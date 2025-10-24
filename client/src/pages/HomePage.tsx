@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Sparkles, Palette, Wind, BookOpen } from "lucide-react";
+import { Sparkles, Users, Wind, BookOpen } from "lucide-react";
 import ProgressBar from "@/components/ProgressBar";
 import StreakCalendar from "@/components/StreakCalendar";
 import ActionCard from "@/components/ActionCard";
@@ -19,11 +19,11 @@ export default function HomePage() {
       testId: "card-processes"
     },
     {
-      title: "Design Your Practice",
-      icon: Palette,
+      title: "Community Practices",
+      icon: Users,
       gradient: "bg-gradient-growth",
-      path: "/design-practice",
-      testId: "card-design-practice"
+      path: "/community-practices",
+      testId: "card-community-practices"
     },
     {
       title: "Spiritual Breaths",

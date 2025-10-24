@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import HomePage from "@/pages/HomePage";
 import ProcessesPage from "@/pages/ProcessesPage";
 import DesignYourPracticePage from "@/pages/DesignYourPracticePage";
+import CommunityPracticesPage from "@/pages/CommunityPracticesPage";
 import SpiritualBreathsPage from "@/pages/SpiritualBreathsPage";
 import ArticlesPage from "@/pages/ArticlesPage";
 import WorkshopsPage from "@/pages/WorkshopsPage";
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/processes" component={ProcessesPage} />
       <Route path="/design-practice" component={DesignYourPracticePage} />
+      <Route path="/community-practices" component={CommunityPracticesPage} />
       <Route path="/spiritual-breaths" component={SpiritualBreathsPage} />
       <Route path="/articles" component={ArticlesPage} />
       <Route path="/workshops" component={WorkshopsPage} />
