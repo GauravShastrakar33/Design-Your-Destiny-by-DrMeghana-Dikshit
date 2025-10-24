@@ -3,8 +3,19 @@ import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { savePlaylist } from "@/lib/storage";
 
 const usmPractices = [
   "Recognition",
@@ -42,6 +53,8 @@ export default function DesignYourPracticePage() {
   const [selectedPractices, setSelectedPractices] = useState<string[]>([]);
   const [usmExpanded, setUsmExpanded] = useState(true);
   const [dydExpanded, setDydExpanded] = useState(true);
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [playlistName, setPlaylistName] = useState("");
 
   const togglePractice = (practice: string) => {
     setSelectedPractices((prev) =>
@@ -51,12 +64,38 @@ export default function DesignYourPracticePage() {
     );
   };
 
-  const handleSave = () => {
+  const handleSaveClick = () => {
+    if (selectedPractices.length === 0) return;
+    setShowNameDialog(true);
+  };
+
+  const handleConfirmSave = () => {
+    if (!playlistName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter a name for your playlist.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    savePlaylist({
+      name: playlistName.trim(),
+      practices: selectedPractices,
+    });
+
     toast({
       title: "Playlist Saved!",
-      description: `${selectedPractices.length} practices added to your playlist.`,
+      description: `"${playlistName}" with ${selectedPractices.length} practices has been saved.`,
     });
-    console.log('Saved practices:', selectedPractices);
+
+    setShowNameDialog(false);
+    setPlaylistName("");
+    setSelectedPractices([]);
+    
+    setTimeout(() => {
+      setLocation("/playlist");
+    }, 500);
   };
 
   return (
@@ -183,7 +222,7 @@ export default function DesignYourPracticePage() {
         <div className="fixed bottom-20 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
           <div className="max-w-md mx-auto">
             <Button
-              onClick={handleSave}
+              onClick={handleSaveClick}
               className="w-full h-12 text-base font-semibold"
               disabled={selectedPractices.length === 0}
               data-testid="button-save-playlist"
@@ -193,6 +232,54 @@ export default function DesignYourPracticePage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
+        <DialogContent className="max-w-md" data-testid="dialog-name-playlist">
+          <DialogHeader>
+            <DialogTitle>Name Your Playlist</DialogTitle>
+            <DialogDescription>
+              Give your custom practice playlist a memorable name
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="playlist-name" className="text-sm font-medium">
+              Playlist Name
+            </Label>
+            <Input
+              id="playlist-name"
+              placeholder="e.g., Morning Routine"
+              value={playlistName}
+              onChange={(e) => setPlaylistName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleConfirmSave();
+                }
+              }}
+              className="mt-2"
+              data-testid="input-playlist-name"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowNameDialog(false);
+                setPlaylistName("");
+              }}
+              data-testid="button-cancel"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmSave}
+              data-testid="button-confirm-save"
+            >
+              Save Playlist
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
