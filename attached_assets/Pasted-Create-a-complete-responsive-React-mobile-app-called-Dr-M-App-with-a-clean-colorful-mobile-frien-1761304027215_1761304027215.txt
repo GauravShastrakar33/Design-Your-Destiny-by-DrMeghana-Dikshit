@@ -1,0 +1,126 @@
+Create a complete responsive React mobile app called “Dr.M App” with a clean, colorful, mobile-friendly UI using Tailwind CSS.
+
+🔹 The app should have a **navigation bar** with the following tabs:
+1. Home  
+2. Workshops  
+3. My Practice Playlist  
+4. Project of Heart  
+5. Profile  
+
+---
+
+### 🏠 Home Page
+
+At the top, show:
+- A **mini progress bar** showing daily practice progress.
+- A **7-day streak calendar** showing practice completion.
+
+Below that, create four main button cards:
+1. **Processes**
+2. **Design Your Practice**
+3. **Spiritual Breaths**
+4. **Articles**
+
+---
+
+### 1️⃣ Processes Page
+- When user clicks “Processes”, open a new page.  
+- At the top, show **segmented buttons**: `DYD` and `USM`.  
+- When “DYD” is selected, show DYD related practices. When “USM” is selected, show USM related practices.  
+
+Each practice should be displayed as a **card** with:
+- Practice icon  
+- Practice title  
+- On click → open a section below with **three segmented buttons**: `Video`, `Audio`, `Script`.
+
+When user clicks:
+- **Video** → embedded video player plays the practice video.  
+- **Audio** → embedded audio player plays the audio.  
+- **Script** → text of the instructions appears below.
+
+✅ **List of USM Practices:**
+1. Recognition  
+2. Vibration Elevation  
+3. Neurolinking  
+4. EET  
+5. Hoponopono  
+6. Soul Connection  
+7. Donald Duck  
+8. Inner Child Healing  
+9. Journaling  
+
+✅ **List of DYD Practices:**
+1. Wealth Code Activation 1–4  
+2. Birth Story Healing  
+3. Specialisations in Birth Story:
+   - Adoption  
+   - Miscarriage  
+   - Cesarean  
+   - Clearing the Birth Energy  
+   - Drugs  
+   - Forceps  
+   - Induced Birth  
+   - Passed Due Date  
+   - Slow/Long Labour  
+   - Too Soon or Too Fast  
+   - Transverse or Posterior Birth  
+   - Trauma/Emergency  
+   - Twins  
+   - Unwanted/Unplanned/Illegitimate  
+   - Wrong Sex  
+4. Pre-Birth Story Process  
+5. Anxiety Relief Code 1–2  
+6. Happiness Code Activation 1–2  
+7. Story Burning  
+
+All processes have **Video**, **Audio**, and **Script** formats.
+
+---
+
+### 2️⃣ Design Your Practice Page
+- Show two collapsible lists: `USM` and `DYD`.  
+- Each practice has a **checkbox** next to it.  
+- User can select any combination to create a **custom playlist**.  
+- A “Save My Playlist” button stores their selection.
+
+---
+
+### 3️⃣ Spiritual Breaths Page
+- Guided breathwork tutorials with embedded **videos**.  
+- Each video followed by an **audio affirmation**.  
+- Clean layout, calm theme, easy to follow.
+
+---
+
+### 4️⃣ Articles Page
+At the top:
+- Banner image with the title **“Dr. M’s Guide”** and a motivational quote overlay.
+
+Then show category sections (flat or gradient background):
+1. Health  
+2. Brain Performance  
+3. Relationships  
+4. My Book Recommendation  
+5. Parenting  
+6. Spirituality  
+
+Each category contains a **horizontal scrollable list of article cards**.
+
+Each **article card** should have:
+- Full background cover image or illustration.  
+- Title text overlay at the bottom.  
+- Rounded corners and subtle shadow.  
+- Slight **scaling animation on tap**.
+
+Entire page scrolls vertically with smooth animation.
+
+---
+
+### ⚙️ Additional UI Requirements
+- Use **Tailwind CSS** for styling.  
+- Use **Framer Motion** for smooth animations.  
+- Use **React Router** for navigation between pages.  
+- Ensure full mobile responsiveness and clean modern design.
+- Use sample placeholder images, videos, and text.
+
+Build this app end-to-end with mock data where needed.
