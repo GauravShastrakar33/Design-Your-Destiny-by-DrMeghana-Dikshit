@@ -3,6 +3,7 @@ export interface SavedPlaylist {
   name: string;
   practices: string[];
   createdAt: string;
+  reminderTime?: string; // HH:MM format
 }
 
 const PLAYLISTS_KEY = 'dr-m-playlists';

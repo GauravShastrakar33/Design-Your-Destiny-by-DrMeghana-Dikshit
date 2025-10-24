@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { ListMusic, Trash2, Play, ChevronDown, ChevronUp } from "lucide-react";
+import { ListMusic, Trash2, Play, ChevronDown, ChevronUp, Bell, BellOff } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,8 +15,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { getPlaylists, deletePlaylist, type SavedPlaylist } from "@/lib/storage";
+import { getPlaylists, deletePlaylist, updatePlaylist, type SavedPlaylist } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MyPracticePlaylistPage() {
@@ -23,6 +33,9 @@ export default function MyPracticePlaylistPage() {
   const [playlists, setPlaylists] = useState<SavedPlaylist[]>([]);
   const [expandedPlaylist, setExpandedPlaylist] = useState<string | null>(null);
   const [playlistToDelete, setPlaylistToDelete] = useState<string | null>(null);
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [selectedPlaylistForReminder, setSelectedPlaylistForReminder] = useState<SavedPlaylist | null>(null);
+  const [reminderTime, setReminderTime] = useState("");
 
   useEffect(() => {
     loadPlaylists();
@@ -42,6 +55,57 @@ export default function MyPracticePlaylistPage() {
     });
   };
 
+  const handleSetReminder = (playlist: SavedPlaylist) => {
+    setSelectedPlaylistForReminder(playlist);
+    setReminderTime(playlist.reminderTime || "");
+    setReminderDialogOpen(true);
+  };
+
+  const handleSaveReminder = () => {
+    if (!selectedPlaylistForReminder) return;
+
+    if (!reminderTime) {
+      toast({
+        title: "Time Required",
+        description: "Please select a reminder time.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updatePlaylist(selectedPlaylistForReminder.id, {
+      reminderTime: reminderTime,
+    });
+
+    loadPlaylists();
+    setReminderDialogOpen(false);
+    setSelectedPlaylistForReminder(null);
+    setReminderTime("");
+
+    toast({
+      title: "Reminder Set!",
+      description: `Daily reminder set for ${formatTime(reminderTime)}`,
+    });
+  };
+
+  const handleRemoveReminder = () => {
+    if (!selectedPlaylistForReminder) return;
+
+    updatePlaylist(selectedPlaylistForReminder.id, {
+      reminderTime: undefined,
+    });
+
+    loadPlaylists();
+    setReminderDialogOpen(false);
+    setSelectedPlaylistForReminder(null);
+    setReminderTime("");
+
+    toast({
+      title: "Reminder Removed",
+      description: "Your reminder has been cleared.",
+    });
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -49,6 +113,14 @@ export default function MyPracticePlaylistPage() {
       day: 'numeric', 
       year: 'numeric' 
     });
+  };
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
   };
 
   if (playlists.length === 0) {
@@ -121,6 +193,14 @@ export default function MyPracticePlaylistPage() {
                   <p className="text-sm text-muted-foreground">
                     {playlist.practices.length} practices • {formatDate(playlist.createdAt)}
                   </p>
+                  {playlist.reminderTime && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Bell className="w-3 h-3 text-primary" />
+                      <span className="text-xs text-primary font-medium">
+                        {formatTime(playlist.reminderTime)}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {expandedPlaylist === playlist.id ? (
                   <ChevronUp className="w-5 h-5 text-muted-foreground" />
@@ -163,6 +243,17 @@ export default function MyPracticePlaylistPage() {
                         </Button>
                         <Button
                           variant="outline"
+                          onClick={() => handleSetReminder(playlist)}
+                          data-testid={`button-reminder-${playlist.id}`}
+                        >
+                          {playlist.reminderTime ? (
+                            <Bell className="w-4 h-4" fill="currentColor" />
+                          ) : (
+                            <Bell className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
                           onClick={() => setPlaylistToDelete(playlist.id)}
                           data-testid={`button-delete-${playlist.id}`}
                         >
@@ -198,6 +289,67 @@ export default function MyPracticePlaylistPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-set-reminder">
+          <DialogHeader>
+            <DialogTitle>Set Daily Reminder</DialogTitle>
+            <DialogDescription>
+              Choose a time to be reminded about "{selectedPlaylistForReminder?.name}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="reminder-time" className="text-sm font-medium">
+              Reminder Time
+            </Label>
+            <Input
+              id="reminder-time"
+              type="time"
+              value={reminderTime}
+              onChange={(e) => setReminderTime(e.target.value)}
+              className="mt-2"
+              data-testid="input-reminder-time"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              You'll receive a daily notification at this time
+            </p>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {selectedPlaylistForReminder?.reminderTime && (
+              <Button
+                variant="outline"
+                onClick={handleRemoveReminder}
+                className="w-full sm:w-auto"
+                data-testid="button-remove-reminder"
+              >
+                <BellOff className="w-4 h-4 mr-2" />
+                Remove Reminder
+              </Button>
+            )}
+            <div className="flex gap-2 flex-1">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setReminderDialogOpen(false);
+                  setSelectedPlaylistForReminder(null);
+                  setReminderTime("");
+                }}
+                className="flex-1"
+                data-testid="button-cancel-reminder"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveReminder}
+                className="flex-1"
+                data-testid="button-save-reminder"
+              >
+                Save Reminder
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
