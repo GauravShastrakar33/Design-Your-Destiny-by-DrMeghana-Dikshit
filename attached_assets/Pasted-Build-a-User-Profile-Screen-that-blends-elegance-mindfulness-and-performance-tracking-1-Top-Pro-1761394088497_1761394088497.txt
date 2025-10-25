@@ -1,0 +1,79 @@
+Build a User Profile Screen that blends elegance, mindfulness, and performance tracking.
+
+1. Top Profile CardContent:
+* Large circular profile photo (left-aligned).
+* Name: “Gaurav Shastrakar” — bold and elegant. (Right to profile picture)
+* Member Since 2023 — smaller, muted subtext.
+* Stars Earned from Dr.M (33 Stars)
+    * Label: “33 ⭐”
+    * Show star and number
+    * star has a soft glow effect or subtle shimmer animation.
+
+Design:
+* Rounded corners, drop shadow, generous padding.
+* This card should feel calm, and celebratory.
+
+
+2. Karmic Affirmation Section
+Below the profile card:
+* Title: “Karmic Affirmation”
+* Box displaying affirmation text: “I am aligned with my higher purpose, attracting peace and growth every day.” 
+* Small ✏️ Edit icon in the top-right corner.
+Style:
+* Pastel gradient background (pale gold or soft blue).
+* Italic serif font for affirmation text.
+* Rounded corners, calm padding.
+Functionality - I should be able to edit and change my karmic affirmation.
+
+ 3. Accountability Partner Section
+Below the affirmation card:
+* Title: “Accountability Partner”
+* Display: partner name (e.g., Amit).
+* Edit button or ✏️ icon on the right to change partner.
+Design:
+* White rounded card, soft shadow, clean spacing.
+Functionality - I should be able to edit and change my Accountability Partner
+
+
+Title Row:
+
+2025 Streak Tracker                 [ Hide ]  [ Change Start Date ]
+* “Hide” toggles visibility.
+* “Change Start Date” opens a date picker.
+Calendar Design:
+* Horizontally scrollable grid calendar (heatmap-style).
+* Each day is a rounded square box with the date number inside.
+* Colors:
+    * 🟩 Green = Streak day (success)
+    * 🟥 Red = missed
+    * 🩶 Grey = Neutral or future date
+* Legend: “Your Consistency-Map 📈 🟢 Streak 🔴 Relapse”
+* Smooth horizontal scroll between months (with snap animation).
+
+Footer of Calendar:
+
+BEST STREAK → 120 Days
+CURRENT STREAK → 12 Days
+* Glowing gradient text (soft gold or mint green).
+Design:
+
+* Rounded edges, shadow, breathing space.
+
+ 5. Settings Section
+Title: “Settings”
+Items (List with icons + arrows):
+1. ⚙️ Account – Change your account settings
+2. 🔔 Notifications – Manage your notification preferences
+3. 💬 Get Support – Talk with our Coaches
+4. 🚪 Logout – Log out of your account
+
+
+🧩 Screen Hierarchy
+ Profile Card – Photo + Name + Member Since + 33 Stars Earned from Dr.M  Karmic Affirmation – Affirmation text + Edit  Accountability Partner – Name + Edit  Streak Tracker – Horizontal HeatMap Calendar + Hide/Change Start Date controls  Settings – Account, Notifications, Get Support, Logout
+
+✅ Final Behavior
+* User can edit affirmation and accountability partner.
+* Calendar scrolls horizontally with month snap.
+* Hide/Show and Change Start Date options above calendar.
+* “Stars from Dr.M – 33” section glows subtly in gold.
+* Everything scrolls vertically within the profile screen with smooth transitions.
