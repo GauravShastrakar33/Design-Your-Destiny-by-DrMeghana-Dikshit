@@ -1,0 +1,99 @@
+Redesign and enhance my Holistic Meditation App Home Dashboard UI. Do not remove or overwrite any existing logic or backend code — only improve UI layout and add new screens as described.
+
+### HomeScreen Dashboard
+
+Redesign my  Homescreen UI so the quick action cards appear in a compact grid layout.
+
+Requirements:
+* Display at least 8 cards (2 columns × 4 rows) visible without scrolling on a standard phone screen.
+* Each card should be smaller in height but still readable and tappable.
+* Maintain card icons and titles (like “Processes,” “Spiritual Breaths,” “Community Practices,” “My Playlist,” etc.).
+* Layout compact Rectangle cards with minimal spacing.
+
+Below these cards, add the following full-width sections:
+
+1. Motivational Quote Card
+* Full-width gradient card with rounded corners.
+* Large centered text: “The only impossible journey is the one you never begin.” — Tony Robbins 
+* Small button below: “More Quotes →” with a dark translucent background.
+* When user clicks: show 3 more motivational quote cards (vertically scrollable).
+1. How you do anything is How you do everything - Dr.M
+  2.The secret of success is learning how to use pain and pleasure instead of having pain and pleasure use you. - Tony Robins
+3. Don’t let yesterday take up too much of today. - Will Roggers
+* Last card should display: “That’s it for today. New Quotes  and Affirmations on a new day. See you tomorrow.” 
+
+2. AI Insights Card
+* Full-width gradient card with rounded corners.
+* Title: “AI Insights ✨”
+* Subtitle: “Receive personalised insights for your streak.”
+* Add lock icon on top right and timer text under subtitle: “Unlocks in 7 days” (Don’t lock it for now) 
+
+🔸 EMOTIONAL MASTERY SCREEN
+When user taps “Emotional Mastery” card on home screen, navigate to a scrollable vertical list of 4 cards:
+1. Anxiety
+2. Anger
+3. Stress
+4. Self Love
+Each card is rectangular, minimal spacing, full-width. At top: segmented control (2 buttons): Video | Audio
+Anxiety bundle:
+* Include “Anxiety Code 1” and “Anxiety Code 2”.
+
+💰 MONEY MASTERY HUB SCREEN
+When user taps “Money Mastery Hub”: Show vertically stacked cards:
+1. Money Calendar
+    * Full-month view calendar UI.
+    * Each date cell can store “income earned that day”.
+    * Simple monthly tracker view with total at bottom.
+2. Rewiring Belief
+    * Full-width gradient card with rounded corners.
+    * When tapped, open belief editing UI:
+        * Title: “Lets Rewire, Champion ”
+        * Instruction: “Left tap your limiting belief and Right tap your uplifting belief.” 
+        * User types limiting belief (hidden option toggle) and uplifting belief.
+        * Can add/edit up to 5 belief pairs.
+        * Show final screen with both beliefs side by side and toggle to hide old beliefs.
+3. Money Manifestation Challenge — shows 30 day-wise videos.
+4. Raining Abundance — shows 21 day-wise videos.
+
+🔔 NOTIFICATION BUTTON
+At top-right corner of home screen: When tapped, take user to new screen and show notifications and announcements.
+
+🔍 SEARCH BOX
+Below the notification icon: Add a search bar aligned left, rounded corners, soft background. It searches across Processes screen (text practices) and Workshop screen videos using tags.
+
+🎧 MUSIC JOURNALING
+* Section with 4–5 Theta music audios.
+* Each displayed as a full-width elegant audio card with title, duration, and play button.
+
+✅ PROCESS CHECKLIST
+When tapped: Show “My Practice Log” screen.
+* Show list of checkbox items: Recognition, EET, Visualisation, Karmic Affirmation, Story Burning, Gratitude Journal, Appreciation Journal, Dump Journal, Mirror Work, Ho'oponopono, Infinity Loop.
+* User can tick whichever practices they did.
+* Button: “Save Today’s Reflection” → store to AsyncStorage.
+* After saving, display: “Well done, Champion 👑” 
+AI Insight Integration:  When user opens AI Insight Card, show a small chart/table of how many days each technique was practiced (use mock/sample data for now).
+
+🧘 LEVEL UP CHALLENGE
+Inside “Level Up” feature:
+1. Challenge Selection Screen
+    * Cards:
+        * “7-Day Calm Mind”
+        * “21-Day Mind Discipline”
+        * “90-Day Life Transformation”
+    * Each card shows description, goal, and CTA button “Start Challenge”.
+2. Challenge Dashboard
+    * Show challenge duration (7, 21, or 90 days).
+    * Display Day count, streak meter, and progress visualization.
+    * Button: “Mark Day as Complete.”
+3. Completion Screen
+    * Message: “Congratulations! You leveled up 🌟” 
+4. History Screen
+    * Show all completed challenges with streaks.
+
+💡 DESIGN STYLE GUIDE
+* Soft gradient backgrounds (beige, lavender, sky blue, mint).
+* Use rounded corners (radius: 16px–20px).
+* Minimal shadows.
+* Calm, clean typography (e.g., Poppins, Nunito, or Inter).
+* Consistent padding (p-3 to p-4).
+* Smooth transitions between cards.
