@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Edit2, ChevronRight, Settings as SettingsIcon, Bell, MessageCircle, LogOut, Eye, EyeOff, Calendar as CalendarIcon } from "lucide-react";
+import { Edit2, ChevronRight, Settings as SettingsIcon, Bell, MessageCircle, LogOut, Eye, EyeOff, Calendar as CalendarIcon, Star, TrendingUp, Circle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 interface StreakDay {
   date: string;
   status: "streak" | "missed" | "neutral";
+}
+
+interface StreakData {
+  [date: string]: "streak" | "missed";
 }
 
 export default function ProfilePage() {
@@ -26,6 +30,7 @@ export default function ProfilePage() {
   const [startDate, setStartDate] = useState("");
   const [editingStartDate, setEditingStartDate] = useState(false);
   const [tempStartDate, setTempStartDate] = useState("");
+  const [streakData, setStreakData] = useState<StreakData>({});
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -33,12 +38,44 @@ export default function ProfilePage() {
     const savedPartner = localStorage.getItem("accountabilityPartner");
     const savedStartDate = localStorage.getItem("streakStartDate");
     const savedStreakVisible = localStorage.getItem("streakVisible");
+    const savedStreakData = localStorage.getItem("streakData");
     
     setAffirmation(savedAffirmation || "I am aligned with my higher purpose, attracting peace and growth every day.");
     setPartner(savedPartner || "Amit");
     setStartDate(savedStartDate || "2025-01-01");
     setStreakVisible(savedStreakVisible === null ? true : savedStreakVisible === "true");
+    setStreakData(savedStreakData ? JSON.parse(savedStreakData) : generateInitialStreakData());
   }, []);
+
+  // Generate initial streak data (deterministic based on date)
+  const generateInitialStreakData = (): StreakData => {
+    const data: StreakData = {};
+    const today = new Date();
+    const year = 2025;
+    
+    for (let month = 0; month < 12; month++) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        if (date < today) {
+          // Use date as seed for consistent pattern
+          const seed = (year * 10000 + month * 100 + day) % 100;
+          if (seed > 30) {
+            data[dateStr] = "streak";
+          } else if (seed > 10) {
+            data[dateStr] = "missed";
+          }
+        } else if (date.toDateString() === today.toDateString()) {
+          data[dateStr] = "streak";
+        }
+      }
+    }
+    
+    localStorage.setItem("streakData", JSON.stringify(data));
+    return data;
+  };
 
   const handleSaveAffirmation = () => {
     setAffirmation(tempAffirmation);
@@ -64,11 +101,12 @@ export default function ProfilePage() {
     localStorage.setItem("streakVisible", String(newValue));
   };
 
-  // Generate calendar data
+  // Generate calendar days using persisted streak data and start date
   const generateCalendarDays = (): StreakDay[] => {
     const days: StreakDay[] = [];
     const today = new Date();
     const year = 2025;
+    const streakStartDate = new Date(startDate);
     
     for (let month = 0; month < 12; month++) {
       const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -76,20 +114,13 @@ export default function ProfilePage() {
         const date = new Date(year, month, day);
         const dateStr = date.toISOString().split('T')[0];
         
-        // Simple logic: randomly assign streak/missed for demo
-        // In production, this would come from actual user data
         let status: "streak" | "missed" | "neutral" = "neutral";
         
-        if (date < today) {
-          // Past dates - simulate streak pattern
-          const random = Math.random();
-          if (random > 0.3) {
-            status = "streak";
-          } else if (random > 0.1) {
-            status = "missed";
-          }
-        } else if (date.toDateString() === today.toDateString()) {
-          status = "streak"; // Today is a streak day
+        // Only consider dates after start date
+        if (date >= streakStartDate && date <= today) {
+          status = streakData[dateStr] || "neutral";
+        } else if (date > today) {
+          status = "neutral";
         }
         
         days.push({ date: dateStr, status });
@@ -101,24 +132,30 @@ export default function ProfilePage() {
 
   const calendarDays = generateCalendarDays();
   
-  // Calculate streaks
+  // Calculate streaks based on persisted data and start date
   const calculateStreaks = () => {
     let currentStreak = 0;
     let bestStreak = 0;
     let tempStreak = 0;
     
     const today = new Date().toISOString().split('T')[0];
-    const sortedDays = [...calendarDays].reverse();
+    const streakStartDate = new Date(startDate);
+    const sortedDays = [...calendarDays]
+      .filter(day => new Date(day.date) >= streakStartDate)
+      .reverse();
+    
+    let foundCurrent = false;
     
     for (const day of sortedDays) {
       if (day.date > today) continue;
       
       if (day.status === "streak") {
         tempStreak++;
-        if (day.date <= today && currentStreak === 0) {
+        if (!foundCurrent) {
           currentStreak = tempStreak;
         }
       } else if (day.status === "missed") {
+        foundCurrent = true;
         if (tempStreak > bestStreak) {
           bestStreak = tempStreak;
         }
@@ -162,7 +199,7 @@ export default function ProfilePage() {
                 <h2 className="text-2xl font-bold text-foreground">Gaurav Shastrakar</h2>
                 <p className="text-sm text-muted-foreground mt-1">Member Since 2023</p>
                 <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border border-yellow-400/30">
-                  <span className="text-2xl animate-pulse">⭐</span>
+                  <Star className="w-5 h-5 text-yellow-600 fill-yellow-600 animate-pulse" />
                   <span className="text-lg font-semibold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
                     33
                   </span>
@@ -339,14 +376,17 @@ export default function ProfilePage() {
             {streakVisible && (
               <>
                 {/* Legend */}
-                <div className="flex items-center gap-4 mb-4 text-sm">
-                  <span className="text-muted-foreground">Your Consistency Map 📈</span>
+                <div className="flex items-center gap-4 mb-4 text-sm flex-wrap">
                   <div className="flex items-center gap-1">
-                    <div className="w-4 h-4 rounded bg-green-500" />
+                    <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Your Consistency Map</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Circle className="w-3 h-3 fill-green-500 text-green-500" />
                     <span className="text-xs text-muted-foreground">Streak</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-4 h-4 rounded bg-red-500" />
+                    <Circle className="w-3 h-3 fill-red-500 text-red-500" />
                     <span className="text-xs text-muted-foreground">Relapse</span>
                   </div>
                 </div>
