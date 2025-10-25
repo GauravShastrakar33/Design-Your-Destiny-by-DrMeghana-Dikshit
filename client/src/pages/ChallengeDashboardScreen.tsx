@@ -101,7 +101,21 @@ export default function ChallengeDashboardScreen() {
     
     setTimeout(() => {
       const newCompletedDays = challenge.completedDays + 1;
-      const newStreak = challenge.streak + 1;
+      
+      // Calculate streak - check if today is consecutive to last completed date
+      let newStreak = 1;
+      if (challenge.lastCompletedDate) {
+        const lastDate = new Date(challenge.lastCompletedDate);
+        const todayDate = new Date(today);
+        const diffTime = todayDate.getTime() - lastDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        // If completed yesterday, increment streak. Otherwise reset to 1.
+        if (diffDays === 1) {
+          newStreak = challenge.streak + 1;
+        }
+      }
+      
       const isNowCompleted = newCompletedDays >= challenge.totalDays;
       
       const updatedChallenge: ChallengeData = {

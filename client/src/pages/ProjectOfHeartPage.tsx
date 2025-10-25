@@ -280,7 +280,7 @@ export default function ProjectOfHeartPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm font-medium" style={{ color: "#6B7280" }}>Your Growth</p>
-              <p className="text-2xl font-bold" style={{ color: "#3D3D3D" }}>
+              <p className="text-2xl font-bold" style={{ color: "#3D3D3D" }} data-testid="text-stars-count">
                 {pohData.stars} Stars ✨
               </p>
               <p className="text-xs mt-1" style={{ color: "#9CA3AF" }}>
@@ -398,8 +398,8 @@ export default function ProjectOfHeartPage() {
                   </div>
                   
                   <div className="p-4 rounded-lg mb-4" style={{ backgroundColor: "#FDECEF" }}>
-                    <p className="font-semibold mb-2" style={{ color: "#3D3D3D" }}>{pohData.vision.title}</p>
-                    <p className="text-sm" style={{ color: "#6B7280" }}>{pohData.vision.description}</p>
+                    <p className="font-semibold mb-2" style={{ color: "#3D3D3D" }} data-testid="text-vision-title">{pohData.vision.title}</p>
+                    <p className="text-sm" style={{ color: "#6B7280" }} data-testid="text-vision-description">{pohData.vision.description}</p>
                   </div>
 
                   <div className="p-4 rounded-lg text-center italic" style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}>
