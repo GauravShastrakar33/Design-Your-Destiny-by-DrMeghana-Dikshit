@@ -59,12 +59,14 @@ export default function DrMPage() {
         <div className="bg-gradient-wellness p-6 pb-8">
           <div className="flex flex-col items-center space-y-4">
             <div className="relative">
-              <img
-                src={drMAvatar}
-                alt="Dr.M"
-                className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
-                data-testid="img-drm-avatar"
-              />
+              <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
+                <img
+                  src={drMAvatar}
+                  alt="Dr.M"
+                  className="w-full h-full object-cover object-top"
+                  data-testid="img-drm-avatar"
+                />
+              </div>
               <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-2 border-white rounded-full" />
             </div>
             <div className="text-center text-white">
