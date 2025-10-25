@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Sparkles, Users, Wind, BookOpen } from "lucide-react";
+import { 
+  Sparkles, 
+  Users, 
+  Wind, 
+  BookOpen, 
+  ListMusic, 
+  Heart, 
+  DollarSign, 
+  Music, 
+  CheckSquare, 
+  TrendingUp 
+} from "lucide-react";
 import ProgressBar from "@/components/ProgressBar";
 import StreakCalendar from "@/components/StreakCalendar";
 import ActionCard from "@/components/ActionCard";
@@ -11,6 +22,7 @@ export default function HomePage() {
   const [streakDays] = useState([true, true, false, true, true, false, false]);
 
   const actionCards = [
+    // Left Column
     {
       title: "Processes",
       icon: Sparkles,
@@ -18,13 +30,7 @@ export default function HomePage() {
       path: "/processes",
       testId: "card-processes"
     },
-    {
-      title: "Community Practices",
-      icon: Users,
-      gradient: "bg-gradient-growth",
-      path: "/community-practices",
-      testId: "card-community-practices"
-    },
+    // Right Column
     {
       title: "Spiritual Breaths",
       icon: Wind,
@@ -32,12 +38,69 @@ export default function HomePage() {
       path: "/spiritual-breaths",
       testId: "card-spiritual-breaths"
     },
+    // Left Column
+    {
+      title: "Community Practices",
+      icon: Users,
+      gradient: "bg-gradient-growth",
+      path: "/community-practices",
+      testId: "card-community-practices"
+    },
+    // Right Column
+    {
+      title: "My Playlist",
+      icon: ListMusic,
+      gradient: "bg-gradient-energy",
+      path: "/playlist",
+      testId: "card-my-playlist"
+    },
+    // Left Column
+    {
+      title: "Emotion Mastery",
+      icon: Heart,
+      gradient: "bg-gradient-calm",
+      path: "/emotion-mastery",
+      testId: "card-emotion-mastery"
+    },
+    // Right Column
     {
       title: "Articles",
       icon: BookOpen,
-      gradient: "bg-gradient-energy",
+      gradient: "bg-gradient-wellness",
       path: "/articles",
       testId: "card-articles"
+    },
+    // Left Column
+    {
+      title: "Money Mastery Hub",
+      icon: DollarSign,
+      gradient: "bg-gradient-growth",
+      path: "/money-mastery",
+      testId: "card-money-mastery"
+    },
+    // Right Column
+    {
+      title: "Process Checklist",
+      icon: CheckSquare,
+      gradient: "bg-gradient-energy",
+      path: "/process-checklist",
+      testId: "card-process-checklist"
+    },
+    // Left Column
+    {
+      title: "Music Journaling",
+      icon: Music,
+      gradient: "bg-gradient-calm",
+      path: "/music-journaling",
+      testId: "card-music-journaling"
+    },
+    // Right Column
+    {
+      title: "Level Up",
+      icon: TrendingUp,
+      gradient: "bg-gradient-wellness",
+      path: "/level-up",
+      testId: "card-level-up"
     },
   ];
 

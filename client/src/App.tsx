@@ -14,6 +14,7 @@ import WorkshopsPage from "@/pages/WorkshopsPage";
 import MyPracticePlaylistPage from "@/pages/MyPracticePlaylistPage";
 import ProjectOfHeartPage from "@/pages/ProjectOfHeartPage";
 import ProfilePage from "@/pages/ProfilePage";
+import DrMPage from "@/pages/DrMPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/playlist" component={MyPracticePlaylistPage} />
       <Route path="/heart" component={ProjectOfHeartPage} />
       <Route path="/profile" component={ProfilePage} />
+      <Route path="/drm" component={DrMPage} />
       <Route component={NotFound} />
     </Switch>
   );
