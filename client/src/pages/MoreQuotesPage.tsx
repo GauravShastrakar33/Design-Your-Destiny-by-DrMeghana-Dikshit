@@ -40,7 +40,7 @@ export default function MoreQuotesPage() {
           {quotes.map((quote, index) => (
             <Card
               key={index}
-              className="p-6 bg-gradient-to-br from-cyan-400 via-teal-400 to-blue-500 border-0"
+              className="p-6 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 border-0"
               data-testid={`quote-card-${index}`}
             >
               <p className="text-white text-lg font-semibold mb-4 leading-relaxed">

@@ -76,7 +76,7 @@ export default function ProcessChecklistPage() {
         </div>
 
         <div className="px-4 py-6 space-y-6">
-          <Card className="p-6 bg-gradient-to-br from-cyan-500 to-teal-600 border-0">
+          <Card className="p-6 bg-gradient-to-br from-indigo-500 to-purple-500 border-0">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="w-8 h-8 text-white" />
               <div>
