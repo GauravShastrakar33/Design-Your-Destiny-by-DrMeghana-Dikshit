@@ -1,0 +1,125 @@
+### Workshop screen
+Design a Workshops screen The design must be consistent with a course or workshop-based learning UI.
+
+Top Navigation Bar
+* Show “Masterclasses” heading on the top right side.
+* Add Search (🔍) button to the left of the Notification icon.
+* Add Notification (🔔) icon at the rightmost side.
+* All three (heading, search, and notification icons) should appear on the same line horizontally.
+
+ Horizontal Tab Selector
+* Below the top bar, add a scrollable horizontal tab selector with the following categories:
+    * Upcoming
+    * Latest
+    * DYD
+    * USM
+    * USC
+    * USB
+    * More
+* The active tab should be highlighted (blue underline or filled pill style).
+* When a tab is selected, it shows the relevant screen content below.
+
+TAB 1 — UPCOMING
+Purpose: Show upcoming live masterclasses with direct “Join” access. Each upcoming masterclass should be displayed as a card with the following details:
+Each Upcoming Card Contains:
+1. Banner Image
+2. Title
+3. Date & Time (e.g., “25 Oct, 7 PM”)
+4. Countdown Timer (e.g., “Starts in: 1h 53m”)
+5. Blue Join button — when clicked, navigate to the Zoom session link.
+Sample Data:
+1. Inner Circle — (25 Oct, 7 PM) — Starts in: 1h 53m
+2. DYD Session — (28 Oct, 6 PM)
+3. Manifestation Mastery — (8 Nov, 6 PM)
+💡 Style Tip: Use bold text for titles, rounded white cards with subtle shadow, and blue buttons.
+
+ TAB 2 — LATEST
+Purpose: Show the most recent uploaded or recorded masterclass videos. Display them in reverse chronological order (latest first).
+Each video card includes:
+* Thumbnail
+* Title
+* Upload date
+No Join button or countdown timer needed.
+Sample Titles:
+1. Lions Gate Portal
+2. Inner Circle Call — Turning Setbacks into Success
+3. Self Sabotage Downloads
+4. Money Mastery
+
+TAB 3 — DYD 
+Purpose: Show DYD courses as module or collection cards. When clicked, it opens the Course Overview Screen.
+Courses to display:
+* DYD 14 — July 2025
+* DYD 13 — April 2025
+* DYD 12 — January 2025
+Each card includes:
+* Course thumbnail
+* Title
+* Year label
+
+Course Overview Screen (for DYD)
+When a user clicks a DYD card:
+1. Top App Bar: “Course Overview” with Back Arrow.
+2. Hero Banner Card:
+    * Large image (e.g., “DYD-14”)
+    * Course title over the banner
+3. Course Info Block: Title repeated below banner
+4. Lesson List Section:
+    * Section title: “Design Your Destiny”
+    * List of lessons (vertical scroll)
+    * Each lesson card shows:
+        * Lesson Number (01, 02, 03…)
+        * Lesson Title (truncate if long)
+        * Duration (e.g., 3hr, 2hr)
+        * Small Play icon on the right
+Sample DYD 14 Lessons:
+1. 19 July — Intervention (3h)
+2. 5 Aug — Root Chakra Process (2h)
+3. 12 Aug — Intervention
+4. 19 Aug — Sacral Chakra
+5. 21 Aug — Intervention
+6. 27 Aug — Solar Plexus Chakra
+7. 2 Sept — Intervention
+8. 4 Sept — Heart Chakra
+9. 9 Sept — Intervention
+10. 11 Sept — Throat Chakra
+11. 18 Sept — Intervention
+12. 23 Sept — Third Chakra
+13. 23 Sept — Intervention
+14. 25 Sept — Crown Chakra
+15. 30 Sept — Intervention
+16. 2 Oct — Crown Chakra Process
+
+TAB 4 — USM
+Purpose: Display USM Courses.
+Sample Data:
+ Course: USM — January 2025 Videos:
+1. Vibration Mastery
+2. Influence Mastery
+3. Money Mastery
+
+Course: USM — March 2025 Videos:
+1. Vibration Mastery
+2. Influence Mastery
+3. Money Mastery
+
+Each card opens into a Course Overview screen with the same structure as DYD.
+
+TAB 5 — USC
+Purpose: Display USC Courses. Sample Data: Course: USC — March 2025 Videos:
+1. Day 1 — Video
+2. Day 2 — Video
+3. Day 3 — Video
+
+TAB 6 — USB
+Purpose: Display a single course with multiple lessons inside
+Sample Data: Course: USB — February 2025 Videos:
+1. Recognise
+2. Release
+3. Rewire
+
+TAB 7 — MORE
+Purpose: Display additional or bonus self-paced courses.
+Cards to Display:
+1. Sleep Subconscious
+2. Build Your Visions

@@ -23,6 +23,7 @@ import LevelUpPage from "@/pages/LevelUpPage";
 import MoreQuotesPage from "@/pages/MoreQuotesPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import AIInsightsPage from "@/pages/AIInsightsPage";
+import CourseOverviewPage from "@/pages/CourseOverviewPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/more-quotes" component={MoreQuotesPage} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/ai-insights" component={AIInsightsPage} />
+      <Route path="/workshops/course/:courseId" component={CourseOverviewPage} />
       <Route component={NotFound} />
     </Switch>
   );
