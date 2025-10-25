@@ -20,6 +20,9 @@ import MoneyMasteryPage from "@/pages/MoneyMasteryPage";
 import MusicJournalingPage from "@/pages/MusicJournalingPage";
 import ProcessChecklistPage from "@/pages/ProcessChecklistPage";
 import LevelUpPage from "@/pages/LevelUpPage";
+import MoreQuotesPage from "@/pages/MoreQuotesPage";
+import NotificationsPage from "@/pages/NotificationsPage";
+import AIInsightsPage from "@/pages/AIInsightsPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -41,6 +44,9 @@ function Router() {
       <Route path="/music-journaling" component={MusicJournalingPage} />
       <Route path="/process-checklist" component={ProcessChecklistPage} />
       <Route path="/level-up" component={LevelUpPage} />
+      <Route path="/more-quotes" component={MoreQuotesPage} />
+      <Route path="/notifications" component={NotificationsPage} />
+      <Route path="/ai-insights" component={AIInsightsPage} />
       <Route component={NotFound} />
     </Switch>
   );
