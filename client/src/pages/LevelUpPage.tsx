@@ -9,21 +9,21 @@ const challenges = [
     title: "7-Day Calm Mind",
     description: "Build a foundation of daily mindfulness practice",
     duration: 7,
-    gradient: "bg-gradient-to-br from-green-400 to-emerald-500"
+    gradient: "bg-gradient-to-br from-teal-400 to-cyan-500"
   },
   {
     id: "21-day",
     title: "21-Day Mind Discipline",
     description: "Develop mental strength and consistency",
     duration: 21,
-    gradient: "bg-gradient-to-br from-blue-400 to-indigo-500"
+    gradient: "bg-gradient-to-br from-cyan-400 to-blue-500"
   },
   {
     id: "90-day",
     title: "90-Day Life Transformation",
     description: "Complete transformation of habits and mindset",
     duration: 90,
-    gradient: "bg-gradient-to-br from-purple-400 to-pink-500"
+    gradient: "bg-gradient-to-br from-blue-400 to-teal-500"
   }
 ];
 
@@ -50,7 +50,7 @@ export default function LevelUpPage() {
         </div>
 
         <div className="px-4 py-6 space-y-6">
-          <Card className="p-6 bg-gradient-to-br from-yellow-400 to-orange-500 border-0">
+          <Card className="p-6 bg-gradient-to-br from-cyan-400 to-teal-500 border-0">
             <div className="flex items-center gap-3">
               <Trophy className="w-10 h-10 text-white" />
               <div>

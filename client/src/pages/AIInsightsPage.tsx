@@ -31,7 +31,7 @@ export default function AIInsightsPage() {
         </div>
 
         <div className="px-4 py-6 space-y-6">
-          <Card className="p-6 bg-gradient-to-br from-blue-500 to-purple-500 border-0">
+          <Card className="p-6 bg-gradient-to-br from-cyan-500 to-teal-600 border-0">
             <h2 className="text-white text-xl font-bold mb-2">
               Your Practice Overview
             </h2>
@@ -62,7 +62,7 @@ export default function AIInsightsPage() {
             </div>
           </div>
 
-          <Card className="p-6 bg-gradient-to-br from-green-400 to-emerald-500 border-0">
+          <Card className="p-6 bg-gradient-to-br from-teal-400 to-cyan-500 border-0">
             <div className="flex items-start gap-3">
               <TrendingUp className="w-6 h-6 text-white flex-shrink-0 mt-1" />
               <div>

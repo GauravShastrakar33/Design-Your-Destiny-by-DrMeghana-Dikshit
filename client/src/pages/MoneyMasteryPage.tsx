@@ -83,7 +83,7 @@ export default function MoneyMasteryPage() {
 
           {/* Rewiring Belief */}
           <Card 
-            className="p-6 bg-gradient-to-br from-purple-400 to-purple-600 border-0 cursor-pointer hover-elevate active-elevate-2"
+            className="p-6 bg-gradient-to-br from-cyan-400 to-teal-600 border-0 cursor-pointer hover-elevate active-elevate-2"
             onClick={() => setLocation("/rewiring-belief")}
             data-testid="card-rewiring-belief"
           >
@@ -103,7 +103,7 @@ export default function MoneyMasteryPage() {
 
           {/* Money Manifestation Challenge */}
           <Card 
-            className="p-6 bg-gradient-to-br from-green-400 to-emerald-600 border-0 cursor-pointer hover-elevate active-elevate-2"
+            className="p-6 bg-gradient-to-br from-teal-400 to-cyan-600 border-0 cursor-pointer hover-elevate active-elevate-2"
             onClick={() => setLocation("/money-manifestation")}
             data-testid="card-money-manifestation"
           >
@@ -126,7 +126,7 @@ export default function MoneyMasteryPage() {
 
           {/* Raining Abundance */}
           <Card 
-            className="p-6 bg-gradient-to-br from-yellow-400 to-orange-500 border-0 cursor-pointer hover-elevate active-elevate-2"
+            className="p-6 bg-gradient-to-br from-blue-400 to-cyan-500 border-0 cursor-pointer hover-elevate active-elevate-2"
             onClick={() => setLocation("/raining-abundance")}
             data-testid="card-raining-abundance"
           >
