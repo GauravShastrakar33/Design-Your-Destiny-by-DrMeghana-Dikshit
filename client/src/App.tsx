@@ -15,6 +15,11 @@ import MyPracticePlaylistPage from "@/pages/MyPracticePlaylistPage";
 import ProjectOfHeartPage from "@/pages/ProjectOfHeartPage";
 import ProfilePage from "@/pages/ProfilePage";
 import DrMPage from "@/pages/DrMPage";
+import EmotionMasteryPage from "@/pages/EmotionMasteryPage";
+import MoneyMasteryPage from "@/pages/MoneyMasteryPage";
+import MusicJournalingPage from "@/pages/MusicJournalingPage";
+import ProcessChecklistPage from "@/pages/ProcessChecklistPage";
+import LevelUpPage from "@/pages/LevelUpPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -31,6 +36,11 @@ function Router() {
       <Route path="/heart" component={ProjectOfHeartPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/drm" component={DrMPage} />
+      <Route path="/emotion-mastery" component={EmotionMasteryPage} />
+      <Route path="/money-mastery" component={MoneyMasteryPage} />
+      <Route path="/music-journaling" component={MusicJournalingPage} />
+      <Route path="/process-checklist" component={ProcessChecklistPage} />
+      <Route path="/level-up" component={LevelUpPage} />
       <Route component={NotFound} />
     </Switch>
   );
