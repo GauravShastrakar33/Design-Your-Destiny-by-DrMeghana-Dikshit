@@ -158,6 +158,7 @@ export default function CourseOverviewPage() {
           <button
             onClick={() => setLocation("/workshops")}
             className="mt-4 text-primary"
+            data-testid="button-back-to-workshops"
           >
             Go back to Workshops
           </button>
