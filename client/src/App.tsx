@@ -20,6 +20,8 @@ import MoneyMasteryPage from "@/pages/MoneyMasteryPage";
 import MusicJournalingPage from "@/pages/MusicJournalingPage";
 import ProcessChecklistPage from "@/pages/ProcessChecklistPage";
 import LevelUpPage from "@/pages/LevelUpPage";
+import ChallengeDashboardScreen from "@/pages/ChallengeDashboardScreen";
+import ChallengeHistoryScreen from "@/pages/ChallengeHistoryScreen";
 import MoreQuotesPage from "@/pages/MoreQuotesPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import AIInsightsPage from "@/pages/AIInsightsPage";
@@ -46,6 +48,8 @@ function Router() {
       <Route path="/music-journaling" component={MusicJournalingPage} />
       <Route path="/process-checklist" component={ProcessChecklistPage} />
       <Route path="/level-up" component={LevelUpPage} />
+      <Route path="/level-up/history" component={ChallengeHistoryScreen} />
+      <Route path="/level-up/:challengeId" component={ChallengeDashboardScreen} />
       <Route path="/more-quotes" component={MoreQuotesPage} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/ai-insights" component={AIInsightsPage} />
