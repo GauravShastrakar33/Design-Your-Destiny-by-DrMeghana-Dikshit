@@ -1,0 +1,199 @@
+Create and implement a new screen called Rewiring Screen for my holistic meditation app (from the “Money Mastery Hub” section).
+Keep all existing app logic and design intact — just add this new feature end to end.
+
+🌟 Overview
+
+The Rewiring Screen (also called Belief Breaker) helps users transform their limiting beliefs into uplifting ones.
+When the user clicks the “Rewiring Belief” card in the Money Mastery Hub, navigate them to this screen.
+
+⚡ Header Section
+
+At the top, centered and motivational:
+
+⚡ Let’s rewire that mindset, Champion!  
+💎 Left tap fear, right tap faith.
+
+
+Header font: Poppins SemiBold
+
+Subtext font: Inter Regular
+
+Color theme: bright, warm, uplifting
+
+Background gradient: linear-gradient(90deg, #FFF7E2, #FFEFD2)
+
+Text color: #2E2C28
+
+Subtext color: #726C63
+
+Underline the word “Champion!” with soft gold #F4B860
+
+🌼 Main Theme Colors
+Element	Color	Description
+Screen background	#FFFDF8	Warm off-white
+Card / Input background	#FFFFFF	Clean white
+Accent color	#F4B860	Warm golden amber
+Secondary accent	#FCE2B7	Soft beige highlight
+Text primary	#2E2C28	Deep charcoal
+Text secondary	#726C63	Soft taupe
+Border	#EDE6DA	Subtle golden edge
+Button highlight	Gradient linear-gradient(90deg, #F6C56E, #F8A14D)	
+Shadow	rgba(0, 0, 0, 0.06)	Gentle, minimal depth
+✏️ Belief Pair Entry Section
+
+Below the header, show:
+
+“Enter one limiting belief and its uplifting counterpart.”
+
+Then show up to 5 belief pair rows (scrollable if needed).
+Each belief pair is a rounded white card with:
+
+Light border (#EDE6DA)
+
+Soft shadow
+
+Padding: 16px
+
+Margin bottom: 12px
+
+Each card contains:
+
+Label: Limiting Belief (uppercase, muted #726C63)
+
+Input box (rounded, placeholder #B8B0A3)
+
+Label: Uplifting Belief
+
+Input box (rounded, same style)
+
+When both inputs are filled:
+
+Display a combined summary box below:
+
+Background: #FFF5E5
+
+Border: #F4B860
+
+Rounded corners
+
+Text lines:
+
+“Limiting → [limiting belief text]”
+
+“Uplifting → [uplifting belief text]”
+
+Add small icons on right side:
+
+✏️ (Edit)
+
+👁️ (Hide/Show)
+
+➕ Buttons Section
+
+Below all belief cards:
+
+Add New Belief
+
+Rounded button
+
+Background: #F4B860
+
+Text color: #2E2C28
+
+Label: “+ Add New Belief”
+
+Limit: Maximum of 5 belief pairs (show subtle message “Max 5 beliefs allowed” when reached).
+
+Save & Close
+
+Full-width button at bottom
+
+Background gradient: linear-gradient(90deg, #FFD580, #F8A14D)
+
+Text: Save & Close
+
+Font: Poppins SemiBold
+
+Text color: #2E2C28
+
+Slight shadow for realism
+
+💾 Save Logic
+
+When user taps Save & Close:
+
+Validate input — only save filled pairs.
+
+Save to AsyncStorage (or local persistent storage) with key:
+@app:rewiring_beliefs
+Each entry object:
+
+{
+  "limiting": "User’s limiting belief text",
+  "uplifting": "User’s uplifting belief text",
+  "hidden": false
+}
+
+
+Show success feedback:
+
+🌼 “Beautiful progress, Champion! Your beliefs are saved.”
+Toast background: soft beige #FCE2B7, text #2E2C28.
+Toast fades in and out over 2–3 seconds.
+
+Navigate smoothly back to Money Mastery Hub with a fade transition.
+
+🔁 When Screen Reopens
+
+Load previously saved beliefs from AsyncStorage.
+
+Pre-fill each limiting/uplifting field.
+
+Maintain hide/show state.
+
+If no data saved, show empty inputs ready for new beliefs.
+
+If user hasn’t updated beliefs for 3 days, show gentle reminder text at top:
+
+🌱 “Your mind loves repetition — let’s refresh your empowering beliefs today!”
+
+🧭 Navigation Flow
+
+From Money Mastery Hub, when user taps “Rewiring Belief” card → navigate to RewiringScreen.
+
+On Save → return to Money Mastery Hub.
+
+On return, the “Rewiring Belief” card shows subtle indication:
+
+Small ✅ check icon
+
+Subtext: “Beliefs updated today” (italic, small, gray).
+
+💬 Developer Notes for Replit
+
+Keep all other app screens and logic unchanged.
+
+Use modular navigation (React Navigation or current system).
+
+Save/load beliefs via AsyncStorage.
+
+Maintain existing warm color theme (no dark mode, no turquoise).
+
+Use calm animations — fade transitions, soft easing, no pop or bounce.
+
+🧘‍♂️ Final Vibe
+
+Bright, minimal, emotionally positive.
+
+Feels like journaling in sunlight — gentle gradients, airy spacing, and warm color tones.
+
+Everything encourages calm self-reflection and personal growth.
+
+✅ Deliverable:
+A fully functional, bright “Belief Rewiring” screen integrated into the Money Mastery Hub, supporting:
+
+Add, edit, hide, and save up to 5 belief pairs.
+
+Persistent data storage and reload.
+
+Smooth transition back to hub with updated card indicator.

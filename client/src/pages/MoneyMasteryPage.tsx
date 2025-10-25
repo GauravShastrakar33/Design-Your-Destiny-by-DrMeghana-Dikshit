@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, Calendar, Brain, Video, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Calendar, Brain, Video, Sparkles, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,29 @@ import { Button } from "@/components/ui/button";
 export default function MoneyMasteryPage() {
   const [, setLocation] = useLocation();
   const [selectedMonth] = useState(new Date());
+  const [hasBeliefs, setHasBeliefs] = useState(false);
+  const [lastUpdatedToday, setLastUpdatedToday] = useState(false);
+
+  useEffect(() => {
+    // Check if beliefs are saved
+    const saved = localStorage.getItem("@app:rewiring_beliefs");
+    const lastUpdate = localStorage.getItem("@app:rewiring_last_update");
+    
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setHasBeliefs(parsed.length > 0);
+      } catch (error) {
+        setHasBeliefs(false);
+      }
+    }
+
+    if (lastUpdate) {
+      const today = new Date().toDateString();
+      const updateDate = new Date(parseInt(lastUpdate)).toDateString();
+      setLastUpdatedToday(today === updateDate);
+    }
+  }, []);
 
   const getDaysInMonth = () => {
     const year = selectedMonth.getFullYear();
@@ -89,11 +112,21 @@ export default function MoneyMasteryPage() {
           >
             <div className="flex items-start gap-3">
               <Brain className="w-8 h-8 text-white flex-shrink-0" />
-              <div>
-                <h2 className="text-white text-xl font-bold mb-2">Rewiring Belief</h2>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <h2 className="text-white text-xl font-bold">Rewiring Belief</h2>
+                  {hasBeliefs && (
+                    <CheckCircle className="w-5 h-5 text-white" data-testid="check-icon" />
+                  )}
+                </div>
                 <p className="text-white/90 text-sm mb-3">
                   Transform limiting beliefs into empowering ones
                 </p>
+                {lastUpdatedToday && (
+                  <p className="text-white/70 text-xs italic mb-2" data-testid="text-updated-today">
+                    Beliefs updated today
+                  </p>
+                )}
                 <Button variant="secondary" size="sm">
                   Start Rewiring →
                 </Button>
