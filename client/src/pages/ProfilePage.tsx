@@ -61,10 +61,11 @@ export default function ProfilePage() {
         
         if (date < today) {
           // Use date as seed for consistent pattern
+          // More green (streak) than red (missed)
           const seed = (year * 10000 + month * 100 + day) % 100;
-          if (seed > 30) {
+          if (seed > 20) {
             data[dateStr] = "streak";
-          } else if (seed > 10) {
+          } else if (seed > 5) {
             data[dateStr] = "missed";
           }
         } else if (date.toDateString() === today.toDateString()) {
@@ -170,7 +171,10 @@ export default function ProfilePage() {
     return { currentStreak, bestStreak };
   };
 
-  const { currentStreak, bestStreak } = calculateStreaks();
+  const streaks = calculateStreaks();
+  // Override with specified values
+  const currentStreak = 9;
+  const bestStreak = 25;
 
   // Group days by month
   const daysByMonth = calendarDays.reduce((acc, day) => {
@@ -387,7 +391,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Circle className="w-3 h-3 fill-red-500 text-red-500" />
-                    <span className="text-xs text-muted-foreground">Relapse</span>
+                    <span className="text-xs text-muted-foreground">Missed</span>
                   </div>
                 </div>
 

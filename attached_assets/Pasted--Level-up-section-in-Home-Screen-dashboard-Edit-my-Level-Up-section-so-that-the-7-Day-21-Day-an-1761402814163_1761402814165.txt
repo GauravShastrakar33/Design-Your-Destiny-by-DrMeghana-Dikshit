@@ -1,0 +1,204 @@
+### Level up section in Home Screen dashboard
+Edit my Level Up section so that the 7-Day, 21-Day, and 90-Day challenge cards on the home dashboard navigate correctly and work with challenge tracking.
+Do not change or remove existing cards — only add functional navigation and challenge persistence.
+
+⚙️ Functionality to Add
+1. When the user taps any Level Up card (7-Day, 21-Day, or 90-Day):
+    * Navigate to a new screen named ChallengeDashboardScreen.
+    * Pass the selected challenge info:
+        * Challenge type (7, 21, or 90 days)
+        * Challenge title (e.g., “7-Day Calm Mind”, “21-Day Mind Discipline”, “90-Day Life Transformation”)
+2. On navigation, save challenge details into AsyncStorage using the key @app:active_challenge The saved object should include:  {
+3.   "type": "21-Day Mind Discipline",
+4.   "totalDays": 21,
+5.   "startDate": "2025-10-25",
+6.   "completedDays": 0,
+7.   "streak": 0,
+8.   "isCompleted": false
+9. }
+10.  
+
+🪷 ChallengeDashboardScreen (New Screen)
+Design a new screen called ChallengeDashboardScreen that shows:
+* Challenge Title (from navigation param)
+* Day Progress → completedDays / totalDays
+* Streak Count → streak 🔥
+* Circular or bar progress visualization based on progress percentage.
+* Button: “Mark Day as Complete”
+    * Increments completedDays by 1
+    * Updates streak count
+    * Saves back to AsyncStorage
+    * Animates the progress ring
+
+🎉 On Challenge Completion
+When completedDays == totalDays:
+* Show full-screen congratulatory modal: “🎉 Congratulations! You leveled up 🌟” 
+* Move challenge data to a history key: @app:challenge_history
+* Clear @app:active_challenge
+* Add buttons:
+    * “View History” → navigate to ChallengeHistoryScreen
+    * “Start New Challenge” → navigate back to Level Up home
+
+🗂️ ChallengeHistoryScreen (Optional)
+If not already created, add a simple screen listing completed challenges stored in @app:challenge_history. Each card shows:
+* Challenge name
+* Completed date
+* Streak length
+
+🌼 Design Theme
+Keep visuals aligned with your existing bright golden theme:
+* Background: #FFFDF8
+* Accent: #F4B860
+* Buttons: gradient linear-gradient(90deg, #FFD580, #F8A14D)
+* Text: #2E2C28
+* Font: Poppins + Inter
+* Animations: smooth fade transitions for navigation and progress updates.
+
+✅ Expected Behavior
+Action	Result
+Tap on “7-Day Calm Mind”	Navigate to dashboard + start challenge
+Mark Day as Complete	Update progress and streak
+Finish Challenge	Show “Leveled Up” message + save to history
+Reopen App	Resume from saved AsyncStorage data
+💬 Developer Note
+Do not modify existing Level Up cards or UI. Just add navigation, AsyncStorage saving, and ChallengeDashboardScreen logic. Keep all existing theme, layout, and animations consistent.
+
+
+
+### profile screen
+ 
+A change in 2025 Streak Tracker
+Change the word Relapse to Missed
+* Legend: “Your Consistency-Map 📈 🟢 Streak 🔴 Missed”
+
+Edit BEST STREAK to 25 days
+CURRENT STREAK to 9 days
+
+Show more green boxes than red in 2025 Streak Tracker 
+
+
+
+### Project of Heart
+
+Create a “Project of Heart (POH)” digital growth journey feature in React + Tailwind.
+Users define their heart’s purpose, plan actionable cycles, earn motivational stars, and optionally self-reflect.
+Do not alter other screens or components. Just add this as a new elegant feature screen or section.
+
+🧭 1️⃣ VisionBoard.tsx — Digital Vision Board
+* A serene, heart-centered space for users to define their Project of Heart.
+* UI:
+    * Title input → “What is your Project of Heart?”
+    * Description box → “Why does this matter to you?”
+    * Optional image upload (acts as their Vision background)
+    * “Set Vision” button (earns ⭐ First Star)
+* Display affirmation: “Your heart’s vision is the seed of transformation.” 
+* Show a glowing rose-gold heart symbol 💖 (centered, gently pulsing) representing energy of love & purpose.
+
+🪞 2️⃣ JourneyPlanner.tsx — Cycles of Growth
+* Three cycles → each with 4 weeks.
+* Each week = a soft gradient card for entering reflections:
+    * Actions Taken
+    * Learnings
+    * Wins
+    * Next Step
+    * Save button → stores locally
+* Completing all 4 weeks in a cycle → earn 2 Stars 🌟🌟
+* Add note: “Each week, your heart expands through awareness and action.” 
+
+🪶 3️⃣ ActionLogger.tsx — Weekly Reflection
+* Dropdowns for Cycle (1–3) and Week (1–4)
+* Fields:
+    * Actions
+    * Learnings
+    * Wins
+* “Save Reflection” button
+* Sunday reminder text: “Reflect with your heart every Sunday 💚” 
+
+🌟 4️⃣ StarProgress.tsx — Golden Growth Tracker
+* Circular star progress tracker (like halo animation).
+* Example text: “You’ve earned 33 Stars ✨ Keep glowing, Champion!” 
+* Star milestones:
+    * Set POH → ⭐
+    * Plan Journey → ⭐
+    * Complete Cycle 1 → ⭐⭐
+    * Complete Cycle 2 → ⭐⭐
+    * Complete Cycle 3 + Reflection → 🏅 Golden Star
+* Add subtle twinkling stars and soft heartbeat pulse behind the star counter.
+
+💭 5️⃣ SelfEvaluationCard.tsx — Optional Reflection Card
+* Add as a separate card on the POH Dashboard with a title: “🪞 Self-Evaluation (Optional)”
+* User can expand this card if they wish to reflect (optional).
+Questions (each in beautiful text boxes):
+1. What was my Project of Heart?
+2. What tangible results was I looking for?
+3. What were my challenges?
+4. What actionable steps did I take?
+5. What results did I get?
+6. What are my learnings?
+7. What are my wins?
+8. What have I achieved?
+Footer quote (centered in italics):
+“When we start, we are one person; months later, we are someone new. Reflection opens new doors and visions.”
+On submit:
+* Show toast: “Reflection Complete 🌟”
+* Award Golden Star
+* Save to localStorage
+If skipped, the journey still continues normally.
+
+🧾 6️⃣ CertificateGenerator.tsx — Handwritten Completion Certificate
+* On completing all cycles (and optional reflection):
+    * Generate a personalized PDF certificate with signature “Dr.M”
+    * Include name, stars earned, and completion message
+    * Quote: “With an open heart, you completed your Project of Heart.” 
+    * Download PDF button
+* Certificate border in rose-gold with faint green glow (heart chakra aura).
+
+🕉 7️⃣ HeartChakraDisplay.tsx — Spiritual Touch
+* Add a small animated heart chakra symbol (💚 Anahata mandala)
+    * Place it subtly near the top-right corner or below Vision Board.
+    * Use a gentle rotating glow animation — emerald-green aura pulsing softly.
+    * Tooltip: “Heart Chakra – Center of Love, Balance, and Purpose.”
+* Optional info box: “Your Project of Heart aligns with the Anahata — the heart chakra, the bridge between physical and spiritual growth.” 
+
+🏆 8️⃣ ChampionBoard.tsx — Champions of DYD Sessions
+* Display top achievers (every 3 months):
+    * Profile image
+    * Name
+    * Stars earned
+    * Reflection quote
+* Add title banner: “🌟 Champions of the Heart 🌟”
+* Elegant cards with gold outline and heart-green glow.
+
+🎨 Design System (Tailwind Theme)
+Base palette:
+
+bg-gradient-to-br from-[#FDECEF] via-[#F8E5E5] to-[#E3F8E0]
+* Rose-Gold: #F9C5BD
+* Heart Green: #A8E6CF
+* Soft Gold: #FDE68A
+* Text Color: #3D3D3D
+* Fonts: Poppins (UI) + Playfair Display (headings)
+* Cards: rounded-2xl shadow-md shadow-rose-200 p-5 backdrop-blur-sm
+* Buttons:    bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF] text-gray-800 font-semibold
+*   
+* Animations:
+    * Use framer-motion for subtle fades, twinkles, and glow effects.
+    * Add animate-pulse on heart chakra symbol.
+
+🧘‍♀️ Emotional Design Language
+* Calm, nurturing, and elevating.
+* Blend of spiritual calm + childlike joy (like earning stars for your soul).
+* Add gentle background affirmations (rotating text in faint opacity):
+    * “You are becoming your vision.”
+    * “Act from your heart.”
+    * “Love is your superpower.”
+
+⚙️ Behavior Summary
+* Save user progress locally (localStorage or Firebase).
+* Allow optional self-evaluation.
+* Automatically grant stars after each milestone.
+* Celebrate each completion with micro-animations.
+* Add sidebar tab: 💖 Project of Heart.
+
+✅ End Goal
+Create a space where users feel connected, proud, and spiritually uplifted while tracking their purpose — guided by love (heart chakra), discipline (cycles), and reflection (growth). Each star earned symbolizes heart-driven evolution.
