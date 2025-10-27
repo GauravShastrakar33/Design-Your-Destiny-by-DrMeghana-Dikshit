@@ -175,6 +175,7 @@ export default function VideoPlayerPage() {
 
         {/* Video Player */}
         <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg" data-testid="video-player">
+          {/* @ts-ignore - ReactPlayer types are incompatible with current setup */}
           <ReactPlayer
             ref={playerRef}
             url={videoUrl}
