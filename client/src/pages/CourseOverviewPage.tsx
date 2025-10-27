@@ -7,6 +7,8 @@ interface Lesson {
   number: string;
   title: string;
   duration: string;
+  url?: string;
+  description?: string;
 }
 
 interface CourseData {
@@ -26,22 +28,22 @@ const coursesData: Record<string, CourseData> = {
     thumbnail: "bg-gradient-to-br from-purple-500 to-pink-500",
     year: "July 2025",
     lessons: [
-      { id: "1", number: "01", title: "19 July — Intervention", duration: "3hr" },
-      { id: "2", number: "02", title: "5 Aug — Root Chakra Process", duration: "2hr" },
-      { id: "3", number: "03", title: "12 Aug — Intervention", duration: "2hr" },
-      { id: "4", number: "04", title: "19 Aug — Sacral Chakra", duration: "2hr" },
-      { id: "5", number: "05", title: "21 Aug — Intervention", duration: "2hr" },
-      { id: "6", number: "06", title: "27 Aug — Solar Plexus Chakra", duration: "2hr" },
-      { id: "7", number: "07", title: "2 Sept — Intervention", duration: "2hr" },
-      { id: "8", number: "08", title: "4 Sept — Heart Chakra", duration: "2hr" },
-      { id: "9", number: "09", title: "9 Sept — Intervention", duration: "2hr" },
-      { id: "10", number: "10", title: "11 Sept — Throat Chakra", duration: "2hr" },
-      { id: "11", number: "11", title: "18 Sept — Intervention", duration: "2hr" },
-      { id: "12", number: "12", title: "23 Sept — Third Chakra", duration: "2hr" },
-      { id: "13", number: "13", title: "23 Sept — Intervention", duration: "2hr" },
-      { id: "14", number: "14", title: "25 Sept — Crown Chakra", duration: "2hr" },
-      { id: "15", number: "15", title: "30 Sept — Intervention", duration: "2hr" },
-      { id: "16", number: "16", title: "2 Oct — Crown Chakra Process", duration: "2hr" }
+      { id: "1", number: "01", title: "19 July — Intervention", duration: "3hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "2", number: "02", title: "5 Aug — Root Chakra Process", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "3", number: "03", title: "12 Aug — Intervention", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "4", number: "04", title: "19 Aug — Sacral Chakra", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "5", number: "05", title: "21 Aug — Intervention", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "6", number: "06", title: "27 Aug — Solar Plexus Chakra", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "7", number: "07", title: "2 Sept — Intervention", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "8", number: "08", title: "4 Sept — Heart Chakra", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "9", number: "09", title: "9 Sept — Intervention", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "10", number: "10", title: "11 Sept — Throat Chakra", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "11", number: "11", title: "18 Sept — Intervention", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "12", number: "12", title: "23 Sept — Third Chakra", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "13", number: "13", title: "23 Sept — Intervention", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "14", number: "14", title: "25 Sept — Crown Chakra", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "15", number: "15", title: "30 Sept — Intervention", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "16", number: "16", title: "2 Oct — Crown Chakra Process", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
     ]
   },
   "dyd-13": {
@@ -51,10 +53,10 @@ const coursesData: Record<string, CourseData> = {
     thumbnail: "bg-gradient-to-br from-blue-500 to-indigo-500",
     year: "April 2025",
     lessons: [
-      { id: "1", number: "01", title: "Session 1 — Introduction", duration: "2hr" },
-      { id: "2", number: "02", title: "Session 2 — Root Chakra", duration: "2hr" },
-      { id: "3", number: "03", title: "Session 3 — Sacral Chakra", duration: "2hr" },
-      { id: "4", number: "04", title: "Session 4 — Solar Plexus", duration: "2hr" }
+      { id: "1", number: "01", title: "Session 1 — Introduction", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "2", number: "02", title: "Session 2 — Root Chakra", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "3", number: "03", title: "Session 3 — Sacral Chakra", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "4", number: "04", title: "Session 4 — Solar Plexus", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
     ]
   },
   "dyd-12": {
@@ -64,9 +66,9 @@ const coursesData: Record<string, CourseData> = {
     thumbnail: "bg-gradient-to-br from-green-500 to-emerald-500",
     year: "January 2025",
     lessons: [
-      { id: "1", number: "01", title: "Introduction Session", duration: "2hr" },
-      { id: "2", number: "02", title: "Energy Work Foundation", duration: "2hr" },
-      { id: "3", number: "03", title: "Chakra Activation", duration: "2hr" }
+      { id: "1", number: "01", title: "Introduction Session", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "2", number: "02", title: "Energy Work Foundation", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "3", number: "03", title: "Chakra Activation", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
     ]
   },
   "usm-march": {
@@ -76,9 +78,9 @@ const coursesData: Record<string, CourseData> = {
     thumbnail: "bg-gradient-to-br from-orange-400 to-red-500",
     year: "March 2025",
     lessons: [
-      { id: "1", number: "01", title: "Vibration Mastery", duration: "2hr" },
-      { id: "2", number: "02", title: "Influence Mastery", duration: "2hr" },
-      { id: "3", number: "03", title: "Money Mastery", duration: "2hr" }
+      { id: "1", number: "01", title: "Vibration Mastery", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "2", number: "02", title: "Influence Mastery", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "3", number: "03", title: "Money Mastery", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
     ]
   },
   "usm-jan": {
@@ -88,9 +90,9 @@ const coursesData: Record<string, CourseData> = {
     thumbnail: "bg-gradient-to-br from-cyan-400 to-blue-500",
     year: "January 2025",
     lessons: [
-      { id: "1", number: "01", title: "Vibration Mastery", duration: "2hr" },
-      { id: "2", number: "02", title: "Influence Mastery", duration: "2hr" },
-      { id: "3", number: "03", title: "Money Mastery", duration: "2hr" }
+      { id: "1", number: "01", title: "Vibration Mastery", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "2", number: "02", title: "Influence Mastery", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "3", number: "03", title: "Money Mastery", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
     ]
   },
   "usc-march": {
@@ -100,9 +102,9 @@ const coursesData: Record<string, CourseData> = {
     thumbnail: "bg-gradient-to-br from-pink-400 to-purple-500",
     year: "March 2025",
     lessons: [
-      { id: "1", number: "01", title: "Day 1 — Video", duration: "1hr" },
-      { id: "2", number: "02", title: "Day 2 — Video", duration: "1hr" },
-      { id: "3", number: "03", title: "Day 3 — Video", duration: "1hr" }
+      { id: "1", number: "01", title: "Day 1 — Video", duration: "1hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "2", number: "02", title: "Day 2 — Video", duration: "1hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "3", number: "03", title: "Day 3 — Video", duration: "1hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
     ]
   },
   "usb-feb": {
@@ -112,9 +114,9 @@ const coursesData: Record<string, CourseData> = {
     thumbnail: "bg-gradient-to-br from-teal-400 to-cyan-500",
     year: "February 2025",
     lessons: [
-      { id: "1", number: "01", title: "Recognise", duration: "2hr" },
-      { id: "2", number: "02", title: "Release", duration: "2hr" },
-      { id: "3", number: "03", title: "Rewire", duration: "2hr" }
+      { id: "1", number: "01", title: "Recognise", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "2", number: "02", title: "Release", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "3", number: "03", title: "Rewire", duration: "2hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
     ]
   },
   "sleep": {
@@ -124,9 +126,9 @@ const coursesData: Record<string, CourseData> = {
     thumbnail: "bg-gradient-to-br from-indigo-400 to-purple-500",
     year: "2025",
     lessons: [
-      { id: "1", number: "01", title: "Deep Sleep Techniques", duration: "1hr" },
-      { id: "2", number: "02", title: "Subconscious Reprogramming", duration: "1hr" },
-      { id: "3", number: "03", title: "Dream Work", duration: "1hr" }
+      { id: "1", number: "01", title: "Deep Sleep Techniques", duration: "1hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "2", number: "02", title: "Subconscious Reprogramming", duration: "1hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "3", number: "03", title: "Dream Work", duration: "1hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
     ]
   },
   "visions": {
@@ -136,9 +138,9 @@ const coursesData: Record<string, CourseData> = {
     thumbnail: "bg-gradient-to-br from-yellow-400 to-orange-500",
     year: "2025",
     lessons: [
-      { id: "1", number: "01", title: "Vision Clarity", duration: "1hr" },
-      { id: "2", number: "02", title: "Action Planning", duration: "1hr" },
-      { id: "3", number: "03", title: "Manifestation Strategies", duration: "1hr" }
+      { id: "1", number: "01", title: "Vision Clarity", duration: "1hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "2", number: "02", title: "Action Planning", duration: "1hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { id: "3", number: "03", title: "Manifestation Strategies", duration: "1hr", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
     ]
   }
 };
@@ -166,6 +168,17 @@ export default function CourseOverviewPage() {
       </div>
     );
   }
+
+  const handleLessonClick = (lesson: Lesson) => {
+    const params = new URLSearchParams({
+      videoId: `${courseId}-lesson-${lesson.id}`,
+      title: `${course.title} - ${lesson.title}`,
+      url: lesson.url || "",
+      description: lesson.description || `${course.fullTitle} - ${lesson.title}`,
+      thumbnail: "",
+    });
+    setLocation(`/video-player?${params.toString()}`);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -209,6 +222,7 @@ export default function CourseOverviewPage() {
                 <Card
                   key={lesson.id}
                   className="p-4 cursor-pointer hover-elevate active-elevate-2"
+                  onClick={() => handleLessonClick(lesson)}
                   data-testid={`lesson-${lesson.id}`}
                 >
                   <div className="flex items-center gap-4">

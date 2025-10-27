@@ -1,0 +1,62 @@
+Add a complete video playback flow to my React + Tailwind app.
+
+### Workshops screen
+
+Screens in my current app:
+• Workshops Screen (shows cards for “Upcoming”, ”Latest", "DYD", "USM", "USC”, ”USB”, “more”) • Course Overview Screen (only for collection cards) • Now create a new: Video Player Screen
+
+
+1.Create a new Video Player Screen : VideoPlayer.tsx
+Requirements: • Play videos using YouTube URLs • Automatically resume from last watched position (saved in localStorage) • Playback speed options: 0.5x, 1x, 1.25x, 1.5x, 2x • Show video information:
+* Title
+* Author (optional)
+* Description (optional) • Full responsive layout matching my current UI style • Hide the Last Watched reminder bar when this screen is visible
+
+
+2.Navigation Rules for workshop cards
+Every workshop card already has: • Thumbnail • Title • Coach Name • YouTube video URL (for single-video cards)
+
+
+Add a new property to each card:
+isCollection: true | false
+Behavior:
+1. If card.isCollection = false • Navigate directly to the Video Player screen
+2. If card.isCollection = true • Navigate to Course Overview screen instead • In Course Overview, each lesson play button should navigate to Video Player screen
+• “Latest” section cards → direct to Video Player • “DYD / USM / USC / USB / More” collection cards → go to Course Overview first
+
+Data passed when navigating:
+url
+title
+author
+description
+thumbnail
+videoId
+
+
+New Route
+Add a new route:
+<Route path="/video-player" element={<VideoPlayer />} />
+
+
+3.Add a Last Watched Reminder Bar (not a mini player)
+Purpose: • Show what video the user last watched • Help them quickly return to the content
+Behavior & UI: • Only show this bar on the Workshops Screen • Fixed at the bottom above the bottom navigation bar • Bar shows:
+* Thumbnail
+* Title (one line)
+* Watched time formatted (MM:SS)
+* ▶ Play button → open Video Player, resume automatically
+* ✖ Close button → hide bar until next watch session • If user completes video (>95%), remove the reminder
+
+Storage:
+localStorage.setItem("last-watched", {
+  videoId,
+  title,
+  thumbnail,
+  author,
+  progressInSeconds
+})
+
+
+4.Add a new demo card in the “Latest” section
+• Include thumbnail image I provided in attachments. • Include title : How to make Right Decisions
+   author : Dr. Meghana Dikshit • On click → opens Video Player screen • Use this YouTube URL (temporary for testing): https://www.youtube.com/clip/UgkxZf04eoPrPNBBU3C4WYdt-08MnPre8vDa
