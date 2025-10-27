@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Settings } from "lucide-react";
 import { useLocation } from "wouter";
+import ReactPlayer from "react-player";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,15 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-interface VideoPlayerProps {
-  videoId?: string;
-  title?: string;
-  author?: string;
-  description?: string;
-  thumbnail?: string;
-  url?: string;
-}
 
 interface LastWatchedData {
   videoId: string;
@@ -27,28 +19,28 @@ interface LastWatchedData {
 }
 
 export default function VideoPlayerPage() {
-  const [location, setLocation] = useLocation();
-  const [player, setPlayer] = useState<any>(null);
+  const [, setLocation] = useLocation();
   const [showSpeedDialog, setShowSpeedDialog] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState(1);
   const [isReady, setIsReady] = useState(false);
-  const playerRef = useRef<HTMLDivElement>(null);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const playerRef = useRef<any>(null);
   const saveIntervalRef = useRef<number | null>(null);
 
-  // Get video data from URL params or state
+  // Get video data from URL params
   const searchParams = new URLSearchParams(window.location.search);
   const videoId = searchParams.get("videoId") || "";
   const title = searchParams.get("title") || "Video";
   const author = searchParams.get("author") || "";
   const description = searchParams.get("description") || "";
   const thumbnail = searchParams.get("thumbnail") || "";
-  const url = searchParams.get("url") || "";
+  const videoUrl = searchParams.get("url") || "";
 
-  // Extract YouTube video ID from URL
+  // Extract YouTube video ID from URL for storage key
   const getYouTubeVideoId = (url: string): string => {
     if (!url) return "";
     
-    // Handle different YouTube URL formats
     const patterns = [
       /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/clip\/)([^&\n?#]+)/,
     ];
@@ -63,7 +55,13 @@ export default function VideoPlayerPage() {
     return "";
   };
 
-  const youtubeId = getYouTubeVideoId(url) || videoId;
+  const youtubeId = getYouTubeVideoId(videoUrl) || videoId;
+
+  // Debug logging
+  useEffect(() => {
+    console.log("Video URL:", videoUrl);
+    console.log("YouTube ID:", youtubeId);
+  }, [videoUrl, youtubeId]);
 
   // Load saved progress
   const getSavedProgress = (): number => {
@@ -80,6 +78,8 @@ export default function VideoPlayerPage() {
     }
     return 0;
   };
+
+  const savedProgress = getSavedProgress();
 
   // Save progress to localStorage
   const saveProgress = (currentTime: number) => {
@@ -102,87 +102,54 @@ export default function VideoPlayerPage() {
   // Check if video is completed (>95%)
   const checkIfCompleted = (currentTime: number, duration: number) => {
     if (duration > 0 && (currentTime / duration) > 0.95) {
-      // Remove from last watched if completed
       localStorage.removeItem("last-watched");
     }
   };
 
-  // Initialize YouTube Player
+  // Handle player ready
+  const handleReady = () => {
+    setIsReady(true);
+    
+    // Seek to saved progress if available
+    if (savedProgress > 0 && playerRef.current) {
+      playerRef.current.seekTo(savedProgress, "seconds");
+    }
+  };
+
+  // Handle player progress
+  const handleProgress = (state: any) => {
+    if (!hasStarted) {
+      setHasStarted(true);
+    }
+    
+    const playedSeconds = state.playedSeconds;
+    setCurrentTime(playedSeconds);
+    
+    const duration = playerRef.current?.getDuration() || 0;
+    
+    saveProgress(playedSeconds);
+    checkIfCompleted(playedSeconds, duration);
+  };
+
+  // Cleanup on unmount
   useEffect(() => {
-    if (!youtubeId) return;
-
-    // Load YouTube IFrame API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-
-    // Initialize player when API is ready
-    (window as any).onYouTubeIframeAPIReady = () => {
-      const savedProgress = getSavedProgress();
-      
-      const newPlayer = new (window as any).YT.Player("youtube-player", {
-        videoId: youtubeId,
-        playerVars: {
-          autoplay: 1,
-          start: savedProgress,
-          rel: 0,
-          modestbranding: 1,
-        },
-        events: {
-          onReady: (event: any) => {
-            setIsReady(true);
-            setPlayer(event.target);
-            
-            // Start saving progress every 5 seconds
-            saveIntervalRef.current = window.setInterval(() => {
-              if (event.target && event.target.getCurrentTime) {
-                const currentTime = event.target.getCurrentTime();
-                const duration = event.target.getDuration();
-                saveProgress(currentTime);
-                checkIfCompleted(currentTime, duration);
-              }
-            }, 5000);
-          },
-          onStateChange: (event: any) => {
-            // Save on pause or end
-            if (event.data === (window as any).YT.PlayerState.PAUSED || 
-                event.data === (window as any).YT.PlayerState.ENDED) {
-              if (event.target && event.target.getCurrentTime) {
-                const currentTime = event.target.getCurrentTime();
-                const duration = event.target.getDuration();
-                saveProgress(currentTime);
-                checkIfCompleted(currentTime, duration);
-              }
-            }
-          },
-        },
-      });
-      setPlayer(newPlayer);
-    };
-
-    // Cleanup
     return () => {
       if (saveIntervalRef.current) {
         clearInterval(saveIntervalRef.current);
       }
-      if (player) {
-        try {
-          player.destroy();
-        } catch (error) {
-          console.error("Error destroying player:", error);
-        }
-      }
     };
-  }, [youtubeId]);
+  }, []);
 
   // Handle playback speed change
   const handleSpeedChange = (speed: number) => {
-    if (player && isReady) {
-      player.setPlaybackRate(speed);
-      setCurrentSpeed(speed);
-      setShowSpeedDialog(false);
-    }
+    setCurrentSpeed(speed);
+    setShowSpeedDialog(false);
+  };
+
+  const handleBack = () => {
+    // Save final progress before leaving
+    saveProgress(currentTime);
+    setLocation("/workshops");
   };
 
   const speedOptions = [0.5, 1, 1.25, 1.5, 2];
@@ -194,14 +161,7 @@ export default function VideoPlayerPage() {
         <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
           <div className="px-4 py-4 flex items-center justify-between gap-4">
             <button
-              onClick={() => {
-                // Save final progress before leaving
-                if (player && player.getCurrentTime) {
-                  const currentTime = player.getCurrentTime();
-                  saveProgress(currentTime);
-                }
-                setLocation("/workshops");
-              }}
+              onClick={handleBack}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
               data-testid="button-back"
             >
@@ -220,8 +180,20 @@ export default function VideoPlayerPage() {
         </div>
 
         {/* Video Player */}
-        <div className="w-full aspect-video bg-black">
-          <div id="youtube-player" className="w-full h-full" ref={playerRef} data-testid="video-player"></div>
+        <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg" data-testid="video-player">
+          {/* @ts-ignore */}
+          <ReactPlayer
+            ref={playerRef}
+            url={videoUrl}
+            controls
+            playing={false}
+            width="100%"
+            height="100%"
+            playbackRate={currentSpeed}
+            onReady={handleReady}
+            onProgress={handleProgress}
+            progressInterval={5000}
+          />
         </div>
 
         {/* Video Info */}
