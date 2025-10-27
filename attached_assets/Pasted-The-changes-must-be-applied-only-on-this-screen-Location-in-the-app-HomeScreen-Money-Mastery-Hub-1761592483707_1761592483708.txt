@@ -1,0 +1,54 @@
+The changes must be applied only on this screen:
+Location in the app: HomeScreen → Money Mastery Hub → Rewiring Belief
+
+Update the Rewiring Belief screen UI as follows:
+
+1. Keep the top motivational header:
+    * Title: “Let's rewire that mindset, Champion!”
+    * Increase the font size slightly for Subtitle not more 
+    * Subtitle: “Left tap fear, Right tap faith” 
+Add two small premium icons on the right side of subtitle 
+brain 🧠 and ⚡ Lightning Bolt 
+• Left side does not any symbol • Keep it minimal, clean, and premium
+
+
+2. Remove the current belief input section from the main screen. The form should only appear in a popup modal when adding or editing a belief.
+
+
+3. On the main screen, show only the belief cards:
+    * Full width card
+    * Rounded corners
+    * Displays ONE belief at a time:
+        * Title: “Limiting Belief” OR “Uplifting Belief”
+        * Belief text large and centered
+
+Inside each belief card, add a toggle button.
+Create a boolean state (e.g. showUplifting).
+When user presses the button:
+- If showUplifting is false: display Limiting Belief and button label: “Show Uplifting Belief”
+- If showUplifting is true: display Uplifting Belief and button label: “Show Limiting Belief”
+Update UI instantly when toggled.
+
+
+4. Inside each card, bottom-right:
+    * Add Edit ✏️ button
+    * Add Delete 🗑️ button
+    * These replace the previous hide option (remove hide feature completely)
+
+5. Remove “Add New Belief” button text. Replace with a floating round + button centered below the cards. This always opens the popup modal for adding a belief pair.
+
+
+6. In the popup modal:
+    * Show fields for Limiting Belief & Uplifting Belief
+    * Include:
+        * Save button 
+        * Close(X) button
+
+7. Ensure belief cards appear stacked if multiple beliefs exist. Users can scroll through older beliefs.
+
+8. Do not modify navigation: Location stays: Home → Money Mastery Hub → Rewiring Belief
+
+Goal: A clean, focused mindset reinforcement experience. No clutter. No confusing options. One belief message visible at a time.
+
+
+
