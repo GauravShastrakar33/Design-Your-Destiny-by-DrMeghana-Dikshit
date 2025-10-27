@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Brain, Zap, Plus, Pencil, Trash2, X } from "lucide-react";
+import { ArrowLeft, Brain, Zap, Plus, Pencil, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ export default function RewiringScreen() {
   const [showModal, setShowModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState({ limiting: "", uplifting: "" });
-  const [toggleStates, setToggleStates] = useState<boolean[]>([]);
 
   // Load saved beliefs on mount
   useEffect(() => {
@@ -40,7 +39,6 @@ export default function RewiringScreen() {
             uplifting: b.uplifting,
           }));
           setBeliefs(cleaned);
-          setToggleStates(new Array(cleaned.length).fill(false));
         }
       } catch (error) {
         console.error("Error loading beliefs:", error);
@@ -89,7 +87,6 @@ export default function RewiringScreen() {
       }
       updatedBeliefs = [...beliefs, formData];
       setBeliefs(updatedBeliefs);
-      setToggleStates([...toggleStates, false]);
     }
 
     // Save immediately with the computed array
@@ -108,11 +105,9 @@ export default function RewiringScreen() {
 
   const handleDeleteBelief = (index: number) => {
     const updatedBeliefs = beliefs.filter((_, i) => i !== index);
-    const updatedToggles = toggleStates.filter((_, i) => i !== index);
     
     // Update state
     setBeliefs(updatedBeliefs);
-    setToggleStates(updatedToggles);
     
     // Save immediately with the computed array
     localStorage.setItem("@app:rewiring_beliefs", JSON.stringify(updatedBeliefs));
@@ -122,12 +117,6 @@ export default function RewiringScreen() {
       title: "Belief removed",
       description: "Your belief has been deleted.",
     });
-  };
-
-  const handleToggleBelief = (index: number) => {
-    const updated = [...toggleStates];
-    updated[index] = !updated[index];
-    setToggleStates(updated);
   };
 
   return (
@@ -195,7 +184,7 @@ export default function RewiringScreen() {
             beliefs.map((belief, index) => (
               <Card
                 key={index}
-                className="p-6 relative"
+                className="p-5 relative"
                 style={{
                   backgroundColor: "#FFFFFF",
                   borderColor: "#EDE6DA",
@@ -204,58 +193,62 @@ export default function RewiringScreen() {
                 }}
                 data-testid={`belief-card-${index}`}
               >
-                {/* Belief Type Label */}
-                <div className="text-center mb-4">
-                  <p
-                    className="text-xs uppercase font-semibold tracking-wide mb-3"
-                    style={{ color: toggleStates[index] ? "#10B981" : "#EF4444" }}
+                {/* Limiting Belief Section */}
+                <div className="mb-4">
+                  <h3
+                    className="text-lg font-bold mb-2"
+                    style={{ color: "#EF4444" }}
                   >
-                    {toggleStates[index] ? "Uplifting Belief" : "Limiting Belief"}
-                  </p>
-                  
-                  {/* Belief Text */}
+                    Limiting Belief
+                  </h3>
                   <p
-                    className="text-lg font-medium leading-relaxed"
-                    style={{ color: "#2E2C28" }}
-                    data-testid={`belief-text-${index}`}
+                    className="text-xl font-medium leading-relaxed"
+                    style={{ color: "#2E2C28", lineHeight: "1.6" }}
+                    data-testid={`belief-limiting-text-${index}`}
                   >
-                    {toggleStates[index] ? belief.uplifting : belief.limiting}
+                    {belief.limiting}
                   </p>
                 </div>
 
-                {/* Toggle Button */}
-                <div className="flex justify-center mb-6">
+                {/* Rewired Belief Section */}
+                <div className="mb-4">
+                  <h3
+                    className="text-lg font-bold mb-2"
+                    style={{ color: "#10B981" }}
+                  >
+                    Rewired Belief
+                  </h3>
+                  <p
+                    className="text-xl font-medium leading-relaxed"
+                    style={{ color: "#2E2C28", lineHeight: "1.6" }}
+                    data-testid={`belief-uplifting-text-${index}`}
+                  >
+                    {belief.uplifting}
+                  </p>
+                </div>
+
+                {/* Action Row: Edit and Delete on same line */}
+                <div className="flex items-center justify-end gap-2 pt-3 border-t" style={{ borderColor: "#F0F0F0" }}>
                   <Button
-                    onClick={() => handleToggleBelief(index)}
-                    size="sm"
-                    style={{
-                      backgroundColor: "#F4B860",
-                      color: "#2E2C28",
-                    }}
-                    data-testid={`button-toggle-${index}`}
-                  >
-                    {toggleStates[index] ? "Show Limiting Belief" : "Show Uplifting Belief"}
-                  </Button>
-                </div>
-
-                {/* Action Buttons (bottom-right) */}
-                <div className="flex items-center justify-end gap-2">
-                  <button
                     onClick={() => handleOpenEditModal(index)}
-                    className="p-2 rounded-lg hover-elevate active-elevate-2"
-                    style={{ backgroundColor: "#F9F9F9" }}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
                     data-testid={`button-edit-${index}`}
                   >
-                    <Pencil className="w-4 h-4" style={{ color: "#726C63" }} />
-                  </button>
-                  <button
+                    <Pencil className="w-4 h-4" />
+                    Edit
+                  </Button>
+                  <Button
                     onClick={() => handleDeleteBelief(index)}
-                    className="p-2 rounded-lg hover-elevate active-elevate-2"
-                    style={{ backgroundColor: "#F9F9F9" }}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
                     data-testid={`button-delete-${index}`}
                   >
-                    <Trash2 className="w-4 h-4" style={{ color: "#EF4444" }} />
-                  </button>
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </Button>
                 </div>
               </Card>
             ))
@@ -297,21 +290,12 @@ export default function RewiringScreen() {
           }}
         >
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle
-                className="text-xl font-semibold"
-                style={{ color: "#2E2C28", fontFamily: "Poppins, sans-serif" }}
-              >
-                {editingIndex !== null ? "Edit Belief Pair" : "Add New Belief Pair"}
-              </DialogTitle>
-              <button
-                onClick={() => setShowModal(false)}
-                className="p-1 rounded-lg hover-elevate active-elevate-2"
-                data-testid="button-close-modal"
-              >
-                <X className="w-5 h-5" style={{ color: "#726C63" }} />
-              </button>
-            </div>
+            <DialogTitle
+              className="text-xl font-semibold"
+              style={{ color: "#2E2C28", fontFamily: "Poppins, sans-serif" }}
+            >
+              {editingIndex !== null ? "Edit Belief Pair" : "Add New Belief Pair"}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 pt-4">
