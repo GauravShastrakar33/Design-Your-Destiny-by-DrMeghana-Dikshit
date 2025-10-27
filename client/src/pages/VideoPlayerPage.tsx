@@ -57,12 +57,6 @@ export default function VideoPlayerPage() {
 
   const youtubeId = getYouTubeVideoId(videoUrl) || videoId;
 
-  // Debug logging
-  useEffect(() => {
-    console.log("Video URL:", videoUrl);
-    console.log("YouTube ID:", youtubeId);
-  }, [videoUrl, youtubeId]);
-
   // Load saved progress
   const getSavedProgress = (): number => {
     try {
@@ -181,11 +175,10 @@ export default function VideoPlayerPage() {
 
         {/* Video Player */}
         <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg" data-testid="video-player">
-          {/* @ts-ignore */}
           <ReactPlayer
             ref={playerRef}
             url={videoUrl}
-            controls
+            controls={true}
             playing={false}
             width="100%"
             height="100%"
