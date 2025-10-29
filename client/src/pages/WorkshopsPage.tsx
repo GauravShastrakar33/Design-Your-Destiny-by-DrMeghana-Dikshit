@@ -83,7 +83,7 @@ const latestVideos: Video[] = [
     thumbnail: rightDecisionThumbnail,
     uploadDate: "27 Oct 2025",
     isCollection: false,
-    url: "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
+    url: "https://samplelib.com/lib/preview/mp4/sample-10s.mp4",
     author: "Dr. Meghana Dikshit",
     description:
       "Learn the art of making decisions that align with your highest self and life purpose.",
