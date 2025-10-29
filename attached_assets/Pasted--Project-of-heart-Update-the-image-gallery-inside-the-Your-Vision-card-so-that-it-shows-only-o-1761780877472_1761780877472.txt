@@ -1,0 +1,59 @@
+### Project of heart
+
+Update the image gallery inside the “Your Vision” card so that it shows only one full image and one half-visible image before scrolling.
+Keep the design style exactly as before — rounded, soft, and minimal — but make the images significantly larger for an immersive, “vision-board” feel.
+The gallery must still support up to 4 images horizontally with smooth scroll.
+Add 3 dummy images
+
+Upgrade the Journey tab inside the “Project of Heart” feature so that the “Start Your Journey” card becomes a full-width CTA button.
+When clicked, it opens a modal asking the user a question.-> “What actions will you take this week toward your vision?”
+After submitting an answer, a success popup message appears - “Congratulation Champion ! Choose yourself, every single day."
+and the card transforms into a beautifully styled action card showing the user’s entered action.
+
+Final Results
+ Before: “Start Your Journey” full-width CTA On click: Modal → question input On submit: Congratulatory popup message After: Beautiful card replaces CTA, showing user’s weekly action
+
+### Reset button - project of heart (demonstration purpose)
+
+Create one reset button when clicked on it Project of heart starts from the beginning from 0 stars
+And everything starts from the start Put that reset POH button in Profile screen -> Settings card -> Account
+I want to add a Reset Project of Heart feature for demonstration purposes. Please do the following:
+Add a “Reset POH” button inside the Profile screen, specifically under: Profile → Settings card → Account section
+The button text should read: Reset Project of Heart
+When this button is clicked:
+The entire Project of Heart progress should reset to its initial state, as if the user is starting fresh.
+Set stars = 0 and clear any locally stored progress.
+for example, clear data stored in localStorage or relevant state variables
+After reset, show a simple confirmation alert:
+Project of Heart has been reset successfully.
+Make sure this button does not break navigation or user data outside POH, and only resets the Project of Heart–related data.
+
+
+### Workshops
+When I click on the “How to make Right Decisions” card in the “Latest” tab - play any dummy 10sec video on video player
+
+### User Profile
+Create a modern, elegant profile dashboard card using React + Tailwind CSS based on this layout:
+Card Layout
+* Full-width card with soft gradient background (from-purple-100 via-pink-50 to-amber-50)
+* Rounded-2xl corners, soft shadow, and subtle hover glow.
+Top Section
+* Profile area with:
+    * Vertical rectangle profile picture (rounded corners)
+    * Name: “Gaurav Shastrakar” (bold, xl font)
+    * Subtext: Member since 2023 (text-gray-500)
+Stars Earned Section
+* A glowing card with a warm gradient (from-yellow-50 to-orange-50)
+* Label: “⭐ Stars Earned 33”
+* Right side text: from Dr.M — Keep shining!
+* Animate the star icon with a soft pulse effect.
+Karmic Affirmation Section
+* Card with ivory background (bg-[#fffdf5]), soft border, and italic serif font for the text.
+* Title: Karmic Affirmation (font-semibold, tracking-wide)
+* Quote text centered and with a soft fade-in animation.
+Your Prescription Section
+* Light mint background (bg-[#f5fff8]), with 3 rows:
+    * Morning: USM Practice + Gratitude Journal
+    * Afternoon: 15-min Money Meditation
+    * Evening: Project of Heart Reflection
+* Each line has a small sun ☀️, 🌿, 🌙 emoji to represent time of day.

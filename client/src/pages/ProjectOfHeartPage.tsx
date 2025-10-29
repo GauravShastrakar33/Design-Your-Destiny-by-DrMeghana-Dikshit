@@ -85,6 +85,12 @@ export default function ProjectOfHeartPage() {
   const [showEvalDialog, setShowEvalDialog] = useState(false);
   const [evalForm, setEvalForm] = useState<{[key: string]: string}>({});
 
+  // Journey Action state
+  const [showJourneyModal, setShowJourneyModal] = useState(false);
+  const [showCongratulationsPopup, setShowCongratulationsPopup] = useState(false);
+  const [weeklyAction, setWeeklyAction] = useState("");
+  const [savedWeeklyAction, setSavedWeeklyAction] = useState<string | null>(null);
+
   useEffect(() => {
     const saved = localStorage.getItem("@app:poh_data");
     if (saved) {
@@ -93,6 +99,11 @@ export default function ProjectOfHeartPage() {
       } catch (error) {
         console.error("Error loading POH data:", error);
       }
+    }
+
+    const savedAction = localStorage.getItem("@app:weekly_action");
+    if (savedAction) {
+      setSavedWeeklyAction(savedAction);
     }
   }, []);
 
@@ -224,6 +235,27 @@ export default function ProjectOfHeartPage() {
     });
 
     setShowEvalDialog(false);
+  };
+
+  const handleSubmitWeeklyAction = () => {
+    if (!weeklyAction.trim()) {
+      toast({
+        title: "Please enter your action",
+        description: "Describe what you'll do this week",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    localStorage.setItem("@app:weekly_action", weeklyAction);
+    setSavedWeeklyAction(weeklyAction);
+    setShowJourneyModal(false);
+    setShowCongratulationsPopup(true);
+    setWeeklyAction("");
+
+    setTimeout(() => {
+      setShowCongratulationsPopup(false);
+    }, 3000);
   };
 
   // Load week reflection when selection changes
@@ -403,30 +435,30 @@ export default function ProjectOfHeartPage() {
                     <p className="text-sm" style={{ color: "#6B7280" }} data-testid="text-vision-description">{pohData.vision.description}</p>
                   </div>
 
-                  {/* Image Gallery */}
-                  <div className="mb-2">
-                    <div className="flex space-x-4 overflow-x-auto scrollbar-hide mt-3">
+                  {/* Image Gallery - Vision Board Style */}
+                  <div className="mb-2 -mx-4">
+                    <div className="flex space-x-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 py-2">
                       <div
-                        className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-xl shadow-md bg-cover bg-center"
+                        className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg bg-cover bg-center snap-start"
                         style={{ backgroundImage: `url('/Screenshot%202025-10-30%20at%204.06.13%20AM_1761778091076.png')` }}
                         data-testid="image-vision-1"
                       />
                       <div
-                        className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-xl shadow-md bg-cover bg-center"
+                        className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg bg-cover bg-center snap-start"
                         style={{ backgroundImage: `url('/Screenshot%202025-10-30%20at%204.07.26%20AM_1761778091076.png')` }}
                         data-testid="image-vision-2"
                       />
                       <div
-                        className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-xl shadow-md bg-cover bg-center"
+                        className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg bg-cover bg-center snap-start"
                         style={{ backgroundImage: `url('/Screenshot%202025-10-30%20at%204.11.04%20AM_1761778091077.png')` }}
                         data-testid="image-vision-3"
                       />
                       <div
-                        className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: "#F3F4F6" }}
+                        className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg flex items-center justify-center snap-start"
+                        style={{ background: "linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)" }}
                         data-testid="image-placeholder-4"
                       >
-                        <Upload className="w-8 h-8 text-2xl opacity-60" style={{ color: "#9CA3AF" }} />
+                        <Upload className="w-12 h-12 opacity-40" style={{ color: "#9CA3AF" }} />
                       </div>
                     </div>
                   </div>
@@ -443,23 +475,55 @@ export default function ProjectOfHeartPage() {
 
           {/* Journey Planner Tab */}
           <TabsContent value="journey">
-            {/* Start Your Journey Card */}
-            <Card className="p-6 shadow-md shadow-rose-200 mb-4" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "1rem" }}>
-              <div className="flex items-center gap-3 mb-3">
-                <Sparkles className="w-6 h-6" style={{ color: "#A8E6CF" }} />
-                <h3 className="text-lg font-semibold" style={{ color: "#3D3D3D" }}>
-                  Start Your Journey
-                </h3>
-              </div>
-              <Input
-                placeholder="What is your Project of Heart?"
-                className="mb-2"
-                data-testid="input-journey-start"
-              />
-              <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                Begin with a clear intention
-              </p>
-            </Card>
+            {/* Start Your Journey - CTA or Action Card */}
+            {!savedWeeklyAction ? (
+              <Button
+                onClick={() => setShowJourneyModal(true)}
+                className="w-full h-24 mb-4 text-lg font-bold shadow-md shadow-rose-200"
+                style={{ 
+                  background: "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)", 
+                  color: "#3D3D3D",
+                  borderRadius: "1rem"
+                }}
+                data-testid="button-start-journey"
+              >
+                <Sparkles className="w-6 h-6 mr-2" />
+                Start Your Journey
+              </Button>
+            ) : (
+              <Card className="p-6 shadow-md shadow-rose-200 mb-4" style={{ 
+                background: "linear-gradient(135deg, #FDECEF 0%, #F8E5E5 50%, #E3F8E0 100%)",
+                borderRadius: "1rem" 
+              }}>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-6 h-6" style={{ color: "#A8E6CF" }} />
+                    <h3 className="text-lg font-semibold" style={{ color: "#3D3D3D" }}>
+                      This Week's Action
+                    </h3>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSavedWeeklyAction(null);
+                      localStorage.removeItem("@app:weekly_action");
+                    }}
+                    data-testid="button-edit-action"
+                  >
+                    Edit
+                  </Button>
+                </div>
+                <div className="p-4 rounded-lg" style={{ backgroundColor: "rgba(255, 255, 255, 0.6)" }}>
+                  <p className="text-base" style={{ color: "#3D3D3D" }} data-testid="text-weekly-action">
+                    {savedWeeklyAction}
+                  </p>
+                </div>
+                <p className="text-xs mt-3 text-center" style={{ color: "#6B7280" }}>
+                  Choose yourself, every single day.
+                </p>
+              </Card>
+            )}
 
             <Card className="p-6 shadow-md shadow-rose-200" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "1rem" }}>
               <div className="mb-6">
@@ -704,6 +768,62 @@ export default function ProjectOfHeartPage() {
             >
               Complete Reflection & Earn 🏅
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Journey Question Modal */}
+      <Dialog open={showJourneyModal} onOpenChange={setShowJourneyModal}>
+        <DialogContent style={{ backgroundColor: "#FFFDF8" }}>
+          <DialogHeader>
+            <DialogTitle style={{ fontFamily: "Playfair Display, serif", color: "#3D3D3D" }}>
+              Your Weekly Commitment
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="weekly-action" className="text-base font-medium" style={{ color: "#3D3D3D" }}>
+                What actions will you take this week toward your vision?
+              </Label>
+              <Textarea
+                id="weekly-action"
+                value={weeklyAction}
+                onChange={(e) => setWeeklyAction(e.target.value)}
+                placeholder="I will..."
+                className="mt-3"
+                rows={4}
+                data-testid="input-weekly-action"
+              />
+            </div>
+            <Button
+              onClick={handleSubmitWeeklyAction}
+              className="w-full font-semibold"
+              style={{ background: "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)", color: "#3D3D3D" }}
+              data-testid="button-submit-action"
+            >
+              Commit to Action
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Congratulations Popup */}
+      <Dialog open={showCongratulationsPopup} onOpenChange={setShowCongratulationsPopup}>
+        <DialogContent className="text-center" style={{ 
+          background: "linear-gradient(135deg, #FAD0C4 0%, #FFD1BA 50%, #A8E6CF 100%)",
+          border: "none"
+        }}>
+          <div className="py-6">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center animate-pulse" 
+              style={{ background: "rgba(255, 255, 255, 0.4)" }}>
+              <Award className="w-12 h-12" style={{ color: "#3D3D3D" }} />
+            </div>
+            <h2 className="text-2xl font-bold mb-3" style={{ color: "#3D3D3D", fontFamily: "Playfair Display, serif" }}>
+              Congratulation Champion!
+            </h2>
+            <p className="text-lg" style={{ color: "#3D3D3D" }}>
+              Choose yourself, every single day.
+            </p>
           </div>
         </DialogContent>
       </Dialog>
