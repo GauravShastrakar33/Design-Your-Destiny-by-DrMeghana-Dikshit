@@ -404,18 +404,30 @@ export default function ProjectOfHeartPage() {
                   </div>
 
                   {/* Image Gallery */}
-                  <div className="mb-4">
-                    <div className="flex gap-2 overflow-x-auto">
-                      {[1, 2, 3, 4].map((index) => (
-                        <div
-                          key={index}
-                          className="flex-shrink-0 w-24 h-24 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: "#F3F4F6" }}
-                          data-testid={`image-placeholder-${index}`}
-                        >
-                          <Upload className="w-6 h-6" style={{ color: "#9CA3AF" }} />
-                        </div>
-                      ))}
+                  <div className="mb-2">
+                    <div className="flex space-x-4 overflow-x-auto scrollbar-hide mt-3">
+                      <div
+                        className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-xl shadow-md bg-cover bg-center"
+                        style={{ backgroundImage: `url('/Screenshot%202025-10-30%20at%204.06.13%20AM_1761778091076.png')` }}
+                        data-testid="image-vision-1"
+                      />
+                      <div
+                        className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-xl shadow-md bg-cover bg-center"
+                        style={{ backgroundImage: `url('/Screenshot%202025-10-30%20at%204.07.26%20AM_1761778091076.png')` }}
+                        data-testid="image-vision-2"
+                      />
+                      <div
+                        className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-xl shadow-md bg-cover bg-center"
+                        style={{ backgroundImage: `url('/Screenshot%202025-10-30%20at%204.11.04%20AM_1761778091077.png')` }}
+                        data-testid="image-vision-3"
+                      />
+                      <div
+                        className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-xl flex items-center justify-center"
+                        style={{ backgroundColor: "#F3F4F6" }}
+                        data-testid="image-placeholder-4"
+                      >
+                        <Upload className="w-8 h-8 text-2xl opacity-60" style={{ color: "#9CA3AF" }} />
+                      </div>
                     </div>
                   </div>
 

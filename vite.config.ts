@@ -19,6 +19,7 @@ export default defineConfig({
         ]
       : []),
   ],
+
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -26,15 +27,22 @@ export default defineConfig({
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
+
   root: path.resolve(import.meta.dirname, "client"),
+
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
+
   server: {
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
+    hmr: {
+      overlay: false, // ✅ disable red overlay error modal during dev reloads
     },
+    fs: {
+      strict: false, // ✅ allow serving files outside root (important for Replit public)
+    },
+    publicDir: path.resolve(import.meta.dirname, "client/public"), // ✅ ensure /RightDecisions.mp4 is served
+    port: 5173, // optional: helps when debugging locally
   },
 });

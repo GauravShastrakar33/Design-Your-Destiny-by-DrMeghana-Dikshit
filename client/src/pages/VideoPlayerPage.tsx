@@ -37,7 +37,6 @@ export default function VideoPlayerPage() {
   const thumbnail = searchParams.get("thumbnail") || "";
   const videoUrl = searchParams.get("url") || "";
 
-  // Extract YouTube video ID from URL for storage key
   const youtubeId = videoId;
 
   // Load saved progress
@@ -61,7 +60,6 @@ export default function VideoPlayerPage() {
   // Save progress to localStorage
   const saveProgress = (currentTime: number) => {
     if (!youtubeId) return;
-
     try {
       const data: LastWatchedData = {
         videoId: youtubeId,
@@ -76,55 +74,42 @@ export default function VideoPlayerPage() {
     }
   };
 
-  // Check if video is completed (>95%)
   const checkIfCompleted = (currentTime: number, duration: number) => {
     if (duration > 0 && currentTime / duration > 0.95) {
       localStorage.removeItem("last-watched");
     }
   };
 
-  // Handle player ready
   const handleReady = () => {
     setIsReady(true);
-
-    // Seek to saved progress if available
     if (savedProgress > 0 && playerRef.current) {
       playerRef.current.seekTo(savedProgress, "seconds");
     }
   };
 
-  // Handle player progress
   const handleProgress = (state: any) => {
-    if (!hasStarted) {
-      setHasStarted(true);
-    }
+    if (!hasStarted) setHasStarted(true);
 
     const playedSeconds = state.playedSeconds;
     setCurrentTime(playedSeconds);
-
     const duration = playerRef.current?.getDuration() || 0;
 
     saveProgress(playedSeconds);
     checkIfCompleted(playedSeconds, duration);
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (saveIntervalRef.current) {
-        clearInterval(saveIntervalRef.current);
-      }
+      if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
     };
   }, []);
 
-  // Handle playback speed change
   const handleSpeedChange = (speed: number) => {
     setCurrentSpeed(speed);
     setShowSpeedDialog(false);
   };
 
   const handleBack = () => {
-    // Save final progress before leaving
     saveProgress(currentTime);
     setLocation("/workshops");
   };
@@ -160,15 +145,16 @@ export default function VideoPlayerPage() {
 
         {/* Video Player */}
         <div
-          className="w-full aspect-video rounded-lg overflow-hidden shadow-lg bg-black"
+          className="w-full aspect-video rounded-lg overflow-hidden shadow-lg"
           data-testid="video-player"
         >
-          {/* @ts-ignore - ReactPlayer types are incompatible with current setup */}
+          {/* @ts-ignore */}
           <ReactPlayer
             ref={playerRef}
             url={videoUrl}
             controls
-            playing={true}
+            playing={false} // change this to false
+            muted={false}
             width="100%"
             height="100%"
             playsinline={true}
@@ -183,19 +169,9 @@ export default function VideoPlayerPage() {
         {/* Video Info */}
         <div className="px-4 py-6 space-y-4">
           <div>
-            <h1
-              className="text-2xl font-bold text-foreground mb-2"
-              data-testid="video-title"
-            >
-              {title}
-            </h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">{title}</h1>
             {author && (
-              <p
-                className="text-sm text-muted-foreground"
-                data-testid="video-author"
-              >
-                {author}
-              </p>
+              <p className="text-sm text-muted-foreground">{author}</p>
             )}
           </div>
 
@@ -204,10 +180,7 @@ export default function VideoPlayerPage() {
               <h3 className="text-sm font-semibold text-foreground mb-2">
                 Description
               </h3>
-              <p
-                className="text-sm text-muted-foreground whitespace-pre-wrap"
-                data-testid="video-description"
-              >
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                 {description}
               </p>
             </div>
@@ -216,7 +189,7 @@ export default function VideoPlayerPage() {
 
         {/* Speed Control Dialog */}
         <Dialog open={showSpeedDialog} onOpenChange={setShowSpeedDialog}>
-          <DialogContent data-testid="dialog-speed-settings">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Playback Speed</DialogTitle>
             </DialogHeader>
@@ -230,7 +203,6 @@ export default function VideoPlayerPage() {
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-foreground"
                   }`}
-                  data-testid={`speed-option-${speed}`}
                 >
                   {speed}x {speed === 1 && "(Normal)"}
                 </button>
