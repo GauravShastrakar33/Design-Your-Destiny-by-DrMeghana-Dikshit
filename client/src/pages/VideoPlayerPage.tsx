@@ -160,22 +160,23 @@ export default function VideoPlayerPage() {
 
         {/* Video Player */}
         <div
-          className="w-full aspect-video rounded-lg overflow-hidden shadow-lg"
+          className="w-full aspect-video rounded-lg overflow-hidden shadow-lg bg-black"
           data-testid="video-player"
         >
           {/* @ts-ignore - ReactPlayer types are incompatible with current setup */}
           <ReactPlayer
             ref={playerRef}
             url={videoUrl}
-            controls={true}
-            playing={false}
+            controls
+            playing={true}
             width="100%"
             height="100%"
-            playsinline={true} // ✅ Required for iOS Safari inline playback
+            playsinline={true}
             playbackRate={currentSpeed}
             onReady={handleReady}
             onProgress={handleProgress}
             progressInterval={5000}
+            style={{ borderRadius: "12px", backgroundColor: "black" }}
           />
         </div>
 
