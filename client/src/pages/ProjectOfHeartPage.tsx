@@ -14,6 +14,7 @@ interface Vision {
   title: string;
   description: string;
   imageUrl?: string;
+  images?: string[]; // Array of up to 4 image URLs
   createdDate: string;
 }
 
@@ -402,6 +403,22 @@ export default function ProjectOfHeartPage() {
                     <p className="text-sm" style={{ color: "#6B7280" }} data-testid="text-vision-description">{pohData.vision.description}</p>
                   </div>
 
+                  {/* Image Gallery */}
+                  <div className="mb-4">
+                    <div className="flex gap-2 overflow-x-auto">
+                      {[1, 2, 3, 4].map((index) => (
+                        <div
+                          key={index}
+                          className="flex-shrink-0 w-24 h-24 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: "#F3F4F6" }}
+                          data-testid={`image-placeholder-${index}`}
+                        >
+                          <Upload className="w-6 h-6" style={{ color: "#9CA3AF" }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="p-4 rounded-lg text-center italic" style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}>
                     <p className="text-sm">
                       "Your heart's vision is the seed of transformation."
@@ -414,6 +431,24 @@ export default function ProjectOfHeartPage() {
 
           {/* Journey Planner Tab */}
           <TabsContent value="journey">
+            {/* Start Your Journey Card */}
+            <Card className="p-6 shadow-md shadow-rose-200 mb-4" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "1rem" }}>
+              <div className="flex items-center gap-3 mb-3">
+                <Sparkles className="w-6 h-6" style={{ color: "#A8E6CF" }} />
+                <h3 className="text-lg font-semibold" style={{ color: "#3D3D3D" }}>
+                  Start Your Journey
+                </h3>
+              </div>
+              <Input
+                placeholder="What is your Project of Heart?"
+                className="mb-2"
+                data-testid="input-journey-start"
+              />
+              <p className="text-xs" style={{ color: "#9CA3AF" }}>
+                Begin with a clear intention
+              </p>
+            </Card>
+
             <Card className="p-6 shadow-md shadow-rose-200" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "1rem" }}>
               <div className="mb-6">
                 <h3 className="text-xl font-semibold mb-2" style={{ color: "#3D3D3D", fontFamily: "Playfair Display, serif" }}>

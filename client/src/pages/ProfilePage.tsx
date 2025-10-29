@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
-import { Edit2, ChevronRight, Settings as SettingsIcon, Bell, MessageCircle, LogOut, Eye, EyeOff, Calendar as CalendarIcon, Star, TrendingUp, Circle } from "lucide-react";
+import { ChevronRight, Settings as SettingsIcon, Bell, MessageCircle, LogOut, Eye, EyeOff, Star, TrendingUp, Circle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 
 interface StreakDay {
   date: string;
@@ -18,30 +12,16 @@ interface StreakData {
 }
 
 export default function ProfilePage() {
-  const [affirmation, setAffirmation] = useState("");
-  const [editingAffirmation, setEditingAffirmation] = useState(false);
-  const [tempAffirmation, setTempAffirmation] = useState("");
-  
-  const [partner, setPartner] = useState("");
-  const [editingPartner, setEditingPartner] = useState(false);
-  const [tempPartner, setTempPartner] = useState("");
-  
   const [streakVisible, setStreakVisible] = useState(true);
   const [startDate, setStartDate] = useState("");
-  const [editingStartDate, setEditingStartDate] = useState(false);
-  const [tempStartDate, setTempStartDate] = useState("");
   const [streakData, setStreakData] = useState<StreakData>({});
 
   // Load from localStorage on mount
   useEffect(() => {
-    const savedAffirmation = localStorage.getItem("karmicAffirmation");
-    const savedPartner = localStorage.getItem("accountabilityPartner");
     const savedStartDate = localStorage.getItem("streakStartDate");
     const savedStreakVisible = localStorage.getItem("streakVisible");
     const savedStreakData = localStorage.getItem("streakData");
     
-    setAffirmation(savedAffirmation || "I am aligned with my higher purpose, attracting peace and growth every day.");
-    setPartner(savedPartner || "Amit");
     setStartDate(savedStartDate || "2025-01-01");
     setStreakVisible(savedStreakVisible === null ? true : savedStreakVisible === "true");
     setStreakData(savedStreakData ? JSON.parse(savedStreakData) : generateInitialStreakData());
@@ -76,24 +56,6 @@ export default function ProfilePage() {
     
     localStorage.setItem("streakData", JSON.stringify(data));
     return data;
-  };
-
-  const handleSaveAffirmation = () => {
-    setAffirmation(tempAffirmation);
-    localStorage.setItem("karmicAffirmation", tempAffirmation);
-    setEditingAffirmation(false);
-  };
-
-  const handleSavePartner = () => {
-    setPartner(tempPartner);
-    localStorage.setItem("accountabilityPartner", tempPartner);
-    setEditingPartner(false);
-  };
-
-  const handleSaveStartDate = () => {
-    setStartDate(tempStartDate);
-    localStorage.setItem("streakStartDate", tempStartDate);
-    setEditingStartDate(false);
   };
 
   const toggleStreakVisibility = () => {
@@ -193,22 +155,31 @@ export default function ProfilePage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
-              <Avatar className="w-20 h-20 border-2 border-primary/20">
-                <AvatarImage src="" alt="Gaurav Shastrakar" />
-                <AvatarFallback className="bg-gradient-to-br from-purple-400 to-pink-500 text-white text-2xl font-bold">
-                  GS
-                </AvatarFallback>
-              </Avatar>
+              <div className="w-20 h-24 rounded-lg overflow-hidden bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-2xl font-bold border-2 border-primary/20">
+                GS
+              </div>
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-foreground">Gaurav Shastrakar</h2>
                 <p className="text-sm text-muted-foreground mt-1">Member Since 2023</p>
-                <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border border-yellow-400/30">
-                  <Star className="w-5 h-5 text-yellow-600 fill-yellow-600 animate-pulse" />
-                  <span className="text-lg font-semibold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                    33
-                  </span>
+              </div>
+            </div>
+            
+            {/* Stars Earned Section */}
+            <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border border-yellow-200/50 dark:border-yellow-800/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Stars Earned</p>
+                  <div className="flex items-center gap-2">
+                    <Star className="w-6 h-6 text-yellow-600 fill-yellow-600" />
+                    <span className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent" data-testid="text-stars-earned">
+                      33
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Stars from Dr.M</p>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">from Dr.M</p>
+                  <p className="text-xs text-muted-foreground mt-1">Keep shining!</p>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -217,102 +188,21 @@ export default function ProfilePage() {
         {/* Karmic Affirmation */}
         <Card className="bg-gradient-to-br from-amber-50/50 to-blue-50/50 dark:from-amber-950/20 dark:to-blue-950/20 border-amber-200/50 dark:border-amber-800/30">
           <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-3">
-              <h3 className="text-lg font-semibold text-foreground">Karmic Affirmation</h3>
-              <Dialog open={editingAffirmation} onOpenChange={setEditingAffirmation}>
-                <DialogTrigger asChild>
-                  <button
-                    onClick={() => {
-                      setTempAffirmation(affirmation);
-                      setEditingAffirmation(true);
-                    }}
-                    className="hover-elevate active-elevate-2 rounded-lg p-2"
-                    data-testid="button-edit-affirmation"
-                  >
-                    <Edit2 className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </DialogTrigger>
-                <DialogContent data-testid="dialog-edit-affirmation">
-                  <DialogHeader>
-                    <DialogTitle>Edit Karmic Affirmation</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="affirmation">Your Affirmation</Label>
-                      <Textarea
-                        id="affirmation"
-                        value={tempAffirmation}
-                        onChange={(e) => setTempAffirmation(e.target.value)}
-                        className="mt-2"
-                        rows={4}
-                        data-testid="input-affirmation"
-                      />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button variant="outline" onClick={() => setEditingAffirmation(false)} data-testid="button-cancel-affirmation">
-                        Cancel
-                      </Button>
-                      <Button onClick={handleSaveAffirmation} data-testid="button-save-affirmation">
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Karmic Affirmation</h3>
             <p className="text-foreground italic font-serif leading-relaxed" data-testid="text-affirmation">
-              "{affirmation}"
+              "I trust the universe to guide me toward my highest purpose. Every challenge is an opportunity for growth, and I embrace it with grace and courage."
             </p>
           </CardContent>
         </Card>
 
-        {/* Accountability Partner */}
-        <Card>
+        {/* Prescription Card */}
+        <Card className="bg-gradient-to-br from-green-50/50 to-teal-50/50 dark:from-green-950/20 dark:to-teal-950/20 border-green-200/50 dark:border-green-800/30">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-1">Accountability Partner</h3>
-                <p className="text-foreground" data-testid="text-partner">{partner}</p>
-              </div>
-              <Dialog open={editingPartner} onOpenChange={setEditingPartner}>
-                <DialogTrigger asChild>
-                  <button
-                    onClick={() => {
-                      setTempPartner(partner);
-                      setEditingPartner(true);
-                    }}
-                    className="hover-elevate active-elevate-2 rounded-lg p-2"
-                    data-testid="button-edit-partner"
-                  >
-                    <Edit2 className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </DialogTrigger>
-                <DialogContent data-testid="dialog-edit-partner">
-                  <DialogHeader>
-                    <DialogTitle>Edit Accountability Partner</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="partner">Partner Name</Label>
-                      <Input
-                        id="partner"
-                        value={tempPartner}
-                        onChange={(e) => setTempPartner(e.target.value)}
-                        className="mt-2"
-                        data-testid="input-partner"
-                      />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button variant="outline" onClick={() => setEditingPartner(false)} data-testid="button-cancel-partner">
-                        Cancel
-                      </Button>
-                      <Button onClick={handleSavePartner} data-testid="button-save-partner">
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Your Prescription</h3>
+            <div className="space-y-2">
+              <p className="text-sm text-foreground"><span className="font-semibold">Morning:</span> USM Practice + Gratitude Journal</p>
+              <p className="text-sm text-foreground"><span className="font-semibold">Afternoon:</span> 15-min Money Meditation</p>
+              <p className="text-sm text-foreground"><span className="font-semibold">Evening:</span> Project of Heart Reflection</p>
             </div>
           </CardContent>
         </Card>
@@ -321,59 +211,15 @@ export default function ProfilePage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-foreground">2025 Streak Tracker</h3>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-foreground">2025 Streak Tracker</h3>
+                <button
                   onClick={toggleStreakVisibility}
+                  className="hover-elevate active-elevate-2 rounded-lg p-1"
                   data-testid="button-toggle-streak"
                 >
-                  {streakVisible ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
-                  {streakVisible ? "Hide" : "Show"}
-                </Button>
-                <Dialog open={editingStartDate} onOpenChange={setEditingStartDate}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setTempStartDate(startDate);
-                        setEditingStartDate(true);
-                      }}
-                      data-testid="button-change-start-date"
-                    >
-                      <CalendarIcon className="w-4 h-4 mr-1" />
-                      Change Start
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent data-testid="dialog-change-start-date">
-                    <DialogHeader>
-                      <DialogTitle>Change Start Date</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="startDate">Start Date</Label>
-                        <Input
-                          id="startDate"
-                          type="date"
-                          value={tempStartDate}
-                          onChange={(e) => setTempStartDate(e.target.value)}
-                          className="mt-2"
-                          data-testid="input-start-date"
-                        />
-                      </div>
-                      <div className="flex gap-2 justify-end">
-                        <Button variant="outline" onClick={() => setEditingStartDate(false)} data-testid="button-cancel-start-date">
-                          Cancel
-                        </Button>
-                        <Button onClick={handleSaveStartDate} data-testid="button-save-start-date">
-                          Save
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                  {streakVisible ? <Eye className="w-4 h-4 text-muted-foreground" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
+                </button>
               </div>
             </div>
 
