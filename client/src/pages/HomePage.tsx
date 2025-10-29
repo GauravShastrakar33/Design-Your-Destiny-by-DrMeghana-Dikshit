@@ -10,10 +10,11 @@ import {
   DollarSign, 
   Music, 
   CheckSquare, 
-  TrendingUp 
+  TrendingUp,
+  Bell,
+  Play
 } from "lucide-react";
-import ProgressBar from "@/components/ProgressBar";
-import StreakCalendar from "@/components/StreakCalendar";
+import { Card } from "@/components/ui/card";
 import ActionCard from "@/components/ActionCard";
 
 export default function HomePage() {
@@ -112,10 +113,10 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-3">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                Welcome to Dr.M App
+                Welcome back, Gaurav
               </h1>
               <p className="text-sm text-muted-foreground">
-                Your wellness journey starts here
+                Every step you take is shaping the best version of you
               </p>
             </div>
             <button
@@ -123,7 +124,7 @@ export default function HomePage() {
               className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover-elevate active-elevate-2"
               data-testid="button-notifications"
             >
-              <span className="text-xl">🔔</span>
+              <Bell className="w-5 h-5 text-foreground" />
             </button>
           </div>
           <div className="relative">
@@ -140,14 +141,62 @@ export default function HomePage() {
         </div>
 
         <div className="px-4 py-4 space-y-6">
-          {/* Progress and Streak */}
-          <div className="space-y-4">
-            <ProgressBar
-              current={practiceProgress.current}
-              total={practiceProgress.total}
-            />
-            <StreakCalendar completedDays={streakDays} />
-          </div>
+          {/* Counter Card - Daily Progress + Weekly Streak */}
+          <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border-purple-200 dark:border-purple-800 p-5" data-testid="card-counter">
+            {/* Daily Progress Header */}
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <h3 className="text-base font-semibold text-foreground">Daily Progress</h3>
+            </div>
+            
+            {/* Weekly Streak Circles */}
+            <div className="flex justify-between mb-4">
+              {[
+                { day: 'SU', completed: true },
+                { day: 'M', completed: true },
+                { day: 'T', completed: false },
+                { day: 'W', completed: true },
+                { day: 'TH', completed: false },
+                { day: 'F', completed: false },
+                { day: 'S', completed: true },
+              ].map((item, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-1">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium ${
+                      item.completed
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-purple-100 dark:bg-purple-900/30 text-muted-foreground'
+                    }`}
+                  >
+                    {item.day}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Today's Practice */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setLocation("/playlist")}
+                  className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center hover-elevate active-elevate-2"
+                  data-testid="button-resume-practice"
+                >
+                  <Play className="w-3 h-3 text-white ml-0.5" />
+                </button>
+                <span className="text-sm font-medium text-foreground">Today's Practice</span>
+              </div>
+              <span className="text-sm text-muted-foreground">{practiceProgress.current}/{practiceProgress.total} mins</span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full h-2 bg-purple-200 dark:bg-purple-900/30 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-300"
+                style={{ width: `${(practiceProgress.current / practiceProgress.total) * 100}%` }}
+              />
+            </div>
+          </Card>
 
           {/* Compact Quick Actions Grid */}
           <div>

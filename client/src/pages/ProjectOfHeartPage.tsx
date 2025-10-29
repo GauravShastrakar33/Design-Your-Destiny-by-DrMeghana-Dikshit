@@ -243,10 +243,10 @@ export default function ProjectOfHeartPage() {
     <div className="min-h-screen pb-20" style={{ background: "linear-gradient(to bottom right, #FDECEF, #F8E5E5, #E3F8E0)" }}>
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Header with Heart Chakra */}
-        <div className="relative mb-8">
+        <div className="relative mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2" style={{ color: "#3D3D3D", fontFamily: "Playfair Display, serif" }}>
+              <h1 className="text-3xl font-bold mb-1" style={{ color: "#3D3D3D", fontFamily: "Playfair Display, serif" }}>
                 Project of Heart
               </h1>
               <p className="text-sm" style={{ color: "#6B7280" }}>
@@ -276,8 +276,8 @@ export default function ProjectOfHeartPage() {
         </div>
 
         {/* Star Progress */}
-        <Card className="mb-6 p-6 shadow-md shadow-rose-200" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "1rem" }}>
-          <div className="flex items-center justify-between mb-4">
+        <Card className="mb-3 p-4 shadow-md shadow-rose-200" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "1rem" }}>
+          <div className="flex items-center justify-between mb-2">
             <div>
               <p className="text-sm font-medium" style={{ color: "#6B7280" }}>Your Growth</p>
               <p className="text-2xl font-bold" style={{ color: "#3D3D3D" }} data-testid="text-stars-count">
@@ -320,7 +320,7 @@ export default function ProjectOfHeartPage() {
           </div>
 
           {/* Star Milestones */}
-          <div className="space-y-2 text-xs" style={{ color: "#6B7280" }}>
+          <div className="space-y-1 text-xs" style={{ color: "#6B7280" }}>
             <div className="flex items-center gap-2">
               {pohData.vision ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <div className="w-4 h-4 rounded-full border border-gray-300" />}
               <span>Set POH → ⭐</span>
@@ -346,7 +346,7 @@ export default function ProjectOfHeartPage() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-3">
             <TabsTrigger value="vision" data-testid="tab-vision">Vision</TabsTrigger>
             <TabsTrigger value="journey" data-testid="tab-journey">Journey</TabsTrigger>
             <TabsTrigger value="reflect" data-testid="tab-reflect">Reflect</TabsTrigger>

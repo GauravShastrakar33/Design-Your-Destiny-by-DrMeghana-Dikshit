@@ -1,0 +1,226 @@
+### Home Screen 
+
+Replace the header text “Welcome to Dr.M App” with “Welcome back, Gaurav”
+Replace “Your wellness journey starts here” with “Every step you take is shaping the best version of you”.
+
+Put 
+and 7 day streak
+In a single card 
+
+(Name it as Counter card, don’t display the name)
+
+Format of Counter card :
+Take it from the image I uploaded as attachment name : Header and Counter.jpg
+
+Design the counter card like the image I uploaded.
+
+Daily Progress with mentioned icon before it.
+Followed by weekly streak as given in image
+Followed by Today’s practice In front of today’s practice put a play button if user clicks it directly the playlist from where he stopped begins.
+
+Change the bell icon as mentioned in the image.
+
+
+
+### Home Screen  Money Mastery Hub -> 
+Remove the existing money calendar
+Create a card name it as Money calendar - its a top card
+Build a money calendar feature in Money Calendar card
+Build a Money Calendar feature using React + Tailwind.
+Requirements:
+1. Show a month calendar grid (1 to 30/31 depending on month)
+2. Each day cell: • shows the date • if earning exists, show amount • color intensity increases with higher earning • click opens modal for adding/editing amount
+3. Modal has: • input for amount • “Save” button • “Delete” if amount already exists
+4. Store earnings in localStorage using a structure like:
+{
+  "2025-10-01": 400,
+  "2025-10-02": 850
+}
+5. Include Previous Month / Next Month navigation
+6. Add a Monthly Summary section with: (add some dummy data for now) • Total earnings (in Rupee) • Highest earning day • Average per day
+7. Use clean UI with Tailwind classes
+8. Organize code into these components: • MoneyCalendar (main) • DayCell • EarningModal • MonthlySummary
+9. Use today’s date to automatically highlight current day
+
+Optional styling: • Smooth modal animation • Light green palette for positive financial feeling
+
+Deliverables: • Persistent localStorage logic • Helper functions for handling dates and totals • Minimal dummy design that I can enhance later
+
+
+
+### Workshops screen
+
+Latest tab → Card with thumbnail and title “How to make Right Decisions”
+
+I have uploaded a video named:
+
+How to make Right Decisions.mp4
+
+Please move this file into the project’s `public` folder so it is accessible at:
+
+/How to make Right Decisions.mp4
+
+Then, in WorkshopsPage.tsx, update ONLY the card with:
+
+title: "How to make Right Decisions"
+
+Replace ONLY the url property in that card with:
+
+url: "/How to make Right Decisions.mp4"
+
+Remove the old YouTube/video URL.
+
+When I click that card in the Latest tab, it should go to VideoPlayerPage and the ReactPlayer must load and play this local MP4 file when I press Play.
+
+
+### Project of heart
+
+
+### layout
+
+Refine the layout of the Project of Heart screen to make it more compact and visually balanced — keeping all design and content exactly the same. Apply only spacing and alignment improvements as follows:
+🔧 Requirements
+1. Header Section
+* Keep “Project of Heart” title and subtitle intact.
+* Make 💚 green heart slightly higher, so the subtitle "Your heart's purpose, guided by love and discipline" appears in a single line below it.
+2. Your Growth Card
+* Do not change any content or visual style.
+* Just make the card more compact by reducing padding:
+    * Outer container: pt-8 → pt-4, pb-4 → pb-3
+    * Card padding: p-5 → p-4
+    * Inside spacing: reduce space-y-4 → space-y-2
+* Reduce any unnecessary top margin on the star circle (mt-3 → mt-1).
+3. Tabs (Vision / Journey / Reflect)
+* Move the tab section closer to the Growth card by reducing margin-top:
+    * mt-6 → mt-2 or mt-3
+* Keep their layout and styling exactly as is (no color or design change).
+4. Below Cards (Vision, Journey, Reflect Content)
+* Bring all cards slightly up to follow the new compact spacing:
+    * Change section wrapper margin: mt-6 → mt-3
+5. Overall Section Alignment
+* Maintain consistent, compact vertical spacing between sections:
+    * Wrapper around cards and tabs should use space-y-3 instead of space-y-5.
+* Ensure the visual flow is: Header → Growth Card → Tabs → Vision Card → Other Cards, with smooth, proportional spacing.
+
+
+### vision tab
+
+Add a horizontal 4-image gallery feature inside the existing “Your Vision” card in the Vision tab.
+Requirements
+1. The image gallery must be inside the Vision card, above the Vision description.
+2. Display up to four images side-by-side, scrollable horizontally with smooth swipe support on mobile.
+3. Images must be:
+    * Rounded rectangle shape
+    * Equal height
+    * Soft shadow
+    * object-fit: cover
+4. The layout must stay aligned with the current Vision card styling and spacing.
+5. Store uploaded images in React state (later can sync with localStorage or backend).
+6. The card order should be:
+    * Vision title + existing Edit button
+    * New horizontal image gallery
+    * Existing vision description text
+    * Existing affirmation quote section
+
+Editing Behavior
+The same Edit button should manage images and text together.
+On clicking Edit:
+* Enable edit modal or inline edit mode that allows:
+    * Updating Vision title and description (already working)
+    * Managing the 4 image slots
+
+Image management inside Edit mode:
+Action	Result
+Tap existing image	Replace image (open picker)
+Tap empty slot	Add new image
+Tap delete ✕ overlay	Remove image (slot becomes empty)
+Rules:
+* Maximum 4 images
+* Keep empty slots visible as + Add Visions placeholders
+On Save:
+* Update text + images state
+* Close edit mode
+On Cancel:
+* No changes saved
+Component Guidance (React + Tailwind)
+The gallery inside the card should use:
+* flex
+* space-x-3
+* overflow-x-auto
+* shrink-0
+* Hidden scrollbar
+
+
+### Journey tab in project of heart
+
+Show a “Start Your Journey” action card on top inside journey card
+Card Title: “Set Your Action Steps To Begin Cycle 1”
+Card Content:
+* “What actions will you take this week toward your vision?”
+Give them a text box and save option -> after clicking on save give them a good message popup “ ✨ “ Congratulation Champion ! This is your becoming story. Let your actions write the next page.”
+
+After saves -> create a card with written actions on top in the journey card and then put the remaining existing “Cycles of Growth” below.
+
+
+
+### user profile screen
+
+
+Update the profile section design as follows:
+* Change the profile picture shape from a circle to a vertical rectangle with rounded corners (12–16px radius).
+* Align the profile image and name details neatly, maintaining a clean and modern layout.
+* Replace the text “Stars from Dr.M” with “Stars Earned   ⭐ 33” — all on one single line next to the star icon and number.
+* Ensure the star icon and number are centered vertically and visually balanced with the name and member info.
+* Reduce the vertical padding between the profile card and the Karmic Affirmation card — keep just enough spacing for clarity (~12–16px max).
+* Maintain the same color scheme and typography.
+* Keep the Karmic Affirmation card style and font as it is.
+The result should look compact, elegant, and visually aligned — like a cohesive card stack with reduced white space.
+
+
+Remove accountability partner from user profile
+
+Remove the edit option from the Karmic Affirmation
+It is something given by a Admin Portal(will work on it later).
+For now put an dummy karmic affirmation : 
+“I am aligned with my higher purpose, attracting peace and growth every day.”
+
+
+Below karmic Affirmation create a card :
+My Personalised prescription card (Which is text input from the admit panel and shown here)
+For now 
+Create a card with digital Input
+With dummy text : 
+
+heading : Prescription for My Champion
+
+Morning doses:
+1. LNB
+2. Vibration Elevation
+3. Neuro-Coupling
+4. WealthCodeActivation - All 4
+5. Mirror Work
+
+Night Practices
+1. Write letter to your father
+2. Anxiety Relief code - All 2
+3. Inner child healing for the experiences of Rejection.
+  
+
+In 2025 Streak Tracker
+Remove the Change Start date feature
+Make hide as a small icon and put it in top right of the streak card
+
+
+When user click on -> Account
+Give him option to :
+1. Change Name 
+2. Change Profile Picture
+3. Gender
+4. Birthday 
+5. Change registered number
+6. Change registered email
+
+
+
+When user click on -> Notification 
+1. Push Notifications (These are notifications for posts created by your creator(s)) - toggle button 

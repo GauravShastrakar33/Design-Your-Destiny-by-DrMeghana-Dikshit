@@ -1,14 +1,28 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Calendar, Brain, Video, Sparkles, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Brain, Video, Sparkles, CheckCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface MoneyEarnings {
+  [date: string]: number; // "2025-10-01": 400
+}
 
 export default function MoneyMasteryPage() {
   const [, setLocation] = useLocation();
-  const [selectedMonth] = useState(new Date());
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [hasBeliefs, setHasBeliefs] = useState(false);
   const [lastUpdatedToday, setLastUpdatedToday] = useState(false);
+  const [earnings, setEarnings] = useState<MoneyEarnings>({});
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [earningAmount, setEarningAmount] = useState("");
 
   useEffect(() => {
     // Check if beliefs are saved
@@ -29,6 +43,16 @@ export default function MoneyMasteryPage() {
       const updateDate = new Date(parseInt(lastUpdate)).toDateString();
       setLastUpdatedToday(today === updateDate);
     }
+
+    // Load earnings from localStorage
+    const savedEarnings = localStorage.getItem("@app:money_earnings");
+    if (savedEarnings) {
+      try {
+        setEarnings(JSON.parse(savedEarnings));
+      } catch (error) {
+        console.error("Error loading earnings:", error);
+      }
+    }
   }, []);
 
   const getDaysInMonth = () => {
@@ -42,6 +66,96 @@ export default function MoneyMasteryPage() {
   const { daysInMonth, firstDay } = getDaysInMonth();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const emptyDays = Array.from({ length: firstDay }, (_, i) => i);
+
+  const formatDate = (day: number): string => {
+    const year = selectedMonth.getFullYear();
+    const month = String(selectedMonth.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(day).padStart(2, '0');
+    return `${year}-${month}-${dayStr}`;
+  };
+
+  const handleDayClick = (day: number) => {
+    const dateKey = formatDate(day);
+    setSelectedDate(dateKey);
+    setEarningAmount(earnings[dateKey]?.toString() || "");
+    setModalOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!selectedDate) return;
+    
+    const amount = parseFloat(earningAmount);
+    if (isNaN(amount)) {
+      alert("Please enter a valid number");
+      return;
+    }
+    if (amount < 0) {
+      alert("Amount cannot be negative");
+      return;
+    }
+
+    const newEarnings = { ...earnings, [selectedDate]: amount };
+    setEarnings(newEarnings);
+    localStorage.setItem("@app:money_earnings", JSON.stringify(newEarnings));
+    setModalOpen(false);
+    setEarningAmount("");
+  };
+
+  const handleDelete = () => {
+    if (!selectedDate) return;
+
+    const newEarnings = { ...earnings };
+    delete newEarnings[selectedDate];
+    setEarnings(newEarnings);
+    localStorage.setItem("@app:money_earnings", JSON.stringify(newEarnings));
+    setModalOpen(false);
+    setEarningAmount("");
+  };
+
+  const previousMonth = () => {
+    setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1));
+  };
+
+  const getEarningColor = (amount: number): string => {
+    const maxEarning = Math.max(...Object.values(earnings), 1);
+    const intensity = amount / maxEarning;
+    
+    if (intensity > 0.75) return "bg-green-600 text-white";
+    if (intensity > 0.5) return "bg-green-500 text-white";
+    if (intensity > 0.25) return "bg-green-400 text-green-900";
+    return "bg-green-200 text-green-900";
+  };
+
+  const calculateMonthlySummary = () => {
+    const currentMonthEarnings = Object.entries(earnings).filter(([date]) => {
+      const [year, month] = date.split('-');
+      return parseInt(year) === selectedMonth.getFullYear() && 
+             parseInt(month) === selectedMonth.getMonth() + 1;
+    });
+
+    const total = currentMonthEarnings.reduce((sum, [, amount]) => sum + amount, 0);
+    const highest = currentMonthEarnings.length > 0 
+      ? Math.max(...currentMonthEarnings.map(([, amount]) => amount))
+      : 0;
+    const average = currentMonthEarnings.length > 0 
+      ? total / currentMonthEarnings.length 
+      : 0;
+    const highestDay = currentMonthEarnings.find(([, amount]) => amount === highest)?.[0];
+
+    return { total, highest, average, highestDay };
+  };
+
+  const summary = calculateMonthlySummary();
+  const today = new Date();
+  const isToday = (day: number) => {
+    return selectedMonth.getFullYear() === today.getFullYear() &&
+           selectedMonth.getMonth() === today.getMonth() &&
+           day === today.getDate();
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -61,18 +175,36 @@ export default function MoneyMasteryPage() {
 
         <div className="px-4 py-6 space-y-6">
           {/* Money Calendar */}
-          <Card className="p-4">
+          <Card className="p-4" data-testid="card-money-calendar">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-semibold text-foreground">Money Calendar</h2>
             </div>
             
-            <div className="mb-3 text-center">
+            {/* Month Navigation */}
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={previousMonth}
+                data-testid="button-prev-month"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
               <h3 className="font-semibold text-foreground">
                 {selectedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={nextMonth}
+                data-testid="button-next-month"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
 
+            {/* Day Headers */}
             <div className="grid grid-cols-7 gap-1 mb-2">
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
                 <div key={i} className="text-center text-xs font-medium text-muted-foreground py-1">
@@ -81,28 +213,107 @@ export default function MoneyMasteryPage() {
               ))}
             </div>
 
+            {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-1">
               {emptyDays.map((_, i) => (
                 <div key={`empty-${i}`} className="aspect-square" />
               ))}
-              {days.map((day) => (
-                <button
-                  key={day}
-                  className="aspect-square rounded-lg bg-muted hover-elevate active-elevate-2 flex items-center justify-center"
-                  data-testid={`day-${day}`}
-                >
-                  <span className="text-sm font-medium text-foreground">{day}</span>
-                </button>
-              ))}
+              {days.map((day) => {
+                const dateKey = formatDate(day);
+                const earning = earnings[dateKey];
+                const hasEarning = earning !== undefined;
+                
+                return (
+                  <button
+                    key={day}
+                    onClick={() => handleDayClick(day)}
+                    className={`aspect-square rounded-lg hover-elevate active-elevate-2 flex flex-col items-center justify-center p-1 ${
+                      hasEarning 
+                        ? getEarningColor(earning)
+                        : isToday(day)
+                        ? 'bg-primary/10 border border-primary'
+                        : 'bg-muted'
+                    }`}
+                    data-testid={`day-${day}`}
+                  >
+                    <span className={`text-xs font-medium ${hasEarning ? '' : 'text-foreground'}`}>
+                      {day}
+                    </span>
+                    {hasEarning && (
+                      <span className="text-[10px] font-semibold">
+                        ₹{earning}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-border">
+            {/* Monthly Summary */}
+            <div className="mt-4 pt-4 border-t border-border space-y-2">
+              <h3 className="text-sm font-semibold text-foreground mb-2">Monthly Summary</h3>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Monthly Total:</span>
-                <span className="text-lg font-bold text-primary">$0</span>
+                <span className="text-sm text-muted-foreground">Total Earnings:</span>
+                <span className="text-lg font-bold text-green-600">₹{summary.total.toFixed(0)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Highest Day:</span>
+                <span className="text-sm font-semibold text-foreground">
+                  {summary.highest > 0 ? `₹${summary.highest.toFixed(0)}` : '-'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Average/Day:</span>
+                <span className="text-sm font-semibold text-foreground">
+                  {summary.average > 0 ? `₹${summary.average.toFixed(0)}` : '-'}
+                </span>
               </div>
             </div>
           </Card>
+
+          {/* Earning Modal */}
+          <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+            <DialogContent data-testid="dialog-earning">
+              <DialogHeader>
+                <DialogTitle>
+                  {selectedDate && earnings[selectedDate] ? 'Edit Earning' : 'Add Earning'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Amount (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={earningAmount}
+                    onChange={(e) => setEarningAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    className="w-full h-10 px-3 rounded-lg bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    data-testid="input-earning-amount"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleSave}
+                    className="flex-1"
+                    data-testid="button-save-earning"
+                  >
+                    Save
+                  </Button>
+                  {selectedDate && earnings[selectedDate] && (
+                    <Button
+                      onClick={handleDelete}
+                      variant="destructive"
+                      data-testid="button-delete-earning"
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Rewiring Belief */}
           <Card 

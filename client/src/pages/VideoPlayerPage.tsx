@@ -38,24 +38,7 @@ export default function VideoPlayerPage() {
   const videoUrl = searchParams.get("url") || "";
 
   // Extract YouTube video ID from URL for storage key
-  const getYouTubeVideoId = (url: string): string => {
-    if (!url) return "";
-    
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/clip\/)([^&\n?#]+)/,
-    ];
-    
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match && match[1]) {
-        return match[1];
-      }
-    }
-    
-    return "";
-  };
-
-  const youtubeId = getYouTubeVideoId(videoUrl) || videoId;
+  const youtubeId = videoId;
 
   // Load saved progress
   const getSavedProgress = (): number => {
@@ -78,7 +61,7 @@ export default function VideoPlayerPage() {
   // Save progress to localStorage
   const saveProgress = (currentTime: number) => {
     if (!youtubeId) return;
-    
+
     try {
       const data: LastWatchedData = {
         videoId: youtubeId,
@@ -95,7 +78,7 @@ export default function VideoPlayerPage() {
 
   // Check if video is completed (>95%)
   const checkIfCompleted = (currentTime: number, duration: number) => {
-    if (duration > 0 && (currentTime / duration) > 0.95) {
+    if (duration > 0 && currentTime / duration > 0.95) {
       localStorage.removeItem("last-watched");
     }
   };
@@ -103,7 +86,7 @@ export default function VideoPlayerPage() {
   // Handle player ready
   const handleReady = () => {
     setIsReady(true);
-    
+
     // Seek to saved progress if available
     if (savedProgress > 0 && playerRef.current) {
       playerRef.current.seekTo(savedProgress, "seconds");
@@ -115,12 +98,12 @@ export default function VideoPlayerPage() {
     if (!hasStarted) {
       setHasStarted(true);
     }
-    
+
     const playedSeconds = state.playedSeconds;
     setCurrentTime(playedSeconds);
-    
+
     const duration = playerRef.current?.getDuration() || 0;
-    
+
     saveProgress(playedSeconds);
     checkIfCompleted(playedSeconds, duration);
   };
@@ -148,6 +131,8 @@ export default function VideoPlayerPage() {
 
   const speedOptions = [0.5, 1, 1.25, 1.5, 2];
 
+  console.log("Video URL inside player:", videoUrl);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto">
@@ -161,7 +146,7 @@ export default function VideoPlayerPage() {
             >
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
-            
+
             <Button
               variant="outline"
               size="icon"
@@ -174,7 +159,10 @@ export default function VideoPlayerPage() {
         </div>
 
         {/* Video Player */}
-        <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg" data-testid="video-player">
+        <div
+          className="w-full aspect-video rounded-lg overflow-hidden shadow-lg"
+          data-testid="video-player"
+        >
           {/* @ts-ignore - ReactPlayer types are incompatible with current setup */}
           <ReactPlayer
             ref={playerRef}
@@ -183,6 +171,7 @@ export default function VideoPlayerPage() {
             playing={false}
             width="100%"
             height="100%"
+            playsinline={true} // ✅ Required for iOS Safari inline playback
             playbackRate={currentSpeed}
             onReady={handleReady}
             onProgress={handleProgress}
@@ -193,11 +182,17 @@ export default function VideoPlayerPage() {
         {/* Video Info */}
         <div className="px-4 py-6 space-y-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground mb-2" data-testid="video-title">
+            <h1
+              className="text-2xl font-bold text-foreground mb-2"
+              data-testid="video-title"
+            >
               {title}
             </h1>
             {author && (
-              <p className="text-sm text-muted-foreground" data-testid="video-author">
+              <p
+                className="text-sm text-muted-foreground"
+                data-testid="video-author"
+              >
                 {author}
               </p>
             )}
@@ -205,8 +200,13 @@ export default function VideoPlayerPage() {
 
           {description && (
             <div className="pt-4 border-t border-border">
-              <h3 className="text-sm font-semibold text-foreground mb-2">Description</h3>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap" data-testid="video-description">
+              <h3 className="text-sm font-semibold text-foreground mb-2">
+                Description
+              </h3>
+              <p
+                className="text-sm text-muted-foreground whitespace-pre-wrap"
+                data-testid="video-description"
+              >
                 {description}
               </p>
             </div>

@@ -54,7 +54,7 @@ const upcomingMasterclasses: UpcomingMasterclass[] = [
     time: "7 PM",
     startTime: new Date("2025-10-25T19:00:00"),
     zoomLink: "https://zoom.us/j/example1",
-    thumbnail: "bg-gradient-to-br from-purple-400 to-pink-500"
+    thumbnail: "bg-gradient-to-br from-purple-400 to-pink-500",
   },
   {
     id: "2",
@@ -63,7 +63,7 @@ const upcomingMasterclasses: UpcomingMasterclass[] = [
     time: "6 PM",
     startTime: new Date("2025-10-28T18:00:00"),
     zoomLink: "https://zoom.us/j/example2",
-    thumbnail: "bg-gradient-to-br from-blue-400 to-indigo-500"
+    thumbnail: "bg-gradient-to-br from-blue-400 to-indigo-500",
   },
   {
     id: "3",
@@ -72,90 +72,158 @@ const upcomingMasterclasses: UpcomingMasterclass[] = [
     time: "6 PM",
     startTime: new Date("2025-11-08T18:00:00"),
     zoomLink: "https://zoom.us/j/example3",
-    thumbnail: "bg-gradient-to-br from-green-400 to-emerald-500"
-  }
+    thumbnail: "bg-gradient-to-br from-green-400 to-emerald-500",
+  },
 ];
 
 const latestVideos: Video[] = [
-  { 
-    id: "demo-1", 
-    title: "How to make Right Decisions", 
-    thumbnail: rightDecisionThumbnail, 
+  {
+    id: "demo-1",
+    title: "How to make Right Decisions",
+    thumbnail: rightDecisionThumbnail,
     uploadDate: "27 Oct 2025",
     isCollection: false,
-    url: "https://www.youtube.com/watch?v=hZCZfK1cRhw",
+    url: "/How to make Right Decisions.mp4",
     author: "Dr. Meghana Dikshit",
-    description: "Learn the art of making decisions that align with your highest self and life purpose.",
-    videoId: "demo-right-decisions"
+    description:
+      "Learn the art of making decisions that align with your highest self and life purpose.",
+    videoId: "demo-right-decisions",
   },
-  { 
-    id: "1", 
-    title: "Lions Gate Portal", 
-    thumbnail: "bg-gradient-to-br from-yellow-400 to-orange-500", 
-    uploadDate: "20 Oct 2025", 
+  {
+    id: "1",
+    title: "Lions Gate Portal",
+    thumbnail: "bg-gradient-to-br from-yellow-400 to-orange-500",
+    uploadDate: "20 Oct 2025",
     isCollection: false,
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     author: "Dr. Meghana Dikshit",
-    description: "Unlock the powerful energies of the Lions Gate Portal for manifestation and transformation.",
-    videoId: "lions-gate-portal"
+    description:
+      "Unlock the powerful energies of the Lions Gate Portal for manifestation and transformation.",
+    videoId: "lions-gate-portal",
   },
-  { 
-    id: "2", 
-    title: "Inner Circle Call — Turning Setbacks into Success", 
-    thumbnail: "bg-gradient-to-br from-purple-400 to-pink-500", 
-    uploadDate: "18 Oct 2025", 
+  {
+    id: "2",
+    title: "Inner Circle Call — Turning Setbacks into Success",
+    thumbnail: "bg-gradient-to-br from-purple-400 to-pink-500",
+    uploadDate: "18 Oct 2025",
     isCollection: false,
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     author: "Dr. Meghana Dikshit",
-    description: "Transform setbacks into stepping stones for success with powerful mindset shifts.",
-    videoId: "inner-circle-setbacks"
+    description:
+      "Transform setbacks into stepping stones for success with powerful mindset shifts.",
+    videoId: "inner-circle-setbacks",
   },
-  { 
-    id: "3", 
-    title: "Self Sabotage Downloads", 
-    thumbnail: "bg-gradient-to-br from-blue-400 to-cyan-500", 
-    uploadDate: "15 Oct 2025", 
+  {
+    id: "3",
+    title: "Self Sabotage Downloads",
+    thumbnail: "bg-gradient-to-br from-blue-400 to-cyan-500",
+    uploadDate: "15 Oct 2025",
     isCollection: false,
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     author: "Dr. Meghana Dikshit",
-    description: "Identify and release self-sabotage patterns holding you back from your dreams.",
-    videoId: "self-sabotage"
+    description:
+      "Identify and release self-sabotage patterns holding you back from your dreams.",
+    videoId: "self-sabotage",
   },
-  { 
-    id: "4", 
-    title: "Money Mastery", 
-    thumbnail: "bg-gradient-to-br from-green-400 to-teal-500", 
-    uploadDate: "12 Oct 2025", 
+  {
+    id: "4",
+    title: "Money Mastery",
+    thumbnail: "bg-gradient-to-br from-green-400 to-teal-500",
+    uploadDate: "12 Oct 2025",
     isCollection: false,
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     author: "Dr. Meghana Dikshit",
-    description: "Master your money mindset and attract abundance into your life.",
-    videoId: "money-mastery"
-  }
+    description:
+      "Master your money mindset and attract abundance into your life.",
+    videoId: "money-mastery",
+  },
 ];
 
 const dydCourses: Course[] = [
-  { id: "dyd-14", title: "DYD 14", thumbnail: "bg-gradient-to-br from-purple-500 to-pink-500", year: "July 2025", type: "dyd", isCollection: true },
-  { id: "dyd-13", title: "DYD 13", thumbnail: "bg-gradient-to-br from-blue-500 to-indigo-500", year: "April 2025", type: "dyd", isCollection: true },
-  { id: "dyd-12", title: "DYD 12", thumbnail: "bg-gradient-to-br from-green-500 to-emerald-500", year: "January 2025", type: "dyd", isCollection: true }
+  {
+    id: "dyd-14",
+    title: "DYD 14",
+    thumbnail: "bg-gradient-to-br from-purple-500 to-pink-500",
+    year: "July 2025",
+    type: "dyd",
+    isCollection: true,
+  },
+  {
+    id: "dyd-13",
+    title: "DYD 13",
+    thumbnail: "bg-gradient-to-br from-blue-500 to-indigo-500",
+    year: "April 2025",
+    type: "dyd",
+    isCollection: true,
+  },
+  {
+    id: "dyd-12",
+    title: "DYD 12",
+    thumbnail: "bg-gradient-to-br from-green-500 to-emerald-500",
+    year: "January 2025",
+    type: "dyd",
+    isCollection: true,
+  },
 ];
 
 const usmCourses: Course[] = [
-  { id: "usm-march", title: "USM", thumbnail: "bg-gradient-to-br from-orange-400 to-red-500", year: "March 2025", type: "usm", isCollection: true },
-  { id: "usm-jan", title: "USM", thumbnail: "bg-gradient-to-br from-cyan-400 to-blue-500", year: "January 2025", type: "usm", isCollection: true }
+  {
+    id: "usm-march",
+    title: "USM",
+    thumbnail: "bg-gradient-to-br from-orange-400 to-red-500",
+    year: "March 2025",
+    type: "usm",
+    isCollection: true,
+  },
+  {
+    id: "usm-jan",
+    title: "USM",
+    thumbnail: "bg-gradient-to-br from-cyan-400 to-blue-500",
+    year: "January 2025",
+    type: "usm",
+    isCollection: true,
+  },
 ];
 
 const uscCourses: Course[] = [
-  { id: "usc-march", title: "USC", thumbnail: "bg-gradient-to-br from-pink-400 to-purple-500", year: "March 2025", type: "usc", isCollection: true }
+  {
+    id: "usc-march",
+    title: "USC",
+    thumbnail: "bg-gradient-to-br from-pink-400 to-purple-500",
+    year: "March 2025",
+    type: "usc",
+    isCollection: true,
+  },
 ];
 
 const usbCourses: Course[] = [
-  { id: "usb-feb", title: "USB", thumbnail: "bg-gradient-to-br from-teal-400 to-cyan-500", year: "February 2025", type: "usb", isCollection: true }
+  {
+    id: "usb-feb",
+    title: "USB",
+    thumbnail: "bg-gradient-to-br from-teal-400 to-cyan-500",
+    year: "February 2025",
+    type: "usb",
+    isCollection: true,
+  },
 ];
 
 const moreCourses: Course[] = [
-  { id: "sleep", title: "Sleep Subconscious", thumbnail: "bg-gradient-to-br from-indigo-400 to-purple-500", year: "2025", type: "more", isCollection: true },
-  { id: "visions", title: "Build Your Visions", thumbnail: "bg-gradient-to-br from-yellow-400 to-orange-500", year: "2025", type: "more", isCollection: true }
+  {
+    id: "sleep",
+    title: "Sleep Subconscious",
+    thumbnail: "bg-gradient-to-br from-indigo-400 to-purple-500",
+    year: "2025",
+    type: "more",
+    isCollection: true,
+  },
+  {
+    id: "visions",
+    title: "Build Your Visions",
+    thumbnail: "bg-gradient-to-br from-yellow-400 to-orange-500",
+    year: "2025",
+    type: "more",
+    isCollection: true,
+  },
 ];
 
 function CountdownTimer({ startTime }: { startTime: Date }) {
@@ -172,7 +240,9 @@ function CountdownTimer({ startTime }: { startTime: Date }) {
       }
 
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const hours = Math.floor(
+        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+      );
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
       if (days > 0) {
@@ -203,7 +273,7 @@ export default function WorkshopsPage() {
     { id: "usm" as Tab, label: "USM" },
     { id: "usc" as Tab, label: "USC" },
     { id: "usb" as Tab, label: "USB" },
-    { id: "more" as Tab, label: "More" }
+    { id: "more" as Tab, label: "More" },
   ];
 
   // Load last watched data
@@ -232,7 +302,11 @@ export default function WorkshopsPage() {
       const params = new URLSearchParams({
         videoId: video.videoId || video.id,
         title: video.title,
-        thumbnail: typeof video.thumbnail === 'string' && video.thumbnail.startsWith('bg-') ? '' : video.thumbnail,
+        thumbnail:
+          typeof video.thumbnail === "string" &&
+          video.thumbnail.startsWith("bg-")
+            ? ""
+            : video.thumbnail,
         url: video.url || "",
         author: video.author || "",
         description: video.description || "",
@@ -249,7 +323,7 @@ export default function WorkshopsPage() {
 
   const handleResumeLastWatched = () => {
     if (!lastWatched) return;
-    
+
     const params = new URLSearchParams({
       videoId: lastWatched.videoId,
       title: lastWatched.title,
@@ -266,7 +340,7 @@ export default function WorkshopsPage() {
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -275,7 +349,9 @@ export default function WorkshopsPage() {
         {/* Top Navigation */}
         <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
           <div className="px-4 py-4 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-foreground">Masterclasses</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              Masterclasses
+            </h1>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setLocation("/search")}
@@ -321,21 +397,32 @@ export default function WorkshopsPage() {
           {activeTab === "upcoming" && (
             <div className="space-y-4">
               {upcomingMasterclasses.map((masterclass) => (
-                <Card key={masterclass.id} className="overflow-hidden" data-testid={`upcoming-${masterclass.id}`}>
-                  <div className={`${masterclass.thumbnail} h-40 flex items-end p-4`}>
-                    <h3 className="text-white text-xl font-bold">{masterclass.title}</h3>
+                <Card
+                  key={masterclass.id}
+                  className="overflow-hidden"
+                  data-testid={`upcoming-${masterclass.id}`}
+                >
+                  <div
+                    className={`${masterclass.thumbnail} h-40 flex items-end p-4`}
+                  >
+                    <h3 className="text-white text-xl font-bold">
+                      {masterclass.title}
+                    </h3>
                   </div>
                   <div className="p-4 space-y-3">
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span>{masterclass.date}, {masterclass.time}</span>
+                        <span>
+                          {masterclass.date}, {masterclass.time}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="w-4 h-4 text-primary" />
                       <span className="font-medium text-primary">
-                        Starts in: <CountdownTimer startTime={masterclass.startTime} />
+                        Starts in:{" "}
+                        <CountdownTimer startTime={masterclass.startTime} />
                       </span>
                     </div>
                     <Button
@@ -355,22 +442,25 @@ export default function WorkshopsPage() {
           {activeTab === "latest" && (
             <div className="space-y-4">
               {latestVideos.map((video) => (
-                <Card 
-                  key={video.id} 
-                  className="overflow-hidden cursor-pointer hover-elevate active-elevate-2" 
+                <Card
+                  key={video.id}
+                  className="overflow-hidden cursor-pointer hover-elevate active-elevate-2"
                   onClick={() => handleVideoClick(video)}
                   data-testid={`video-${video.id}`}
                 >
-                  {typeof video.thumbnail === 'string' && video.thumbnail.startsWith('bg-') ? (
-                    <div className={`${video.thumbnail} h-40 flex items-center justify-center`}>
+                  {typeof video.thumbnail === "string" &&
+                  video.thumbnail.startsWith("bg-") ? (
+                    <div
+                      className={`${video.thumbnail} h-40 flex items-center justify-center`}
+                    >
                       <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
                         <Play className="w-7 h-7 text-white" fill="white" />
                       </div>
                     </div>
                   ) : (
                     <div className="relative h-40 bg-black">
-                      <img 
-                        src={video.thumbnail} 
+                      <img
+                        src={video.thumbnail}
                         alt={video.title}
                         className="w-full h-full object-cover"
                       />
@@ -382,11 +472,17 @@ export default function WorkshopsPage() {
                     </div>
                   )}
                   <div className="p-4">
-                    <h3 className="font-semibold text-foreground mb-2">{video.title}</h3>
+                    <h3 className="font-semibold text-foreground mb-2">
+                      {video.title}
+                    </h3>
                     {video.author && (
-                      <p className="text-sm text-muted-foreground mb-1">{video.author}</p>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        {video.author}
+                      </p>
                     )}
-                    <p className="text-sm text-muted-foreground">{video.uploadDate}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {video.uploadDate}
+                    </p>
                   </div>
                 </Card>
               ))}
@@ -403,9 +499,13 @@ export default function WorkshopsPage() {
                   onClick={() => handleCourseClick(course)}
                   data-testid={`course-${course.id}`}
                 >
-                  <div className={`${course.thumbnail} h-40 flex items-end p-4`}>
+                  <div
+                    className={`${course.thumbnail} h-40 flex items-end p-4`}
+                  >
                     <div>
-                      <h3 className="text-white text-2xl font-bold">{course.title}</h3>
+                      <h3 className="text-white text-2xl font-bold">
+                        {course.title}
+                      </h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
                     </div>
                   </div>
@@ -424,9 +524,13 @@ export default function WorkshopsPage() {
                   onClick={() => handleCourseClick(course)}
                   data-testid={`course-${course.id}`}
                 >
-                  <div className={`${course.thumbnail} h-40 flex items-end p-4`}>
+                  <div
+                    className={`${course.thumbnail} h-40 flex items-end p-4`}
+                  >
                     <div>
-                      <h3 className="text-white text-2xl font-bold">{course.title}</h3>
+                      <h3 className="text-white text-2xl font-bold">
+                        {course.title}
+                      </h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
                     </div>
                   </div>
@@ -445,9 +549,13 @@ export default function WorkshopsPage() {
                   onClick={() => handleCourseClick(course)}
                   data-testid={`course-${course.id}`}
                 >
-                  <div className={`${course.thumbnail} h-40 flex items-end p-4`}>
+                  <div
+                    className={`${course.thumbnail} h-40 flex items-end p-4`}
+                  >
                     <div>
-                      <h3 className="text-white text-2xl font-bold">{course.title}</h3>
+                      <h3 className="text-white text-2xl font-bold">
+                        {course.title}
+                      </h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
                     </div>
                   </div>
@@ -466,9 +574,13 @@ export default function WorkshopsPage() {
                   onClick={() => handleCourseClick(course)}
                   data-testid={`course-${course.id}`}
                 >
-                  <div className={`${course.thumbnail} h-40 flex items-end p-4`}>
+                  <div
+                    className={`${course.thumbnail} h-40 flex items-end p-4`}
+                  >
                     <div>
-                      <h3 className="text-white text-2xl font-bold">{course.title}</h3>
+                      <h3 className="text-white text-2xl font-bold">
+                        {course.title}
+                      </h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
                     </div>
                   </div>
@@ -487,9 +599,13 @@ export default function WorkshopsPage() {
                   onClick={() => handleCourseClick(course)}
                   data-testid={`course-${course.id}`}
                 >
-                  <div className={`${course.thumbnail} h-40 flex items-end p-4`}>
+                  <div
+                    className={`${course.thumbnail} h-40 flex items-end p-4`}
+                  >
                     <div>
-                      <h3 className="text-white text-2xl font-bold">{course.title}</h3>
+                      <h3 className="text-white text-2xl font-bold">
+                        {course.title}
+                      </h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
                     </div>
                   </div>
@@ -502,7 +618,7 @@ export default function WorkshopsPage() {
 
       {/* Last Watched Reminder Bar */}
       {lastWatched && showLastWatched && (
-        <div 
+        <div
           className="fixed bottom-16 left-0 right-0 bg-card border-t border-border shadow-lg z-20"
           data-testid="last-watched-bar"
         >
@@ -510,20 +626,26 @@ export default function WorkshopsPage() {
             <div className="flex items-center gap-3">
               {/* Thumbnail */}
               {lastWatched.thumbnail && (
-                <img 
+                <img
                   src={lastWatched.thumbnail}
                   alt={lastWatched.title}
                   className="w-16 h-10 object-cover rounded flex-shrink-0"
                   data-testid="last-watched-thumbnail"
                 />
               )}
-              
+
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate" data-testid="last-watched-title">
+                <p
+                  className="text-sm font-medium text-foreground truncate"
+                  data-testid="last-watched-title"
+                >
                   {lastWatched.title}
                 </p>
-                <p className="text-xs text-muted-foreground" data-testid="last-watched-time">
+                <p
+                  className="text-xs text-muted-foreground"
+                  data-testid="last-watched-time"
+                >
                   Watched: {formatTime(lastWatched.progressInSeconds)}
                 </p>
               </div>
