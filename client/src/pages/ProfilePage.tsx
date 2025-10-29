@@ -15,6 +15,7 @@ export default function ProfilePage() {
   const [streakVisible, setStreakVisible] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [streakData, setStreakData] = useState<StreakData>({});
+  const [accountExpanded, setAccountExpanded] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -62,6 +63,14 @@ export default function ProfilePage() {
     const newValue = !streakVisible;
     setStreakVisible(newValue);
     localStorage.setItem("streakVisible", String(newValue));
+  };
+
+  const handleResetPOH = () => {
+    if (confirm("Are you sure you want to reset your Project of Heart? This will clear all POH progress and set stars to 0.")) {
+      localStorage.removeItem("@app:poh_data");
+      localStorage.removeItem("@app:weekly_action");
+      alert("Project of Heart has been reset successfully.");
+    }
   };
 
   // Generate calendar days using persisted streak data and start date
@@ -297,19 +306,35 @@ export default function ProfilePage() {
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4">Settings</h3>
             <div className="space-y-1">
-              <button
-                className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
-                data-testid="button-account"
-              >
-                <div className="flex items-center gap-3">
-                  <SettingsIcon className="w-5 h-5 text-muted-foreground" />
-                  <div className="text-left">
-                    <p className="font-medium text-foreground">Account</p>
-                    <p className="text-xs text-muted-foreground">Change your account settings</p>
+              <div>
+                <button
+                  onClick={() => setAccountExpanded(!accountExpanded)}
+                  className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
+                  data-testid="button-account"
+                >
+                  <div className="flex items-center gap-3">
+                    <SettingsIcon className="w-5 h-5 text-muted-foreground" />
+                    <div className="text-left">
+                      <p className="font-medium text-foreground">Account</p>
+                      <p className="text-xs text-muted-foreground">Change your account settings</p>
+                    </div>
                   </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
+                  <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${accountExpanded ? 'rotate-90' : ''}`} />
+                </button>
+                
+                {accountExpanded && (
+                  <div className="pl-11 pr-3 py-2 space-y-2">
+                    <button
+                      onClick={handleResetPOH}
+                      className="w-full text-left p-3 rounded-lg hover-elevate active-elevate-2 border border-red-200 dark:border-red-800/30"
+                      data-testid="button-reset-poh"
+                    >
+                      <p className="font-medium text-red-600 dark:text-red-400">Reset Project of Heart</p>
+                      <p className="text-xs text-muted-foreground mt-1">Clear all POH progress (for demonstration)</p>
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <button
                 className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
