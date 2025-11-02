@@ -142,10 +142,45 @@ Preferred communication style: Simple, everyday language.
 - **@replit/vite-plugin-cartographer**: Code exploration tool
 - **@replit/vite-plugin-dev-banner**: Development mode banner
 
+### Audio System
+
+**Audio Library** (`client/src/lib/audioLibrary.ts`): Centralized audio metadata management with three collections:
+- **Practices**: Audio files for meditation practices (Vibration Elevation, Neurolinking, Wealth Code Activations 1 & 2)
+- **Affirmations**: Guided breathwork audio (Memory Development Breath)
+- **Journaling Audios**: Background music for meditation journaling (Deep Theta Music)
+- Helper function `findAudioByTitle()` searches across all collections for audio file matching
+
+**AudioPlayer Component** (`client/src/components/AudioPlayer.tsx`): Reusable HTML5 audio player with:
+- Play/pause round button with visual feedback
+- Seekable progress bar with gradient fill
+- Time display (current time / total duration)
+- Playback speed controls (1x, 1.25x, 1.5x, 2x) via dropdown Select
+- Two modes:
+  - `basic`: Simple playback, no progress tracking
+  - `playlist`: Calls `/api/track-progress` at 90% completion (when backend is ready)
+- External control props:
+  - `isActive`: Allows parent to pause player when another starts
+  - `onPlay`: Callback when playback starts
+  - `onEnded`: Callback when audio finishes (enables sequential playback)
+  - `autoPlay`: Auto-loads and plays when src changes
+
+**Audio Integration Points**:
+- **ProcessesPage**: Practice cards display AudioPlayer in Audio tab when audio file exists
+- **SpiritualBreathsPage**: Guided affirmation section uses AudioPlayer for Memory Development Breath
+- **MyPracticePlaylistPage**: Sequential playlist playback with single AudioPlayer that auto-advances through tracks
+- **MusicJournalingPage**: Each journaling track has full-featured AudioPlayer, only one plays at a time
+
+**Technical Pattern**: 
+- AudioPlayer uses HTML5 `<audio>` element, no external media libraries
+- Parent components control playback via `isActive` prop to ensure single-player-at-a-time behavior
+- Playlist mode supports auto-advance via `onEnded` callback and `autoPlay` prop
+- Currently playing track highlighted in UI with primary color styling
+
 ### Future Integration Points
 
 Based on attached design documents and feature requests:
 - **Zoom API**: For joining live masterclass sessions (links present, integration not implemented)
 - **Push Notifications**: For practice reminders (UI exists but notification system not implemented)
-- **Video/Audio Streaming**: Embedded players for practice content (placeholders exist)
+- **Backend Progress Tracking**: `/api/track-progress` endpoint for AudioPlayer playlist mode
+- **Expanded Audio Library**: Add more practice audio files, affirmations, and journaling tracks as assets become available
 - **AI Insights**: Mentioned in UI with "unlocks in 7 days" - planned feature not implemented
