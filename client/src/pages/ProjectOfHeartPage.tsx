@@ -1,13 +1,33 @@
 import { useState, useEffect } from "react";
-import { Heart, Target, Sparkles, Upload, Calendar, Star, Award, CheckCircle2 } from "lucide-react";
+import {
+  Heart,
+  Target,
+  Sparkles,
+  Upload,
+  Calendar,
+  Star,
+  Award,
+  CheckCircle2,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 interface Vision {
@@ -54,7 +74,7 @@ const SELF_EVALUATION_QUESTIONS = [
   "What results did I get?",
   "What are my learnings?",
   "What are my wins?",
-  "What have I achieved?"
+  "What have I achieved?",
 ];
 
 export default function ProjectOfHeartPage() {
@@ -64,7 +84,7 @@ export default function ProjectOfHeartPage() {
     vision: null,
     cycles: {},
     stars: 0,
-    selfEvaluation: null
+    selfEvaluation: null,
   });
 
   // Vision state
@@ -78,18 +98,21 @@ export default function ProjectOfHeartPage() {
     actions: "",
     learnings: "",
     wins: "",
-    nextStep: ""
+    nextStep: "",
   });
 
   // Self Evaluation state
   const [showEvalDialog, setShowEvalDialog] = useState(false);
-  const [evalForm, setEvalForm] = useState<{[key: string]: string}>({});
+  const [evalForm, setEvalForm] = useState<{ [key: string]: string }>({});
 
   // Journey Action state
   const [showJourneyModal, setShowJourneyModal] = useState(false);
-  const [showCongratulationsPopup, setShowCongratulationsPopup] = useState(false);
+  const [showCongratulationsPopup, setShowCongratulationsPopup] =
+    useState(false);
   const [weeklyAction, setWeeklyAction] = useState("");
-  const [savedWeeklyAction, setSavedWeeklyAction] = useState<string | null>(null);
+  const [savedWeeklyAction, setSavedWeeklyAction] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const saved = localStorage.getItem("@app:poh_data");
@@ -117,7 +140,7 @@ export default function ProjectOfHeartPage() {
       toast({
         title: "Please complete all fields",
         description: "Both title and description are required",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -125,27 +148,27 @@ export default function ProjectOfHeartPage() {
     const vision: Vision = {
       title: visionForm.title,
       description: visionForm.description,
-      createdDate: new Date().toISOString().split('T')[0]
+      createdDate: new Date().toISOString().split("T")[0],
     };
 
     const newStars = pohData.vision ? pohData.stars : pohData.stars + 1;
-    
+
     savePOHData({
       ...pohData,
       vision,
-      stars: newStars
+      stars: newStars,
     });
 
     if (!pohData.vision) {
       toast({
         title: "Vision Set! ⭐",
         description: "Your heart's vision is the seed of transformation.",
-        className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]"
+        className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]",
       });
     } else {
       toast({
         title: "Vision Updated",
-        description: "Your vision has been updated successfully."
+        description: "Your vision has been updated successfully.",
       });
     }
 
@@ -153,68 +176,75 @@ export default function ProjectOfHeartPage() {
   };
 
   const handleSaveWeekReflection = () => {
-    if (!weekForm.actions.trim() || !weekForm.learnings.trim() || !weekForm.wins.trim()) {
+    if (
+      !weekForm.actions.trim() ||
+      !weekForm.learnings.trim() ||
+      !weekForm.wins.trim()
+    ) {
       toast({
         title: "Please complete all required fields",
         description: "Actions, learnings, and wins are required",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     const cycleKey = `cycle${selectedCycle}`;
     const weekKey = `week${selectedWeek}`;
-    
+
     const updatedCycles = {
       ...pohData.cycles,
       [cycleKey]: {
         weeks: {
           ...(pohData.cycles[cycleKey]?.weeks || {}),
-          [weekKey]: weekForm
+          [weekKey]: weekForm,
         },
-        completed: false
-      }
+        completed: false,
+      },
     };
 
     // Check if all 4 weeks are completed for this cycle
-    const allWeeksCompleted = [1, 2, 3, 4].every(w => 
-      updatedCycles[cycleKey]?.weeks[`week${w}`]
+    const allWeeksCompleted = [1, 2, 3, 4].every(
+      (w) => updatedCycles[cycleKey]?.weeks[`week${w}`],
     );
 
     let newStars = pohData.stars;
     if (allWeeksCompleted && !pohData.cycles[cycleKey]?.completed) {
       updatedCycles[cycleKey].completed = true;
       newStars += 2; // Award 2 stars for completing a cycle
-      
+
       toast({
         title: "Cycle Completed! 🌟🌟",
-        description: "Each week, your heart expands through awareness and action.",
-        className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]"
+        description:
+          "Each week, your heart expands through awareness and action.",
+        className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]",
       });
     } else {
       toast({
         title: "Reflection Saved 💚",
-        description: "Your weekly reflection has been saved."
+        description: "Your weekly reflection has been saved.",
       });
     }
 
     savePOHData({
       ...pohData,
       cycles: updatedCycles,
-      stars: newStars
+      stars: newStars,
     });
 
     setWeekForm({ actions: "", learnings: "", wins: "", nextStep: "" });
   };
 
   const handleSaveSelfEvaluation = () => {
-    const allAnswered = SELF_EVALUATION_QUESTIONS.every(q => evalForm[q]?.trim());
-    
+    const allAnswered = SELF_EVALUATION_QUESTIONS.every((q) =>
+      evalForm[q]?.trim(),
+    );
+
     if (!allAnswered) {
       toast({
         title: "Please answer all questions",
         description: "All fields are required for the self-evaluation",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -223,15 +253,17 @@ export default function ProjectOfHeartPage() {
       ...pohData,
       selfEvaluation: {
         completed: true,
-        responses: evalForm
+        responses: evalForm,
       },
-      stars: pohData.selfEvaluation?.completed ? pohData.stars : pohData.stars + 1
+      stars: pohData.selfEvaluation?.completed
+        ? pohData.stars
+        : pohData.stars + 1,
     });
 
     toast({
       title: "Reflection Complete 🌟",
       description: "You've earned a Golden Star for your introspection!",
-      className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]"
+      className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]",
     });
 
     setShowEvalDialog(false);
@@ -242,7 +274,7 @@ export default function ProjectOfHeartPage() {
       toast({
         title: "Please enter your action",
         description: "Describe what you'll do this week",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -273,54 +305,87 @@ export default function ProjectOfHeartPage() {
   const progressPercentage = (pohData.stars / 9) * 100;
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: "linear-gradient(to bottom right, #FDECEF, #F8E5E5, #E3F8E0)" }}>
+    <div
+      className="min-h-screen pb-20"
+      style={{
+        background:
+          "linear-gradient(to bottom right, #FDECEF, #F8E5E5, #E3F8E0)",
+      }}
+    >
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Header with Heart Chakra */}
         <div className="relative mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-1" style={{ color: "#3D3D3D", fontFamily: "Playfair Display, serif" }}>
+              <h1
+                className="text-3xl font-bold mb-1"
+                style={{
+                  color: "#3D3D3D",
+                  fontFamily: "Playfair Display, serif",
+                }}
+              >
                 Project of Heart
               </h1>
               <p className="text-sm" style={{ color: "#6B7280" }}>
                 Your heart's purpose, guided by love and discipline
               </p>
             </div>
-            
+
             {/* Heart Chakra Symbol */}
             <div className="relative group">
-              <div 
+              <div
                 className="w-16 h-16 rounded-full flex items-center justify-center animate-pulse"
-                style={{ background: "radial-gradient(circle, #A8E6CF 0%, transparent 70%)" }}
+                style={{
+                  background:
+                    "radial-gradient(circle, #A8E6CF 0%, transparent 70%)",
+                }}
               >
-                <Heart 
-                  className="w-10 h-10" 
-                  style={{ color: "#A8E6CF" }} 
+                <Heart
+                  className="w-10 h-10"
+                  style={{ color: "#A8E6CF" }}
                   fill="currentColor"
                   data-testid="heart-chakra"
                 />
               </div>
-              <div className="absolute hidden group-hover:block top-full right-0 mt-2 w-56 p-3 rounded-lg shadow-lg text-xs" style={{ backgroundColor: "#FFFFFF", color: "#3D3D3D" }}>
+              <div
+                className="absolute hidden group-hover:block top-full right-0 mt-2 w-56 p-3 rounded-lg shadow-lg text-xs"
+                style={{ backgroundColor: "#FFFFFF", color: "#3D3D3D" }}
+              >
                 <p className="font-semibold mb-1">Heart Chakra – Anahata 💚</p>
-                <p className="text-xs opacity-80">Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between physical and spiritual growth.</p>
+                <p className="text-xs opacity-80">
+                  Center of Love, Balance, and Purpose. Your Project of Heart
+                  aligns with the bridge between physical and spiritual growth.
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Star Progress */}
-        <Card className="mb-3 p-4 shadow-md shadow-rose-200" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "1rem" }}>
+        <Card
+          className="mb-3 p-4 shadow-md shadow-rose-200"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            borderRadius: "1rem",
+          }}
+        >
           <div className="flex items-center justify-between mb-2">
             <div>
-              <p className="text-sm font-medium" style={{ color: "#6B7280" }}>Your Growth</p>
-              <p className="text-2xl font-bold" style={{ color: "#3D3D3D" }} data-testid="text-stars-count">
+              <p className="text-sm font-medium" style={{ color: "#6B7280" }}>
+                Your Growth
+              </p>
+              <p
+                className="text-2xl font-bold"
+                style={{ color: "#3D3D3D" }}
+                data-testid="text-stars-count"
+              >
                 {pohData.stars} Stars ✨
               </p>
               <p className="text-xs mt-1" style={{ color: "#9CA3AF" }}>
                 Keep glowing, Champion!
               </p>
             </div>
-            
+
             {/* Circular Progress */}
             <div className="relative w-24 h-24">
               <svg className="w-24 h-24 transform -rotate-90">
@@ -347,7 +412,11 @@ export default function ProjectOfHeartPage() {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <Star className="w-8 h-8" style={{ color: "#FDE68A" }} fill="currentColor" />
+                <Star
+                  className="w-8 h-8"
+                  style={{ color: "#FDE68A" }}
+                  fill="currentColor"
+                />
               </div>
             </div>
           </div>
@@ -355,23 +424,43 @@ export default function ProjectOfHeartPage() {
           {/* Star Milestones */}
           <div className="space-y-1 text-xs" style={{ color: "#6B7280" }}>
             <div className="flex items-center gap-2">
-              {pohData.vision ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <div className="w-4 h-4 rounded-full border border-gray-300" />}
+              {pohData.vision ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <div className="w-4 h-4 rounded-full border border-gray-300" />
+              )}
               <span>Set POH → ⭐</span>
             </div>
             <div className="flex items-center gap-2">
-              {pohData.cycles.cycle1?.completed ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <div className="w-4 h-4 rounded-full border border-gray-300" />}
+              {pohData.cycles.cycle1?.completed ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <div className="w-4 h-4 rounded-full border border-gray-300" />
+              )}
               <span>Complete Cycle 1 → ⭐⭐</span>
             </div>
             <div className="flex items-center gap-2">
-              {pohData.cycles.cycle2?.completed ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <div className="w-4 h-4 rounded-full border border-gray-300" />}
+              {pohData.cycles.cycle2?.completed ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <div className="w-4 h-4 rounded-full border border-gray-300" />
+              )}
               <span>Complete Cycle 2 → ⭐⭐</span>
             </div>
             <div className="flex items-center gap-2">
-              {pohData.cycles.cycle3?.completed ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <div className="w-4 h-4 rounded-full border border-gray-300" />}
+              {pohData.cycles.cycle3?.completed ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <div className="w-4 h-4 rounded-full border border-gray-300" />
+              )}
               <span>Complete Cycle 3 → ⭐⭐</span>
             </div>
             <div className="flex items-center gap-2">
-              {pohData.selfEvaluation?.completed ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <div className="w-4 h-4 rounded-full border border-gray-300" />}
+              {pohData.selfEvaluation?.completed ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <div className="w-4 h-4 rounded-full border border-gray-300" />
+              )}
               <span>Self-Evaluation → 🏅 Golden Star</span>
             </div>
           </div>
@@ -380,29 +469,60 @@ export default function ProjectOfHeartPage() {
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 mb-3">
-            <TabsTrigger value="vision" data-testid="tab-vision">Vision</TabsTrigger>
-            <TabsTrigger value="journey" data-testid="tab-journey">Journey</TabsTrigger>
-            <TabsTrigger value="reflect" data-testid="tab-reflect">Reflect</TabsTrigger>
+            <TabsTrigger value="vision" data-testid="tab-vision">
+              Vision
+            </TabsTrigger>
+            <TabsTrigger value="journey" data-testid="tab-journey">
+              Journey
+            </TabsTrigger>
+            <TabsTrigger value="reflect" data-testid="tab-reflect">
+              Reflect
+            </TabsTrigger>
           </TabsList>
 
           {/* Vision Board Tab */}
           <TabsContent value="vision">
-            <Card className="p-6 shadow-md shadow-rose-200" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "1rem" }}>
+            <Card
+              className="p-6 shadow-md shadow-rose-200"
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                borderRadius: "1rem",
+              }}
+            >
               {!pohData.vision ? (
                 <div className="text-center py-8">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #F9C5BD, #A8E6CF)" }}>
-                    <Heart className="w-10 h-10 text-white" fill="currentColor" />
+                  <div
+                    className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg, #F9C5BD, #A8E6CF)",
+                    }}
+                  >
+                    <Heart
+                      className="w-10 h-10 text-white"
+                      fill="currentColor"
+                    />
                   </div>
-                  <h3 className="text-xl font-semibold mb-2" style={{ color: "#3D3D3D", fontFamily: "Playfair Display, serif" }}>
+                  <h3
+                    className="text-xl font-semibold mb-2"
+                    style={{
+                      color: "#3D3D3D",
+                      fontFamily: "Playfair Display, serif",
+                    }}
+                  >
                     Define Your Heart's Purpose
                   </h3>
                   <p className="text-sm mb-6" style={{ color: "#6B7280" }}>
-                    A serene, heart-centered space to define your Project of Heart
+                    A serene, heart-centered space to define your Project of
+                    Heart
                   </p>
                   <Button
                     onClick={() => setShowVisionDialog(true)}
                     className="font-semibold"
-                    style={{ background: "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)", color: "#3D3D3D" }}
+                    style={{
+                      background:
+                        "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
+                      color: "#3D3D3D",
+                    }}
                     data-testid="button-set-vision"
                   >
                     Set Your Vision
@@ -412,8 +532,18 @@ export default function ProjectOfHeartPage() {
                 <div>
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <Heart className="w-6 h-6" style={{ color: "#F9C5BD" }} fill="currentColor" />
-                      <h3 className="text-xl font-semibold" style={{ color: "#3D3D3D", fontFamily: "Playfair Display, serif" }}>
+                      <Heart
+                        className="w-6 h-6"
+                        style={{ color: "#F9C5BD" }}
+                        fill="currentColor"
+                      />
+                      <h3
+                        className="text-xl font-semibold"
+                        style={{
+                          color: "#3D3D3D",
+                          fontFamily: "Playfair Display, serif",
+                        }}
+                      >
                         Your Vision
                       </h3>
                     </div>
@@ -421,7 +551,10 @@ export default function ProjectOfHeartPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setVisionForm({ title: pohData.vision!.title, description: pohData.vision!.description });
+                        setVisionForm({
+                          title: pohData.vision!.title,
+                          description: pohData.vision!.description,
+                        });
                         setShowVisionDialog(true);
                       }}
                       data-testid="button-edit-vision"
@@ -429,10 +562,25 @@ export default function ProjectOfHeartPage() {
                       Edit
                     </Button>
                   </div>
-                  
-                  <div className="p-4 rounded-lg mb-4" style={{ backgroundColor: "#FDECEF" }}>
-                    <p className="font-semibold mb-2" style={{ color: "#3D3D3D" }} data-testid="text-vision-title">{pohData.vision.title}</p>
-                    <p className="text-sm" style={{ color: "#6B7280" }} data-testid="text-vision-description">{pohData.vision.description}</p>
+
+                  <div
+                    className="p-4 rounded-lg mb-4"
+                    style={{ backgroundColor: "#FDECEF" }}
+                  >
+                    <p
+                      className="font-semibold mb-2"
+                      style={{ color: "#3D3D3D" }}
+                      data-testid="text-vision-title"
+                    >
+                      {pohData.vision.title}
+                    </p>
+                    <p
+                      className="text-sm"
+                      style={{ color: "#6B7280" }}
+                      data-testid="text-vision-description"
+                    >
+                      {pohData.vision.description}
+                    </p>
                   </div>
 
                   {/* Image Gallery - Vision Board Style */}
@@ -440,30 +588,39 @@ export default function ProjectOfHeartPage() {
                     <div className="flex space-x-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 py-2">
                       <div
                         className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg bg-cover bg-center snap-start"
-                        style={{ backgroundImage: `url('/Screenshot%202025-10-30%20at%204.06.13%20AM_1761778091076.png')` }}
+                        style={{ backgroundImage: "url('/Vision1.png')" }}
                         data-testid="image-vision-1"
                       />
                       <div
                         className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg bg-cover bg-center snap-start"
-                        style={{ backgroundImage: `url('/Screenshot%202025-10-30%20at%204.07.26%20AM_1761778091076.png')` }}
+                        style={{ backgroundImage: "url('/Vision2.png')" }}
                         data-testid="image-vision-2"
                       />
                       <div
                         className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg bg-cover bg-center snap-start"
-                        style={{ backgroundImage: `url('/Screenshot%202025-10-30%20at%204.11.04%20AM_1761778091077.png')` }}
+                        style={{ backgroundImage: "url('/Vision3.png')" }}
                         data-testid="image-vision-3"
                       />
                       <div
                         className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg flex items-center justify-center snap-start"
-                        style={{ background: "linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)" }}
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)",
+                        }}
                         data-testid="image-placeholder-4"
                       >
-                        <Upload className="w-12 h-12 opacity-40" style={{ color: "#9CA3AF" }} />
+                        <Upload
+                          className="w-12 h-12 opacity-40"
+                          style={{ color: "#9CA3AF" }}
+                        />
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-lg text-center italic" style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}>
+                  <div
+                    className="p-4 rounded-lg text-center italic"
+                    style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}
+                  >
                     <p className="text-sm">
                       "Your heart's vision is the seed of transformation."
                     </p>
@@ -480,10 +637,11 @@ export default function ProjectOfHeartPage() {
               <Button
                 onClick={() => setShowJourneyModal(true)}
                 className="w-full h-24 mb-4 text-lg font-bold shadow-md shadow-rose-200"
-                style={{ 
-                  background: "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)", 
+                style={{
+                  background:
+                    "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
                   color: "#3D3D3D",
-                  borderRadius: "1rem"
+                  borderRadius: "1rem",
                 }}
                 data-testid="button-start-journey"
               >
@@ -491,14 +649,21 @@ export default function ProjectOfHeartPage() {
                 Start Your Journey
               </Button>
             ) : (
-              <Card className="p-6 shadow-md shadow-rose-200 mb-4" style={{ 
-                background: "linear-gradient(135deg, #FDECEF 0%, #F8E5E5 50%, #E3F8E0 100%)",
-                borderRadius: "1rem" 
-              }}>
+              <Card
+                className="p-6 shadow-md shadow-rose-200 mb-4"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #FDECEF 0%, #F8E5E5 50%, #E3F8E0 100%)",
+                  borderRadius: "1rem",
+                }}
+              >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Target className="w-6 h-6" style={{ color: "#A8E6CF" }} />
-                    <h3 className="text-lg font-semibold" style={{ color: "#3D3D3D" }}>
+                    <h3
+                      className="text-lg font-semibold"
+                      style={{ color: "#3D3D3D" }}
+                    >
                       This Week's Action
                     </h3>
                   </div>
@@ -514,20 +679,42 @@ export default function ProjectOfHeartPage() {
                     Edit
                   </Button>
                 </div>
-                <div className="p-4 rounded-lg" style={{ backgroundColor: "rgba(255, 255, 255, 0.6)" }}>
-                  <p className="text-base" style={{ color: "#3D3D3D" }} data-testid="text-weekly-action">
+                <div
+                  className="p-4 rounded-lg"
+                  style={{ backgroundColor: "rgba(255, 255, 255, 0.6)" }}
+                >
+                  <p
+                    className="text-base"
+                    style={{ color: "#3D3D3D" }}
+                    data-testid="text-weekly-action"
+                  >
                     {savedWeeklyAction}
                   </p>
                 </div>
-                <p className="text-xs mt-3 text-center" style={{ color: "#6B7280" }}>
+                <p
+                  className="text-xs mt-3 text-center"
+                  style={{ color: "#6B7280" }}
+                >
                   Choose yourself, every single day.
                 </p>
               </Card>
             )}
 
-            <Card className="p-6 shadow-md shadow-rose-200" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "1rem" }}>
+            <Card
+              className="p-6 shadow-md shadow-rose-200"
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                borderRadius: "1rem",
+              }}
+            >
               <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-2" style={{ color: "#3D3D3D", fontFamily: "Playfair Display, serif" }}>
+                <h3
+                  className="text-xl font-semibold mb-2"
+                  style={{
+                    color: "#3D3D3D",
+                    fontFamily: "Playfair Display, serif",
+                  }}
+                >
                   Cycles of Growth
                 </h3>
                 <p className="text-sm mb-4" style={{ color: "#6B7280" }}>
@@ -536,8 +723,13 @@ export default function ProjectOfHeartPage() {
 
                 <div className="grid grid-cols-2 gap-3 mb-6">
                   <div>
-                    <Label className="text-xs" style={{ color: "#6B7280" }}>Cycle</Label>
-                    <Select value={String(selectedCycle)} onValueChange={(v) => setSelectedCycle(parseInt(v))}>
+                    <Label className="text-xs" style={{ color: "#6B7280" }}>
+                      Cycle
+                    </Label>
+                    <Select
+                      value={String(selectedCycle)}
+                      onValueChange={(v) => setSelectedCycle(parseInt(v))}
+                    >
                       <SelectTrigger data-testid="select-cycle">
                         <SelectValue />
                       </SelectTrigger>
@@ -549,8 +741,13 @@ export default function ProjectOfHeartPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs" style={{ color: "#6B7280" }}>Week</Label>
-                    <Select value={String(selectedWeek)} onValueChange={(v) => setSelectedWeek(parseInt(v))}>
+                    <Label className="text-xs" style={{ color: "#6B7280" }}>
+                      Week
+                    </Label>
+                    <Select
+                      value={String(selectedWeek)}
+                      onValueChange={(v) => setSelectedWeek(parseInt(v))}
+                    >
                       <SelectTrigger data-testid="select-week">
                         <SelectValue />
                       </SelectTrigger>
@@ -566,11 +763,19 @@ export default function ProjectOfHeartPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="actions" className="text-xs" style={{ color: "#6B7280" }}>Actions Taken *</Label>
+                    <Label
+                      htmlFor="actions"
+                      className="text-xs"
+                      style={{ color: "#6B7280" }}
+                    >
+                      Actions Taken *
+                    </Label>
                     <Textarea
                       id="actions"
                       value={weekForm.actions}
-                      onChange={(e) => setWeekForm({ ...weekForm, actions: e.target.value })}
+                      onChange={(e) =>
+                        setWeekForm({ ...weekForm, actions: e.target.value })
+                      }
                       placeholder="What actions did you take this week?"
                       className="mt-1"
                       rows={3}
@@ -579,11 +784,19 @@ export default function ProjectOfHeartPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="learnings" className="text-xs" style={{ color: "#6B7280" }}>Learnings *</Label>
+                    <Label
+                      htmlFor="learnings"
+                      className="text-xs"
+                      style={{ color: "#6B7280" }}
+                    >
+                      Learnings *
+                    </Label>
                     <Textarea
                       id="learnings"
                       value={weekForm.learnings}
-                      onChange={(e) => setWeekForm({ ...weekForm, learnings: e.target.value })}
+                      onChange={(e) =>
+                        setWeekForm({ ...weekForm, learnings: e.target.value })
+                      }
                       placeholder="What did you learn?"
                       className="mt-1"
                       rows={3}
@@ -592,11 +805,19 @@ export default function ProjectOfHeartPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="wins" className="text-xs" style={{ color: "#6B7280" }}>Wins *</Label>
+                    <Label
+                      htmlFor="wins"
+                      className="text-xs"
+                      style={{ color: "#6B7280" }}
+                    >
+                      Wins *
+                    </Label>
                     <Textarea
                       id="wins"
                       value={weekForm.wins}
-                      onChange={(e) => setWeekForm({ ...weekForm, wins: e.target.value })}
+                      onChange={(e) =>
+                        setWeekForm({ ...weekForm, wins: e.target.value })
+                      }
                       placeholder="What were your wins?"
                       className="mt-1"
                       rows={3}
@@ -605,11 +826,19 @@ export default function ProjectOfHeartPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="nextStep" className="text-xs" style={{ color: "#6B7280" }}>Next Step (Optional)</Label>
+                    <Label
+                      htmlFor="nextStep"
+                      className="text-xs"
+                      style={{ color: "#6B7280" }}
+                    >
+                      Next Step (Optional)
+                    </Label>
                     <Textarea
                       id="nextStep"
                       value={weekForm.nextStep}
-                      onChange={(e) => setWeekForm({ ...weekForm, nextStep: e.target.value })}
+                      onChange={(e) =>
+                        setWeekForm({ ...weekForm, nextStep: e.target.value })
+                      }
                       placeholder="What's your next step?"
                       className="mt-1"
                       rows={2}
@@ -620,14 +849,21 @@ export default function ProjectOfHeartPage() {
                   <Button
                     onClick={handleSaveWeekReflection}
                     className="w-full font-semibold"
-                    style={{ background: "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)", color: "#3D3D3D" }}
+                    style={{
+                      background:
+                        "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
+                      color: "#3D3D3D",
+                    }}
                     data-testid="button-save-week"
                   >
                     Save Reflection
                   </Button>
                 </div>
 
-                <div className="mt-6 p-3 rounded-lg text-center" style={{ backgroundColor: "#F0F9FF" }}>
+                <div
+                  className="mt-6 p-3 rounded-lg text-center"
+                  style={{ backgroundColor: "#F0F9FF" }}
+                >
                   <p className="text-xs" style={{ color: "#6B7280" }}>
                     💚 Reflect with your heart every Sunday
                   </p>
@@ -638,12 +874,29 @@ export default function ProjectOfHeartPage() {
 
           {/* Self Evaluation Tab */}
           <TabsContent value="reflect">
-            <Card className="p-6 shadow-md shadow-rose-200" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "1rem" }}>
+            <Card
+              className="p-6 shadow-md shadow-rose-200"
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                borderRadius: "1rem",
+              }}
+            >
               <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #FDE68A, #F9C5BD)" }}>
+                <div
+                  className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "linear-gradient(135deg, #FDE68A, #F9C5BD)",
+                  }}
+                >
                   <Award className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2" style={{ color: "#3D3D3D", fontFamily: "Playfair Display, serif" }}>
+                <h3
+                  className="text-xl font-semibold mb-2"
+                  style={{
+                    color: "#3D3D3D",
+                    fontFamily: "Playfair Display, serif",
+                  }}
+                >
                   Self-Evaluation
                 </h3>
                 <p className="text-sm mb-6" style={{ color: "#6B7280" }}>
@@ -651,9 +904,17 @@ export default function ProjectOfHeartPage() {
                 </p>
 
                 {pohData.selfEvaluation?.completed ? (
-                  <div className="p-4 rounded-lg" style={{ backgroundColor: "#F0FDF4" }}>
+                  <div
+                    className="p-4 rounded-lg"
+                    style={{ backgroundColor: "#F0FDF4" }}
+                  >
                     <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
-                    <p className="font-semibold mb-1" style={{ color: "#3D3D3D" }}>Reflection Complete!</p>
+                    <p
+                      className="font-semibold mb-1"
+                      style={{ color: "#3D3D3D" }}
+                    >
+                      Reflection Complete!
+                    </p>
                     <p className="text-sm" style={{ color: "#6B7280" }}>
                       You've earned a Golden Star 🏅
                     </p>
@@ -665,16 +926,24 @@ export default function ProjectOfHeartPage() {
                       setShowEvalDialog(true);
                     }}
                     className="font-semibold"
-                    style={{ background: "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)", color: "#3D3D3D" }}
+                    style={{
+                      background:
+                        "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
+                      color: "#3D3D3D",
+                    }}
                     data-testid="button-start-evaluation"
                   >
                     Begin Self-Evaluation
                   </Button>
                 )}
 
-                <div className="mt-6 p-4 rounded-lg italic text-center" style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}>
+                <div
+                  className="mt-6 p-4 rounded-lg italic text-center"
+                  style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}
+                >
                   <p className="text-xs leading-relaxed">
-                    "When we start, we are one person; months later, we are someone new. Reflection opens new doors and visions."
+                    "When we start, we are one person; months later, we are
+                    someone new. Reflection opens new doors and visions."
                   </p>
                 </div>
               </div>
@@ -685,8 +954,12 @@ export default function ProjectOfHeartPage() {
         {/* Background Affirmations */}
         <div className="fixed bottom-32 left-0 right-0 pointer-events-none">
           <div className="max-w-md mx-auto px-4">
-            <p className="text-center text-xs opacity-20 animate-pulse" style={{ color: "#3D3D3D" }}>
-              You are becoming your vision • Act from your heart • Love is your superpower
+            <p
+              className="text-center text-xs opacity-20 animate-pulse"
+              style={{ color: "#3D3D3D" }}
+            >
+              You are becoming your vision • Act from your heart • Love is your
+              superpower
             </p>
           </div>
         </div>
@@ -702,22 +975,30 @@ export default function ProjectOfHeartPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="vision-title">What is your Project of Heart? *</Label>
+              <Label htmlFor="vision-title">
+                What is your Project of Heart? *
+              </Label>
               <Input
                 id="vision-title"
                 value={visionForm.title}
-                onChange={(e) => setVisionForm({ ...visionForm, title: e.target.value })}
+                onChange={(e) =>
+                  setVisionForm({ ...visionForm, title: e.target.value })
+                }
                 placeholder="e.g., Launch my wellness coaching business"
                 className="mt-2"
                 data-testid="input-vision-title"
               />
             </div>
             <div>
-              <Label htmlFor="vision-description">Why does this matter to you? *</Label>
+              <Label htmlFor="vision-description">
+                Why does this matter to you? *
+              </Label>
               <Textarea
                 id="vision-description"
                 value={visionForm.description}
-                onChange={(e) => setVisionForm({ ...visionForm, description: e.target.value })}
+                onChange={(e) =>
+                  setVisionForm({ ...visionForm, description: e.target.value })
+                }
                 placeholder="Describe your deeper purpose..."
                 className="mt-2"
                 rows={4}
@@ -727,7 +1008,11 @@ export default function ProjectOfHeartPage() {
             <Button
               onClick={handleSetVision}
               className="w-full font-semibold"
-              style={{ background: "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)", color: "#3D3D3D" }}
+              style={{
+                background:
+                  "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
+                color: "#3D3D3D",
+              }}
               data-testid="button-save-vision"
             >
               {pohData.vision ? "Update Vision" : "Set Vision & Earn ⭐"}
@@ -738,7 +1023,10 @@ export default function ProjectOfHeartPage() {
 
       {/* Self Evaluation Dialog */}
       <Dialog open={showEvalDialog} onOpenChange={setShowEvalDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" style={{ backgroundColor: "#FFFDF8" }}>
+        <DialogContent
+          className="max-w-2xl max-h-[80vh] overflow-y-auto"
+          style={{ backgroundColor: "#FFFDF8" }}
+        >
           <DialogHeader>
             <DialogTitle style={{ fontFamily: "Playfair Display, serif" }}>
               Self-Evaluation 🪞
@@ -747,12 +1035,17 @@ export default function ProjectOfHeartPage() {
           <div className="space-y-4">
             {SELF_EVALUATION_QUESTIONS.map((question, index) => (
               <div key={index}>
-                <Label className="text-sm font-medium" style={{ color: "#3D3D3D" }}>
+                <Label
+                  className="text-sm font-medium"
+                  style={{ color: "#3D3D3D" }}
+                >
                   {index + 1}. {question}
                 </Label>
                 <Textarea
                   value={evalForm[question] || ""}
-                  onChange={(e) => setEvalForm({ ...evalForm, [question]: e.target.value })}
+                  onChange={(e) =>
+                    setEvalForm({ ...evalForm, [question]: e.target.value })
+                  }
                   placeholder="Your reflection..."
                   className="mt-2"
                   rows={3}
@@ -763,7 +1056,11 @@ export default function ProjectOfHeartPage() {
             <Button
               onClick={handleSaveSelfEvaluation}
               className="w-full font-semibold"
-              style={{ background: "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)", color: "#3D3D3D" }}
+              style={{
+                background:
+                  "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
+                color: "#3D3D3D",
+              }}
               data-testid="button-save-evaluation"
             >
               Complete Reflection & Earn 🏅
@@ -776,13 +1073,22 @@ export default function ProjectOfHeartPage() {
       <Dialog open={showJourneyModal} onOpenChange={setShowJourneyModal}>
         <DialogContent style={{ backgroundColor: "#FFFDF8" }}>
           <DialogHeader>
-            <DialogTitle style={{ fontFamily: "Playfair Display, serif", color: "#3D3D3D" }}>
+            <DialogTitle
+              style={{
+                fontFamily: "Playfair Display, serif",
+                color: "#3D3D3D",
+              }}
+            >
               Your Weekly Commitment
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="weekly-action" className="text-base font-medium" style={{ color: "#3D3D3D" }}>
+              <Label
+                htmlFor="weekly-action"
+                className="text-base font-medium"
+                style={{ color: "#3D3D3D" }}
+              >
                 What actions will you take this week toward your vision?
               </Label>
               <Textarea
@@ -798,7 +1104,11 @@ export default function ProjectOfHeartPage() {
             <Button
               onClick={handleSubmitWeeklyAction}
               className="w-full font-semibold"
-              style={{ background: "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)", color: "#3D3D3D" }}
+              style={{
+                background:
+                  "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
+                color: "#3D3D3D",
+              }}
               data-testid="button-submit-action"
             >
               Commit to Action
@@ -808,17 +1118,32 @@ export default function ProjectOfHeartPage() {
       </Dialog>
 
       {/* Congratulations Popup */}
-      <Dialog open={showCongratulationsPopup} onOpenChange={setShowCongratulationsPopup}>
-        <DialogContent className="text-center" style={{ 
-          background: "linear-gradient(135deg, #FAD0C4 0%, #FFD1BA 50%, #A8E6CF 100%)",
-          border: "none"
-        }}>
+      <Dialog
+        open={showCongratulationsPopup}
+        onOpenChange={setShowCongratulationsPopup}
+      >
+        <DialogContent
+          className="text-center"
+          style={{
+            background:
+              "linear-gradient(135deg, #FAD0C4 0%, #FFD1BA 50%, #A8E6CF 100%)",
+            border: "none",
+          }}
+        >
           <div className="py-6">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center animate-pulse" 
-              style={{ background: "rgba(255, 255, 255, 0.4)" }}>
+            <div
+              className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center animate-pulse"
+              style={{ background: "rgba(255, 255, 255, 0.4)" }}
+            >
               <Award className="w-12 h-12" style={{ color: "#3D3D3D" }} />
             </div>
-            <h2 className="text-2xl font-bold mb-3" style={{ color: "#3D3D3D", fontFamily: "Playfair Display, serif" }}>
+            <h2
+              className="text-2xl font-bold mb-3"
+              style={{
+                color: "#3D3D3D",
+                fontFamily: "Playfair Display, serif",
+              }}
+            >
               Congratulation Champion!
             </h2>
             <p className="text-lg" style={{ color: "#3D3D3D" }}>

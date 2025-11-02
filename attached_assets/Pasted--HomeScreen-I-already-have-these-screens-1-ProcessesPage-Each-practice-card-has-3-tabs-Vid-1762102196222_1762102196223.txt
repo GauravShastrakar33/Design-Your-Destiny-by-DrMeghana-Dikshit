@@ -1,0 +1,104 @@
+### HomeScreen
+
+I already have these screens:
+
+1. ProcessesPage → Each practice card has 3 tabs: Video | Audio | Script.
+   - Under Audio tab, I want to replace the gray placeholder with a real audio player.
+   - Audio files come from this audioLibrary.js:
+
+export const audioLibrary = {
+  practices: [
+    { id: 2, title: "Vibration Elevation", file: "/audios/VibrationElevation.mp3" },
+    { id: 3, title: "Neurolinking", file: "/audios/Neurolinking.mp3" },
+    { id: 10, title: "Wealth Code Activation 1", file: "/audios/WealthCodeActivation1.mp3" },
+    { id: 11, title: "Wealth Code Activation 2", file: "/audios/WealthCodeActivation2.mp3" },
+  ],
+  affirmations: [
+    { id: "aff1", title: "Memory Development Breath", file: "/audios/MemoryDevelopmentBreath.mp3" }
+  ],
+};
+
+2. SpiritualBreathsPage → Under “Guided Affirmation”, I want the same audio player.
+
+-----------------------------------------
+🎯 What I Need You To Build
+-----------------------------------------
+
+✅ Build a reusable <AudioPlayer /> React component with:
+- Props: src, title, mode ("basic" or "playlist"), userId?, audioId?, playlistId?
+- UI matching my design:
+   • Round play/pause button (same style as screenshot)
+   • Progress bar (thin line)
+   • Time display like `0:00 / 3:24`
+   • Dropdown or button for speed change → 1x, 1.25x, 1.5x, 2x
+- Use HTML5 <audio> internally, no external heavy audio libraries.
+- When mode="basic" → no progress tracking.
+- When mode="playlist" → if listener reaches 90%, call POST /api/track-progress.
+
+✅ Usage in ProcessesPage:
+   - Inside each practice card, under Audio Tab:
+     <AudioPlayer
+        src={audioLibrary.practices.find(p => p.id === practice.id)?.file}
+        title={practice.title}
+        mode="basic"
+     />
+
+✅ Usage in SpiritualBreathsPage (Guided Affirmation):
+   <AudioPlayer
+      src={audioLibrary.affirmations[0].file}
+      title="Memory Development Breath"
+      mode="basic"
+   />
+
+✅ (Later) In Custom Playlist Page:
+   <AudioPlayer
+      mode="playlist"
+      userId="123"
+      playlistId="myPlaylist1"
+      audioId={audio.id}
+      src={audio.file}
+   />
+
+-----------------------------------------
+📦 Output Required:
+-----------------------------------------
+1. ✅ AudioPlayer.tsx (React + Tailwind)
+2. ✅ Example integration in ProcessesPage (inside Audio Tab)
+3. ✅ Example integration in SpiritualBreathsPage (Guided Affirmation section)
+4. ✅ Add speed controls + working seek + duration
+
+Keep the code clean, modular, and responsive for mobile.
+
+### My Playlists
+
+I have this existing React component for displaying my saved custom playlists (MyPracticePlaylistPage). It currently shows only strings for each practice name in a playlist like "Vibration Elevation", "Neurolinking", etc.
+
+I also have an audioLibrary.js file:
+
+export const audioLibrary = {
+  practices: [
+    { id: 2, title: "Vibration Elevation", file: "/audios/VibrationElevation.mp3" },
+    { id: 3, title: "Neurolinking", file: "/audios/Neurolinking.mp3" },
+    { id: 10, title: "Wealth Code Activation 1", file: "/audios/WealthCodeActivation1.mp3" },
+    { id: 11, title: "Wealth Code Activation 2", file: "/audios/WealthCodeActivation2.mp3" },
+  ],
+  affirmations: [
+    { id: "aff1", title: "Memory Development Breath", file: "/audios/MemoryDevelopmentBreath.mp3" }
+  ],
+};
+
+I want you to modify MyPracticePlaylistPage so that:
+
+1. For each practice inside a playlist, check if it exists inside audioLibrary by matching the title.
+2. If an audio file exists, render an <AudioPlayer /> component under that item.
+3. The AudioPlayer should receive:
+   - src={audio.file}
+   - title={audio.title}
+   - mode="playlist" (we are not doing progress tracking yet)
+4. If no matching audio is found, just show the name as plain text like before.
+5. Do not remove existing functionality (delete, reminders, expand/collapse).
+6. Keep everything in functional React + TypeScript + Tailwind.
+
+Finally, ONLY modify the part inside:
+{playlist.practices.map(...)}
+to map names -> audioLibrary -> AudioPlayer.
