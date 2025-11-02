@@ -1,48 +1,15 @@
-import { ArrowLeft, Play, Pause } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
-
-const thetaMusic = [
-  {
-    id: 1,
-    title: "Deep Theta Music",
-    duration: "30:00",
-    description: "Perfect for deep relaxation and meditation",
-  },
-  {
-    id: 2,
-    title: "Theta Healing Waves",
-    duration: "25:00",
-    description: "Healing frequencies for emotional release",
-  },
-  {
-    id: 3,
-    title: "Creative Theta Flow",
-    duration: "20:00",
-    description: "Enhance creativity and inspiration",
-  },
-  {
-    id: 4,
-    title: "Sleep Inducing Theta",
-    duration: "45:00",
-    description: "Fall asleep naturally with theta waves",
-  },
-  {
-    id: 5,
-    title: "Morning Theta Boost",
-    duration: "15:00",
-    description: "Start your day with calm energy",
-  },
-];
+import { AudioPlayer } from "@/components/AudioPlayer";
+import { audioLibrary } from "@/lib/audioLibrary";
 
 export default function MusicJournalingPage() {
   const [, setLocation] = useLocation();
-  const [playingId, setPlayingId] = useState<number | null>(null);
+  const [currentTrackId, setCurrentTrackId] = useState<number | string | null>(null);
 
-  const togglePlay = (id: number) => {
-    setPlayingId(playingId === id ? null : id);
-  };
+  const tracks = audioLibrary.journalingAudios;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -68,49 +35,21 @@ export default function MusicJournalingPage() {
         </div>
 
         <div className="px-4 py-6 space-y-4">
-          {thetaMusic.map((audio) => (
+          {tracks.map((track) => (
             <Card
-              key={audio.id}
-              className="p-4"
-              data-testid={`audio-${audio.id}`}
+              key={track.id}
+              className="overflow-hidden"
+              data-testid={`audio-${track.id}`}
             >
-              <div className="flex items-start gap-4">
-                <button
-                  onClick={() => togglePlay(audio.id)}
-                  className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 hover-elevate active-elevate-2"
-                  data-testid={`button-play-${audio.id}`}
-                >
-                  {playingId === audio.id ? (
-                    <Pause
-                      className="w-6 h-6 text-primary"
-                      fill="currentColor"
-                    />
-                  ) : (
-                    <Play
-                      className="w-6 h-6 text-primary"
-                      fill="currentColor"
-                    />
-                  )}
-                </button>
-
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground mb-1">
-                    {audio.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {audio.description}
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground">
-                      {audio.duration}
-                    </span>
-                    {playingId === audio.id && (
-                      <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                        <div className="w-1/3 h-full bg-primary rounded-full animate-pulse" />
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="p-4">
+                <AudioPlayer
+                  src={track.file}
+                  title={track.title}
+                  mode="basic"
+                  isActive={currentTrackId === track.id}
+                  onPlay={() => setCurrentTrackId(track.id)}
+                  onEnded={() => setCurrentTrackId(null)}
+                />
               </div>
             </Card>
           ))}

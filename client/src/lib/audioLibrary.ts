@@ -20,6 +20,10 @@ export const audioLibrary = {
 };
 
 export function findAudioByTitle(title: string): AudioItem | undefined {
-  const allAudios = [...audioLibrary.practices, ...audioLibrary.affirmations];
+  const allAudios = [
+    ...audioLibrary.practices,
+    ...audioLibrary.affirmations,
+    ...audioLibrary.journalingAudios,
+  ];
   return allAudios.find(audio => audio.title === title);
 }
