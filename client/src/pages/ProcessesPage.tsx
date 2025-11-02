@@ -70,6 +70,7 @@ export default function ProcessesPage() {
               key={practice.id}
               title={practice.title}
               icon={practice.icon}
+              practiceId={practice.id}
               testId={`practice-${practice.title.toLowerCase().replace(/\s+/g, '-')}`}
             />
           ))}

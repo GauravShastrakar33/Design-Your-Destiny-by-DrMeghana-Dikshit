@@ -3,19 +3,26 @@ import { Card } from "@/components/ui/card";
 import { ChevronDown, ChevronUp, LucideIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SegmentedControl from "./SegmentedControl";
+import { AudioPlayer } from "./AudioPlayer";
+import { audioLibrary } from "@/lib/audioLibrary";
 
 interface PracticeCardProps {
   title: string;
   icon: LucideIcon;
+  practiceId?: number;
   videoUrl?: string;
   audioUrl?: string;
   script?: string;
   testId?: string;
 }
 
-export default function PracticeCard({ title, icon: Icon, videoUrl, audioUrl, script, testId }: PracticeCardProps) {
+export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, audioUrl, script, testId }: PracticeCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeFormat, setActiveFormat] = useState<"Video" | "Audio" | "Script">("Video");
+
+  const audioFile = practiceId 
+    ? audioLibrary.practices.find(p => p.id === practiceId)
+    : null;
 
   return (
     <Card className="overflow-hidden" data-testid={testId}>
@@ -63,19 +70,29 @@ export default function PracticeCard({ title, icon: Icon, videoUrl, audioUrl, sc
                 )}
 
                 {activeFormat === "Audio" && (
-                  <div className="bg-muted rounded-lg p-4 flex items-center gap-3" data-testid="audio-player">
-                    <button className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </button>
-                    <div className="flex-1">
-                      <div className="h-1.5 bg-background rounded-full overflow-hidden">
-                        <div className="h-full bg-primary w-1/3 rounded-full" />
+                  <>
+                    {audioFile ? (
+                      <AudioPlayer
+                        src={audioFile.file}
+                        title={title}
+                        mode="basic"
+                      />
+                    ) : (
+                      <div className="bg-muted rounded-lg p-4 flex items-center gap-3" data-testid="audio-placeholder">
+                        <button className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                          <svg className="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </button>
+                        <div className="flex-1">
+                          <div className="h-1.5 bg-background rounded-full overflow-hidden">
+                            <div className="h-full bg-primary w-1/3 rounded-full" />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">Audio coming soon</p>
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">2:34 / 7:45</p>
-                    </div>
-                  </div>
+                    )}
+                  </>
                 )}
 
                 {activeFormat === "Script" && (
