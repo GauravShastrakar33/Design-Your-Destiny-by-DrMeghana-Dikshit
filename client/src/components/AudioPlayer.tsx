@@ -16,6 +16,10 @@ interface AudioPlayerProps {
   userId?: string;
   audioId?: string | number;
   playlistId?: string;
+  isActive?: boolean;
+  onPlay?: () => void;
+  onEnded?: () => void;
+  autoPlay?: boolean;
 }
 
 export function AudioPlayer({
@@ -25,6 +29,10 @@ export function AudioPlayer({
   userId,
   audioId,
   playlistId,
+  isActive,
+  onPlay,
+  onEnded,
+  autoPlay = false,
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -39,7 +47,12 @@ export function AudioPlayer({
 
     const updateTime = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
-    const handleEnded = () => setIsPlaying(false);
+    const handleEnded = () => {
+      setIsPlaying(false);
+      if (onEnded) {
+        onEnded();
+      }
+    };
 
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("loadedmetadata", updateDuration);
@@ -50,7 +63,7 @@ export function AudioPlayer({
       audio.removeEventListener("loadedmetadata", updateDuration);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, []);
+  }, [onEnded]);
 
   useEffect(() => {
     if (mode === "playlist" && duration > 0 && !hasTracked90Percent) {
@@ -61,6 +74,29 @@ export function AudioPlayer({
       }
     }
   }, [currentTime, duration, mode, hasTracked90Percent]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isActive === false && isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    }
+  }, [isActive, isPlaying]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    setCurrentTime(0);
+    setHasTracked90Percent(false);
+    audio.load();
+
+    if (autoPlay) {
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  }, [src, autoPlay]);
 
   const trackProgress = async () => {
     if (!userId || !audioId || !playlistId) return;
@@ -87,10 +123,14 @@ export function AudioPlayer({
 
     if (isPlaying) {
       audio.pause();
+      setIsPlaying(false);
     } else {
       audio.play();
+      setIsPlaying(true);
+      if (onPlay) {
+        onPlay();
+      }
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {

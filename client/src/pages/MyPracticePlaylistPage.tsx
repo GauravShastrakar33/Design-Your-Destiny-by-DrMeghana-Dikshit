@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ListMusic, Trash2, Play, ChevronDown, ChevronUp, Bell, BellOff } from "lucide-react";
+import { ListMusic, Trash2, Play, Pause, ChevronDown, ChevronUp, Bell, BellOff } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,6 +38,10 @@ export default function MyPracticePlaylistPage() {
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [selectedPlaylistForReminder, setSelectedPlaylistForReminder] = useState<SavedPlaylist | null>(null);
   const [reminderTime, setReminderTime] = useState("");
+  
+  const [currentPlaylistId, setCurrentPlaylistId] = useState<string | null>(null);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [isPlayingPlaylist, setIsPlayingPlaylist] = useState(false);
 
   useEffect(() => {
     loadPlaylists();
@@ -124,6 +128,41 @@ export default function MyPracticePlaylistPage() {
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
   };
+
+  const handlePlayPlaylist = (playlistId: string) => {
+    setCurrentPlaylistId(playlistId);
+    setCurrentTrackIndex(0);
+    setIsPlayingPlaylist(true);
+  };
+
+  const handleStopPlaylist = () => {
+    setCurrentPlaylistId(null);
+    setCurrentTrackIndex(0);
+    setIsPlayingPlaylist(false);
+  };
+
+  const handleTrackEnded = () => {
+    const currentPlaylist = playlists.find(p => p.id === currentPlaylistId);
+    if (!currentPlaylist) return;
+
+    if (currentTrackIndex < currentPlaylist.practices.length - 1) {
+      setCurrentTrackIndex(prev => prev + 1);
+    } else {
+      handleStopPlaylist();
+    }
+  };
+
+  const getCurrentAudio = () => {
+    if (!currentPlaylistId) return null;
+    
+    const playlist = playlists.find(p => p.id === currentPlaylistId);
+    if (!playlist) return null;
+
+    const practiceName = playlist.practices[currentTrackIndex];
+    return findAudioByTitle(practiceName);
+  };
+
+  const currentAudio = getCurrentAudio();
 
   if (playlists.length === 0) {
     return (
@@ -221,42 +260,51 @@ export default function MyPracticePlaylistPage() {
                     className="border-t border-border"
                   >
                     <div className="p-4 space-y-3">
-                      <div className="space-y-3">
-                        {playlist.practices.map((practice, index) => {
-                          const audioFile = findAudioByTitle(practice);
-                          
-                          return (
-                            <div
-                              key={index}
-                              className="space-y-2"
-                              data-testid={`practice-item-${index}`}
-                            >
-                              <div className="flex items-center gap-2 text-sm text-foreground">
-                                <div className="w-1.5 h-1.5 bg-primary rounded-full flex-shrink-0" />
-                                <span className="font-medium">{practice}</span>
-                              </div>
-                              {audioFile && (
-                                <div className="ml-4">
-                                  <AudioPlayer
-                                    src={audioFile.file}
-                                    title={audioFile.title}
-                                    mode="playlist"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                      <div className="space-y-2">
+                        {playlist.practices.map((practice, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 text-sm text-foreground"
+                            data-testid={`practice-item-${index}`}
+                          >
+                            <div className="w-1.5 h-1.5 bg-primary rounded-full flex-shrink-0" />
+                            <span className={currentPlaylistId === playlist.id && currentTrackIndex === index ? "font-semibold text-primary" : "font-medium"}>
+                              {practice}
+                            </span>
+                          </div>
+                        ))}
                       </div>
+
+                      {currentPlaylistId === playlist.id && isPlayingPlaylist && currentAudio && (
+                        <div className="pt-2">
+                          <AudioPlayer
+                            src={currentAudio.file}
+                            title={currentAudio.title}
+                            mode="basic"
+                            autoPlay={true}
+                            onEnded={handleTrackEnded}
+                          />
+                        </div>
+                      )}
+
                       <div className="flex gap-2 pt-2">
                         <Button
                           variant="outline"
                           className="flex-1"
-                          onClick={() => console.log('Play playlist:', playlist.name)}
+                          onClick={() => currentPlaylistId === playlist.id ? handleStopPlaylist() : handlePlayPlaylist(playlist.id)}
                           data-testid={`button-play-${playlist.id}`}
                         >
-                          <Play className="w-4 h-4 mr-2" />
-                          Play
+                          {currentPlaylistId === playlist.id ? (
+                            <>
+                              <Pause className="w-4 h-4 mr-2" />
+                              Stop
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-4 h-4 mr-2" />
+                              Play
+                            </>
+                          )}
                         </Button>
                         <Button
                           variant="outline"

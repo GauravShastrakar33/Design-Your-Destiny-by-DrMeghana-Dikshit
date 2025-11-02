@@ -14,6 +14,9 @@ export const audioLibrary = {
   affirmations: [
     { id: "aff1", title: "Memory Development Breath", file: "/audios/MemoryDevelopmentBreath.mp3" }
   ] as AudioItem[],
+  journalingAudios : [
+     { id: 1, title: "Deep Theta Music", file: "/audios/ThetaMusic1.mp3" },
+   ] as AudioItem[],
 };
 
 export function findAudioByTitle(title: string): AudioItem | undefined {

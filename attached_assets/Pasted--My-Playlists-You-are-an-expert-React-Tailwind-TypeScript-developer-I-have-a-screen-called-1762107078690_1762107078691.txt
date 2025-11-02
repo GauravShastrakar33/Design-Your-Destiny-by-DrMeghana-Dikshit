@@ -1,0 +1,115 @@
+### My Playlists
+
+You are an expert React + Tailwind + TypeScript developer.
+
+I have a screen called `MyPracticePlaylistPage` where users can expand a playlist and see the list of practices they added. Right now, I am rendering an AudioPlayer for every practice, but I want to change it.
+
+🎧 I want this exact behavior:
+✅ Show only the list of practice names inside the expanded playlist (no multiple audio players).
+✅ When user clicks the Play button for the playlist:
+   - Start playing the FIRST audio in the playlist.
+   - Use a SINGLE AudioPlayer component below the playlist.
+   - After one audio finishes, automatically play the NEXT audio in the playlist.
+   - When the last audio finishes, stop playback.
+✅ Audio files must be loaded from `audioLibrary.js` using practice title matching.
+✅ AudioPlayer should support:
+   - Play / Pause
+   - Progress bar
+   - Current time / Total duration
+   - Speed control (1x, 1.25x, 1.5x, 2x)
+✅ For now, no progress tracking API is required (just sequential playback).
+
+Here is my `audioLibrary.js` (must be used exactly as below):
+
+export const audioLibrary = {
+  practices: [
+    { id: 2, title: "Vibration Elevation", file: "/audios/VibrationElevation.mp3" },
+    { id: 3, title: "Neurolinking", file: "/audios/Neurolinking.mp3" },
+    { id: 10, title: "Wealth Code Activation 1", file: "/audios/WealthCodeActivation1.mp3" },
+    { id: 11, title: "Wealth Code Activation 2", file: "/audios/WealthCodeActivation2.mp3" },
+  ],
+  affirmations: [
+    { id: "aff1", title: "Memory Development Breath", file: "/audios/MemoryDevelopmentBreath.mp3" }
+  ],
+};
+
+🎯 What to do:
+1. Modify `MyPracticePlaylistPage`:
+   - Map only practice names.
+   - Add state: currentTrackIndex, isPlaying.
+   - On Play button → set currentTrackIndex = 0 and isPlaying = true.
+2. Insert ONE <AudioPlayer /> below the playlist when isPlaying is true.
+3. Pass the correct audio src like:
+   const currentAudio = audioLibrary.practices.find(a => a.title === playlist.practices[currentTrackIndex]);
+4. In <AudioPlayer />, when audio ends (@onEnded), go to next track:
+   if (currentTrackIndex < playlist.practices.length - 1) setCurrentTrackIndex(prev => prev + 1)
+   else stop and reset.
+5. Keep reminder/delete logic untouched.
+
+✅ Return only the updated code parts (AudioPlayer + MyPracticePlaylistPage modifications).
+✅ Styling must be clean and follow the current UI.
+
+
+
+### Music Journaling
+
+You are a React + TypeScript + Tailwind expert.
+
+I have a Music Journaling page where I want to add an audio player for each journaling track. 
+I’m using a reusable <AudioPlayer /> component in other parts of my app, and I want to use the same here.
+
+------------------------------------------------
+✅ My audio source is from audioLibrary.ts (not a local array):
+------------------------------------------------
+export interface AudioItem {
+  id: number | string;
+  title: string;
+  file: string;
+}
+
+export const audioLibrary = {
+  practices: [
+    { id: 2, title: "Vibration Elevation", file: "/audios/VibrationElevation.mp3" },
+    { id: 3, title: "Neurolinking", file: "/audios/Neurolinking.mp3" },
+    { id: 10, title: "Wealth Code Activation 1", file: "/audios/WealthCodeActivation1.mp3" },
+    { id: 11, title: "Wealth Code Activation 2", file: "/audios/WealthCodeActivation2.mp3" },
+  ],
+  affirmations: [
+    { id: "aff1", title: "Memory Development Breath", file: "/audios/MemoryDevelopmentBreath.mp3" }
+  ],
+  journalingAudios: [
+    { id: 1, title: "Deep Theta Music", file: "/audios/ThetaMusic1.mp3" },
+    // Add more later...
+  ],
+};
+
+------------------------------------------------
+✅ What I want you to do in MusicJournalingPage:
+------------------------------------------------
+1. Import and load tracks from audioLibrary.journalingAudios instead of hardcoding an array.
+2. Render a card UI like my screenshot:
+   • Large circular Play/Pause button  
+   • Title and optional subtitle/description  
+   • Duration & progress bar
+3. Use only ONE audio playing at a time:
+   • If a user clicks Play on a track → stop any other playing track  
+   • Keep track of current playing track with `currentTrackId` and `setCurrentTrackId`
+4. Use my existing <AudioPlayer /> component for actual audio logic:
+   <AudioPlayer
+     src={track.file}
+     title={track.title}
+     mode="basic"
+     isActive={currentTrackId === track.id}
+     onPlay={() => setCurrentTrackId(track.id)}
+     onEnded={() => setCurrentTrackId(null)}
+   />
+5. Do not show multiple AudioPlayers stacked — embed inside each journaling card UI layout.
+6. (Optional but preferred) Add speed controls like: 1x, 1.25x, 1.5x.
+
+------------------------------------------------
+✅ Output Required:
+------------------------------------------------
+✔ Updated MusicJournalingPage code using audioLibrary.journalingAudios  
+✔ Integration of <AudioPlayer /> in each card  
+✔ Logic for only one track playing at a time  
+✔ No extra explanations — return only clean updated code.
