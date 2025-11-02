@@ -26,6 +26,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { getPlaylists, deletePlaylist, updatePlaylist, type SavedPlaylist } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
+import { AudioPlayer } from "@/components/AudioPlayer";
+import { findAudioByTitle } from "@/lib/audioLibrary";
 
 export default function MyPracticePlaylistPage() {
   const [, setLocation] = useLocation();
@@ -219,17 +221,32 @@ export default function MyPracticePlaylistPage() {
                     className="border-t border-border"
                   >
                     <div className="p-4 space-y-3">
-                      <div className="space-y-2">
-                        {playlist.practices.map((practice, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2 text-sm text-foreground"
-                            data-testid={`practice-item-${index}`}
-                          >
-                            <div className="w-1.5 h-1.5 bg-primary rounded-full" />
-                            {practice}
-                          </div>
-                        ))}
+                      <div className="space-y-3">
+                        {playlist.practices.map((practice, index) => {
+                          const audioFile = findAudioByTitle(practice);
+                          
+                          return (
+                            <div
+                              key={index}
+                              className="space-y-2"
+                              data-testid={`practice-item-${index}`}
+                            >
+                              <div className="flex items-center gap-2 text-sm text-foreground">
+                                <div className="w-1.5 h-1.5 bg-primary rounded-full flex-shrink-0" />
+                                <span className="font-medium">{practice}</span>
+                              </div>
+                              {audioFile && (
+                                <div className="ml-4">
+                                  <AudioPlayer
+                                    src={audioFile.file}
+                                    title={audioFile.title}
+                                    mode="playlist"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                       <div className="flex gap-2 pt-2">
                         <Button
