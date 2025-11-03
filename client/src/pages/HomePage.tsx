@@ -142,10 +142,10 @@ export default function HomePage() {
 
         <div className="px-4 py-4 space-y-6">
           {/* Counter Card - Daily Progress + Weekly Streak */}
-          <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border-purple-200 dark:border-purple-800 p-5" data-testid="card-counter">
+          <Card className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30 border-teal-200 dark:border-teal-800 p-5" data-testid="card-counter">
             {/* Daily Progress Header */}
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <TrendingUp className="w-5 h-5 text-teal-600 dark:text-teal-400" />
               <h3 className="text-base font-semibold text-foreground">Daily Progress</h3>
             </div>
             
@@ -164,8 +164,8 @@ export default function HomePage() {
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium ${
                       item.completed
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-purple-100 dark:bg-purple-900/30 text-muted-foreground'
+                        ? 'bg-gradient-growth text-white'
+                        : 'bg-teal-100 dark:bg-teal-900/30 text-muted-foreground'
                     }`}
                   >
                     {item.day}
@@ -179,7 +179,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setLocation("/playlist")}
-                  className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center hover-elevate active-elevate-2"
+                  className="w-6 h-6 rounded-full bg-gradient-growth flex items-center justify-center hover-elevate active-elevate-2"
                   data-testid="button-resume-practice"
                 >
                   <Play className="w-3 h-3 text-white ml-0.5" />
@@ -190,9 +190,9 @@ export default function HomePage() {
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full h-2 bg-purple-200 dark:bg-purple-900/30 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-teal-200 dark:bg-teal-900/30 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-300"
+                className="h-full bg-gradient-growth rounded-full transition-all duration-300"
                 style={{ width: `${(practiceProgress.current / practiceProgress.total) * 100}%` }}
               />
             </div>
