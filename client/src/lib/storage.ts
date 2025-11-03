@@ -58,8 +58,8 @@ export interface DailyStats {
   [playlistId: string]: PlaylistStats;
 }
 
-const PROGRESS_KEY = 'playlistProgress';
-const STATS_KEY = 'playlistStats';
+const PROGRESS_KEY = '@app:playlist_progress';
+const STATS_KEY = '@app:daily_completions';
 
 export function saveProgress(playlistId: string, trackId: string, time: number): void {
   const stored = localStorage.getItem(PROGRESS_KEY);

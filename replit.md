@@ -49,6 +49,8 @@ Preferred communication style: Simple, everyday language.
 
 **Current**: All user data is stored in browser localStorage:
 - Practice playlists (`dr-m-playlists`)
+- Playlist progress tracking (`@app:playlist_progress`) - per-playlist resume data
+- Daily completion stats (`@app:daily_completions`) - per-playlist daily completion tracking
 - Challenge progress (`@app:active_challenge`, `@app:challenge_history`)
 - Belief pairs for rewiring (`@app:rewiring_beliefs`)
 - User preferences (karmic affirmation, accountability partner, streak visibility)
@@ -157,17 +159,20 @@ Preferred communication style: Simple, everyday language.
 - Playback speed controls (1x, 1.25x, 1.5x, 2x) via dropdown Select
 - Two modes:
   - `basic`: Simple playback, no progress tracking
-  - `playlist`: Calls `/api/track-progress` at 90% completion (when backend is ready)
+  - `playlist`: Enables progress callbacks with 90% completion tracking
 - External control props:
   - `isActive`: Allows parent to pause player when another starts
   - `onPlay`: Callback when playback starts
   - `onEnded`: Callback when audio finishes (enables sequential playback)
   - `autoPlay`: Auto-loads and plays when src changes
+  - `initialTime`: Resume playback from specific position (for playlist mode)
+  - `onProgressUpdate`: Callback fired during playback with time/duration (for saving progress)
+  - `onComplete`: Callback fired at 90% completion (for completion tracking)
 
 **Audio Integration Points**:
 - **ProcessesPage**: Practice cards display AudioPlayer in Audio tab when audio file exists
 - **SpiritualBreathsPage**: Guided affirmation section uses AudioPlayer for Memory Development Breath
-- **MyPracticePlaylistPage**: Sequential playlist playback with single AudioPlayer that auto-advances through tracks
+- **MyPracticePlaylistPage**: Sequential playlist playback with single AudioPlayer that auto-advances through tracks, full progress tracking and resume functionality
 - **MusicJournalingPage**: Each journaling track has full-featured AudioPlayer, only one plays at a time
 
 **Technical Pattern**: 
@@ -175,6 +180,23 @@ Preferred communication style: Simple, everyday language.
 - Parent components control playback via `isActive` prop to ensure single-player-at-a-time behavior
 - Playlist mode supports auto-advance via `onEnded` callback and `autoPlay` prop
 - Currently playing track highlighted in UI with primary color styling
+
+**Playlist Progress System** (`client/src/lib/storage.ts`):
+- **Per-Playlist Progress Tracking**: Each playlist maintains independent resume state (current track + timestamp)
+- **Resume Functionality**: Users can stop a playlist and return later to continue from exact position
+- **Practice Name Matching**: Progress saved using practice names from playlist (stable identifiers)
+- **Throttled Saves**: Progress auto-saved every 3 seconds during playback to minimize localStorage writes
+- **Immediate Track Advance**: When track ends, next track's progress immediately saved to prevent regression
+- **90% Completion Rule**: Tracks marked complete when reaching 90% duration (ensures completion even if user skips final seconds)
+- **Per-Playlist Daily Stats**: Completion tracking maintains separate stats for each playlist on each day
+- **Progress Persistence**: 
+  - Saved on manual stop (user can resume)
+  - Saved during playback (every 3 seconds)
+  - Saved on track advance (immediate)
+  - Cleared only on playlist completion (all tracks finished)
+- **Storage Keys**:
+  - `@app:playlist_progress`: Map of `playlistId -> { currentTrackId, currentTime }`
+  - `@app:daily_completions`: Nested map of `date -> playlistId -> { completedTracks, totalTracks }`
 
 ### Future Integration Points
 
