@@ -24,7 +24,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { getPlaylists, deletePlaylist, updatePlaylist, type SavedPlaylist } from "@/lib/storage";
+import { 
+  getPlaylists, 
+  deletePlaylist, 
+  updatePlaylist, 
+  type SavedPlaylist,
+  saveProgress,
+  loadProgress,
+  markTrackComplete,
+  clearProgress,
+} from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { findAudioByTitle } from "@/lib/audioLibrary";
@@ -42,6 +51,8 @@ export default function MyPracticePlaylistPage() {
   const [currentPlaylistId, setCurrentPlaylistId] = useState<string | null>(null);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlayingPlaylist, setIsPlayingPlaylist] = useState(false);
+  const [initialTime, setInitialTime] = useState(0);
+  const [lastSaveTime, setLastSaveTime] = useState(0);
 
   useEffect(() => {
     loadPlaylists();
@@ -130,15 +141,43 @@ export default function MyPracticePlaylistPage() {
   };
 
   const handlePlayPlaylist = (playlistId: string) => {
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (!playlist) return;
+
+    // Load saved progress
+    const savedProgress = loadProgress(playlistId);
+    
+    if (savedProgress) {
+      // Resume from saved position - match by practice name
+      const trackIndex = playlist.practices.findIndex(
+        p => p === savedProgress.currentTrackId
+      );
+      
+      if (trackIndex !== -1) {
+        setCurrentTrackIndex(trackIndex);
+        setInitialTime(savedProgress.currentTime);
+      } else {
+        // If track not found, start from beginning
+        setCurrentTrackIndex(0);
+        setInitialTime(0);
+      }
+    } else {
+      // Start from beginning
+      setCurrentTrackIndex(0);
+      setInitialTime(0);
+    }
+    
     setCurrentPlaylistId(playlistId);
-    setCurrentTrackIndex(0);
     setIsPlayingPlaylist(true);
   };
 
   const handleStopPlaylist = () => {
+    // Don't clear progress - user should be able to resume later
     setCurrentPlaylistId(null);
     setCurrentTrackIndex(0);
     setIsPlayingPlaylist(false);
+    setInitialTime(0);
+    setLastSaveTime(0);
   };
 
   const handleTrackEnded = () => {
@@ -146,10 +185,57 @@ export default function MyPracticePlaylistPage() {
     if (!currentPlaylist) return;
 
     if (currentTrackIndex < currentPlaylist.practices.length - 1) {
-      setCurrentTrackIndex(prev => prev + 1);
+      const nextTrackIndex = currentTrackIndex + 1;
+      const nextPracticeName = currentPlaylist.practices[nextTrackIndex];
+      
+      // Immediately save progress for next track at position 0
+      saveProgress(currentPlaylistId!, nextPracticeName, 0);
+      setLastSaveTime(Date.now()); // Reset throttle timer
+      
+      setCurrentTrackIndex(nextTrackIndex);
+      setInitialTime(0); // Reset initial time for next track
     } else {
+      // Playlist completed - clear progress since we're done
+      if (currentPlaylistId) {
+        clearProgress(currentPlaylistId);
+      }
       handleStopPlaylist();
     }
+  };
+
+  const handleProgressUpdate = (time: number, duration: number) => {
+    const currentPlaylist = playlists.find(p => p.id === currentPlaylistId);
+    if (!currentPlaylistId || !currentPlaylist) return;
+    
+    // Save using the practice name from the playlist (not audio title)
+    const practiceName = currentPlaylist.practices[currentTrackIndex];
+    
+    // Throttle saves to every 3 seconds using timestamp check
+    const now = Date.now();
+    if (now - lastSaveTime >= 3000) {
+      saveProgress(currentPlaylistId, practiceName, time);
+      setLastSaveTime(now);
+    }
+  };
+
+  const handleTrackComplete = () => {
+    const currentPlaylist = playlists.find(p => p.id === currentPlaylistId);
+    if (!currentPlaylist) return;
+    
+    // Use practice name from playlist for consistency
+    const practiceName = currentPlaylist.practices[currentTrackIndex];
+    
+    // Mark track as completed (90% rule)
+    markTrackComplete(
+      currentPlaylist.id,
+      practiceName,
+      currentPlaylist.practices.length
+    );
+    
+    toast({
+      title: "Track Completed!",
+      description: `You completed "${practiceName}"`,
+    });
   };
 
   const getCurrentAudio = () => {
@@ -280,9 +366,12 @@ export default function MyPracticePlaylistPage() {
                           <AudioPlayer
                             src={currentAudio.file}
                             title={currentAudio.title}
-                            mode="basic"
+                            mode="playlist"
                             autoPlay={true}
+                            initialTime={initialTime}
                             onEnded={handleTrackEnded}
+                            onProgressUpdate={handleProgressUpdate}
+                            onComplete={handleTrackComplete}
                           />
                         </div>
                       )}

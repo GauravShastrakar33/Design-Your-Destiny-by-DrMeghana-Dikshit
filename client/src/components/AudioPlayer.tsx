@@ -20,6 +20,9 @@ interface AudioPlayerProps {
   onPlay?: () => void;
   onEnded?: () => void;
   autoPlay?: boolean;
+  initialTime?: number;
+  onProgressUpdate?: (time: number, duration: number) => void;
+  onComplete?: () => void;
 }
 
 export function AudioPlayer({
@@ -33,6 +36,9 @@ export function AudioPlayer({
   onPlay,
   onEnded,
   autoPlay = false,
+  initialTime = 0,
+  onProgressUpdate,
+  onComplete,
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -45,7 +51,15 @@ export function AudioPlayer({
     const audio = audioRef.current;
     if (!audio) return;
 
-    const updateTime = () => setCurrentTime(audio.currentTime);
+    const updateTime = () => {
+      setCurrentTime(audio.currentTime);
+      
+      // Call onProgressUpdate for playlist mode
+      if (mode === "playlist" && onProgressUpdate) {
+        onProgressUpdate(audio.currentTime, audio.duration);
+      }
+    };
+    
     const updateDuration = () => setDuration(audio.duration);
     const handleEnded = () => {
       setIsPlaying(false);
@@ -63,7 +77,7 @@ export function AudioPlayer({
       audio.removeEventListener("loadedmetadata", updateDuration);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [onEnded]);
+  }, [onEnded, mode, onProgressUpdate]);
 
   useEffect(() => {
     if (mode === "playlist" && duration > 0 && !hasTracked90Percent) {
@@ -71,9 +85,14 @@ export function AudioPlayer({
       if (progress >= 90) {
         trackProgress();
         setHasTracked90Percent(true);
+        
+        // Call onComplete callback for 90% completion
+        if (onComplete) {
+          onComplete();
+        }
       }
     }
-  }, [currentTime, duration, mode, hasTracked90Percent]);
+  }, [currentTime, duration, mode, hasTracked90Percent, onComplete]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -93,10 +112,16 @@ export function AudioPlayer({
     setHasTracked90Percent(false);
     audio.load();
 
+    // Set initial time if provided (for resume feature)
+    if (initialTime > 0) {
+      audio.currentTime = initialTime;
+      setCurrentTime(initialTime);
+    }
+
     if (autoPlay) {
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
     }
-  }, [src, autoPlay]);
+  }, [src, autoPlay, initialTime]);
 
   const trackProgress = async () => {
     if (!userId || !audioId || !playlistId) return;

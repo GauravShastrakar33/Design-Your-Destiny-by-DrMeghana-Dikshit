@@ -1,0 +1,80 @@
+I already have:
+✔ Custom Playlist screen (MyPracticePlaylistPage)
+✔ Global <AudioPlayer /> component with play, pause, speed, progress
+✔ audioLibrary working for loading audios
+✔ Music Journaling + Processes pages working
+
+Now I want to upgrade my Custom Playlist with real user progress tracking and resume feature.
+
+-----------------------------------------
+✅ Feature 1: Resume From Where I Left Off
+-----------------------------------------
+• If user stops listening halfway (example: 8:15 in track 2), the next time they open the playlist:
+   → It should automatically start from the same track and timestamp.
+• If user completes 2 out of 6 audios, next time it should begin from the 3rd.
+• Save resume info in localStorage like this:
+
+localStorage.setItem('playlistProgress', JSON.stringify({
+  playlistId: "GauravsMorningPlaylist",
+  currentTrackId: "Neurolinking",
+  currentTime: 495  // in seconds
+}));
+
+• On playlist load:
+   → Read localStorage
+   → If playlistId matches, auto-set currentTrackIndex + audio.currentTime.
+
+-----------------------------------------
+✅ Feature 2: Track Audio Completion (90% Rule)
+-----------------------------------------
+• If user listens to ≥ 90% of an audio in a playlist → mark it as "completed".
+• Store per-day completion like:
+
+localStorage.setItem('playlistStats', JSON.stringify({
+  "2025-11-03": {
+    playlistId: "GauravsMorningPlaylist",
+    completedTracks: ["Vibration Elevation", "Neurolinking"],
+    totalTracks: 6,
+    dayCompleted: false
+  }
+}));
+
+• Logic:
+   → In <AudioPlayer />, when (currentTime / duration) >= 0.9 → call markTrackComplete(trackId, playlistId)
+   → Push into completedTracks for today
+   → If completedTracks.length === totalTracks → set dayCompleted: true
+
+-----------------------------------------
+⚙️ VERY IMPORTANT: Use AudioPlayer modes
+-----------------------------------------
+- <AudioPlayer /> already has `mode="basic"` and `mode="playlist"`
+
+- `mode="basic"` = ONLY plays audio, NO tracking, NO saving progress  
+- `mode="playlist"` = MUST track and save:
+    ✔ Save current track + timestamp to localStorage (resume feature)
+    ✔ Detect 90% completion and mark track complete
+    ✔ Update playlistStats for challenges/insights
+
+So:
+• Music Journaling, Processes, Affirmations → use mode="basic"
+• Custom Playlist → use mode="playlist"
+
+-----------------------------------------
+⚙️ Technical Instructions
+-----------------------------------------
+Modify these files:
+- MyPracticePlaylistPage.tsx
+- AudioPlayer.tsx
+- utils/storage.ts (or /lib/storage.ts) → add:
+    • saveProgress(playlistId, trackId, time)
+    • loadProgress(playlistId)
+    • markTrackComplete(playlistId, trackId)
+    • getDailyStats()
+
+In <AudioPlayer /> component:
+- Add new props:
+    onProgressUpdate?(time: number, duration: number)
+    onComplete?()
+- Inside <audio> element:
+    onTimeUpdate={() => onProgressUpdate?.(audio.currentTime, audio.duration)}
+- If mode === "playlist" and (currentTime / duration >= 0.9), call onComplete()
