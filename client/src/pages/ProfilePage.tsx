@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { ChevronRight, Settings as SettingsIcon, Bell, MessageCircle, LogOut, Eye, EyeOff, Star, TrendingUp, Circle, Sunrise, Leaf, Moon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -12,6 +13,7 @@ interface StreakData {
 }
 
 export default function ProfilePage() {
+  const [, setLocation] = useLocation();
   const [streakVisible, setStreakVisible] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [streakData, setStreakData] = useState<StreakData>({});
@@ -70,6 +72,14 @@ export default function ProfilePage() {
       localStorage.removeItem("@app:poh_data");
       localStorage.removeItem("@app:weekly_action");
       alert("Project of Heart has been reset successfully.");
+    }
+  };
+
+  const handleResetChecklist = () => {
+    if (confirm("Are you sure you want to reset your Process Checklist? This will remove your current selections and daily progress.")) {
+      localStorage.removeItem("userChecklist");
+      localStorage.removeItem("dailyLogs");
+      setLocation("/process-checklist");
     }
   };
 
@@ -340,6 +350,14 @@ export default function ProfilePage() {
                     >
                       <p className="font-medium text-red-600 dark:text-red-400">Reset Project of Heart</p>
                       <p className="text-xs text-muted-foreground mt-1">Clear all POH progress (for demonstration)</p>
+                    </button>
+                    <button
+                      onClick={handleResetChecklist}
+                      className="w-full text-left p-3 rounded-lg hover-elevate active-elevate-2 border border-red-200 dark:border-red-800/30"
+                      data-testid="button-reset-checklist"
+                    >
+                      <p className="font-medium text-red-600 dark:text-red-400">Reset Process Checklist</p>
+                      <p className="text-xs text-muted-foreground mt-1">Clear checklist and daily progress</p>
                     </button>
                   </div>
                 )}
