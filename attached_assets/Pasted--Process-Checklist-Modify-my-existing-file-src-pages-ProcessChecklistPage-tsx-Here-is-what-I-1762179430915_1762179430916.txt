@@ -1,0 +1,99 @@
+### Process Checklist
+
+Modify my existing file: `src/pages/ProcessChecklistPage.tsx`
+
+Here is what I want changed on this page:
+
+✅ 1. First-time User Experience:
+• If no custom checklist is stored in localStorage (or API), show this full-screen intro instead of the practice list:
+
+---
+✨ Start Your Daily Practice Ritual
+
+Hello Champion,  
+Ready to build your own Process Checklist — the practices that truly matter to you?
+
+This will help you:
+• Stay consistent  
+• Track your journey weekly & monthly  
+• See your growth clearly
+
+[ 🌿 Create My Process Checklist ]
+---
+
+When the button is clicked
+follow this flow:
+1. Open a Modal or New Page
+* Show a modal (popup) or navigate to a new page.
+* This page/modal lets the user select practices they want in their personal daily checklist.
+
+Example layout:
+Select Your Daily Practices:
+☐ Gratitude Journal  
+☐ Meditation  
+☐ Mirror Work  
+☐ Ho'oponopono  
+☐ Affirmations  
+[ ✅ Save My Checklist ]
+
+2. Save User’s Selection
+* When the user clicks Save My Checklist:
+* Store the selected practices in localStorage as the user’s personal checklist (you can replace it with a database later). 
+
+3. Show Only Selected Practices in Daily View
+Show only the practices that the user selected in their checklist.
+
+Example UI after saving:
+
+┌─────────────────────────┐
+| ← My Practice Log |
+├─────────────────────────┤
+| |"Today’s Practices" Header Card|
+|
+| ☑ Gratitude Journal |
+| ☐ Mirror Work |
+| ☐ Ho'oponopono |
+| 
+| [ Save Today’s Reflection ] |
+| ✏ Edit Checklist |
+├─────────────────────────┤
+| 🏠 📚 🤖 ❤️ 👤 (Bottom Nav) |
+└─────────────────────────┘
+
+
+User should be able to tick or untick checkboxes
+
+✅ 3. Add “Edit Checklist” feature:
+• Add a small button/link: `✏ Edit My Checklist`
+• Clicking it opens a modal or new screen where user can toggle practices from the full list.
+• Allow them to Save / Cancel.
+
+✅ 4. Store and load data:
+• Save selected checklist to `localStorage.userChecklist` (array of strings)
+• Track daily completed practices in `localStorage.dailyLogs` as:
+  [
+    { date: "2025-11-03", completed: ["Gratitude Journal"] }
+  ]
+
+
+✅ 5. Here are some simple but powerful UI upgrades you can apply to the list:
+🎨 1. Better Checkbox + Text Alignment
+* Use rounded custom checkboxes
+* Slight hover effect for better interactivity
+* Increase whitespace between items for breathing room
+📦 2. Card Container Enhancement
+* Add soft shadows (shadow-md) and smooth corner radius (rounded-xl)
+* Use subtle gradient or soft border color
+💜 3. Improve "Today’s Practices" Header Card
+* Keep your purple gradient, but:
+    * Add icon alignment
+    * Add padding top & bottom for balance
+    * Maybe add subtle glow/blur behind?
+
+---
+
+Make sure your final code:
+• Has two states: firstTimeSetup or showChecklist  
+• Allows editing checklist  
+• Doesn’t show full practice list by default after setup
+Do not remove navigation/footer.
