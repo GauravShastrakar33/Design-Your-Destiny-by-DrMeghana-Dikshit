@@ -4,26 +4,56 @@ export interface AudioItem {
   file: string;
 }
 
+export interface JournalingAudioItem extends AudioItem {
+   description?: string;
+  duration?: string;
+}
+
 export const audioLibrary = {
   practices: [
-    { id: 2, title: "Vibration Elevation", file: "/audios/VibrationElevation.mp3" },
+    {
+      id: 2,
+      title: "Vibration Elevation",
+      file: "/audios/VibrationElevation.mp3",
+    },
     { id: 3, title: "Neurolinking", file: "/audios/Neurolinking.mp3" },
-    { id: 10, title: "Wealth Code Activation 1", file: "/audios/WealthCodeActivation1.mp3" },
-    { id: 11, title: "Wealth Code Activation 2", file: "/audios/WealthCodeActivation2.mp3" },
+    {
+      id: 10,
+      title: "Wealth Code Activation 1",
+      file: "/audios/WealthCodeActivation1.mp3",
+    },
+    {
+      id: 11,
+      title: "Wealth Code Activation 2",
+      file: "/audios/WealthCodeActivation2.mp3",
+    },
   ] as AudioItem[],
   affirmations: [
-    { id: "aff1", title: "Memory Development Breath", file: "/audios/MemoryDevelopmentBreath.mp3" }
+    {
+      id: "aff1",
+      title: "Memory Development Breath",
+      file: "/audios/MemoryDevelopmentBreath.mp3",
+    },
   ] as AudioItem[],
-  journalingAudios : [
-     { id: 1, title: "Deep Theta Music", file: "/audios/ThetaMusic1.mp3" },
-   ] as AudioItem[],
+  journalingAudios: [
+    {
+      id: 1,
+      title: "Deep Theta Music",
+      description: "Perfect for deep relaxation and meditation",
+      duration: "22:51",
+      file: "/audios/ThetaMusic1.mp3",
+    },
+    {
+      id: 2,
+      title: "Sleep Relaxation",
+      description: "Healing frequencies Before Sleep",
+      duration: "2:19",
+      file: "/audios/SleepMusic.mp3",
+    },
+  ] as JournalingAudioItem[],
 };
 
 export function findAudioByTitle(title: string): AudioItem | undefined {
-  const allAudios = [
-    ...audioLibrary.practices,
-    ...audioLibrary.affirmations,
-    ...audioLibrary.journalingAudios,
-  ];
-  return allAudios.find(audio => audio.title === title);
+  const allAudios = [...audioLibrary.practices, ...audioLibrary.affirmations];
+  return allAudios.find((audio) => audio.title === title);
 }
