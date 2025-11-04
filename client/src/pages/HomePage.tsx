@@ -146,13 +146,19 @@ export default function HomePage() {
             className="bg-gradient-wellness rounded-2xl p-3 shadow-lg"
             data-testid="card-counter"
           >
-            {/* Streak Header */}
-            <div className="mb-2">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl">🔥</span>
-                <h2 className="text-xl font-bold text-white">9 Day Streak</h2>
+            {/* Streak Header with Best Streak on Right */}
+            <div className="mb-2 flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl">🔥</span>
+                  <h2 className="text-xl font-bold text-white">9 Day Streak</h2>
+                </div>
+                <p className="text-white/80 text-[10px] ml-7">Keep the momentum going, Gaurav!</p>
               </div>
-              <p className="text-white/80 text-[10px] ml-7">Keep the momentum going, Gaurav!</p>
+              <div className="text-right">
+                <p className="text-white/70 text-[9px]">Best Streak</p>
+                <p className="text-white text-sm font-bold">25 days</p>
+              </div>
             </div>
 
             {/* 7-Day Activity Chart */}
@@ -160,19 +166,17 @@ export default function HomePage() {
               <h3 className="text-white/90 text-[10px] font-medium mb-1.5">Weekly Activity</h3>
               <div className="flex items-end justify-between gap-1 h-12">
                 {[
-                  { day: 'M', height: 40, active: false },
-                  { day: 'T', height: 75, active: true },
-                  { day: 'W', height: 20, active: false },
-                  { day: 'T', height: 90, active: true },
-                  { day: 'F', height: 55, active: true },
-                  { day: 'S', height: 100, active: true },
-                  { day: 'S', height: 65, active: true },
+                  { day: 'Mon', height: 60 },
+                  { day: 'Tue', height: 35 },
+                  { day: 'Wed', height: 75 },
+                  { day: 'Thu', height: 85 },
+                  { day: 'Fri', height: 40 },
+                  { day: 'Sat', height: 95 },
+                  { day: 'Sun', height: 70 },
                 ].map((item, idx) => (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-1">
                     <div 
-                      className={`w-full rounded-t-sm transition-all duration-300 ${
-                        item.active ? 'bg-white' : 'bg-white/20'
-                      }`}
+                      className="w-full bg-blue-500 rounded-t transition-all duration-300"
                       style={{ height: `${item.height}%` }}
                     />
                     <span className="text-white/70 text-[9px] font-medium">{item.day}</span>
@@ -195,21 +199,15 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* CTA Button with Best Streak on Right */}
-            <div className="flex items-center justify-between gap-2">
-              <button
-                onClick={() => setLocation("/playlist")}
-                className="flex-1 py-1.5 bg-white/20 hover:bg-white/30 active:bg-white/40 backdrop-blur-sm text-white text-[10px] font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5"
-                data-testid="button-resume-practice"
-              >
-                <Play className="w-3 h-3" />
-                Resume Practice
-              </button>
-              <div className="text-right">
-                <p className="text-white/70 text-[9px]">Best Streak</p>
-                <p className="text-white text-sm font-bold">25 days</p>
-              </div>
-            </div>
+            {/* CTA Button */}
+            <button
+              onClick={() => setLocation("/playlist")}
+              className="w-full py-1.5 bg-white/20 hover:bg-white/30 active:bg-white/40 backdrop-blur-sm text-white text-[10px] font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5"
+              data-testid="button-resume-practice"
+            >
+              <Play className="w-3 h-3" />
+              Resume Practice
+            </button>
           </div>
 
           {/* Compact Quick Actions Grid */}
