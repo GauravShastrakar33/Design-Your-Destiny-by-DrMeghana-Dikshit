@@ -44,6 +44,7 @@ interface LastWatchedData {
   thumbnail: string;
   author?: string;
   progressInSeconds: number;
+  url?: string; // ✅ Add this
 }
 
 const upcomingMasterclasses: UpcomingMasterclass[] = [
@@ -79,14 +80,14 @@ const upcomingMasterclasses: UpcomingMasterclass[] = [
 const latestVideos: Video[] = [
   {
     id: "demo-1",
-    title: "How to make Right Decisions",
-    thumbnail: rightDecisionThumbnail,
+    title: "Wealth Code Activation 2",
+    thumbnail: "/thumbnails/WealthCodeActivation2.png",
     uploadDate: "27 Oct 2025",
     isCollection: false,
-    url: "/RightDecisions.mp4",
+    url: "/WealthCodeActivation2.mp4",
     author: "Dr. Meghana Dikshit",
     description:
-      "Learn the art of making decisions that align with your highest self and life purpose.",
+      "Shift your inner money blueprint, clear subconscious blocks, and raising the vibrational frequency to match the energy of massive financial success and flow.",
     videoId: "demo-right-decisions",
   },
   {
@@ -295,22 +296,17 @@ export default function WorkshopsPage() {
 
   const handleVideoClick = (video: Video) => {
     if (video.isCollection) {
-      // Navigate to course overview
       setLocation(`/workshops/course/${video.id}`);
     } else {
-      // Navigate to video player
       const params = new URLSearchParams({
         videoId: video.videoId || video.id,
         title: video.title,
-        thumbnail:
-          typeof video.thumbnail === "string" &&
-          video.thumbnail.startsWith("bg-")
-            ? ""
-            : video.thumbnail,
+        thumbnail: video.thumbnail || "",
         url: video.url || "",
         author: video.author || "",
         description: video.description || "",
       });
+
       setLocation(`/video-player?${params.toString()}`);
     }
   };
@@ -329,7 +325,10 @@ export default function WorkshopsPage() {
       title: lastWatched.title,
       thumbnail: lastWatched.thumbnail,
       author: lastWatched.author || "",
+      url: lastWatched.url || "", // ✅ send video file
+      progress: lastWatched.progressInSeconds.toString(), // ✅ send time
     });
+
     setLocation(`/video-player?${params.toString()}`);
   };
 
@@ -660,6 +659,7 @@ export default function WorkshopsPage() {
                   <Play className="w-4 h-4 mr-1" fill="currentColor" />
                   Resume
                 </Button>
+
                 <button
                   onClick={handleCloseLastWatched}
                   className="w-8 h-8 rounded-full hover-elevate active-elevate-2 flex items-center justify-center"

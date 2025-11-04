@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Settings } from "lucide-react";
 import { useLocation } from "wouter";
-import ReactPlayer from "react-player";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,164 +21,126 @@ export default function VideoPlayerPage() {
   const [, setLocation] = useLocation();
   const [showSpeedDialog, setShowSpeedDialog] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState(1);
-  const [isReady, setIsReady] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const playerRef = useRef<any>(null);
-  const saveIntervalRef = useRef<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Get video data from URL params
-  const searchParams = new URLSearchParams(window.location.search);
-  const videoId = searchParams.get("videoId") || "";
-  const title = searchParams.get("title") || "Video";
-  const author = searchParams.get("author") || "";
-  const description = searchParams.get("description") || "";
-  const thumbnail = searchParams.get("thumbnail") || "";
-  const videoUrl = searchParams.get("url") || "";
+  // ✅ Get values from URL
+  const params = new URLSearchParams(window.location.search);
+  const videoId = params.get("videoId") || "";
+  const title = params.get("title") || "Video";
+  const author = params.get("author") || "";
+  const description = params.get("description") || "";
+  const thumbnail = params.get("thumbnail") || "";
+  const videoUrl = params.get("url") || "";
 
-  const youtubeId = videoId;
+  // ✅ Correct final video path
+  const finalVideoUrl = videoUrl.startsWith("http")
+    ? videoUrl
+    : `${window.location.origin}${videoUrl}`;
 
-  // Load saved progress
-  const getSavedProgress = (): number => {
-    try {
-      const saved = localStorage.getItem("last-watched");
-      if (saved) {
-        const data: LastWatchedData = JSON.parse(saved);
-        if (data.videoId === youtubeId) {
-          return data.progressInSeconds;
-        }
-      }
-    } catch (error) {
-      console.error("Error loading saved progress:", error);
-    }
-    return 0;
-  };
-
-  const savedProgress = getSavedProgress();
-
-  // Save progress to localStorage
-  const saveProgress = (currentTime: number) => {
-    if (!youtubeId) return;
-    try {
-      const data: LastWatchedData = {
-        videoId: youtubeId,
-        title,
-        thumbnail,
-        author,
-        progressInSeconds: Math.floor(currentTime),
-      };
-      localStorage.setItem("last-watched", JSON.stringify(data));
-    } catch (error) {
-      console.error("Error saving progress:", error);
-    }
-  };
-
-  const checkIfCompleted = (currentTime: number, duration: number) => {
-    if (duration > 0 && currentTime / duration > 0.95) {
-      localStorage.removeItem("last-watched");
-    }
-  };
-
-  const handleReady = () => {
-    setIsReady(true);
-    if (savedProgress > 0 && playerRef.current) {
-      playerRef.current.seekTo(savedProgress, "seconds");
-    }
-  };
-
-  const handleProgress = (state: any) => {
-    if (!hasStarted) setHasStarted(true);
-
-    const playedSeconds = state.playedSeconds;
-    setCurrentTime(playedSeconds);
-    const duration = playerRef.current?.getDuration() || 0;
-
-    saveProgress(playedSeconds);
-    checkIfCompleted(playedSeconds, duration);
-  };
-
+  // ✅ Load saved progress
   useEffect(() => {
-    return () => {
-      if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
-    };
+    const savedProgress = params.get("progress"); // ✅ read from URL
+
+    if (savedProgress && videoRef.current) {
+      videoRef.current.onloadedmetadata = () => {
+        videoRef.current!.currentTime = parseInt(savedProgress);
+      };
+    }
   }, []);
 
-  const handleSpeedChange = (speed: number) => {
-    setCurrentSpeed(speed);
-    setShowSpeedDialog(false);
+  // ✅ Save progress every 5 seconds
+  const handleTimeUpdate = () => {
+    if (!videoRef.current) return;
+    const currentTime = Math.floor(videoRef.current.currentTime);
+    if (currentTime % 5 === 0) {
+      localStorage.setItem(
+        "last-watched",
+        JSON.stringify({
+          videoId,
+          title,
+          thumbnail,
+          author,
+          url: finalVideoUrl, // ✅ store the actual video URL
+          progressInSeconds: currentTime,
+        }),
+      );
+    }
+  };
+
+  // ✅ Remove "last-watched" when 95% is completed
+  const handleEnded = () => {
+    localStorage.removeItem("last-watched");
   };
 
   const handleBack = () => {
-    saveProgress(currentTime);
+    if (videoRef.current) {
+      localStorage.setItem(
+        "last-watched",
+        JSON.stringify({
+          videoId,
+          title,
+          thumbnail,
+          author,
+          url: finalVideoUrl, // ✅ Include video URL too!
+          progressInSeconds: Math.floor(videoRef.current.currentTime),
+        }),
+      );
+    }
     setLocation("/workshops");
+  };
+
+  const handleSpeedChange = (speed: number) => {
+    setCurrentSpeed(speed);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+    }
+    setShowSpeedDialog(false);
   };
 
   const speedOptions = [0.5, 1, 1.25, 1.5, 2];
 
-  console.log("Video URL inside player:", videoUrl);
-
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto">
-        {/* Top App Bar */}
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center justify-between gap-4">
-            <button
-              onClick={handleBack}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
+        {/* Top Bar */}
+        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-10">
+          <div className="px-4 py-4 flex items-center justify-between">
+            <button onClick={handleBack} className="p-2 rounded-lg">
+              <ArrowLeft className="w-6 h-6" />
             </button>
-
             <Button
               variant="outline"
               size="icon"
               onClick={() => setShowSpeedDialog(true)}
-              data-testid="button-speed-settings"
             >
               <Settings className="w-5 h-5" />
             </Button>
           </div>
         </div>
 
-        {/* Video Player */}
-        <div
-          className="w-full aspect-video rounded-lg overflow-hidden shadow-lg"
-          data-testid="video-player"
-        >
-          {/* @ts-ignore */}
-          <ReactPlayer
-            ref={playerRef}
-            url={videoUrl}
+        {/* ✅ Native HTML5 Video Player */}
+        <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg bg-black">
+          <video
+            ref={videoRef}
+            src={finalVideoUrl}
             controls
-            playing={false} // change this to false
-            muted={false}
-            width="100%"
-            height="100%"
-            playsinline={true}
-            playbackRate={currentSpeed}
-            onReady={handleReady}
-            onProgress={handleProgress}
-            progressInterval={5000}
-            style={{ borderRadius: "12px", backgroundColor: "black" }}
+            playsInline
+            style={{ width: "100%", height: "100%" }}
+            onTimeUpdate={handleTimeUpdate}
+            onEnded={handleEnded}
+            onError={() =>
+              console.error("❌ Video failed to load:", finalVideoUrl)
+            }
           />
         </div>
 
         {/* Video Info */}
         <div className="px-4 py-6 space-y-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">{title}</h1>
-            {author && (
-              <p className="text-sm text-muted-foreground">{author}</p>
-            )}
-          </div>
-
+          <h1 className="text-2xl font-bold">{title}</h1>
+          {author && <p className="text-sm text-muted-foreground">{author}</p>}
           {description && (
-            <div className="pt-4 border-t border-border">
-              <h3 className="text-sm font-semibold text-foreground mb-2">
-                Description
-              </h3>
+            <div className="pt-4 border-t">
+              <h3 className="text-sm font-semibold">Description</h3>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                 {description}
               </p>
@@ -187,7 +148,7 @@ export default function VideoPlayerPage() {
           )}
         </div>
 
-        {/* Speed Control Dialog */}
+        {/* Speed Dialog */}
         <Dialog open={showSpeedDialog} onOpenChange={setShowSpeedDialog}>
           <DialogContent>
             <DialogHeader>
@@ -198,10 +159,10 @@ export default function VideoPlayerPage() {
                 <button
                   key={speed}
                   onClick={() => handleSpeedChange(speed)}
-                  className={`w-full px-4 py-3 rounded-lg text-left hover-elevate active-elevate-2 ${
+                  className={`w-full px-4 py-3 rounded-lg text-left ${
                     currentSpeed === speed
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground"
+                      : "bg-muted"
                   }`}
                 >
                   {speed}x {speed === 1 && "(Normal)"}
