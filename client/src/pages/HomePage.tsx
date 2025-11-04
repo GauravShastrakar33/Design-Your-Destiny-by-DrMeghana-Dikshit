@@ -142,66 +142,66 @@ export default function HomePage() {
 
         <div className="px-4 py-4 space-y-6">
           {/* Daily Progress Card - Ultra Compact */}
-          <div
-            className="bg-gradient-wellness rounded-2xl p-3 shadow-lg"
-            data-testid="card-counter"
-          >
-            {/* Streak Header with Best Streak on Right */}
-            <div className="mb-2 flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xl">🔥</span>
-                  <h2 className="text-xl font-bold text-white">9 Day Streak</h2>
-                </div>
-                <p className="text-white/80 text-[10px] ml-7">
-                  Keep the momentum going, Gaurav!
-                </p>
+          <div className="bg-gradient-calm rounded-2xl pt-3 pb-4 px-4 shadow-lg">
+            {/* 🌟 Streak Section - Moved Slightly Up */}
+            <div className="flex items-center justify-between mb-1 -mt-1">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🔥</span>
+                <h2 className="text-lg font-semibold text-white">
+                  9 Day Streak
+                </h2>
               </div>
               <div className="text-right">
-                <p className="text-white/70 text-[9px]">Best Streak</p>
-                <p className="text-white text-sm font-bold">25 days</p>
+                <p className="text-white/90 text-[12px] font-semibold">
+                  Best Streak
+                </p>
+                <p className="text-white text-base font-bold leading-none">
+                  25 Days
+                </p>
               </div>
             </div>
 
-            {/* 7-Day Activity Chart */}
-            <div className="mb-2">
-              <h3 className="text-white/90 text-[10px] font-medium mb-1.5">
-                Weekly Activity
-              </h3>
-              <div className="flex items-end justify-between gap-2 h-20">
-                {[
-                  { day: "Mon", height: 60 },
-                  { day: "Tue", height: 35 },
-                  { day: "Wed", height: 75 },
-                  { day: "Thu", height: 85 },
-                  { day: "Fri", height: 40 },
-                  { day: "Sat", height: 95 },
-                  { day: "Sun", height: 70 },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-1">
-                    <div
-                      className="w-2 bg-white/80 rounded-t-md shadow-md"
-                      style={{ height: `${item.height}%` }}
-                    />
-                    <span className="text-white/70 text-[9px] font-medium">
-                      {item.day}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            {/* ✅ Subtitle - Left aligned & slightly larger */}
+            <p className="text-white/90 text-[14px] font-medium mt-0.5 ml-6">
+              Keep the momentum going, Gaurav!
+            </p>
+
+            {/* ✅ Weekly Circles – Bigger Spacing */}
+            <div className="flex items-center justify-center gap-4 mt-3 mb-4">
+              {[
+                { day: "M", done: true },
+                { day: "T", done: false },
+                { day: "W", done: true },
+                { day: "T", done: true },
+                { day: "F", done: false },
+                { day: "S", done: true },
+                { day: "S", done: true },
+              ].map((item, idx) => (
+                <div
+                  key={idx}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold
+                  ${
+                    item.done
+                      ? "bg-white/90 text-indigo-700 shadow-sm"
+                      : "bg-white/15 text-white/50 border border-white/30"
+                  }`}
+                >
+                  {item.day}
+                </div>
+              ))}
             </div>
 
             {/* Today's Practice Progress */}
-            <div className="mb-2">
+            <div className="mb-3">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-white/90 text-[10px] font-medium">
+                <span className="text-white/90 text-[11px] font-medium">
                   Today's Practice
                 </span>
-                <span className="text-white text-[10px] font-semibold">
+                <span className="text-white text-[11px] font-semibold">
                   {practiceProgress.current}/{practiceProgress.total} mins
                 </span>
               </div>
-              <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
+              <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-white rounded-full transition-all duration-300"
                   style={{
@@ -214,10 +214,10 @@ export default function HomePage() {
             {/* CTA Button */}
             <button
               onClick={() => setLocation("/playlist")}
-              className="w-full py-1.5 bg-white/20 hover:bg-white/30 active:bg-white/40 backdrop-blur-sm text-white text-[10px] font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5"
-              data-testid="button-resume-practice"
+              className="w-full py-1.5 bg-white/20 hover:bg-white/30 active:bg-white/40 
+                         text-white text-[11px] font-semibold rounded-lg flex items-center justify-center gap-1.5"
             >
-              <Play className="w-3 h-3" />
+              <Play className="w-3.5 h-3.5" />
               Resume Practice
             </button>
           </div>
