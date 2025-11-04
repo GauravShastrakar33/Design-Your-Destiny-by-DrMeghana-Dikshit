@@ -44,35 +44,75 @@ export default function AIInsightsPage() {
   }, []);
 
   const loadData = () => {
-    // Load data from localStorage
-    const dailyLogs = JSON.parse(localStorage.getItem("@app:daily_logs") || "[]");
-    const userChecklist = JSON.parse(localStorage.getItem("userChecklist") || "[]");
+    // DUMMY DATA FOR DEMONSTRATION
+    const dummyWeeklyData = {
+      playlists: [
+        {
+          name: "Gaurav's Morning Playlist",
+          activity: [
+            { day: 'Mon', height: 60 },
+            { day: 'Tue', height: 35 },
+            { day: 'Wed', height: 75 },
+            { day: 'Thu', height: 85 },
+            { day: 'Fri', height: 40 },
+            { day: 'Sat', height: 95 },
+            { day: 'Sun', height: 70 },
+          ],
+          mostPracticed: [
+            ['Vibration Elevation', 3],
+            ['Wealth Code Activation 1', 2],
+            ['Birth Story Healing', 1]
+          ]
+        },
+        {
+          name: "Evening Relaxation",
+          activity: [
+            { day: 'Mon', height: 45 },
+            { day: 'Tue', height: 50 },
+            { day: 'Wed', height: 30 },
+            { day: 'Thu', height: 65 },
+            { day: 'Fri', height: 70 },
+            { day: 'Sat', height: 55 },
+            { day: 'Sun', height: 80 },
+          ],
+          mostPracticed: [
+            ['Neurolinking', 4],
+            ['Memory Development Breath', 2]
+          ]
+        }
+      ],
+      checklist: {
+        daysCount: 5,
+        mostDone: [
+          ['Gratitude Journal', 5],
+          ['Recognition', 3],
+          ['Mirror Work', 2]
+        ]
+      }
+    };
+
+    const dummyMonthlyData = {
+      playlist: [
+        ['Vibration Elevation', 12],
+        ['Wealth Code Activation 1', 10],
+        ['Neurolinking', 8],
+        ['Birth Story Healing', 6],
+        ['Memory Development Breath', 5],
+        ['Wealth Code Activation 2', 4]
+      ],
+      checklist: [
+        ['Gratitude Journal', 15],
+        ['Recognition', 12],
+        ['Mirror Work', 8],
+        ['Visualisation', 7],
+        ['EET', 5],
+        ['Story Burning', 3]
+      ],
+      maxCount: 15
+    };
     
-    // Get date ranges
-    const now = new Date();
-    const sevenDaysAgo = new Date(now);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
-    // Filter weekly logs
-    const weeklyLogs = dailyLogs.filter((log: any) => {
-      const logDate = new Date(log.date);
-      return logDate >= sevenDaysAgo && logDate <= now;
-    });
-    
-    // Filter monthly logs
-    const monthlyLogs = dailyLogs.filter((log: any) => {
-      const logDate = new Date(log.date);
-      return logDate >= firstOfMonth && logDate <= now;
-    });
-    
-    // Process weekly data
-    const weeklyProcessed = processWeeklyData(weeklyLogs, userChecklist);
-    const monthlyProcessed = processMonthlyData(monthlyLogs);
-    
-    setWeeklyData(weeklyProcessed);
-    setMonthlyData(monthlyProcessed);
+    setWeeklyData(dummyWeeklyData);
+    setMonthlyData(dummyMonthlyData);
   };
 
   const processWeeklyData = (logs: any[], userChecklist: string[]) => {
