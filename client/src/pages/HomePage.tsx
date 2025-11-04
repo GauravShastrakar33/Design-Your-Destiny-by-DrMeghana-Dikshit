@@ -141,24 +141,24 @@ export default function HomePage() {
         </div>
 
         <div className="px-4 py-4 space-y-6">
-          {/* Daily Progress Card - Bold Gradient Style */}
+          {/* Daily Progress Card - Compact Gradient Style */}
           <div 
-            className="bg-gradient-wellness rounded-2xl p-6 shadow-lg"
+            className="bg-gradient-wellness rounded-2xl p-4 shadow-lg"
             data-testid="card-counter"
           >
             {/* Streak Header */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-3xl">🔥</span>
-                <h2 className="text-3xl font-bold text-white">9 Day Streak</h2>
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-2xl">🔥</span>
+                <h2 className="text-2xl font-bold text-white">9 Day Streak</h2>
               </div>
-              <p className="text-white/80 text-sm ml-10">Keep the momentum going, Gaurav!</p>
+              <p className="text-white/80 text-xs ml-8">Keep the momentum going, Gaurav!</p>
             </div>
 
             {/* 7-Day Activity Chart */}
-            <div className="mb-6">
-              <h3 className="text-white/90 text-sm font-medium mb-3">Weekly Activity</h3>
-              <div className="flex items-end justify-between gap-1.5 h-24">
+            <div className="mb-3">
+              <h3 className="text-white/90 text-xs font-medium mb-2">Weekly Activity</h3>
+              <div className="flex items-end justify-between gap-1.5 h-16">
                 {[
                   { day: 'Mon', height: 70, active: true },
                   { day: 'Tue', height: 45, active: true },
@@ -168,26 +168,26 @@ export default function HomePage() {
                   { day: 'Sat', height: 95, active: true },
                   { day: 'Sun', height: 60, active: true },
                 ].map((item, idx) => (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-2">
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-1.5">
                     <div 
                       className={`w-full rounded-t-md transition-all duration-300 ${
                         item.active ? 'bg-white' : 'bg-white/20'
                       }`}
                       style={{ height: `${item.height}%` }}
                     />
-                    <span className="text-white/70 text-xs font-medium">{item.day}</span>
+                    <span className="text-white/70 text-[10px] font-medium">{item.day}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Today's Practice Progress */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/90 text-sm font-medium">Today's Practice</span>
-                <span className="text-white text-sm font-semibold">{practiceProgress.current}/{practiceProgress.total} mins</span>
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-white/90 text-xs font-medium">Today's Practice</span>
+                <span className="text-white text-xs font-semibold">{practiceProgress.current}/{practiceProgress.total} mins</span>
               </div>
-              <div className="w-full h-2.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
+              <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
                 <div
                   className="h-full bg-white rounded-full transition-all duration-300"
                   style={{ width: `${(practiceProgress.current / practiceProgress.total) * 100}%` }}
@@ -196,24 +196,24 @@ export default function HomePage() {
             </div>
 
             {/* Stats Row */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-white/70 text-xs">Best Streak</p>
-                <p className="text-white text-lg font-bold">25 days</p>
+                <p className="text-white/70 text-[10px]">Best Streak</p>
+                <p className="text-white text-base font-bold">25 days</p>
               </div>
               <div className="text-right">
-                <p className="text-white/70 text-xs">This Week</p>
-                <p className="text-white text-lg font-bold">5/7 days</p>
+                <p className="text-white/70 text-[10px]">This Week</p>
+                <p className="text-white text-base font-bold">5/7 days</p>
               </div>
             </div>
 
             {/* CTA Button */}
             <button
               onClick={() => setLocation("/playlist")}
-              className="w-full py-3 bg-white/20 hover:bg-white/30 active:bg-white/40 backdrop-blur-sm text-white text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 backdrop-blur-sm text-white text-xs font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
               data-testid="button-resume-practice"
             >
-              <Play className="w-4 h-4" />
+              <Play className="w-3.5 h-3.5" />
               Resume Practice
             </button>
           </div>
