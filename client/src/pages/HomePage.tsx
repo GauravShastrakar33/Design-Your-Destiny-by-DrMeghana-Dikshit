@@ -142,7 +142,7 @@ export default function HomePage() {
 
         <div className="px-4 py-4 space-y-6">
           {/* Daily Progress Card - Ultra Compact */}
-          <div 
+          <div
             className="bg-gradient-wellness rounded-2xl p-3 shadow-lg"
             data-testid="card-counter"
           >
@@ -153,7 +153,9 @@ export default function HomePage() {
                   <span className="text-xl">🔥</span>
                   <h2 className="text-xl font-bold text-white">9 Day Streak</h2>
                 </div>
-                <p className="text-white/80 text-[10px] ml-7">Keep the momentum going, Gaurav!</p>
+                <p className="text-white/80 text-[10px] ml-7">
+                  Keep the momentum going, Gaurav!
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-white/70 text-[9px]">Best Streak</p>
@@ -163,23 +165,27 @@ export default function HomePage() {
 
             {/* 7-Day Activity Chart */}
             <div className="mb-2">
-              <h3 className="text-white/90 text-[10px] font-medium mb-1.5">Weekly Activity</h3>
-              <div className="flex items-end justify-between gap-1 h-12">
+              <h3 className="text-white/90 text-[10px] font-medium mb-1.5">
+                Weekly Activity
+              </h3>
+              <div className="flex items-end justify-between gap-2 h-20">
                 {[
-                  { day: 'Mon', height: 60 },
-                  { day: 'Tue', height: 35 },
-                  { day: 'Wed', height: 75 },
-                  { day: 'Thu', height: 85 },
-                  { day: 'Fri', height: 40 },
-                  { day: 'Sat', height: 95 },
-                  { day: 'Sun', height: 70 },
+                  { day: "Mon", height: 60 },
+                  { day: "Tue", height: 35 },
+                  { day: "Wed", height: 75 },
+                  { day: "Thu", height: 85 },
+                  { day: "Fri", height: 40 },
+                  { day: "Sat", height: 95 },
+                  { day: "Sun", height: 70 },
                 ].map((item, idx) => (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-1">
-                    <div 
-                      className="w-full bg-white rounded-t transition-all duration-300"
+                  <div key={idx} className="flex flex-col items-center gap-1">
+                    <div
+                      className="w-2 bg-white/80 rounded-t-md shadow-md"
                       style={{ height: `${item.height}%` }}
                     />
-                    <span className="text-white/70 text-[9px] font-medium">{item.day}</span>
+                    <span className="text-white/70 text-[9px] font-medium">
+                      {item.day}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -188,13 +194,19 @@ export default function HomePage() {
             {/* Today's Practice Progress */}
             <div className="mb-2">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-white/90 text-[10px] font-medium">Today's Practice</span>
-                <span className="text-white text-[10px] font-semibold">{practiceProgress.current}/{practiceProgress.total} mins</span>
+                <span className="text-white/90 text-[10px] font-medium">
+                  Today's Practice
+                </span>
+                <span className="text-white text-[10px] font-semibold">
+                  {practiceProgress.current}/{practiceProgress.total} mins
+                </span>
               </div>
               <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
                 <div
                   className="h-full bg-white rounded-full transition-all duration-300"
-                  style={{ width: `${(practiceProgress.current / practiceProgress.total) * 100}%` }}
+                  style={{
+                    width: `${(practiceProgress.current / practiceProgress.total) * 100}%`,
+                  }}
                 />
               </div>
             </div>
