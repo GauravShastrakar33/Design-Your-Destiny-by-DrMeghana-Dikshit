@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { 
-  Sparkles, 
-  Users, 
-  Wind, 
-  BookOpen, 
-  ListMusic, 
-  Heart, 
-  DollarSign, 
-  Music, 
-  CheckSquare, 
+import {
+  Sparkles,
+  Users,
+  Wind,
+  BookOpen,
+  ListMusic,
+  Heart,
+  DollarSign,
+  Music,
+  CheckSquare,
   TrendingUp,
   Bell,
-  Play
+  Play,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import ActionCard from "@/components/ActionCard";
@@ -27,9 +27,9 @@ export default function HomePage() {
     {
       title: "Processes",
       icon: Sparkles,
-      gradient: "bg-gradient-wellness",
+      gradient: "bg-gradient-ocean",
       path: "/processes",
-      testId: "card-processes"
+      testId: "card-processes",
     },
     // Right Column
     {
@@ -37,71 +37,71 @@ export default function HomePage() {
       icon: Wind,
       gradient: "bg-gradient-calm",
       path: "/spiritual-breaths",
-      testId: "card-spiritual-breaths"
+      testId: "card-spiritual-breaths",
     },
     // Left Column
     {
       title: "Community Practices",
       icon: Users,
-      gradient: "bg-gradient-growth",
+      gradient: "bg-gradient-sunrise",
       path: "/community-practices",
-      testId: "card-community-practices"
+      testId: "card-community-practices",
     },
     // Right Column
     {
       title: "My Playlist",
       icon: ListMusic,
-      gradient: "bg-gradient-energy",
+      gradient: "bg-gradient-harmony",
       path: "/playlist",
-      testId: "card-my-playlist"
+      testId: "card-my-playlist",
     },
     // Left Column
     {
       title: "Emotion Mastery",
       icon: Heart,
-      gradient: "bg-gradient-calm",
+      gradient: "bg-gradient-focus",
       path: "/emotion-mastery",
-      testId: "card-emotion-mastery"
+      testId: "card-emotion-mastery",
     },
     // Right Column
     {
       title: "Articles",
       icon: BookOpen,
-      gradient: "bg-gradient-wellness",
+      gradient: "bg-gradient-ocean",
       path: "/articles",
-      testId: "card-articles"
+      testId: "card-articles",
     },
     // Left Column
     {
       title: "Money Mastery Hub",
       icon: DollarSign,
-      gradient: "bg-gradient-growth",
+      gradient: "bg-gradient-forest",
       path: "/money-mastery",
-      testId: "card-money-mastery"
+      testId: "card-money-mastery",
     },
     // Right Column
     {
       title: "Process Checklist",
       icon: CheckSquare,
-      gradient: "bg-gradient-energy",
+      gradient: "bg-gradient-desert",
       path: "/process-checklist",
-      testId: "card-process-checklist"
+      testId: "card-process-checklist",
     },
     // Left Column
     {
       title: "Music Journaling",
       icon: Music,
-      gradient: "bg-gradient-calm",
+      gradient: "bg-gradient-lavender",
       path: "/music-journaling",
-      testId: "card-music-journaling"
+      testId: "card-music-journaling",
     },
     // Right Column
     {
       title: "Level Up",
       icon: TrendingUp,
-      gradient: "bg-gradient-wellness",
+      gradient: "bg-gradient-fire",
       path: "/level-up",
-      testId: "card-level-up"
+      testId: "card-level-up",
     },
   ];
 
@@ -141,62 +141,82 @@ export default function HomePage() {
         </div>
 
         <div className="px-4 py-4 space-y-6">
-          {/* Counter Card - Daily Progress + Weekly Streak */}
-          <Card className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30 border-teal-200 dark:border-teal-800 p-5" data-testid="card-counter">
-            {/* Daily Progress Header */}
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-              <h3 className="text-base font-semibold text-foreground">Daily Progress</h3>
-            </div>
-            
-            {/* Weekly Streak Circles */}
-            <div className="flex justify-between mb-4">
-              {[
-                { day: 'SU', completed: true },
-                { day: 'M', completed: true },
-                { day: 'T', completed: false },
-                { day: 'W', completed: true },
-                { day: 'TH', completed: false },
-                { day: 'F', completed: false },
-                { day: 'S', completed: true },
-              ].map((item, idx) => (
-                <div key={idx} className="flex flex-col items-center gap-1">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium ${
-                      item.completed
-                        ? 'bg-gradient-growth text-white'
-                        : 'bg-teal-100 dark:bg-teal-900/30 text-muted-foreground'
-                    }`}
-                  >
-                    {item.day}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Today's Practice */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setLocation("/playlist")}
-                  className="w-6 h-6 rounded-full bg-gradient-growth flex items-center justify-center hover-elevate active-elevate-2"
-                  data-testid="button-resume-practice"
-                >
-                  <Play className="w-3 h-3 text-white ml-0.5" />
-                </button>
-                <span className="text-sm font-medium text-foreground">Today's Practice</span>
+          {/* Daily Progress Card - Bold Gradient Style */}
+          <div 
+            className="bg-gradient-wellness rounded-2xl p-6 shadow-lg"
+            data-testid="card-counter"
+          >
+            {/* Streak Header */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-3xl">🔥</span>
+                <h2 className="text-3xl font-bold text-white">9 Day Streak</h2>
               </div>
-              <span className="text-sm text-muted-foreground">{practiceProgress.current}/{practiceProgress.total} mins</span>
+              <p className="text-white/80 text-sm ml-10">Keep the momentum going, Gaurav!</p>
             </div>
 
-            {/* Progress Bar */}
-            <div className="w-full h-2 bg-teal-200 dark:bg-teal-900/30 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-growth rounded-full transition-all duration-300"
-                style={{ width: `${(practiceProgress.current / practiceProgress.total) * 100}%` }}
-              />
+            {/* 7-Day Activity Chart */}
+            <div className="mb-6">
+              <h3 className="text-white/90 text-sm font-medium mb-3">Weekly Activity</h3>
+              <div className="flex items-end justify-between gap-1.5 h-24">
+                {[
+                  { day: 'Mon', height: 70, active: true },
+                  { day: 'Tue', height: 45, active: true },
+                  { day: 'Wed', height: 85, active: true },
+                  { day: 'Thu', height: 90, active: true },
+                  { day: 'Fri', height: 30, active: true },
+                  { day: 'Sat', height: 95, active: true },
+                  { day: 'Sun', height: 60, active: true },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-2">
+                    <div 
+                      className={`w-full rounded-t-md transition-all duration-300 ${
+                        item.active ? 'bg-white' : 'bg-white/20'
+                      }`}
+                      style={{ height: `${item.height}%` }}
+                    />
+                    <span className="text-white/70 text-xs font-medium">{item.day}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </Card>
+
+            {/* Today's Practice Progress */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/90 text-sm font-medium">Today's Practice</span>
+                <span className="text-white text-sm font-semibold">{practiceProgress.current}/{practiceProgress.total} mins</span>
+              </div>
+              <div className="w-full h-2.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
+                <div
+                  className="h-full bg-white rounded-full transition-all duration-300"
+                  style={{ width: `${(practiceProgress.current / practiceProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Stats Row */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-white/70 text-xs">Best Streak</p>
+                <p className="text-white text-lg font-bold">25 days</p>
+              </div>
+              <div className="text-right">
+                <p className="text-white/70 text-xs">This Week</p>
+                <p className="text-white text-lg font-bold">5/7 days</p>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <button
+              onClick={() => setLocation("/playlist")}
+              className="w-full py-3 bg-white/20 hover:bg-white/30 active:bg-white/40 backdrop-blur-sm text-white text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+              data-testid="button-resume-practice"
+            >
+              <Play className="w-4 h-4" />
+              Resume Practice
+            </button>
+          </div>
 
           {/* Compact Quick Actions Grid */}
           <div>
@@ -256,9 +276,7 @@ export default function HomePage() {
               </div>
               <div className="text-2xl">🔒</div>
             </div>
-            <p className="text-white/80 text-xs mt-3">
-              Unlocks in 7 days
-            </p>
+            <p className="text-white/80 text-xs mt-3">Unlocks in 7 days</p>
             <button
               onClick={() => setLocation("/ai-insights")}
               className="mt-4 w-full py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-sm font-medium rounded-xl backdrop-blur-sm"
