@@ -176,7 +176,7 @@ export default function HomePage() {
                 ].map((item, idx) => (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-1">
                     <div 
-                      className="w-full bg-blue-500 rounded-t transition-all duration-300"
+                      className="w-full bg-white rounded-t transition-all duration-300"
                       style={{ height: `${item.height}%` }}
                     />
                     <span className="text-white/70 text-[9px] font-medium">{item.day}</span>
