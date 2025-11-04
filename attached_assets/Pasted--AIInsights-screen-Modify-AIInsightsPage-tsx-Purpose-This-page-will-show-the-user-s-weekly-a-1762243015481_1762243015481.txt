@@ -1,0 +1,118 @@
+### AIInsights screen
+Modify AIInsightsPage.tsx
+
+🎯 Purpose:
+This page will show the user's weekly and monthly progress in a simple and inspiring way based only on:
+• Custom Playlists (audio practices played)
+• My Process Checklist (self-practices completed)
+
+There should be a toggle at the top:  
+[ Weekly View ]   [ Monthly View ]
+
+--------------------------------------
+
+✅ Weekly View should contain:
+
+📌 Section 1: Custom Playlists (for each playlist user has)
+Example layout:
+
+🎧 Gaurav’s Morning Playlist  
+Weekly Activity:
+(7-day bar graph like the image I have attached)  
+Mon Tue Wed Thu Fri Sat Sun  
+▮  ▯  ▯  ▮  ▮  ▯  ▯
+
+Most Practiced:
+• Vibration Elevation (3×)  
+• Wealth Code Activation 1 (2×)
+
+📌 Section 2: My Process Checklist – Weekly Summary
+Example:
+
+✅ My Process Checklist  
+Practices Done on X days this week
+
+Most Done:
+• Gratitude Journal (3×)  
+• Recognition (2×)  
+• Mirror Work (1×)
+
+No strict score like “3 of 7 completed”, just counts.
+
+--------------------------------------
+
+Monthly View:
+
+Show Monthly Progress for:
+• Custom Playlists (all user-created playlists)
+• My Process Checklist (self practices)
+
+Goal: Show Monthly Progress inside ONE card that includes:
+✔ All playlists combined (grouped by practice)
+✔ All self-practices from My Process Checklist
+✔ Display each as a horizontal bar with count
+✔ Show practice name + bar + count
+✔ Soft and minimal UI, no multiple cards
+✔ No harsh colors — use light pastel, Tailwind neutral gradients, smooth rounded bars
+
+-----------------------------
+UI Layout (Mobile-first):
+
+<Card class="bg-white rounded-xl shadow-sm p-5">
+  
+  📅 <Month Name> Progress (October 2025)
+
+  🎧 Playlist Practices
+  (show only practices user actually did this month)
+  Example:
+  Vibration Elevation        ▓▓▓▓▓▓   6×
+  Wealth Code Activation 1   ▓▓▓▓▓    5×
+  Birth Story Healing        ▓▓▓▓     3×
+
+  ✅ Process Checklist 
+  Gratitude Journal          ▓▓▓▓▓    5×
+  Recognition                ▓▓▓▓     4×
+  Mirror Work                ▓▓       2×
+
+  ✨ “You came back again and again. That’s growth.”
+</Card>
+
+Horizontal Bar Component Requirements:
+Create a reusable <HorizontalBar /> component:
+• Outer bar: `w-full bg-gray-200 h-3 rounded-full`
+• Inner bar:
+   - width = (count / maxCount) * 100%
+   - `h-3 rounded-full transition-all duration-500`
+   - Soft gradient colors (example: `bg-gradient-to-r from-purple-300 to-purple-500`)
+• Layout per row:
+   Practice name (left) — Count (right)
+   Bar underneath the text
+
+--------------------------------------
+
+🧠 Data:
+Load data from localStorage or mock JSON:
+
+localStorage.userChecklist = ["Gratitude Journal", "Mirror Work", ...]  
+localStorage.dailyLogs = [
+  { date: "2025-02-10", type: "playlist", playlist: "Gaurav’s Morning Playlist", practice: "Vibration Elevation" },
+  { date: "2025-02-10", type: "checklist", practice: "Gratitude Journal" },
+]
+
+Filter by:
+• Last 7 days → Weekly view  
+• Current month → Monthly view  
+Group and count occurrences accordingly.
+
+--------------------------------------
+
+Style:
+• Mobile-first layout (max-width: 400px, centered)
+• Minimalist, calming aesthetics (like Calm, Headspace)
+• Soft colors, pastel tones, no harsh reds or warnings
+• Rounded white cards, gentle shadows (shadow-sm), padded content
+• Typography:
+   - Page title: text-lg font-semibold
+   - Section headings: text-md font-medium
+   - Practice labels: text-sm font-medium
+   - Insight text/message: text-sm italic or text-gray-500
