@@ -266,26 +266,6 @@ export default function AIInsightsPage() {
                       </h3>
                     </div>
 
-                    {/* 7-Day Activity Chart */}
-                    <div className="mb-4">
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                        Weekly Activity
-                      </h4>
-                      <div className="flex items-end justify-between gap-1 h-20">
-                        {playlist.activity.map((day: any, dayIdx: number) => (
-                          <div key={dayIdx} className="flex-1 flex flex-col items-center gap-1">
-                            <div
-                              className="w-full bg-blue-500 rounded-t transition-all duration-300"
-                              style={{ height: `${day.height}%` }}
-                            />
-                            <span className="text-[10px] font-medium text-muted-foreground">
-                              {day.day}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
                     {/* Most Practiced */}
                     {playlist.mostPracticed.length > 0 && (
                       <div>
