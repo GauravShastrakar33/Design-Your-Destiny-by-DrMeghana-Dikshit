@@ -1,6 +1,20 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronRight, Settings as SettingsIcon, Bell, MessageCircle, LogOut, Eye, EyeOff, Star, TrendingUp, Circle, Sunrise, Leaf, Moon } from "lucide-react";
+import {
+  ChevronRight,
+  Settings as SettingsIcon,
+  Bell,
+  MessageCircle,
+  LogOut,
+  Eye,
+  EyeOff,
+  Star,
+  TrendingUp,
+  Circle,
+  Sunrise,
+  Leaf,
+  Moon,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface StreakDay {
@@ -24,10 +38,16 @@ export default function ProfilePage() {
     const savedStartDate = localStorage.getItem("streakStartDate");
     const savedStreakVisible = localStorage.getItem("streakVisible");
     const savedStreakData = localStorage.getItem("streakData");
-    
+
     setStartDate(savedStartDate || "2025-01-01");
-    setStreakVisible(savedStreakVisible === null ? true : savedStreakVisible === "true");
-    setStreakData(savedStreakData ? JSON.parse(savedStreakData) : generateInitialStreakData());
+    setStreakVisible(
+      savedStreakVisible === null ? true : savedStreakVisible === "true",
+    );
+    setStreakData(
+      savedStreakData
+        ? JSON.parse(savedStreakData)
+        : generateInitialStreakData(),
+    );
   }, []);
 
   // Generate initial streak data (deterministic based on date)
@@ -35,13 +55,13 @@ export default function ProfilePage() {
     const data: StreakData = {};
     const today = new Date();
     const year = 2025;
-    
+
     for (let month = 0; month < 12; month++) {
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
-        const dateStr = date.toISOString().split('T')[0];
-        
+        const dateStr = date.toISOString().split("T")[0];
+
         if (date < today) {
           // Use date as seed for consistent pattern
           // More green (streak) than red (missed)
@@ -56,7 +76,7 @@ export default function ProfilePage() {
         }
       }
     }
-    
+
     localStorage.setItem("streakData", JSON.stringify(data));
     return data;
   };
@@ -68,7 +88,11 @@ export default function ProfilePage() {
   };
 
   const handleResetPOH = () => {
-    if (confirm("Are you sure you want to reset your Project of Heart? This will clear all POH progress and set stars to 0.")) {
+    if (
+      confirm(
+        "Are you sure you want to reset your Project of Heart? This will clear all POH progress and set stars to 0.",
+      )
+    ) {
       localStorage.removeItem("@app:poh_data");
       localStorage.removeItem("@app:weekly_action");
       alert("Project of Heart has been reset successfully.");
@@ -76,7 +100,11 @@ export default function ProfilePage() {
   };
 
   const handleResetChecklist = () => {
-    if (confirm("Are you sure you want to reset your Process Checklist? This will remove your current selections and daily progress.")) {
+    if (
+      confirm(
+        "Are you sure you want to reset your Process Checklist? This will remove your current selections and daily progress.",
+      )
+    ) {
       localStorage.removeItem("userChecklist");
       localStorage.removeItem("dailyLogs");
       setLocation("/process-checklist");
@@ -89,48 +117,48 @@ export default function ProfilePage() {
     const today = new Date();
     const year = 2025;
     const streakStartDate = new Date(startDate);
-    
+
     for (let month = 0; month < 12; month++) {
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
-        const dateStr = date.toISOString().split('T')[0];
-        
+        const dateStr = date.toISOString().split("T")[0];
+
         let status: "streak" | "missed" | "neutral" = "neutral";
-        
+
         // Only consider dates after start date
         if (date >= streakStartDate && date <= today) {
           status = streakData[dateStr] || "neutral";
         } else if (date > today) {
           status = "neutral";
         }
-        
+
         days.push({ date: dateStr, status });
       }
     }
-    
+
     return days;
   };
 
   const calendarDays = generateCalendarDays();
-  
+
   // Calculate streaks based on persisted data and start date
   const calculateStreaks = () => {
     let currentStreak = 0;
     let bestStreak = 0;
     let tempStreak = 0;
-    
-    const today = new Date().toISOString().split('T')[0];
+
+    const today = new Date().toISOString().split("T")[0];
     const streakStartDate = new Date(startDate);
     const sortedDays = [...calendarDays]
-      .filter(day => new Date(day.date) >= streakStartDate)
+      .filter((day) => new Date(day.date) >= streakStartDate)
       .reverse();
-    
+
     let foundCurrent = false;
-    
+
     for (const day of sortedDays) {
       if (day.date > today) continue;
-      
+
       if (day.status === "streak") {
         tempStreak++;
         if (!foundCurrent) {
@@ -144,11 +172,11 @@ export default function ProfilePage() {
         tempStreak = 0;
       }
     }
-    
+
     if (tempStreak > bestStreak) {
       bestStreak = tempStreak;
     }
-    
+
     return { currentStreak, bestStreak };
   };
 
@@ -158,14 +186,30 @@ export default function ProfilePage() {
   const bestStreak = 25;
 
   // Group days by month
-  const daysByMonth = calendarDays.reduce((acc, day) => {
-    const month = new Date(day.date).getMonth();
-    if (!acc[month]) acc[month] = [];
-    acc[month].push(day);
-    return acc;
-  }, {} as Record<number, StreakDay[]>);
+  const daysByMonth = calendarDays.reduce(
+    (acc, day) => {
+      const month = new Date(day.date).getMonth();
+      if (!acc[month]) acc[month] = [];
+      acc[month].push(day);
+      return acc;
+    },
+    {} as Record<number, StreakDay[]>,
+  );
 
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -178,26 +222,37 @@ export default function ProfilePage() {
                 GS
               </div>
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-foreground">Gaurav Shastrakar</h2>
-                <p className="text-sm text-muted-foreground mt-1">Member Since 2023</p>
+                <h2 className="text-2xl font-bold text-foreground">
+                  Gaurav Shastrakar
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Member Since 2023
+                </p>
               </div>
             </div>
-            
+
             {/* Stars Earned Section */}
             <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border border-yellow-200/50 dark:border-yellow-800/30 shadow-md">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">Stars Earned</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    Stars Earned
+                  </p>
                   <div className="flex items-center gap-2">
                     <Star className="w-6 h-6 text-yellow-600 fill-yellow-600 animate-pulse" />
-                    <span className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent" data-testid="text-stars-earned">
+                    <span
+                      className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
+                      data-testid="text-stars-earned"
+                    >
                       33
                     </span>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">from Dr.M</p>
-                  <p className="text-xs text-muted-foreground mt-1">Keep shining!</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Keep shining!
+                  </p>
                 </div>
               </div>
             </div>
@@ -207,9 +262,16 @@ export default function ProfilePage() {
         {/* Karmic Affirmation */}
         <Card className="bg-[#fffdf5] dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-800/30 shadow-md">
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-3 tracking-wide">Karmic Affirmation</h3>
-            <p className="text-foreground italic font-serif leading-relaxed text-center" data-testid="text-affirmation">
-              "I trust the universe to guide me toward my highest purpose. Every challenge is an opportunity for growth, and I embrace it with grace and courage."
+            <h3 className="text-lg font-semibold text-foreground mb-3 tracking-wide">
+              Karmic Affirmation
+            </h3>
+            <p
+              className="text-foreground italic font-serif leading-relaxed text-center"
+              data-testid="text-affirmation"
+            >
+              "I trust the universe to guide me toward my highest purpose. Every
+              challenge is an opportunity for growth, and I embrace it with
+              grace and courage."
             </p>
           </CardContent>
         </Card>
@@ -217,64 +279,80 @@ export default function ProfilePage() {
         {/* Prescription Card */}
         <Card className="bg-[#f5fff8] dark:bg-green-950/20 border-green-200/50 dark:border-green-800/30 shadow-md">
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-3">Your Prescription</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-3">
+              Your Prescription
+            </h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <Sunrise className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                <p className="text-sm text-foreground"><span className="font-semibold">Morning:</span> USM Practice + Gratitude Journal</p>
+                <p className="text-sm text-foreground">
+                  <span className="font-semibold">Morning:</span> USM Practice +
+                  Gratitude Journal
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <Leaf className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <p className="text-sm text-foreground"><span className="font-semibold">Afternoon:</span> 15-min Money Meditation</p>
+                <p className="text-sm text-foreground">
+                  <span className="font-semibold">Afternoon:</span> 15-min Money
+                  Meditation
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <Moon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-                <p className="text-sm text-foreground"><span className="font-semibold">Evening:</span> Project of Heart Reflection</p>
+                <p className="text-sm text-foreground">
+                  <span className="font-semibold">Evening:</span> Project of
+                  Heart Reflection
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Streak Tracker */}
-        <Card>
+        <Card className="bg-white border shadow-sm rounded-xl">
           <CardContent className="p-6">
+            {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-foreground">2025 Streak Tracker</h3>
-                <button
-                  onClick={toggleStreakVisibility}
-                  className="hover-elevate active-elevate-2 rounded-lg p-1"
-                  data-testid="button-toggle-streak"
-                >
-                  {streakVisible ? <Eye className="w-4 h-4 text-muted-foreground" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
-                </button>
-              </div>
+              <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                Your Consistency Map 📈
+              </h3>
+              <button
+                onClick={toggleStreakVisibility}
+                className="p-1 hover:bg-gray-100 rounded-md transition"
+              >
+                {streakVisible ? (
+                  <Eye className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <EyeOff className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
             </div>
 
             {streakVisible && (
               <>
                 {/* Legend */}
-                <div className="flex items-center gap-4 mb-4 text-sm flex-wrap">
+                <div className="flex justify-end gap-4 text-xs mb-4">
                   <div className="flex items-center gap-1">
-                    <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Your Consistency Map</span>
+                    <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                    <span className="text-gray-600">Streak</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Circle className="w-3 h-3 fill-green-500 text-green-500" />
-                    <span className="text-xs text-muted-foreground">Streak</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Circle className="w-3 h-3 fill-red-500 text-red-500" />
-                    <span className="text-xs text-muted-foreground">Missed</span>
+                    <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                    <span className="text-gray-600">Missed</span>
                   </div>
                 </div>
 
                 {/* Calendar */}
-                <div className="overflow-x-auto scrollbar-hide" data-testid="streak-calendar">
+                <div
+                  className="overflow-x-auto scrollbar-hide"
+                  data-testid="streak-calendar"
+                >
                   <div className="flex gap-6 pb-4">
                     {Object.entries(daysByMonth).map(([month, days]) => (
                       <div key={month} className="flex-shrink-0">
-                        <h4 className="text-sm font-medium text-foreground mb-2">{monthNames[parseInt(month)]}</h4>
+                        <h4 className="text-sm font-medium text-foreground mb-2">
+                          {monthNames[parseInt(month)]}
+                        </h4>
                         <div className="grid grid-cols-7 gap-1">
                           {days.map((day) => {
                             const dayNum = new Date(day.date).getDate();
@@ -285,8 +363,8 @@ export default function ProfilePage() {
                                   day.status === "streak"
                                     ? "bg-green-500 text-white"
                                     : day.status === "missed"
-                                    ? "bg-red-500 text-white"
-                                    : "bg-muted text-muted-foreground"
+                                      ? "bg-red-500 text-white"
+                                      : "bg-muted text-muted-foreground"
                                 }`}
                                 data-testid={`day-${day.date}`}
                               >
@@ -300,20 +378,14 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Streak Stats */}
-                <div className="mt-6 grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-1">BEST STREAK</p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent" data-testid="text-best-streak">
+                {/* Best Streak Section */}
+                <div className="mt-4 text-left">
+                  <p className="text-sm text-gray-500 tracking-wide">
+                    BEST STREAK ----&gt;{" "}
+                    <span className="text-green-600 font-semibold">
                       {bestStreak} Days
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-1">CURRENT STREAK</p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent" data-testid="text-current-streak">
-                      {currentStreak} Days
-                    </p>
-                  </div>
+                    </span>
+                  </p>
                 </div>
               </>
             )}
@@ -323,7 +395,9 @@ export default function ProfilePage() {
         {/* Settings */}
         <Card>
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Settings</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">
+              Settings
+            </h3>
             <div className="space-y-1">
               <div>
                 <button
@@ -335,12 +409,16 @@ export default function ProfilePage() {
                     <SettingsIcon className="w-5 h-5 text-muted-foreground" />
                     <div className="text-left">
                       <p className="font-medium text-foreground">Account</p>
-                      <p className="text-xs text-muted-foreground">Change your account settings</p>
+                      <p className="text-xs text-muted-foreground">
+                        Change your account settings
+                      </p>
                     </div>
                   </div>
-                  <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${accountExpanded ? 'rotate-90' : ''}`} />
+                  <ChevronRight
+                    className={`w-5 h-5 text-muted-foreground transition-transform ${accountExpanded ? "rotate-90" : ""}`}
+                  />
                 </button>
-                
+
                 {accountExpanded && (
                   <div className="pl-11 pr-3 py-2 space-y-2">
                     <button
@@ -348,16 +426,24 @@ export default function ProfilePage() {
                       className="w-full text-left p-3 rounded-lg hover-elevate active-elevate-2 border border-red-200 dark:border-red-800/30"
                       data-testid="button-reset-poh"
                     >
-                      <p className="font-medium text-red-600 dark:text-red-400">Reset Project of Heart</p>
-                      <p className="text-xs text-muted-foreground mt-1">Clear all POH progress (for demonstration)</p>
+                      <p className="font-medium text-red-600 dark:text-red-400">
+                        Reset Project of Heart
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Clear all POH progress (for demonstration)
+                      </p>
                     </button>
                     <button
                       onClick={handleResetChecklist}
                       className="w-full text-left p-3 rounded-lg hover-elevate active-elevate-2 border border-red-200 dark:border-red-800/30"
                       data-testid="button-reset-checklist"
                     >
-                      <p className="font-medium text-red-600 dark:text-red-400">Reset Process Checklist</p>
-                      <p className="text-xs text-muted-foreground mt-1">Clear checklist and daily progress</p>
+                      <p className="font-medium text-red-600 dark:text-red-400">
+                        Reset Process Checklist
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Clear checklist and daily progress
+                      </p>
                     </button>
                   </div>
                 )}
@@ -371,7 +457,9 @@ export default function ProfilePage() {
                   <Bell className="w-5 h-5 text-muted-foreground" />
                   <div className="text-left">
                     <p className="font-medium text-foreground">Notifications</p>
-                    <p className="text-xs text-muted-foreground">Manage your notification preferences</p>
+                    <p className="text-xs text-muted-foreground">
+                      Manage your notification preferences
+                    </p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -385,7 +473,9 @@ export default function ProfilePage() {
                   <MessageCircle className="w-5 h-5 text-muted-foreground" />
                   <div className="text-left">
                     <p className="font-medium text-foreground">Get Support</p>
-                    <p className="text-xs text-muted-foreground">Talk with our Coaches</p>
+                    <p className="text-xs text-muted-foreground">
+                      Talk with our Coaches
+                    </p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -399,7 +489,9 @@ export default function ProfilePage() {
                   <LogOut className="w-5 h-5 text-red-500" />
                   <div className="text-left">
                     <p className="font-medium text-red-500">Logout</p>
-                    <p className="text-xs text-muted-foreground">Log out of your account</p>
+                    <p className="text-xs text-muted-foreground">
+                      Log out of your account
+                    </p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />

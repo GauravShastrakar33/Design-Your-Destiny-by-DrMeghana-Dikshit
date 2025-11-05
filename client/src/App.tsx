@@ -50,11 +50,17 @@ function Router() {
       <Route path="/process-checklist" component={ProcessChecklistPage} />
       <Route path="/level-up" component={LevelUpPage} />
       <Route path="/level-up/history" component={ChallengeHistoryScreen} />
-      <Route path="/level-up/:challengeId" component={ChallengeDashboardScreen} />
+      <Route
+        path="/level-up/:challengeId"
+        component={ChallengeDashboardScreen}
+      />
       <Route path="/more-quotes" component={MoreQuotesPage} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/ai-insights" component={AIInsightsPage} />
-      <Route path="/workshops/course/:courseId" component={CourseOverviewPage} />
+      <Route
+        path="/workshops/course/:courseId"
+        component={CourseOverviewPage}
+      />
       <Route path="/video-player" component={VideoPlayerPage} />
       <Route path="/rewiring-belief" component={RewiringScreen} />
       <Route component={NotFound} />
