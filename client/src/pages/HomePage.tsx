@@ -24,82 +24,110 @@ export default function HomePage() {
   const [streakDays] = useState([true, true, false, true, true, false, false]);
 
   const actionCards = [
-    // Left Column
     {
       title: "Processes",
-      icon: Sparkles,
+      icon: (
+        <Sparkles
+          className="w-[18px] h-[18px] text-[#703DFA]"
+          strokeWidth={1.6}
+        />
+      ),
       gradient: "bg-gradient-ocean",
       path: "/processes",
       testId: "card-processes",
     },
-    // Right Column
     {
       title: "Spiritual Breaths",
-      icon: Wind,
+      icon: (
+        <Wind className="w-[18px] h-[18px] text-[#703DFA]" strokeWidth={1.6} />
+      ),
       gradient: "bg-gradient-calm",
       path: "/spiritual-breaths",
       testId: "card-spiritual-breaths",
     },
-    // Left Column
     {
       title: "Community Practices",
-      icon: Users,
+      icon: (
+        <Users className="w-[18px] h-[18px] text-[#703DFA]" strokeWidth={1.6} />
+      ),
       gradient: "bg-gradient-sunrise",
       path: "/community-practices",
       testId: "card-community-practices",
     },
-    // Right Column
     {
       title: "My ProcessList",
-      icon: ListMusic,
+      icon: (
+        <ListMusic
+          className="w-[18px] h-[18px] text-[#703DFA]"
+          strokeWidth={1.6}
+        />
+      ),
       gradient: "bg-gradient-harmony",
       path: "/playlist",
       testId: "card-my-playlist",
     },
-    // Left Column
     {
-      title: "Emotion Mastery",
-      icon: Heart,
+      title: "Mental Health",
+      icon: (
+        <i className="ri-mental-health-line text-[26px] text-[#703DFA] leading-none"></i>
+      ),
       gradient: "bg-gradient-focus",
-      path: "/emotion-mastery",
-      testId: "card-emotion-mastery",
+      path: "/mental-health",
+      testId: "card-mental-health",
     },
-    // Right Column
     {
       title: "Articles",
-      icon: BookOpen,
+      icon: (
+        <BookOpen
+          className="w-[18px] h-[18px] text-[#703DFA]"
+          strokeWidth={1.6}
+        />
+      ),
       gradient: "bg-gradient-ocean",
       path: "/articles",
       testId: "card-articles",
     },
-    // Left Column
     {
       title: "Abundance Mastery",
-      icon: DollarSign,
+      icon: (
+        <DollarSign
+          className="w-[18px] h-[18px] text-[#703DFA]"
+          strokeWidth={1.6}
+        />
+      ),
       gradient: "bg-gradient-forest",
       path: "/money-mastery",
       testId: "card-money-mastery",
     },
-    // Right Column
     {
       title: "Process Checklist",
-      icon: CheckSquare,
+      icon: (
+        <CheckSquare
+          className="w-[18px] h-[18px] text-[#703DFA]"
+          strokeWidth={1.6}
+        />
+      ),
       gradient: "bg-gradient-desert",
       path: "/process-checklist",
       testId: "card-process-checklist",
     },
-    // Left Column
     {
       title: "Music Journaling",
-      icon: Music,
+      icon: (
+        <Music className="w-[18px] h-[18px] text-[#703DFA]" strokeWidth={1.6} />
+      ),
       gradient: "bg-gradient-lavender",
       path: "/music-journaling",
       testId: "card-music-journaling",
     },
-    // Right Column
     {
       title: "Level Up",
-      icon: TrendingUp,
+      icon: (
+        <TrendingUp
+          className="w-[18px] h-[18px] text-[#703DFA]"
+          strokeWidth={1.6}
+        />
+      ),
       gradient: "bg-gradient-fire",
       path: "/level-up",
       testId: "card-level-up",
@@ -183,11 +211,8 @@ export default function HomePage() {
                   className="bg-white border border-[#232A34]/10 rounded-2xl p-3 flex items-center gap-3 shadow-sm hover:shadow-md active:scale-[0.98] transition min-h-[60px]"
                   data-testid={card.testId}
                 >
-                  <div className="w-10 h-10 bg-[#703DFA]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <card.icon
-                      className="w-[18px] h-[18px] text-[#703DFA]"
-                      strokeWidth={1.6}
-                    />
+                  <div className="flex items-center justify-center flex-shrink-0">
+                    {card.icon}
                   </div>
                   <span className="text-sm font-semibold text-[#232A34] text-left flex-1">
                     {card.title}
@@ -196,52 +221,52 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Motivational Quote Card */}
-          <div
-            className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-6 text-center shadow-lg"
-            data-testid="card-quote"
+        {/* Motivational Quote Card */}
+        <div
+          className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-6 text-center shadow-lg"
+          data-testid="card-quote"
+        >
+          <p className="text-white text-lg font-semibold mb-4 leading-relaxed">
+            "The only impossible journey is the one you never begin."
+          </p>
+          <p className="text-white/80 text-sm mb-4">— Tony Robbins</p>
+          <button
+            onClick={() => setLocation("/more-quotes")}
+            className="px-4 py-2 bg-black/30 hover:bg-black/40 active:bg-black/50 text-white text-sm font-medium rounded-full backdrop-blur-sm"
+            data-testid="button-more-quotes"
           >
-            <p className="text-white text-lg font-semibold mb-4 leading-relaxed">
-              "The only impossible journey is the one you never begin."
-            </p>
-            <p className="text-white/80 text-sm mb-4">— Tony Robbins</p>
-            <button
-              onClick={() => setLocation("/more-quotes")}
-              className="px-4 py-2 bg-black/30 hover:bg-black/40 active:bg-black/50 text-white text-sm font-medium rounded-full backdrop-blur-sm"
-              data-testid="button-more-quotes"
-            >
-              More Quotes →
-            </button>
-          </div>
+            More Quotes →
+          </button>
+        </div>
 
-          {/* AI Insights Card */}
-          <div
-            className="bg-gradient-to-br from-blue-400 via-cyan-400 to-teal-400 rounded-2xl p-6 shadow-lg relative"
-            data-testid="card-ai-insights"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <h3 className="text-white text-xl font-bold mb-1">
-                  AI Insights ✨
-                </h3>
-                <p className="text-white/90 text-sm">
-                  Receive personalised insights for your streak
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Lock className="w-5 h-5 text-white" />
-              </div>
+        {/* AI Insights Card */}
+        <div
+          className="bg-gradient-to-br from-blue-400 via-cyan-400 to-teal-400 rounded-2xl p-6 shadow-lg relative"
+          data-testid="card-ai-insights"
+        >
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <h3 className="text-white text-xl font-bold mb-1">
+                AI Insights ✨
+              </h3>
+              <p className="text-white/90 text-sm">
+                Receive personalised insights for your streak
+              </p>
             </div>
-            <p className="text-white/80 text-xs mt-3">Unlocks in 7 days</p>
-            <button
-              onClick={() => setLocation("/ai-insights")}
-              className="mt-4 w-full py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-sm font-medium rounded-xl backdrop-blur-sm"
-              data-testid="button-ai-insights"
-            >
-              View Insights
-            </button>
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <Lock className="w-5 h-5 text-white" />
+            </div>
           </div>
+          <p className="text-white/80 text-xs mt-3">Unlocks in 7 days</p>
+          <button
+            onClick={() => setLocation("/ai-insights")}
+            className="mt-4 w-full py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-sm font-medium rounded-xl backdrop-blur-sm"
+            data-testid="button-ai-insights"
+          >
+            View Insights
+          </button>
         </div>
       </div>
     </div>
