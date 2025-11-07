@@ -163,7 +163,7 @@ export default function HomePage() {
         </div>
 
         {/* Content Container */}
-        <div className="px-4 pt-1 pb-4 space-y-4">
+        <div className="px-3 pt-1 pb-4 space-y-4">
           {/* Compact Quick Actions Grid */}
           <div>
             <div className="grid grid-cols-2 gap-2">
