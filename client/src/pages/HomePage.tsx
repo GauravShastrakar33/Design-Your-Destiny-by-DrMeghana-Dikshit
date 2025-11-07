@@ -105,7 +105,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                Welcome back, Gaurav
+                Welcome back,
               </h1>
               <p className="text-sm text-muted-foreground">
                 Every step you take is shaping the best version of you
