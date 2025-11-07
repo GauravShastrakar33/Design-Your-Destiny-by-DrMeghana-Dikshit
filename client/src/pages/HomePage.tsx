@@ -165,12 +165,12 @@ export default function HomePage() {
         {/* Compact Quick Actions Grid */}
         <div className="px-4 pt-1 pb-4 space-y-6">
           <div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               {actionCards.map((card) => (
                 <button
                   key={card.path}
                   onClick={() => setLocation(card.path)}
-                  className="bg-white border border-[#232A34]/10 rounded-2xl p-3 flex items-center gap-3 shadow-sm hover:shadow-md active:scale-[0.98] transition min-h-[60px]"
+                  className="bg-white border border-[#232A34]/10 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm hover:shadow-md active:scale-[0.98] transition min-h-[52px]"
                   data-testid={card.testId}
                 >
                   {/* ✅ Icon without purple background */}
