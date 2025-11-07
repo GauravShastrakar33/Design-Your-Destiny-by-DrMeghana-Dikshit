@@ -124,6 +124,19 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="px-4 py-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search practices, workshops..."
+              className="w-full h-11 pl-11 pr-4 rounded-full bg-white text-foreground placeholder:text-purple-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#703DFA]/50 border border-purple-100 shadow-sm"
+              data-testid="input-search"
+            />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400 w-4 h-4" strokeWidth={2} />
+          </div>
+        </div>
+
         {/* 🔴 Live Session Section */}
         <div className="w-full mb-6">
           {/* 📌 Image Banner */}
