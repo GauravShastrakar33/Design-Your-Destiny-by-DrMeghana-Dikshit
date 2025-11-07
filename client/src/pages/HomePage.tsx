@@ -102,7 +102,7 @@ export default function HomePage() {
       <div className="max-w-md mx-auto">
         {/* Header with Notification and Search */}
         <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10 px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
                 Welcome back, Gaurav
@@ -118,15 +118,6 @@ export default function HomePage() {
             >
               <Bell className="w-5 h-5 text-white" strokeWidth={2} />
             </button>
-          </div>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search practices, workshops..."
-              className="w-full h-10 pl-10 pr-4 rounded-full bg-purple-50 text-foreground placeholder:text-purple-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#703DFA]/50 border border-purple-100"
-              data-testid="input-search"
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400 w-4 h-4" strokeWidth={2} />
           </div>
         </div>
 
