@@ -192,20 +192,24 @@ export default function HomePage() {
 
           {/* Motivational Quote Card */}
           <div
-            className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-5 text-center shadow-md"
+            className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-5 shadow-md relative"
             data-testid="card-quote"
           >
-            <p className="text-white text-base font-semibold mb-3 leading-relaxed">
-              "The only impossible journey is the one you never begin."
-            </p>
-            <p className="text-white/80 text-xs mb-3">— Tony Robbins</p>
-            <button
-              onClick={() => setLocation("/more-quotes")}
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-xs font-semibold rounded-full backdrop-blur-sm transition"
-              data-testid="button-more-quotes"
-            >
-              More Quotes →
-            </button>
+            <div className="text-center mb-4">
+              <p className="text-white text-lg font-medium mb-3 leading-relaxed italic">
+                "The only impossible journey is the one you never begin."
+              </p>
+              <p className="text-white/90 text-sm font-light">— Tony Robbins</p>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setLocation("/more-quotes")}
+                className="px-3 py-1.5 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-xs font-semibold rounded-full backdrop-blur-sm transition"
+                data-testid="button-more-quotes"
+              >
+                More Quotes →
+              </button>
+            </div>
           </div>
 
           {/* AI Insights Card */}
