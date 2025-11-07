@@ -116,7 +116,7 @@ export default function HomePage() {
             </div>
             <button
               onClick={() => setLocation("/notifications")}
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover-elevate active-elevate-2 shadow-sm border border-purple-100"
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover-elevate active-elevate-2 shadow-sm border border-[#232A34]/10"
               data-testid="button-notifications"
             >
               <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
@@ -156,9 +156,9 @@ export default function HomePage() {
         </div>
 
         {/* Content Container */}
-        <div className="px-2 pt-0 pb-4 space-y-4">
+        <div className="px-4 pt-0 pb-4 space-y-4">
           {/* Compact Quick Actions Grid */}
-          <div>
+          <div className="-mx-4 px-1">
             <div className="grid grid-cols-2 gap-2">
               {actionCards.map((card) => (
                 <button
