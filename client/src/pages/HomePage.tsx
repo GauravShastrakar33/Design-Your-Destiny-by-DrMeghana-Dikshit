@@ -74,7 +74,7 @@ export default function HomePage() {
     },
     // Left Column
     {
-      title: "Money Mastery Hub",
+      title: "Abundance Maste",
       icon: DollarSign,
       gradient: "bg-gradient-forest",
       path: "/money-mastery",
@@ -142,7 +142,7 @@ export default function HomePage() {
         </div>
 
         {/* 🔴 Live Session Section */}
-        <div className="w-full mb-3">
+        <div className="w-full mb-6">
           {/* 📌 Image Banner */}
           <div className="relative w-full h-56 overflow-hidden shadow-md">
             <img
@@ -172,7 +172,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="px-4 pt-2 pb-4 space-y-6">
+        <div className="px-4 py-4 space-y-6">
           {/* Compact Quick Actions Grid */}
           <div>
             <div className="grid grid-cols-2 gap-2">
