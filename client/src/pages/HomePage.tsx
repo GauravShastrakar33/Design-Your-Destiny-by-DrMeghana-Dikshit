@@ -98,10 +98,10 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen pb-20" style={{ backgroundColor: '#F3F3F3' }}>
       <div className="max-w-md mx-auto">
         {/* Header with Notification and Search */}
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10 px-4 py-3">
+        <div className="sticky top-0 backdrop-blur-sm border-b border-border z-10 px-4 py-3" style={{ backgroundColor: 'rgba(243, 243, 243, 0.95)' }}>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
