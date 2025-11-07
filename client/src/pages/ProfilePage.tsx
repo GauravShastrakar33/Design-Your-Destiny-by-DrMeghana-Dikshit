@@ -14,6 +14,7 @@ import {
   Sunrise,
   Leaf,
   Moon,
+  Lock,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -391,6 +392,34 @@ export default function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        {/* AI Insights Card */}
+        <div
+          className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-4 shadow-md relative"
+          data-testid="card-ai-insights"
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <h3 className="text-white text-lg font-bold mb-1">
+                AI Insights ✨
+              </h3>
+              <p className="text-white/90 text-xs">
+                Receive personalised insights for your streak
+              </p>
+            </div>
+            <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Lock className="w-4 h-4 text-white" />
+            </div>
+          </div>
+          <p className="text-white/70 text-[11px] mt-2">Unlocks in 7 days</p>
+          <button
+            onClick={() => setLocation("/ai-insights")}
+            className="mt-3 w-full py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-xs font-semibold rounded-xl backdrop-blur-sm transition"
+            data-testid="button-ai-insights"
+          >
+            View Insights
+          </button>
+        </div>
 
         {/* Settings */}
         <Card>
