@@ -192,7 +192,7 @@ export default function HomePage() {
 
           {/* Motivational Quote Card */}
           <div
-            className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-4 shadow-md relative"
+            className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-4 shadow-md relative mt-1"
             data-testid="card-quote"
           >
             <div className="text-center mb-3 px-2">
