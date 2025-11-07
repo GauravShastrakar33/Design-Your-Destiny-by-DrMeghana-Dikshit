@@ -113,10 +113,10 @@ export default function HomePage() {
             </div>
             <button
               onClick={() => setLocation("/notifications")}
-              className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center hover-elevate active-elevate-2 shadow-sm"
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover-elevate active-elevate-2 shadow-sm border border-purple-100"
               data-testid="button-notifications"
             >
-              <Bell className="w-5 h-5 text-white" strokeWidth={2} />
+              <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
             </button>
           </div>
         </div>
