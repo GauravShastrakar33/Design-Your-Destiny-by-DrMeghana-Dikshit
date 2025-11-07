@@ -100,20 +100,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        {/* Header with Notification and Search */}
+        {/* Header with Notification */}
         <div
-          className="sticky top-0 backdrop-blur-sm border-b border-border z-10 px-4 py-3"
+          className="sticky top-0 backdrop-blur-sm z-10 px-4 py-3"
           style={{ backgroundColor: "rgba(243, 243, 243, 0.95)" }}
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                Welcome back,Champion!
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                How are you feeling today?
-              </p>
-            </div>
+          <div className="flex items-center justify-end">
             <button
               onClick={() => setLocation("/notifications")}
               className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover-elevate active-elevate-2 shadow-sm border border-[#232A34]/10"
@@ -121,6 +113,18 @@ export default function HomePage() {
             >
               <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
             </button>
+          </div>
+        </div>
+
+        {/* Welcome Card */}
+        <div className="px-4 pt-4">
+          <div className="bg-gradient-to-br from-purple-600 via-violet-500 to-purple-400 rounded-2xl p-5 shadow-md">
+            <h1 className="text-2xl font-bold text-white mb-1">
+              Welcome back, Champion!
+            </h1>
+            <p className="text-white/90 text-sm">
+              How are you feeling today?
+            </p>
           </div>
         </div>
 
