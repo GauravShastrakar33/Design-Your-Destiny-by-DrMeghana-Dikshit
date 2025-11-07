@@ -14,6 +14,7 @@ import {
   Bell,
   Play,
   Lock,
+  Search,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import ActionCard from "@/components/ActionCard";
@@ -112,22 +113,20 @@ export default function HomePage() {
             </div>
             <button
               onClick={() => setLocation("/notifications")}
-              className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover-elevate active-elevate-2"
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center hover-elevate active-elevate-2 shadow-sm"
               data-testid="button-notifications"
             >
-              <Bell className="w-5 h-5 text-foreground" />
+              <Bell className="w-5 h-5 text-white" strokeWidth={2} />
             </button>
           </div>
           <div className="relative">
             <input
               type="text"
               placeholder="Search practices, workshops..."
-              className="w-full h-10 pl-10 pr-4 rounded-full bg-muted text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full h-10 pl-10 pr-4 rounded-full bg-purple-50 text-foreground placeholder:text-purple-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#703DFA]/50 border border-purple-100"
               data-testid="input-search"
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-              🔍
-            </span>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400 w-4 h-4" strokeWidth={2} />
           </div>
         </div>
 
@@ -163,7 +162,7 @@ export default function HomePage() {
         </div>
 
         {/* Content Container */}
-        <div className="px-3 pt-0 pb-4 space-y-3">
+        <div className="px-4 pt-0 pb-4 space-y-4">
           {/* Compact Quick Actions Grid */}
           <div>
             <div className="grid grid-cols-2 gap-2">
@@ -191,8 +190,9 @@ export default function HomePage() {
           </div>
 
           {/* Motivational Quote Card */}
+          {/* Motivational Quote Card */}
           <div
-            className="bg-gradient-to-br from-purple-600 via-violet-500 to-purple-400 rounded-2xl p-4 shadow-md relative mt-8"
+            className="bg-gradient-to-br from-purple-600 via-violet-500 to-purple-400 rounded-2xl p-4 shadow-md relative mt-6"
             data-testid="card-quote"
           >
             <div className="text-center mb-3 px-2">
