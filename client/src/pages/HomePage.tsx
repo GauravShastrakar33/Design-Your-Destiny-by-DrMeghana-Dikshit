@@ -237,7 +237,7 @@ export default function HomePage() {
                   data-testid={card.testId}
                 >
                   <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <card.icon className="w-5 h-5 text-white" />
+                    <card.icon className="w-[18px] h-[18px] text-white" strokeWidth={1.6} />
                   </div>
                   <span className="text-sm font-semibold text-white text-left flex-1">
                     {card.title}
