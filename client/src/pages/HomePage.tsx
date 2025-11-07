@@ -162,8 +162,9 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Compact Quick Actions Grid */}
-        <div className="px-4 pt-1 pb-4 space-y-6">
+        {/* Content Container */}
+        <div className="px-4 pt-1 pb-4 space-y-4">
+          {/* Compact Quick Actions Grid */}
           <div>
             <div className="grid grid-cols-2 gap-2">
               {actionCards.map((card) => (
@@ -188,52 +189,52 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Motivational Quote Card */}
-        <div
-          className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-6 text-center shadow-lg"
-          data-testid="card-quote"
-        >
-          <p className="text-white text-lg font-semibold mb-4 leading-relaxed">
-            "The only impossible journey is the one you never begin."
-          </p>
-          <p className="text-white/80 text-sm mb-4">— Tony Robbins</p>
-          <button
-            onClick={() => setLocation("/more-quotes")}
-            className="px-4 py-2 bg-black/30 hover:bg-black/40 active:bg-black/50 text-white text-sm font-medium rounded-full backdrop-blur-sm"
-            data-testid="button-more-quotes"
+          {/* Motivational Quote Card */}
+          <div
+            className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-5 text-center shadow-md"
+            data-testid="card-quote"
           >
-            More Quotes →
-          </button>
-        </div>
-
-        {/* AI Insights Card */}
-        <div
-          className="bg-gradient-to-br from-blue-400 via-cyan-400 to-teal-400 rounded-2xl p-6 shadow-lg relative"
-          data-testid="card-ai-insights"
-        >
-          <div className="flex items-start justify-between mb-2">
-            <div>
-              <h3 className="text-white text-xl font-bold mb-1">
-                AI Insights ✨
-              </h3>
-              <p className="text-white/90 text-sm">
-                Receive personalised insights for your streak
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <Lock className="w-5 h-5 text-white" />
-            </div>
+            <p className="text-white text-base font-semibold mb-3 leading-relaxed">
+              "The only impossible journey is the one you never begin."
+            </p>
+            <p className="text-white/80 text-xs mb-3">— Tony Robbins</p>
+            <button
+              onClick={() => setLocation("/more-quotes")}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-xs font-semibold rounded-full backdrop-blur-sm transition"
+              data-testid="button-more-quotes"
+            >
+              More Quotes →
+            </button>
           </div>
-          <p className="text-white/80 text-xs mt-3">Unlocks in 7 days</p>
-          <button
-            onClick={() => setLocation("/ai-insights")}
-            className="mt-4 w-full py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-sm font-medium rounded-xl backdrop-blur-sm"
-            data-testid="button-ai-insights"
+
+          {/* AI Insights Card */}
+          <div
+            className="bg-gradient-to-br from-blue-400 via-cyan-400 to-teal-400 rounded-2xl p-5 shadow-md relative"
+            data-testid="card-ai-insights"
           >
-            View Insights
-          </button>
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <h3 className="text-white text-lg font-bold mb-1">
+                  AI Insights ✨
+                </h3>
+                <p className="text-white/90 text-xs">
+                  Receive personalised insights for your streak
+                </p>
+              </div>
+              <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Lock className="w-4 h-4 text-white" />
+              </div>
+            </div>
+            <p className="text-white/70 text-[11px] mt-2">Unlocks in 7 days</p>
+            <button
+              onClick={() => setLocation("/ai-insights")}
+              className="mt-3 w-full py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-xs font-semibold rounded-xl backdrop-blur-sm transition"
+              data-testid="button-ai-insights"
+            >
+              View Insights
+            </button>
+          </div>
         </div>
       </div>
     </div>
