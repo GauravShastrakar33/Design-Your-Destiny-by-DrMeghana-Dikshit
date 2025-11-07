@@ -98,17 +98,20 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: '#F3F3F3' }}>
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
         {/* Header with Notification and Search */}
-        <div className="sticky top-0 backdrop-blur-sm border-b border-border z-10 px-4 py-3" style={{ backgroundColor: 'rgba(243, 243, 243, 0.95)' }}>
+        <div
+          className="sticky top-0 backdrop-blur-sm border-b border-border z-10 px-4 py-3"
+          style={{ backgroundColor: "rgba(243, 243, 243, 0.95)" }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                Welcome back,
+                Welcome back,Champion!
               </h1>
               <p className="text-sm text-muted-foreground">
-                Every step you take is shaping the best version of you
+                How are you feeling today?
               </p>
             </div>
             <button
@@ -153,7 +156,7 @@ export default function HomePage() {
         </div>
 
         {/* Content Container */}
-        <div className="px-4 pt-0 pb-4 space-y-4">
+        <div className="px-2 pt-0 pb-4 space-y-4">
           {/* Compact Quick Actions Grid */}
           <div>
             <div className="grid grid-cols-2 gap-2">
