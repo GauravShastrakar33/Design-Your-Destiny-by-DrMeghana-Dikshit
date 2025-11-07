@@ -141,105 +141,55 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="px-4 py-4 space-y-6">
-          {/* Daily Progress Card - Ultra Compact */}
-          <div className="bg-gradient-calm rounded-2xl pt-3 pb-4 px-4 shadow-lg">
-            {/* 🌟 Streak Section - Moved Slightly Up */}
-            <div className="flex items-center justify-between mb-1 -mt-1">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🔥</span>
-                <h2 className="text-lg font-semibold text-white">
-                  9 Day Streak
-                </h2>
-              </div>
-              <div className="text-right">
-                <p className="text-white/90 text-[12px] font-semibold">
-                  Best Streak
-                </p>
-                <p className="text-white text-base font-bold leading-none">
-                  25 Days
-                </p>
-              </div>
+        {/* 🔴 Live Session Section */}
+        <div className="w-full mb-3">
+          {/* 📌 Image Banner */}
+          <div className="relative w-full h-56 overflow-hidden shadow-md">
+            <img
+              src="/DrM.png"
+              alt="Live Session"
+              className="w-full h-full object-cover"
+            />
+
+            {/* ✅ LIVE Tag */}
+            <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-white/20 backdrop-blur-lg px-3 py-1 rounded-md">
+              <span className="h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse"></span>
+              <span className="text-xs font-medium text-white">LIVE</span>
             </div>
-
-            {/* ✅ Subtitle - Left aligned & slightly larger */}
-            <p className="text-white/90 text-[14px] font-medium mt-0.5 ml-6">
-              Keep the momentum going, Gaurav!
-            </p>
-
-            {/* ✅ Weekly Circles – Bigger Spacing */}
-            <div className="flex items-center justify-center gap-4 mt-3 mb-4">
-              {[
-                { day: "M", done: true },
-                { day: "T", done: false },
-                { day: "W", done: true },
-                { day: "T", done: true },
-                { day: "F", done: false },
-                { day: "S", done: true },
-                { day: "S", done: true },
-              ].map((item, idx) => (
-                <div
-                  key={idx}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold
-                  ${
-                    item.done
-                      ? "bg-white/90 text-indigo-700 shadow-sm"
-                      : "bg-white/15 text-white/50 border border-white/30"
-                  }`}
-                >
-                  {item.day}
-                </div>
-              ))}
-            </div>
-
-            {/* Today's Practice Progress */}
-            <div className="mb-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-white/90 text-[11px] font-medium">
-                  Today's Practice
-                </span>
-                <span className="text-white text-[11px] font-semibold">
-                  {practiceProgress.current}/{practiceProgress.total} mins
-                </span>
-              </div>
-              <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-white rounded-full transition-all duration-300"
-                  style={{
-                    width: `${(practiceProgress.current / practiceProgress.total) * 100}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* CTA Button */}
-            <button
-              onClick={() => setLocation("/playlist")}
-              className="w-full py-1.5 bg-white/20 hover:bg-white/30 active:bg-white/40 
-                         text-white text-[11px] font-semibold rounded-lg flex items-center justify-center gap-1.5"
-            >
-              <Play className="w-3.5 h-3.5" />
-              Resume Practice
-            </button>
           </div>
 
+          {/* ✅ Join Button — Smaller Width + Less Gap */}
+          <div className="w-full flex justify-center">
+            <button
+              onClick={() =>
+                window.open("https://zoom.us/j/your-meeting-id", "_blank")
+              }
+              className="mt-2 w-[85%] px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 
+                         text-white font-medium shadow-md hover:opacity-90 transition text-sm"
+            >
+              JOIN NOW
+            </button>
+          </div>
+        </div>
+
+        <div className="px-4 pt-2 pb-4 space-y-6">
           {/* Compact Quick Actions Grid */}
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-3">
-              Quick Actions
-            </h2>
             <div className="grid grid-cols-2 gap-2">
               {actionCards.map((card) => (
                 <button
                   key={card.path}
                   onClick={() => setLocation(card.path)}
-                  className={`${card.gradient} rounded-2xl p-3 flex items-center gap-2 hover-elevate active-elevate-2 min-h-[60px]`}
+                  className="bg-white border border-[#232A34]/10 rounded-2xl p-3 flex items-center gap-3 shadow-sm hover:shadow-md active:scale-[0.98] transition min-h-[60px]"
                   data-testid={card.testId}
                 >
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <card.icon className="w-[18px] h-[18px] text-white" strokeWidth={1.6} />
+                  <div className="w-10 h-10 bg-[#703DFA]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <card.icon
+                      className="w-[18px] h-[18px] text-[#703DFA]"
+                      strokeWidth={1.6}
+                    />
                   </div>
-                  <span className="text-sm font-semibold text-white text-left flex-1">
+                  <span className="text-sm font-semibold text-[#232A34] text-left flex-1">
                     {card.title}
                   </span>
                 </button>
