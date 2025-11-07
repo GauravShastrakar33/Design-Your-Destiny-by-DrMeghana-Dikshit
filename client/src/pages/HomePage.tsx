@@ -158,7 +158,7 @@ export default function HomePage() {
         {/* Content Container */}
         <div className="px-4 pt-0 pb-4 space-y-4">
           {/* Compact Quick Actions Grid */}
-          <div className="-mx-4 px-1">
+          <div className="-mx-2 px-2">
             <div className="grid grid-cols-2 gap-2">
               {actionCards.map((card) => (
                 <button
