@@ -192,14 +192,14 @@ export default function HomePage() {
 
           {/* Motivational Quote Card */}
           <div
-            className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-6 shadow-md relative"
+            className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-4 shadow-md relative"
             data-testid="card-quote"
           >
-            <div className="text-center mb-4 px-2">
-              <p className="text-white text-xl font-medium mb-4 leading-relaxed italic">
+            <div className="text-center mb-3 px-2">
+              <p className="text-white text-lg font-medium mb-2.5 leading-relaxed italic">
                 "The only impossible journey is the one you never begin."
               </p>
-              <p className="text-white/90 text-base font-light">— Tony Robbins</p>
+              <p className="text-white/90 text-sm font-light">— Tony Robbins</p>
             </div>
             <div className="flex justify-end">
               <button
