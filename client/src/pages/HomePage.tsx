@@ -26,108 +26,70 @@ export default function HomePage() {
   const actionCards = [
     {
       title: "Processes",
-      icon: (
-        <Sparkles
-          className="w-[18px] h-[18px] text-[#703DFA]"
-          strokeWidth={1.6}
-        />
-      ),
+      icon: Sparkles,
       gradient: "bg-gradient-ocean",
       path: "/processes",
       testId: "card-processes",
     },
     {
       title: "Spiritual Breaths",
-      icon: (
-        <Wind className="w-[18px] h-[18px] text-[#703DFA]" strokeWidth={1.6} />
-      ),
+      icon: Wind,
       gradient: "bg-gradient-calm",
       path: "/spiritual-breaths",
       testId: "card-spiritual-breaths",
     },
     {
       title: "Community Practices",
-      icon: (
-        <Users className="w-[18px] h-[18px] text-[#703DFA]" strokeWidth={1.6} />
-      ),
+      icon: Users,
       gradient: "bg-gradient-sunrise",
       path: "/community-practices",
       testId: "card-community-practices",
     },
     {
       title: "My ProcessList",
-      icon: (
-        <ListMusic
-          className="w-[18px] h-[18px] text-[#703DFA]"
-          strokeWidth={1.6}
-        />
-      ),
+      icon: ListMusic,
       gradient: "bg-gradient-harmony",
       path: "/playlist",
       testId: "card-my-playlist",
     },
     {
       title: "Mental Health",
-      icon: (
-        <i className="ri-mental-health-line text-[26px] text-[#703DFA] leading-none"></i>
-      ),
+      icon: Heart, // ✅ Lucide icon instead of Remix
       gradient: "bg-gradient-focus",
       path: "/mental-health",
       testId: "card-mental-health",
     },
     {
       title: "Articles",
-      icon: (
-        <BookOpen
-          className="w-[18px] h-[18px] text-[#703DFA]"
-          strokeWidth={1.6}
-        />
-      ),
+      icon: BookOpen,
       gradient: "bg-gradient-ocean",
       path: "/articles",
       testId: "card-articles",
     },
     {
       title: "Abundance Mastery",
-      icon: (
-        <DollarSign
-          className="w-[18px] h-[18px] text-[#703DFA]"
-          strokeWidth={1.6}
-        />
-      ),
+      icon: DollarSign,
       gradient: "bg-gradient-forest",
       path: "/money-mastery",
       testId: "card-money-mastery",
     },
     {
       title: "Process Checklist",
-      icon: (
-        <CheckSquare
-          className="w-[18px] h-[18px] text-[#703DFA]"
-          strokeWidth={1.6}
-        />
-      ),
+      icon: CheckSquare,
       gradient: "bg-gradient-desert",
       path: "/process-checklist",
       testId: "card-process-checklist",
     },
     {
       title: "Music Journaling",
-      icon: (
-        <Music className="w-[18px] h-[18px] text-[#703DFA]" strokeWidth={1.6} />
-      ),
+      icon: Music,
       gradient: "bg-gradient-lavender",
       path: "/music-journaling",
       testId: "card-music-journaling",
     },
     {
       title: "Level Up",
-      icon: (
-        <TrendingUp
-          className="w-[18px] h-[18px] text-[#703DFA]"
-          strokeWidth={1.6}
-        />
-      ),
+      icon: TrendingUp,
       gradient: "bg-gradient-fire",
       path: "/level-up",
       testId: "card-level-up",
@@ -200,8 +162,8 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Compact Quick Actions Grid */}
         <div className="px-4 pt-1 pb-4 space-y-6">
-          {/* Compact Quick Actions Grid */}
           <div>
             <div className="grid grid-cols-2 gap-2">
               {actionCards.map((card) => (
@@ -211,9 +173,14 @@ export default function HomePage() {
                   className="bg-white border border-[#232A34]/10 rounded-2xl p-3 flex items-center gap-3 shadow-sm hover:shadow-md active:scale-[0.98] transition min-h-[60px]"
                   data-testid={card.testId}
                 >
+                  {/* ✅ Icon without purple background */}
                   <div className="flex items-center justify-center flex-shrink-0">
-                    {card.icon}
+                    <card.icon
+                      className="w-[20px] h-[20px] text-[#703DFA]"
+                      strokeWidth={1.6}
+                    />
                   </div>
+
                   <span className="text-sm font-semibold text-[#232A34] text-left flex-1">
                     {card.title}
                   </span>
