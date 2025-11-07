@@ -50,7 +50,7 @@ export default function HomePage() {
     },
     // Right Column
     {
-      title: "My Playlist",
+      title: "My ProcessList",
       icon: ListMusic,
       gradient: "bg-gradient-harmony",
       path: "/playlist",
@@ -74,7 +74,7 @@ export default function HomePage() {
     },
     // Left Column
     {
-      title: "Abundance Maste",
+      title: "Abundance Mastery",
       icon: DollarSign,
       gradient: "bg-gradient-forest",
       path: "/money-mastery",
