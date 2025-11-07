@@ -125,7 +125,7 @@ export default function HomePage() {
         </div>
 
         {/* Search Bar */}
-        <div className="px-4 py-4">
+        <div className="px-2 py-4">
           <div className="relative">
             <input
               type="text"
