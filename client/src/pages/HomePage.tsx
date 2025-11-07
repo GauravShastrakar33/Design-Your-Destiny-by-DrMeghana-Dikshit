@@ -249,10 +249,7 @@ export default function HomePage() {
 
           {/* Motivational Quote Card */}
           <div
-            className="rounded-2xl p-6 text-center shadow-lg"
-            style={{
-              background: 'linear-gradient(135deg, var(--palette-bright-purple) 0%, var(--palette-golden) 100%)'
-            }}
+            className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-6 text-center shadow-lg"
             data-testid="card-quote"
           >
             <p className="text-white text-lg font-semibold mb-4 leading-relaxed">
@@ -270,10 +267,7 @@ export default function HomePage() {
 
           {/* AI Insights Card */}
           <div
-            className="rounded-2xl p-6 shadow-lg relative"
-            style={{
-              background: 'linear-gradient(135deg, var(--palette-dark-purple) 0%, var(--palette-bright-purple) 100%)'
-            }}
+            className="bg-gradient-to-br from-blue-400 via-cyan-400 to-teal-400 rounded-2xl p-6 shadow-lg relative"
             data-testid="card-ai-insights"
           >
             <div className="flex items-start justify-between mb-2">

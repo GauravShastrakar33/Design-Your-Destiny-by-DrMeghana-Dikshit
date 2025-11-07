@@ -12,42 +12,42 @@ export default {
       },
       backgroundImage: {
         "gradient-wellness":
-          "linear-gradient(135deg, var(--palette-bright-purple) 0%, var(--palette-dark-purple) 100%)",
+          "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(280 65% 48%) 100%)",
         "gradient-calm":
-          "linear-gradient(135deg, var(--palette-dark-purple) 0%, var(--palette-bright-purple) 100%)",
+          "linear-gradient(135deg, hsl(195 85% 48%) 0%, hsl(240 65% 55%) 100%)",
         "gradient-energy":
-          "linear-gradient(135deg, var(--palette-golden) 0%, var(--palette-bright-purple) 100%)",
+          "linear-gradient(135deg, hsl(40 85% 52%) 0%, hsl(0 72% 48%) 100%)",
         "gradient-growth":
-          "linear-gradient(135deg, var(--palette-bright-purple) 0%, var(--palette-golden) 100%)",
+          "linear-gradient(135deg, hsl(160 70% 45%) 0%, hsl(195 85% 42%) 100%)",
 
         // New Additions 👇
         "gradient-focus":
-          "linear-gradient(135deg, var(--palette-dark-purple) 0%, var(--palette-dark-navy) 100%)",
+          "linear-gradient(135deg, hsl(260 70% 50%) 0%, hsl(220 80% 55%) 100%)",
         "gradient-sunrise":
-          "linear-gradient(135deg, var(--palette-golden) 0%, var(--palette-golden) 100%)",
+          "linear-gradient(135deg, hsl(20 90% 65%) 0%, hsl(45 95% 70%) 100%)",
         "gradient-harmony":
-          "linear-gradient(135deg, var(--palette-bright-purple) 0%, var(--palette-bright-purple) 100%)",
+          "linear-gradient(135deg, hsl(280 55% 75%) 0%, hsl(330 70% 85%) 100%)",
         "gradient-ocean":
-          "linear-gradient(135deg, var(--palette-dark-purple) 0%, var(--palette-bright-purple) 100%)",
+          "linear-gradient(135deg, hsl(200 80% 50%) 0%, hsl(180 65% 55%) 100%)",
         "gradient-mystic":
-          "linear-gradient(135deg, var(--palette-bright-purple) 0%, var(--palette-dark-purple) 100%)",
+          "linear-gradient(135deg, hsl(260 60% 60%) 0%, hsl(200 60% 50%) 100%)",
 
         "gradient-forest":
-          "linear-gradient(135deg, var(--palette-dark-gray) 0%, var(--palette-dark-purple) 100%)",
+          "linear-gradient(135deg, hsl(150 50% 40%) 0%, hsl(170 60% 45%) 100%)", // Deep green → mint
         "gradient-desert":
-          "linear-gradient(135deg, var(--palette-golden) 0%, var(--palette-dark-purple) 100%)",
+          "linear-gradient(135deg, hsl(30 80% 70%) 0%, hsl(15 70% 60%) 100%)", // Sand → warm terracotta
         "gradient-lavender":
-          "linear-gradient(135deg, var(--palette-bright-purple) 0%, var(--palette-bright-purple) 100%)",
+          "linear-gradient(135deg, hsl(260 45% 80%) 0%, hsl(280 55% 70%) 100%)", // Pale lavender → lilac
         "gradient-fire":
-          "linear-gradient(135deg, var(--palette-golden) 0%, var(--palette-golden) 100%)",
+          "linear-gradient(135deg, hsl(0 85% 55%) 0%, hsl(25 90% 55%) 100%)", // Red → Orange
         "gradient-royal":
-          "linear-gradient(135deg, var(--palette-dark-purple) 0%, var(--palette-dark-navy) 100%)",
+          "linear-gradient(135deg, hsl(250 60% 55%) 0%, hsl(260 45% 40%) 100%)", // Purple → Deep violet
         "gradient-peace":
-          "linear-gradient(135deg, var(--palette-bright-purple) 0%, var(--palette-bright-purple) 100%)",
+          "linear-gradient(135deg, hsl(200 60% 90%) 0%, hsl(210 55% 75%) 100%)", // Pale blue → powder blue
         "gradient-blossom":
-          "linear-gradient(135deg, var(--palette-golden) 0%, var(--palette-bright-purple) 100%)",
+          "linear-gradient(135deg, hsl(340 80% 90%) 0%, hsl(350 70% 80%) 100%)", // Rose → soft pink
         "gradient-night":
-          "linear-gradient(135deg, var(--palette-dark-navy) 0%, var(--palette-dark-purple) 100%)",
+          "linear-gradient(135deg, hsl(220 50% 25%) 0%, hsl(260 50% 30%) 100%)", // Deep blue → indigo
       },
       colors: {
         // Flat / base colors (regular buttons)
