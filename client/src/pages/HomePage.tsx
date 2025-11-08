@@ -102,15 +102,15 @@ export default function HomePage() {
       <div className="max-w-md mx-auto">
         {/* Header with Notification */}
         <div
-          className="sticky top-0 backdrop-blur-sm border-b border-border z-10 px-4 py-3"
+          className="sticky top-0 backdrop-blur-sm border-b border-border z-10 px-4 py-4"
           style={{ backgroundColor: "rgba(243, 243, 243, 0.95)" }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600 bg-clip-text text-transparent">
                 Welcome back, Champion!
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-600 mt-0.5">
                 How are you feeling today?
               </p>
             </div>
