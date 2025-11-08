@@ -158,9 +158,9 @@ export default function MoneyMasteryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
+        <div className="sticky top-0 backdrop-blur-sm border-b border-border z-10" style={{ backgroundColor: "rgba(243, 243, 243, 0.95)" }}>
           <div className="px-4 py-4 flex items-center gap-4">
             <button
               onClick={() => setLocation("/")}
@@ -169,7 +169,7 @@ export default function MoneyMasteryPage() {
             >
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
-            <h1 className="text-2xl font-bold text-foreground">Money Mastery Hub</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600 bg-clip-text text-transparent">Abundance Mastery</h1>
           </div>
         </div>
 
@@ -317,7 +317,7 @@ export default function MoneyMasteryPage() {
 
           {/* Rewiring Belief */}
           <Card 
-            className="p-6 bg-gradient-to-br from-purple-400 to-purple-600 border-0 cursor-pointer hover-elevate active-elevate-2"
+            className="p-6 bg-gradient-to-br from-purple-600 via-violet-500 to-purple-400 border-0 cursor-pointer hover-elevate active-elevate-2 shadow-md"
             onClick={() => setLocation("/rewiring-belief")}
             data-testid="card-rewiring-belief"
           >
@@ -347,7 +347,7 @@ export default function MoneyMasteryPage() {
 
           {/* Money Manifestation Challenge */}
           <Card 
-            className="p-6 bg-gradient-to-br from-green-400 to-emerald-600 border-0 cursor-pointer hover-elevate active-elevate-2"
+            className="p-6 bg-gradient-to-br from-indigo-500 to-purple-500 border-0 cursor-pointer hover-elevate active-elevate-2 shadow-md"
             onClick={() => setLocation("/money-manifestation")}
             data-testid="card-money-manifestation"
           >
@@ -370,7 +370,7 @@ export default function MoneyMasteryPage() {
 
           {/* Raining Abundance */}
           <Card 
-            className="p-6 bg-gradient-to-br from-yellow-400 to-orange-500 border-0 cursor-pointer hover-elevate active-elevate-2"
+            className="p-6 bg-gradient-to-br from-purple-500 to-pink-500 border-0 cursor-pointer hover-elevate active-elevate-2 shadow-md"
             onClick={() => setLocation("/raining-abundance")}
             data-testid="card-raining-abundance"
           >
