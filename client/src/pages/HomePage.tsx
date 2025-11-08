@@ -101,10 +101,7 @@ export default function HomePage() {
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
         {/* Header with Notification */}
-        <div
-          className="sticky top-0 backdrop-blur-sm z-10 px-4 py-4"
-          style={{ backgroundColor: "rgba(243, 243, 243, 0.95)" }}
-        >
+        <div className="px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 bg-white rounded-2xl px-4 py-3 shadow-sm border border-[#232A34]/10">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600 bg-clip-text text-transparent">
