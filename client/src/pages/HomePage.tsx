@@ -101,7 +101,7 @@ export default function HomePage() {
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
         {/* Header with Notification */}
-        <div className="px-4 py-4">
+        <div className="px-4 pt-4 pb-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 bg-white rounded-2xl px-4 py-3 shadow-sm border border-[#232A34]/10">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600 bg-clip-text text-transparent">
@@ -122,7 +122,7 @@ export default function HomePage() {
         </div>
 
         {/* Search Bar */}
-        <div className="px-3 py-4">
+        <div className="px-4 pb-4">
           <div className="relative">
             <input
               type="text"
@@ -134,13 +134,9 @@ export default function HomePage() {
           </div>
         </div>
 
-
-
-        
-
-        {/* 🔴 Live Session Section */}
-        <div className="w-full mb-6">
-          {/* 📌 Image Banner */}
+        {/* Live Session Section */}
+        <div className="w-full mb-3">
+          {/* Image Banner */}
           <div className="relative w-full h-56 overflow-hidden shadow-md">
             <img
               src="/DrM.png"
@@ -148,20 +144,20 @@ export default function HomePage() {
               className="w-full h-full object-cover"
             />
 
-            {/* ✅ LIVE Tag */}
+            {/* LIVE Tag */}
             <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-white/20 backdrop-blur-lg px-3 py-1 rounded-md">
               <span className="h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse"></span>
               <span className="text-xs font-medium text-white">LIVE</span>
             </div>
           </div>
 
-          {/* ✅ Join Button — Smaller Width + Less Gap */}
+          {/* Join Button */}
           <div className="w-full flex justify-center">
             <button
               onClick={() =>
                 window.open("https://zoom.us/j/your-meeting-id", "_blank")
               }
-              className="mt-2 w-[85%] px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 
+              className="mt-3 w-[85%] px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 
                          text-white font-medium shadow-md hover:opacity-90 transition text-sm"
             >
               JOIN NOW
@@ -170,7 +166,7 @@ export default function HomePage() {
         </div>
 
         {/* Content Container */}
-        <div className="px-4 pt-0 pb-4 space-y-4">
+        <div className="px-4 pb-4 space-y-4">
           {/* Compact Quick Actions Grid */}
           <div className="-mx-2 px-2">
             <div className="grid grid-cols-2 gap-2">
@@ -197,7 +193,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Motivational Quote Card */}
           {/* Motivational Quote Card */}
           <div
             className="bg-gradient-to-br from-purple-600 via-violet-500 to-purple-400 rounded-2xl p-4 shadow-md relative mt-6"
