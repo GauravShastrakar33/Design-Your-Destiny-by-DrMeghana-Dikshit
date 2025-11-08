@@ -108,7 +108,7 @@ export default function HomePage() {
                 Welcome back, Champion!
               </h1>
               <p className="text-sm text-gray-600 mt-0.5">
-                How are you feeling today?
+                How’s your energy today?
               </p>
             </div>
             <button
@@ -130,7 +130,10 @@ export default function HomePage() {
               className="w-full h-11 pl-11 pr-4 rounded-2xl bg-white text-[#232A34] placeholder:text-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#703DFA]/50 border border-[#232A34]/10 shadow-sm"
               data-testid="input-search"
             />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#703DFA] w-4 h-4" strokeWidth={2} />
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#703DFA] w-4 h-4"
+              strokeWidth={2}
+            />
           </div>
         </div>
 
