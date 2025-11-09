@@ -13,8 +13,16 @@ const categories = [
   {
     name: "Health",
     articles: [
-      { id: 1, title: "10 Daily Habits for Optimal Health", image: healthImage },
-      { id: 2, title: "Nutrition Basics: Eating for Energy", image: healthImage },
+      {
+        id: 1,
+        title: "10 Daily Habits for Optimal Health",
+        image: healthImage,
+      },
+      {
+        id: 2,
+        title: "Nutrition Basics: Eating for Energy",
+        image: healthImage,
+      },
       { id: 3, title: "Movement & Exercise Guide", image: healthImage },
     ],
   },
@@ -30,8 +38,16 @@ const categories = [
     name: "Relationships",
     articles: [
       { id: 7, title: "Building Deeper Connections", image: relationshipImage },
-      { id: 8, title: "Communication for Better Relationships", image: relationshipImage },
-      { id: 9, title: "Healing & Forgiveness in Relationships", image: relationshipImage },
+      {
+        id: 8,
+        title: "Communication for Better Relationships",
+        image: relationshipImage,
+      },
+      {
+        id: 9,
+        title: "Healing & Forgiveness in Relationships",
+        image: relationshipImage,
+      },
     ],
   },
   {
@@ -45,9 +61,21 @@ const categories = [
   {
     name: "Parenting",
     articles: [
-      { id: 13, title: "Conscious Parenting Principles", image: parentingImage },
-      { id: 14, title: "Supporting Your Child's Emotional Growth", image: parentingImage },
-      { id: 15, title: "Mindful Connection with Your Children", image: parentingImage },
+      {
+        id: 13,
+        title: "Conscious Parenting Principles",
+        image: parentingImage,
+      },
+      {
+        id: 14,
+        title: "Supporting Your Child's Emotional Growth",
+        image: parentingImage,
+      },
+      {
+        id: 15,
+        title: "Mindful Connection with Your Children",
+        image: parentingImage,
+      },
     ],
   },
   {
@@ -75,7 +103,7 @@ export default function ArticlesPage() {
             >
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
-            <h1 className="text-2xl font-bold text-foreground">Articles</h1>
+            <h1 className="text-xl font-bold text-foreground">ARTICLES</h1>
           </div>
         </div>
 
@@ -98,7 +126,10 @@ export default function ArticlesPage() {
 
         <div className="py-6 space-y-8">
           {categories.map((category) => (
-            <div key={category.name} data-testid={`category-${category.name.toLowerCase().replace(/\s+/g, '-')}`}>
+            <div
+              key={category.name}
+              data-testid={`category-${category.name.toLowerCase().replace(/\s+/g, "-")}`}
+            >
               <h3 className="text-xl font-semibold text-foreground px-4 mb-4">
                 {category.name}
               </h3>
@@ -108,7 +139,9 @@ export default function ArticlesPage() {
                     key={article.id}
                     title={article.title}
                     image={article.image}
-                    onClick={() => console.log(`Clicked article: ${article.title}`)}
+                    onClick={() =>
+                      console.log(`Clicked article: ${article.title}`)
+                    }
                     testId={`article-${article.id}`}
                   />
                 ))}
@@ -117,7 +150,7 @@ export default function ArticlesPage() {
           ))}
         </div>
       </div>
-      
+
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
