@@ -321,8 +321,8 @@ export default function MoneyMasteryPage() {
             onClick={() => setLocation("/rewiring-belief")}
             data-testid="card-rewiring-belief"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 flex-1">
+            <div className="flex flex-col">
+              <div className="flex items-start gap-3 mb-4">
                 <Brain className="w-8 h-8 flex-shrink-0" style={{ color: "#703DFA" }} />
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
@@ -341,18 +341,20 @@ export default function MoneyMasteryPage() {
                   )}
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-white text-black border-border flex-shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLocation("/rewiring-belief");
-                }}
-              >
-                <span className="mr-1">Start Rewiring</span>
-                <span style={{ color: "#703DFA" }}>→</span>
-              </Button>
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-white text-black border-border"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLocation("/rewiring-belief");
+                  }}
+                >
+                  <span className="mr-1">Start Rewiring</span>
+                  <span style={{ color: "#703DFA" }}>→</span>
+                </Button>
+              </div>
             </div>
           </Card>
 
