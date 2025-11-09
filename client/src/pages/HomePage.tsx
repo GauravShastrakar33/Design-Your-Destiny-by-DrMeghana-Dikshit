@@ -105,10 +105,10 @@ export default function HomePage() {
           <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-[#232A34]/10 flex items-center justify-between gap-3">
             <div className="flex-1">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600 bg-clip-text text-transparent">
-                Welcome back, Champion!
+                Welcome back, Champion 🎖️
               </h1>
               <p className="text-sm text-gray-600 mt-0.5">
-                How are you feeling today?
+                 How’s your energy today?
               </p>
             </div>
             <button
