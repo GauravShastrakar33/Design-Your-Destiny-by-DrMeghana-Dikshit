@@ -15,8 +15,8 @@ const categories = [
     articles: [
       {
         id: 1,
-        title: "10 Daily Habits for Optimal Health",
-        image: healthImage,
+        title: "How Gut Health Influences the Brain",
+        image: "/articles/GutHealth5.png",
       },
       {
         id: 2,

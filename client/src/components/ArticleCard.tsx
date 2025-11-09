@@ -19,9 +19,9 @@ export default function ArticleCard({ title, image, onClick, testId }: ArticleCa
         <img
           src={image}
           alt={title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover brightness-110"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-3">
           <h3 className="text-sm font-semibold text-white leading-tight">
             {title}
