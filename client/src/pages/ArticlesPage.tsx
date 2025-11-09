@@ -95,7 +95,7 @@ export default function ArticlesPage() {
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
         <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
+          <div className="px-4 py-4 flex items-center justify-between">
             <button
               onClick={() => setLocation("/")}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
@@ -103,7 +103,10 @@ export default function ArticlesPage() {
             >
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
-            <h1 className="text-xl font-bold text-foreground">ARTICLES</h1>
+            <h1 className="text-xl font-bold text-gray-600 absolute left-1/2 -translate-x-1/2" style={{ fontFamily: "Montserrat" }}>
+              ARTICLES
+            </h1>
+            <div className="w-10"></div>
           </div>
         </div>
 
