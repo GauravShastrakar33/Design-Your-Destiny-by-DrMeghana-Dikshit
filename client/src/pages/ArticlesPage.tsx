@@ -16,46 +16,74 @@ const categories = [
       {
         id: 1,
         title: "How Gut Health Influences the Brain",
-        image: "/articles/GutHealth5.png",
+        image: "/articles/GutHealth8.jpeg",
       },
       {
         id: 2,
-        title: "Nutrition Basics: Eating for Energy",
+        title: "When the Mind Creates Pain",
+        image: "/articles/Psychosomatic1.jpeg",
+      },
+      {
+        id: 3,
+        title: "Superfoods for Brain Health, Energy & Longevity",
         image: healthImage,
       },
-      { id: 3, title: "Movement & Exercise Guide", image: healthImage },
     ],
   },
   {
     name: "Brain Performance",
     articles: [
-      { id: 4, title: "Boost Your Focus & Concentration", image: brainImage },
-      { id: 5, title: "Memory Enhancement Techniques", image: brainImage },
-      { id: 6, title: "Mental Clarity Through Meditation", image: brainImage },
+      {
+        id: 4,
+        title: "Rewire Your Neocortex for Faster Learning",
+        image: "/articles/Neo.jpeg",
+      },
+      {
+        id: 5,
+        title: "Memory Enhancement Techniques",
+        image: "/articles/BetterMemor.jpeg",
+      },
+      {
+        id: 6,
+        title: "Reset your Focus in 90sec",
+        image: "/articles/Rese.jpeg",
+      },
     ],
   },
   {
     name: "Relationships",
     articles: [
-      { id: 7, title: "Building Deeper Connections", image: relationshipImage },
+      {
+        id: 7,
+        title: "Why You Attract Emotionally Unavailable Partners",
+        image: "/articles/EmotionallyUA.jpeg",
+      },
       {
         id: 8,
-        title: "Communication for Better Relationships",
-        image: relationshipImage,
+        title: "Building Deeper Connections",
+        image: "/articles/BDC.jpeg",
       },
       {
         id: 9,
         title: "Healing & Forgiveness in Relationships",
-        image: relationshipImage,
+        image: "/articles/Forgiveness.jpeg",
       },
     ],
   },
   {
     name: "My Book Recommendation",
     articles: [
-      { id: 10, title: "The Power of Now by Eckhart Tolle", image: bookImage },
-      { id: 11, title: "Atomic Habits by James Clear", image: bookImage },
-      { id: 12, title: "The Body Keeps the Score", image: bookImage },
+      {
+        id: 10,
+        title: "Healing the Shame that binds you ",
+        image: "/articles/ShameThatBindsYou.png",
+      },
+      {
+        id: 11,
+        title: "The Body Keeps the Score",
+        image: "/articles/TheBodyKeep.png",
+      },
+      { id: 12, title: "Atomic Habbits", image: "/articles/Atomic.png" },
     ],
   },
   {
@@ -63,27 +91,39 @@ const categories = [
     articles: [
       {
         id: 13,
-        title: "Conscious Parenting Principles",
-        image: parentingImage,
+        title: "What Kids Really Want from You",
+        image: "/articles/Kid1.jpeg",
       },
       {
         id: 14,
-        title: "Supporting Your Child's Emotional Growth",
-        image: parentingImage,
+        title: "Why “Connection Before Correction” Works",
+        image: "/articles/CC.jpeg",
       },
       {
         id: 15,
-        title: "Mindful Connection with Your Children",
-        image: parentingImage,
+        title: "Self-Care Isn’t Selfish: The Foundation of Calm Parenting",
+        image: "/articles/CP.jpeg",
       },
     ],
   },
   {
     name: "Spirituality",
     articles: [
-      { id: 16, title: "Daily Spiritual Practices", image: spiritualityImage },
-      { id: 17, title: "Finding Your Inner Peace", image: spiritualityImage },
-      { id: 18, title: "Awakening Your Higher Self", image: spiritualityImage },
+      {
+        id: 16,
+        title: "Soul Lessons: Why Challenges Are Invitations to Grow",
+        image: "/articles/SL.jpeg",
+      },
+      {
+        id: 17,
+        title: "Chakras and Modern Science — Finding the Bridge",
+        image: "/articles/CS.jpeg",
+      },
+      {
+        id: 18,
+        title: "The Shift from 3D to 5D Consciousness",
+        image: "/articles/35D.jpeg",
+      },
     ],
   },
 ];
@@ -115,7 +155,7 @@ export default function ArticlesPage() {
 
         <div className="relative h-52 overflow-hidden">
           <img
-            src="/articles/Dr.M’sGuide6.png"
+            src="/articles/Dr.M’sGuide5.png"
             alt="Dr. M's Guide"
             className="w-full h-full object-cover"
           />
