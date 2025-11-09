@@ -322,7 +322,7 @@ export default function MoneyMasteryPage() {
             data-testid="card-rewiring-belief"
           >
             <div className="flex flex-col h-full">
-              <div className="flex items-start gap-3 mb-3 flex-1">
+              <div className="flex items-start gap-3 mb-1 flex-1">
                 <Brain className="w-7 h-7 flex-shrink-0" style={{ color: "#703DFA" }} />
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
