@@ -103,7 +103,10 @@ export default function ArticlesPage() {
             >
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
-            <h1 className="text-xl font-bold text-gray-600 absolute left-1/2 -translate-x-1/2 tracking-widest" style={{ fontFamily: "Montserrat" }}>
+            <h1
+              className="text-xl font-bold text-gray-600 absolute left-1/2 -translate-x-1/2 tracking-widest"
+              style={{ fontFamily: "Montserrat" }}
+            >
               ARTICLES
             </h1>
             <div className="w-10"></div>
@@ -112,19 +115,10 @@ export default function ArticlesPage() {
 
         <div className="relative h-52 overflow-hidden">
           <img
-            src={bannerImage}
+            src="/articles/Dr.M’sGuide6.png"
             alt="Dr. M's Guide"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-5 text-center">
-            <h2 className="text-2xl font-bold text-white mb-1 font-serif">
-              Dr. M's Guide
-            </h2>
-            <p className="text-base text-white/90 italic">
-              "Wisdom for your wellness journey"
-            </p>
-          </div>
         </div>
 
         <div className="py-6 space-y-8">
