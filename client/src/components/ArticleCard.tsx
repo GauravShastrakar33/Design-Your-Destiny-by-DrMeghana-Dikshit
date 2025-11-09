@@ -11,11 +11,11 @@ export default function ArticleCard({ title, image, onClick, testId }: ArticleCa
   return (
     <motion.div
       whileTap={{ scale: 1.05 }}
-      className="flex-shrink-0 w-44 cursor-pointer"
+      className="flex-shrink-0 w-48 cursor-pointer"
       onClick={onClick}
       data-testid={testId}
     >
-      <div className="relative h-56 rounded-xl overflow-hidden shadow-md hover-elevate">
+      <div className="relative h-64 rounded-xl overflow-hidden shadow-md hover-elevate">
         <img
           src={image}
           alt={title}
