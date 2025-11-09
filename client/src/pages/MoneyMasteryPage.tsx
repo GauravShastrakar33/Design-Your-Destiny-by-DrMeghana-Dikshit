@@ -169,7 +169,7 @@ export default function MoneyMasteryPage() {
             >
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
-            <h1 className="text-2xl font-bold text-gray-600 tracking-widest" style={{ fontFamily: "Montserrat" }}>ABUNDANCE MASTERY</h1>
+            <h1 className="text-lg font-bold text-gray-600 tracking-widest" style={{ fontFamily: "Montserrat" }}>ABUNDANCE MASTERY</h1>
           </div>
         </div>
 
