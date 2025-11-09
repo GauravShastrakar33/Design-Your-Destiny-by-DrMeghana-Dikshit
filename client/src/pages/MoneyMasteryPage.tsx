@@ -160,7 +160,7 @@ export default function MoneyMasteryPage() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 backdrop-blur-sm border-b border-border z-10" style={{ backgroundColor: "rgba(243, 243, 243, 0.95)" }}>
+        <div className="sticky top-0 bg-white backdrop-blur-sm border-b border-border z-10">
           <div className="px-4 py-4 flex items-center gap-4">
             <button
               onClick={() => setLocation("/")}
@@ -169,7 +169,7 @@ export default function MoneyMasteryPage() {
             >
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600 bg-clip-text text-transparent">Abundance Mastery</h1>
+            <h1 className="text-2xl font-bold text-gray-600 tracking-widest" style={{ fontFamily: "Montserrat" }}>ABUNDANCE MASTERY</h1>
           </div>
         </div>
 
