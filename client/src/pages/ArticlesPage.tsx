@@ -103,7 +103,7 @@ export default function ArticlesPage() {
             >
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
-            <h1 className="text-xl font-bold text-gray-600 absolute left-1/2 -translate-x-1/2" style={{ fontFamily: "Montserrat" }}>
+            <h1 className="text-xl font-bold text-gray-600 absolute left-1/2 -translate-x-1/2 tracking-widest" style={{ fontFamily: "Montserrat" }}>
               ARTICLES
             </h1>
             <div className="w-10"></div>
