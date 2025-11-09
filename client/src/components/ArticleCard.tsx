@@ -11,7 +11,7 @@ export default function ArticleCard({ title, image, onClick, testId }: ArticleCa
   return (
     <motion.div
       whileTap={{ scale: 1.05 }}
-      className="flex-shrink-0 w-48 cursor-pointer"
+      className="flex-shrink-0 w-44 cursor-pointer"
       onClick={onClick}
       data-testid={testId}
     >
