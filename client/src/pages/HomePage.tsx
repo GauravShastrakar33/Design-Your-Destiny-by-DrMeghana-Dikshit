@@ -104,11 +104,17 @@ export default function HomePage() {
         <div className="pl-3 pr-4 pt-4 pb-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 bg-white rounded-2xl px-4 py-3 shadow-sm border border-[#232A34]/10">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600 bg-clip-text text-transparent">
-                Welcome back, Champion!
+              <h1
+                className="text-2xl font-bold"
+                style={{ fontFamily: "Bebas Neue" }}
+              >
+                Welcome back, Champion 🌟
               </h1>
-              <p className="text-sm text-gray-600 mt-0.5">
-                How’s your energy today?
+              <p
+                className="text-sm text-gray-600"
+                style={{ fontFamily: "Montserrat" }}
+              >
+                How's your energy today?
               </p>
             </div>
             <button
