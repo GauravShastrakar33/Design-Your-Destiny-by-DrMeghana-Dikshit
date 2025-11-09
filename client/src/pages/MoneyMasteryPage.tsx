@@ -317,7 +317,7 @@ export default function MoneyMasteryPage() {
 
           {/* Rewiring Belief */}
           <Card 
-            className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md min-h-[120px]"
+            className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md h-[140px]"
             onClick={() => setLocation("/rewiring-belief")}
             data-testid="card-rewiring-belief"
           >
@@ -360,7 +360,7 @@ export default function MoneyMasteryPage() {
 
           {/* Money Manifestation Challenge */}
           <Card 
-            className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md min-h-[120px]"
+            className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md h-[140px]"
             onClick={() => setLocation("/money-manifestation")}
             data-testid="card-money-manifestation"
           >
@@ -383,7 +383,7 @@ export default function MoneyMasteryPage() {
 
           {/* Raining Abundance */}
           <Card 
-            className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md min-h-[120px]"
+            className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md h-[140px]"
             onClick={() => setLocation("/raining-abundance")}
             data-testid="card-raining-abundance"
           >
