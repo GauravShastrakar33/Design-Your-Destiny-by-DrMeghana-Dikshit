@@ -317,25 +317,25 @@ export default function MoneyMasteryPage() {
 
           {/* Rewiring Belief */}
           <Card 
-            className="p-6 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
+            className="p-4 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
             onClick={() => setLocation("/rewiring-belief")}
             data-testid="card-rewiring-belief"
           >
             <div className="flex flex-col">
-              <div className="flex items-start gap-3 mb-4">
-                <Brain className="w-8 h-8 flex-shrink-0" style={{ color: "#703DFA" }} />
+              <div className="flex items-start gap-2 mb-3">
+                <Brain className="w-6 h-6 flex-shrink-0" style={{ color: "#703DFA" }} />
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h2 className="text-foreground text-xl font-bold">Rewiring Belief</h2>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-foreground text-lg font-bold">Rewiring Belief</h2>
                     {hasBeliefs && (
-                      <CheckCircle className="w-5 h-5" style={{ color: "#703DFA" }} data-testid="check-icon" />
+                      <CheckCircle className="w-4 h-4" style={{ color: "#703DFA" }} data-testid="check-icon" />
                     )}
                   </div>
-                  <p className="text-muted-foreground text-sm mb-3">
+                  <p className="text-muted-foreground text-xs">
                     Transform limiting beliefs into empowering ones
                   </p>
                   {lastUpdatedToday && (
-                    <p className="text-muted-foreground text-xs italic" data-testid="text-updated-today">
+                    <p className="text-muted-foreground text-xs italic mt-1" data-testid="text-updated-today">
                       Beliefs updated today
                     </p>
                   )}
@@ -345,13 +345,13 @@ export default function MoneyMasteryPage() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="bg-white text-black border-border"
+                  className="bg-white text-black border-border h-8"
                   onClick={(e) => {
                     e.stopPropagation();
                     setLocation("/rewiring-belief");
                   }}
                 >
-                  <span className="mr-1">Start Rewiring</span>
+                  <span className="mr-1 text-xs">Start Rewiring</span>
                   <span style={{ color: "#703DFA" }}>→</span>
                 </Button>
               </div>
@@ -360,20 +360,20 @@ export default function MoneyMasteryPage() {
 
           {/* Money Manifestation Challenge */}
           <Card 
-            className="p-6 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
+            className="p-4 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
             onClick={() => setLocation("/money-manifestation")}
             data-testid="card-money-manifestation"
           >
-            <div className="flex items-start gap-3">
-              <Video className="w-8 h-8 flex-shrink-0" style={{ color: "#703DFA" }} />
-              <div>
-                <h2 className="text-foreground text-xl font-bold mb-2">Money Manifestation Challenge</h2>
-                <p className="text-muted-foreground text-sm mb-3">
+            <div className="flex items-start gap-2">
+              <Video className="w-6 h-6 flex-shrink-0" style={{ color: "#703DFA" }} />
+              <div className="flex-1">
+                <h2 className="text-foreground text-lg font-bold mb-1">Money Manifestation Challenge</h2>
+                <p className="text-muted-foreground text-xs mb-2">
                   30-day video series to manifest abundance
                 </p>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">Day 1 of 30</span>
-                  <div className="flex-1 h-2 bg-muted rounded-full">
+                  <span className="text-muted-foreground text-xs">Day 1 of 30</span>
+                  <div className="flex-1 h-1.5 bg-muted rounded-full">
                     <div className="w-[3%] h-full rounded-full" style={{ backgroundColor: "#703DFA" }} />
                   </div>
                 </div>
@@ -383,20 +383,20 @@ export default function MoneyMasteryPage() {
 
           {/* Raining Abundance */}
           <Card 
-            className="p-6 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
+            className="p-4 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
             onClick={() => setLocation("/raining-abundance")}
             data-testid="card-raining-abundance"
           >
-            <div className="flex items-start gap-3">
-              <Sparkles className="w-8 h-8 flex-shrink-0" style={{ color: "#703DFA" }} />
-              <div>
-                <h2 className="text-foreground text-xl font-bold mb-2">Raining Abundance</h2>
-                <p className="text-muted-foreground text-sm mb-3">
+            <div className="flex items-start gap-2">
+              <Sparkles className="w-6 h-6 flex-shrink-0" style={{ color: "#703DFA" }} />
+              <div className="flex-1">
+                <h2 className="text-foreground text-lg font-bold mb-1">Raining Abundance</h2>
+                <p className="text-muted-foreground text-xs mb-2">
                   21-day journey to attract prosperity
                 </p>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">Day 1 of 21</span>
-                  <div className="flex-1 h-2 bg-muted rounded-full">
+                  <span className="text-muted-foreground text-xs">Day 1 of 21</span>
+                  <div className="flex-1 h-1.5 bg-muted rounded-full">
                     <div className="w-[5%] h-full rounded-full" style={{ backgroundColor: "#703DFA" }} />
                   </div>
                 </div>
