@@ -110,18 +110,18 @@ export default function ArticlesPage() {
           </div>
         </div>
 
-        <div className="relative h-64 overflow-hidden">
+        <div className="relative h-40 overflow-hidden">
           <img
             src={bannerImage}
             alt="Dr. M's Guide"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
-            <h2 className="text-3xl font-bold text-white mb-2 font-serif">
+          <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
+            <h2 className="text-2xl font-bold text-white mb-1 font-serif">
               Dr. M's Guide
             </h2>
-            <p className="text-lg text-white/90 italic">
+            <p className="text-sm text-white/90 italic">
               "Wisdom for your wellness journey"
             </p>
           </div>
