@@ -321,27 +321,38 @@ export default function MoneyMasteryPage() {
             onClick={() => setLocation("/rewiring-belief")}
             data-testid="card-rewiring-belief"
           >
-            <div className="flex items-start gap-3">
-              <Brain className="w-8 h-8 flex-shrink-0" style={{ color: "#703DFA" }} />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h2 className="text-foreground text-xl font-bold">Rewiring Belief</h2>
-                  {hasBeliefs && (
-                    <CheckCircle className="w-5 h-5" style={{ color: "#703DFA" }} data-testid="check-icon" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 flex-1">
+                <Brain className="w-8 h-8 flex-shrink-0" style={{ color: "#703DFA" }} />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h2 className="text-foreground text-xl font-bold">Rewiring Belief</h2>
+                    {hasBeliefs && (
+                      <CheckCircle className="w-5 h-5" style={{ color: "#703DFA" }} data-testid="check-icon" />
+                    )}
+                  </div>
+                  <p className="text-muted-foreground text-sm mb-3">
+                    Transform limiting beliefs into empowering ones
+                  </p>
+                  {lastUpdatedToday && (
+                    <p className="text-muted-foreground text-xs italic" data-testid="text-updated-today">
+                      Beliefs updated today
+                    </p>
                   )}
                 </div>
-                <p className="text-muted-foreground text-sm mb-3">
-                  Transform limiting beliefs into empowering ones
-                </p>
-                {lastUpdatedToday && (
-                  <p className="text-muted-foreground text-xs italic mb-2" data-testid="text-updated-today">
-                    Beliefs updated today
-                  </p>
-                )}
-                <Button variant="secondary" size="sm">
-                  Start Rewiring →
-                </Button>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white text-black border-border flex-shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLocation("/rewiring-belief");
+                }}
+              >
+                <span className="mr-1">Start Rewiring</span>
+                <span style={{ color: "#703DFA" }}>→</span>
+              </Button>
             </div>
           </Card>
 
