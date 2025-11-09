@@ -175,9 +175,9 @@ export default function MoneyMasteryPage() {
 
         <div className="px-4 py-6 space-y-6">
           {/* Money Calendar */}
-          <Card className="p-4" data-testid="card-money-calendar">
+          <Card className="p-4 bg-white" data-testid="card-money-calendar">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-primary" />
+              <Calendar className="w-5 h-5" style={{ color: "#703DFA" }} />
               <h2 className="text-lg font-semibold text-foreground">Money Calendar</h2>
             </div>
             
