@@ -61,18 +61,23 @@ export default function DrMPage() {
         user_name: "Gaurav",
       });
 
-      const responseData = result.data as string[];
+      // Gradio client returns { data: [...] }
+      const responseData: any = result.data;
+      
+      // Extract URLs from Gradio file objects or use strings directly
+      const video1 = responseData[0];
+      const video2 = responseData[1];
       
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         type: "assistant",
-        videoUrl1: responseData[0] || undefined,
-        videoUrl2: responseData[1] || undefined,
-        youtubeEmbed: responseData[2] || undefined,
-        text: responseData[3] || undefined,
+        // Gradio returns file objects with .url property for videos, or strings
+        videoUrl1: typeof video1 === 'object' && video1?.url ? video1.url : (typeof video1 === 'string' && video1.trim() ? video1 : undefined),
+        videoUrl2: typeof video2 === 'object' && video2?.url ? video2.url : (typeof video2 === 'string' && video2.trim() ? video2 : undefined),
+        youtubeEmbed: responseData[2] && typeof responseData[2] === 'string' && responseData[2].trim() ? responseData[2] : undefined,
+        text: responseData[3] && typeof responseData[3] === 'string' && responseData[3].trim() ? responseData[3] : undefined,
         timestamp: new Date(),
       };
-
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error calling Dr.M API:", error);
