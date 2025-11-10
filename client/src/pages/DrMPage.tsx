@@ -53,7 +53,7 @@ export default function DrMPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!question.trim()) {
       toast({
         title: "Please enter a question",
@@ -66,12 +66,12 @@ export default function DrMPage() {
 
     try {
       const response = await askDrM(question, "");
-      
+
       console.log("Dr.M Response:", response);
       console.log("Answer Video:", response.answerVideo);
       console.log("Video URL:", response.answerVideo.video);
       console.log("Text Response:", response.textResponse);
-      
+
       const newMessage: DrmMessage = {
         id: Date.now().toString(),
         question: question,
@@ -87,12 +87,15 @@ export default function DrMPage() {
 
       setCurrentVideoUrl(response.answerVideo.video || "");
       setCurrentSubtitlesUrl(response.answerVideo.subtitles || "");
-      
+
       setQuestion("");
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get response from Dr.M",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to get response from Dr.M",
         variant: "destructive",
       });
     } finally {
@@ -127,7 +130,11 @@ export default function DrMPage() {
         {/* Loading Progress Bar */}
         {isLoading && (
           <div className="w-full">
-            <Progress value={undefined} className="h-1 rounded-none" data-testid="progress-loading" />
+            <Progress
+              value={undefined}
+              className="h-1 rounded-none"
+              data-testid="progress-loading"
+            />
           </div>
         )}
 
@@ -156,44 +163,61 @@ export default function DrMPage() {
             </video>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white/60">
-              <p className="text-sm" data-testid="text-no-video">Ask Dr.M a question to get started</p>
+              <p className="text-sm" data-testid="text-no-video">
+                Ask Dr.M a question to get started
+              </p>
             </div>
           )}
         </div>
 
         {/* Chat History */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-2" data-testid="chat-history">
+        <div
+          className="flex-1 overflow-y-auto p-4 space-y-4 pb-24"
+          data-testid="chat-history"
+        >
           {messages.slice(-MAX_CONVERSATIONS).map((message) => (
             <div key={message.id} className="space-y-2">
               {/* User Question */}
               <div className="flex justify-end">
                 <div className="bg-purple-600 text-white rounded-lg px-4 py-2 max-w-[80%]">
-                  <p className="text-sm" data-testid={`text-user-question-${message.id}`}>
+                  <p
+                    className="text-sm"
+                    data-testid={`text-user-question-${message.id}`}
+                  >
                     {message.question}
                   </p>
                 </div>
               </div>
-              
+
               {/* Dr.M Response */}
               <div className="flex justify-start">
                 <div className="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
-                  <p className="text-sm" data-testid={`text-drm-response-${message.id}`}>
-                    {message.textResponse || "Dr.M has responded with a video message"}
+                  <p
+                    className="text-sm"
+                    data-testid={`text-drm-response-${message.id}`}
+                  >
+                    {message.textResponse ||
+                      "Dr.M has responded with a video message"}
                   </p>
                 </div>
               </div>
             </div>
           ))}
-          
+
           {messages.length === 0 && !isLoading && (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p className="text-sm" data-testid="text-empty-chat">Start a conversation with Dr.M</p>
+              <p className="text-sm" data-testid="text-empty-chat">
+                Start a conversation with Dr.M
+              </p>
             </div>
           )}
         </div>
 
         {/* Input Field */}
-        <form onSubmit={handleSubmit} className="p-3 border-t flex-shrink-0 bg-background">
+        <form
+          onSubmit={handleSubmit}
+          className="p-3 border-t flex-shrink-0 bg-background mb-16"
+        >
           <div className="flex gap-2">
             <Input
               type="text"
