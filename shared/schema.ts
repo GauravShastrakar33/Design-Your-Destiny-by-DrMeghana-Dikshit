@@ -16,3 +16,15 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+export const drmMessageSchema = z.object({
+  id: z.string(),
+  question: z.string(),
+  userName: z.string().optional(),
+  videoUrl: z.string(),
+  subtitlesUrl: z.string().optional(),
+  textResponse: z.string(),
+  timestamp: z.number(),
+});
+
+export type DrmMessage = z.infer<typeof drmMessageSchema>;
