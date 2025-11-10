@@ -128,9 +128,9 @@ export default function DrMPage() {
     <div className="min-h-screen pb-20 bg-background">
       <div className="max-w-md mx-auto h-screen flex flex-col">
         {/* Header with Avatar */}
-        <div className="bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600 p-3 flex-shrink-0">
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-3 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="relative">
+            <div className="relative ml-2">
               <div className="w-12 h-12 rounded-full border-2 border-white shadow-lg overflow-hidden bg-white">
                 <img
                   src={drMAvatar}
@@ -276,7 +276,7 @@ export default function DrMPage() {
         {/* Input Field */}
         <form
           onSubmit={handleSubmit}
-          className="p-3 border-t flex-shrink-0 bg-background mb-16"
+          className="p-3 border-t flex-shrink-0 bg-background"
         >
           <div className="flex gap-2">
             <Input
@@ -285,7 +285,7 @@ export default function DrMPage() {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 focus-visible:ring-[#703DFA]"
               data-testid="input-question"
             />
             <Button
