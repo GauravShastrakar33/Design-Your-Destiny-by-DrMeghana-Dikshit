@@ -5,10 +5,10 @@ export default function DrMPage() {
     <div className="min-h-screen pb-20 bg-background">
       <div className="max-w-md mx-auto h-screen flex flex-col">
         {/* Header with Avatar */}
-        <div className="bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600 p-6 pb-8 flex-shrink-0">
-          <div className="flex flex-col items-center space-y-4">
+        <div className="bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600 p-4 pb-6 flex-shrink-0">
+          <div className="flex flex-col items-center space-y-3">
             <div className="relative">
-              <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
+              <div className="w-20 h-20 rounded-full border-2 border-white shadow-lg overflow-hidden bg-white">
                 <img
                   src={drMAvatar}
                   alt="Dr.M"
@@ -16,10 +16,10 @@ export default function DrMPage() {
                   data-testid="img-drm-avatar"
                 />
               </div>
-              <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-2 border-white rounded-full" />
+              <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
             </div>
             <div className="text-center text-white">
-              <h1 className="text-2xl font-bold mb-1">Dr.M</h1>
+              <h1 className="text-xl font-bold mb-1">Dr.M</h1>
               <p className="text-sm opacity-90">Your AI Wellness Companion</p>
             </div>
           </div>
