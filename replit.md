@@ -198,6 +198,38 @@ Preferred communication style: Simple, everyday language.
   - `@app:playlist_progress`: Map of `playlistId -> { currentTrackId, currentTime }`
   - `@app:daily_completions`: Nested map of `date -> playlistId -> { completedTracks, totalTracks }`
 
+### Dr.M AI Video Integration
+
+**Overview**: Custom chat interface integrated with Gradio-hosted AI video generation service at https://dr-meghana-video.wowlabz.com/
+
+**Implementation** (`client/src/pages/DrMPage.tsx`, `client/src/lib/gradioClient.ts`):
+- **Gradio Client**: Uses `@gradio/client` npm package to connect to external video generation API
+- **4-Section Layout**:
+  1. Compact header with Dr.M avatar and title
+  2. Main video player with auto-play and subtitle support
+  3. Chat history showing last 3 conversations
+  4. Input field with send button
+- **API Integration**: 
+  - Endpoint: `/process_query` with parameters `{ user_name: string, question: string }`
+  - Response: Array with [introVideo, answerVideo, relatedVideoHtml, textResponse]
+  - Video extraction handles multiple possible response formats (string URLs or objects)
+  - HTML stripping applied to text responses for clean display
+- **Conversation Storage**: 
+  - Key: `@app:drm_conversations`
+  - Maintains last 3 conversations with full video URLs and text responses
+  - Persists across page reloads
+- **Loading States**: Horizontal progress bar appears during API calls (30-180 second response times)
+- **Video Playback**: 
+  - Auto-plays Dr.M's personalized answer video when response arrives
+  - Supports optional subtitle tracks if provided by API
+  - Native HTML5 video player with full controls
+
+**Technical Notes**:
+- Gradio API has daily usage quotas/limits
+- Robust video URL extraction handles multiple response structures
+- Error handling with user-friendly toast notifications
+- All user interactions tagged with `data-testid` attributes for testing
+
 ### Future Integration Points
 
 Based on attached design documents and feature requests:

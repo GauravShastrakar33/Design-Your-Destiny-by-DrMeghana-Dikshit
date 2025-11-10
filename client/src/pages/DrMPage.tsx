@@ -67,12 +67,17 @@ export default function DrMPage() {
     try {
       const response = await askDrM(question, "");
       
+      console.log("Dr.M Response:", response);
+      console.log("Answer Video:", response.answerVideo);
+      console.log("Video URL:", response.answerVideo.video);
+      console.log("Text Response:", response.textResponse);
+      
       const newMessage: DrmMessage = {
         id: Date.now().toString(),
         question: question,
         userName: "",
-        videoUrl: response.answerVideo.video,
-        subtitlesUrl: response.answerVideo.subtitles,
+        videoUrl: response.answerVideo.video || "",
+        subtitlesUrl: response.answerVideo.subtitles || "",
         textResponse: response.textResponse,
         timestamp: Date.now(),
       };
@@ -80,7 +85,7 @@ export default function DrMPage() {
       const updatedMessages = [...messages, newMessage];
       saveMessages(updatedMessages);
 
-      setCurrentVideoUrl(response.answerVideo.video);
+      setCurrentVideoUrl(response.answerVideo.video || "");
       setCurrentSubtitlesUrl(response.answerVideo.subtitles || "");
       
       setQuestion("");
