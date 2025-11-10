@@ -207,13 +207,14 @@ Preferred communication style: Simple, everyday language.
 - **4-Section Layout**:
   1. Compact header with Dr.M avatar and title
   2. Main video player with auto-play and subtitle support
-  3. Chat history showing last 3 conversations
-  4. Input field with send button
+  3. Chat history showing last 3 conversations with video thumbnails
+  4. Input field with send button (always visible at bottom)
 - **API Integration**: 
   - Endpoint: `/process_query` with parameters `{ user_name: string, question: string }`
   - Response: Array with [introVideo, answerVideo, relatedVideoHtml, textResponse]
   - Video extraction handles multiple possible response formats (string URLs or objects)
   - HTML stripping applied to text responses for clean display
+  - Quota messages (e.g., "📊 X questions remaining") automatically filtered from chat display
 - **Conversation Storage**: 
   - Key: `@app:drm_conversations`
   - Maintains last 3 conversations with full video URLs and text responses
@@ -223,9 +224,16 @@ Preferred communication style: Simple, everyday language.
   - Auto-plays Dr.M's personalized answer video when response arrives
   - Supports optional subtitle tracks if provided by API
   - Native HTML5 video player with full controls
+- **Video Thumbnails** (November 2025 update):
+  - Clickable video preview (80×56px) next to each Dr.M response in chat history
+  - Gradient background (purple-900 to violet-800) with centered play icon
+  - Click any thumbnail to replay that video in the main player
+  - Currently playing video highlighted with purple border and ring effect
+  - Provides quick access to review any of the last 3 video responses
 
 **Technical Notes**:
 - Gradio API has daily usage quotas/limits
+- Quota messages intelligently filtered via `isQuotaMessage()` pattern matching
 - Robust video URL extraction handles multiple response structures
 - Error handling with user-friendly toast notifications
 - All user interactions tagged with `data-testid` attributes for testing
