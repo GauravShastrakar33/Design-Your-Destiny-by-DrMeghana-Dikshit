@@ -160,7 +160,7 @@ export default function DrMPage() {
         )}
 
         {/* Video Player Section */}
-        <div className="flex-shrink-0 bg-black aspect-video relative">
+        <div className="flex-shrink-0 bg-black aspect-video relative mt-4">
           {currentVideoUrl ? (
             <video
               ref={videoRef}
@@ -200,7 +200,7 @@ export default function DrMPage() {
             <div key={message.id} className="space-y-2">
               {/* User Question */}
               <div className="flex justify-end">
-                <div className="bg-purple-600 text-white rounded-lg px-4 py-2 max-w-[80%]">
+                <div className="text-white rounded-lg px-4 py-2 max-w-[80%]" style={{ backgroundColor: '#703DFA' }}>
                   <p
                     className="text-sm"
                     data-testid={`text-user-question-${message.id}`}
@@ -216,22 +216,26 @@ export default function DrMPage() {
                 {message.videoUrl && (
                   <button
                     onClick={() => handlePlayVideo(message)}
-                    className={`relative flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden bg-gradient-to-br from-purple-900 to-violet-800 border-2 transition-all ${
+                    className={`relative flex-shrink-0 w-16 h-11 rounded-lg overflow-hidden border-2 transition-all ${
                       currentVideoId === message.id
-                        ? "border-purple-500 ring-2 ring-purple-300"
+                        ? "ring-2 ring-purple-300"
                         : "border-gray-300 hover:border-purple-400"
                     }`}
+                    style={{ 
+                      backgroundColor: '#703DFA',
+                      borderColor: currentVideoId === message.id ? '#703DFA' : undefined
+                    }}
                     data-testid={`button-video-thumbnail-${message.id}`}
                   >
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Play className="w-8 h-8 text-white drop-shadow-lg" fill="white" />
+                      <Play className="w-6 h-6 text-white drop-shadow-lg" fill="white" />
                     </div>
                   </button>
                 )}
 
                 {/* Text Response - hide if it's just a quota message */}
                 {!isQuotaMessage(message.textResponse) && (
-                  <div className="bg-muted rounded-lg px-4 py-2 max-w-[70%]">
+                  <div className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900" style={{ backgroundColor: '#F3F0FF' }}>
                     <p
                       className="text-sm"
                       data-testid={`text-drm-response-${message.id}`}
@@ -244,9 +248,9 @@ export default function DrMPage() {
                 
                 {/* Show fallback message only if there's a video but quota message */}
                 {isQuotaMessage(message.textResponse) && message.videoUrl && (
-                  <div className="bg-muted rounded-lg px-4 py-2 max-w-[70%]">
+                  <div className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900" style={{ backgroundColor: '#F3F0FF' }}>
                     <p
-                      className="text-sm text-muted-foreground"
+                      className="text-sm text-gray-600"
                       data-testid={`text-drm-response-${message.id}`}
                     >
                       Video response
@@ -269,7 +273,7 @@ export default function DrMPage() {
         {/* Input Field */}
         <form
           onSubmit={handleSubmit}
-          className="p-3 border-t flex-shrink-0 bg-background mb-16"
+          className="p-3 border-t flex-shrink-0 bg-background"
         >
           <div className="flex gap-2">
             <Input
@@ -286,6 +290,8 @@ export default function DrMPage() {
               disabled={isLoading || !question.trim()}
               size="icon"
               data-testid="button-send"
+              style={{ backgroundColor: '#703DFA' }}
+              className="hover:opacity-90"
             >
               <Send className="h-4 w-4" />
             </Button>
