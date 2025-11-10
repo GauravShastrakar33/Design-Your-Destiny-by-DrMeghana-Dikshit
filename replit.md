@@ -198,6 +198,48 @@ Preferred communication style: Simple, everyday language.
   - `@app:playlist_progress`: Map of `playlistId -> { currentTrackId, currentTime }`
   - `@app:daily_completions`: Nested map of `date -> playlistId -> { completedTracks, totalTracks }`
 
+### Dr.M AI Assistant Integration
+
+**Platform**: Gradio-powered wellness assistant deployed at `https://dr-meghana-video.wowlabz.com/`
+
+**Implementation**: Custom chat interface in `DrMPage.tsx` using `@gradio/client` library
+
+**API Integration**:
+- **Endpoint**: `/process_query`
+- **Request Format**: `{ question: string, user_name: string }`
+- **Response Format**: Array of 4 elements:
+  - `[0]`: Video URL 1 (Message from Dr. M) - Gradio file object with `.url` property or string
+  - `[1]`: Video URL 2 (Personalized Answer) - Gradio file object with `.url` property or string
+  - `[2]`: YouTube embed HTML string (Related Video)
+  - `[3]`: Text response (Wellness guidance)
+- **User Context**: Uses "Gaurav" as the personalized user name
+
+**Features**:
+- **Custom Chat UI**: Purple gradient theme matching app design, mobile-first responsive layout
+- **Rich Media Display**: 
+  - HTML5 video players for Dr. M's video responses with playback controls
+  - Inline YouTube video embeds for related content
+  - Formatted text responses with HTML rendering support
+- **UX Enhancements**: 
+  - Message bubbles (user messages right-aligned purple gradient, assistant messages left-aligned)
+  - Loading indicator ("Dr.M is thinking...") during API calls
+  - Auto-scroll to latest message
+  - Empty state with welcome message and Heart icon
+  - Error handling with toast notifications
+- **State Management**: Local component state for chat history (no persistence - fresh session each visit)
+
+**Technical Details**:
+- Response parsing handles both Gradio file objects (with `.url` property) and plain strings
+- Supports all 4 response types independently - any combination can be returned
+- Enter key sends message, disabled state while loading prevents duplicate submissions
+- Styled with Montserrat fonts, purple accent colors, and rounded message bubbles
+
+**Future Enhancements**:
+- Persist chat history to localStorage for session continuity
+- Add voice input capability for questions
+- Support for image/attachment uploads in queries
+- Rate limiting display (currently shows "📊 X questions remaining today")
+
 ### Future Integration Points
 
 Based on attached design documents and feature requests:
@@ -205,4 +247,3 @@ Based on attached design documents and feature requests:
 - **Push Notifications**: For practice reminders (UI exists but notification system not implemented)
 - **Backend Progress Tracking**: `/api/track-progress` endpoint for AudioPlayer playlist mode
 - **Expanded Audio Library**: Add more practice audio files, affirmations, and journaling tracks as assets become available
-- **AI Insights**: Mentioned in UI with "unlocks in 7 days" - planned feature not implemented
