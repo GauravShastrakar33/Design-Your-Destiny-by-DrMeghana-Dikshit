@@ -5,11 +5,20 @@ import { DrmMessage } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Send } from "lucide-react";
+import { Send, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const STORAGE_KEY = "@app:drm_conversations";
 const MAX_CONVERSATIONS = 3;
+
+const isQuotaMessage = (text: string): boolean => {
+  if (!text) return false;
+  const quotaPatterns = [
+    /\d+\s+questions?\s+remaining/i,
+    /📊.*questions?\s+remaining/i,
+  ];
+  return quotaPatterns.some((pattern) => pattern.test(text));
+};
 
 export default function DrMPage() {
   const [messages, setMessages] = useState<DrmMessage[]>([]);
@@ -17,6 +26,7 @@ export default function DrMPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
   const [currentSubtitlesUrl, setCurrentSubtitlesUrl] = useState<string>("");
+  const [currentVideoId, setCurrentVideoId] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
@@ -27,8 +37,10 @@ export default function DrMPage() {
         const parsed = JSON.parse(stored);
         setMessages(parsed);
         if (parsed.length > 0) {
-          setCurrentVideoUrl(parsed[parsed.length - 1].videoUrl);
-          setCurrentSubtitlesUrl(parsed[parsed.length - 1].subtitlesUrl || "");
+          const lastMessage = parsed[parsed.length - 1];
+          setCurrentVideoUrl(lastMessage.videoUrl);
+          setCurrentSubtitlesUrl(lastMessage.subtitlesUrl || "");
+          setCurrentVideoId(lastMessage.id);
         }
       } catch (error) {
         console.error("Error loading messages:", error);
@@ -49,6 +61,14 @@ export default function DrMPage() {
     const toSave = newMessages.slice(-MAX_CONVERSATIONS);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     setMessages(toSave);
+  };
+
+  const handlePlayVideo = (message: DrmMessage) => {
+    if (message.videoUrl) {
+      setCurrentVideoUrl(message.videoUrl);
+      setCurrentSubtitlesUrl(message.subtitlesUrl || "");
+      setCurrentVideoId(message.id);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,6 +107,7 @@ export default function DrMPage() {
 
       setCurrentVideoUrl(response.answerVideo.video || "");
       setCurrentSubtitlesUrl(response.answerVideo.subtitles || "");
+      setCurrentVideoId(newMessage.id);
 
       setQuestion("");
     } catch (error) {
@@ -172,7 +193,7 @@ export default function DrMPage() {
 
         {/* Chat History */}
         <div
-          className="flex-1 overflow-y-auto p-4 space-y-4 pb-24"
+          className="flex-1 overflow-y-auto p-4 space-y-4 pb-2"
           data-testid="chat-history"
         >
           {messages.slice(-MAX_CONVERSATIONS).map((message) => (
@@ -190,16 +211,48 @@ export default function DrMPage() {
               </div>
 
               {/* Dr.M Response */}
-              <div className="flex justify-start">
-                <div className="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
-                  <p
-                    className="text-sm"
-                    data-testid={`text-drm-response-${message.id}`}
+              <div className="flex justify-start gap-2">
+                {/* Video Thumbnail */}
+                {message.videoUrl && (
+                  <button
+                    onClick={() => handlePlayVideo(message)}
+                    className={`relative flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden bg-gradient-to-br from-purple-900 to-violet-800 border-2 transition-all ${
+                      currentVideoId === message.id
+                        ? "border-purple-500 ring-2 ring-purple-300"
+                        : "border-gray-300 hover:border-purple-400"
+                    }`}
+                    data-testid={`button-video-thumbnail-${message.id}`}
                   >
-                    {message.textResponse ||
-                      "Dr.M has responded with a video message"}
-                  </p>
-                </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Play className="w-8 h-8 text-white drop-shadow-lg" fill="white" />
+                    </div>
+                  </button>
+                )}
+
+                {/* Text Response - hide if it's just a quota message */}
+                {!isQuotaMessage(message.textResponse) && (
+                  <div className="bg-muted rounded-lg px-4 py-2 max-w-[70%]">
+                    <p
+                      className="text-sm"
+                      data-testid={`text-drm-response-${message.id}`}
+                    >
+                      {message.textResponse ||
+                        "Dr.M has responded with a video message"}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Show fallback message only if there's a video but quota message */}
+                {isQuotaMessage(message.textResponse) && message.videoUrl && (
+                  <div className="bg-muted rounded-lg px-4 py-2 max-w-[70%]">
+                    <p
+                      className="text-sm text-muted-foreground"
+                      data-testid={`text-drm-response-${message.id}`}
+                    >
+                      Video response
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           ))}
