@@ -1,6 +1,100 @@
+import { useState, useEffect, useRef } from "react";
 import drMAvatar from "@assets/DrM_1761365497901.webp";
+import { askDrM } from "@/lib/gradioClient";
+import { DrmMessage } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Send } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+const STORAGE_KEY = "@app:drm_conversations";
+const MAX_CONVERSATIONS = 3;
 
 export default function DrMPage() {
+  const [messages, setMessages] = useState<DrmMessage[]>([]);
+  const [question, setQuestion] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
+  const [currentSubtitlesUrl, setCurrentSubtitlesUrl] = useState<string>("");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setMessages(parsed);
+        if (parsed.length > 0) {
+          setCurrentVideoUrl(parsed[parsed.length - 1].videoUrl);
+          setCurrentSubtitlesUrl(parsed[parsed.length - 1].subtitlesUrl || "");
+        }
+      } catch (error) {
+        console.error("Error loading messages:", error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentVideoUrl && videoRef.current) {
+      videoRef.current.load();
+      videoRef.current.play().catch((error) => {
+        console.error("Error auto-playing video:", error);
+      });
+    }
+  }, [currentVideoUrl]);
+
+  const saveMessages = (newMessages: DrmMessage[]) => {
+    const toSave = newMessages.slice(-MAX_CONVERSATIONS);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    setMessages(toSave);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!question.trim()) {
+      toast({
+        title: "Please enter a question",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await askDrM(question, "");
+      
+      const newMessage: DrmMessage = {
+        id: Date.now().toString(),
+        question: question,
+        userName: "",
+        videoUrl: response.answerVideo.video,
+        subtitlesUrl: response.answerVideo.subtitles,
+        textResponse: response.textResponse,
+        timestamp: Date.now(),
+      };
+
+      const updatedMessages = [...messages, newMessage];
+      saveMessages(updatedMessages);
+
+      setCurrentVideoUrl(response.answerVideo.video);
+      setCurrentSubtitlesUrl(response.answerVideo.subtitles || "");
+      
+      setQuestion("");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to get response from Dr.M",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-20 bg-background">
       <div className="max-w-md mx-auto h-screen flex flex-col">
@@ -25,16 +119,96 @@ export default function DrMPage() {
           </div>
         </div>
 
-        {/* Gradio App Iframe */}
-        <div className="flex-1 overflow-hidden">
-          <iframe
-            src="https://dr-meghana-video.wowlabz.com/"
-            className="w-full h-full border-0"
-            title="Dr.M AI Assistant"
-            allow="camera; microphone"
-            data-testid="iframe-gradio-app"
-          />
+        {/* Loading Progress Bar */}
+        {isLoading && (
+          <div className="w-full">
+            <Progress value={undefined} className="h-1 rounded-none" data-testid="progress-loading" />
+          </div>
+        )}
+
+        {/* Video Player Section */}
+        <div className="flex-shrink-0 bg-black aspect-video relative">
+          {currentVideoUrl ? (
+            <video
+              ref={videoRef}
+              className="w-full h-full"
+              controls
+              autoPlay
+              playsInline
+              data-testid="video-drm-response"
+            >
+              <source src={currentVideoUrl} type="video/mp4" />
+              {currentSubtitlesUrl && (
+                <track
+                  kind="subtitles"
+                  src={currentSubtitlesUrl}
+                  srcLang="en"
+                  label="English"
+                  default
+                />
+              )}
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white/60">
+              <p className="text-sm" data-testid="text-no-video">Ask Dr.M a question to get started</p>
+            </div>
+          )}
         </div>
+
+        {/* Chat History */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4" data-testid="chat-history">
+          {messages.slice(-MAX_CONVERSATIONS).map((message) => (
+            <div key={message.id} className="space-y-2">
+              {/* User Question */}
+              <div className="flex justify-end">
+                <div className="bg-purple-600 text-white rounded-lg px-4 py-2 max-w-[80%]">
+                  <p className="text-sm" data-testid={`text-user-question-${message.id}`}>
+                    {message.question}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Dr.M Response */}
+              <div className="flex justify-start">
+                <div className="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
+                  <p className="text-sm" data-testid={`text-drm-response-${message.id}`}>
+                    {message.textResponse || "Dr.M has responded with a video message"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {messages.length === 0 && !isLoading && (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <p className="text-sm" data-testid="text-empty-chat">Start a conversation with Dr.M</p>
+            </div>
+          )}
+        </div>
+
+        {/* Input Field */}
+        <form onSubmit={handleSubmit} className="p-4 border-t flex-shrink-0">
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Type your question..."
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              disabled={isLoading}
+              className="flex-1"
+              data-testid="input-question"
+            />
+            <Button
+              type="submit"
+              disabled={isLoading || !question.trim()}
+              size="icon"
+              data-testid="button-send"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );
