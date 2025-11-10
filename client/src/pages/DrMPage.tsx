@@ -160,7 +160,7 @@ export default function DrMPage() {
         )}
 
         {/* Video Player Section */}
-        <div className="flex-shrink-0 bg-black aspect-video relative mt-4">
+        <div className="flex-shrink-0 bg-black aspect-video relative">
           {currentVideoUrl ? (
             <video
               ref={videoRef}
@@ -200,14 +200,12 @@ export default function DrMPage() {
             <div key={message.id} className="space-y-2">
               {/* User Question */}
               <div className="flex justify-end">
-                <div 
-                  className="text-white rounded-lg px-4 py-2 max-w-[80%]" 
-                  style={{ backgroundColor: '#703DFA' }}
+                <div
+                  className="text-white rounded-lg px-4 py-2 max-w-[80%]"
+                  style={{ backgroundColor: "#703DFA" }}
                   data-testid={`text-user-question-${message.id}`}
                 >
-                  <p className="text-sm">
-                    {message.question}
-                  </p>
+                  <p className="text-sm">{message.question}</p>
                 </div>
               </div>
 
@@ -222,23 +220,27 @@ export default function DrMPage() {
                         ? "ring-2 ring-purple-300"
                         : "border-gray-300 hover:border-purple-400"
                     }`}
-                    style={{ 
-                      backgroundColor: '#703DFA',
-                      borderColor: currentVideoId === message.id ? '#703DFA' : undefined
+                    style={{
+                      backgroundColor: "#703DFA",
+                      borderColor:
+                        currentVideoId === message.id ? "#703DFA" : undefined,
                     }}
                     data-testid={`button-video-thumbnail-${message.id}`}
                   >
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Play className="w-6 h-6 text-white drop-shadow-lg" fill="white" />
+                      <Play
+                        className="w-6 h-6 text-white drop-shadow-lg"
+                        fill="white"
+                      />
                     </div>
                   </button>
                 )}
 
                 {/* Text Response - hide if it's just a quota message */}
                 {!isQuotaMessage(message.textResponse) && (
-                  <div 
-                    className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900" 
-                    style={{ backgroundColor: '#F3F0FF' }}
+                  <div
+                    className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900"
+                    style={{ backgroundColor: "#F3F0FF" }}
                     data-testid={`text-drm-response-${message.id}`}
                   >
                     <p className="text-sm">
@@ -247,17 +249,15 @@ export default function DrMPage() {
                     </p>
                   </div>
                 )}
-                
+
                 {/* Show fallback message only if there's a video but quota message */}
                 {isQuotaMessage(message.textResponse) && message.videoUrl && (
-                  <div 
-                    className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900" 
-                    style={{ backgroundColor: '#F3F0FF' }}
+                  <div
+                    className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900"
+                    style={{ backgroundColor: "#F3F0FF" }}
                     data-testid={`text-drm-response-${message.id}`}
                   >
-                    <p className="text-sm text-gray-600">
-                      Video response
-                    </p>
+                    <p className="text-sm text-gray-600">Video response</p>
                   </div>
                 )}
               </div>
@@ -276,7 +276,7 @@ export default function DrMPage() {
         {/* Input Field */}
         <form
           onSubmit={handleSubmit}
-          className="p-3 border-t flex-shrink-0 bg-background"
+          className="p-3 border-t flex-shrink-0 bg-background mb-16"
         >
           <div className="flex gap-2">
             <Input
@@ -293,7 +293,7 @@ export default function DrMPage() {
               disabled={isLoading || !question.trim()}
               size="icon"
               data-testid="button-send"
-              style={{ backgroundColor: '#703DFA' }}
+              style={{ backgroundColor: "#703DFA" }}
               className="hover:opacity-90"
             >
               <Send className="h-4 w-4" />
