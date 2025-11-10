@@ -54,7 +54,7 @@ export default function HomePage() {
       testId: "card-my-playlist",
     },
     {
-      title: "Emotional Mastery",
+      title: "Emotion Mastery",
       icon: Heart, // ✅ Lucide icon instead of Remix
       gradient: "bg-gradient-focus",
       path: "/emotion-mastery",
