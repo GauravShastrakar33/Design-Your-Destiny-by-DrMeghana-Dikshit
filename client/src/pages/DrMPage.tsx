@@ -200,11 +200,12 @@ export default function DrMPage() {
             <div key={message.id} className="space-y-2">
               {/* User Question */}
               <div className="flex justify-end">
-                <div className="text-white rounded-lg px-4 py-2 max-w-[80%]" style={{ backgroundColor: '#703DFA' }}>
-                  <p
-                    className="text-sm"
-                    data-testid={`text-user-question-${message.id}`}
-                  >
+                <div 
+                  className="text-white rounded-lg px-4 py-2 max-w-[80%]" 
+                  style={{ backgroundColor: '#703DFA' }}
+                  data-testid={`text-user-question-${message.id}`}
+                >
+                  <p className="text-sm">
                     {message.question}
                   </p>
                 </div>
@@ -235,11 +236,12 @@ export default function DrMPage() {
 
                 {/* Text Response - hide if it's just a quota message */}
                 {!isQuotaMessage(message.textResponse) && (
-                  <div className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900" style={{ backgroundColor: '#F3F0FF' }}>
-                    <p
-                      className="text-sm"
-                      data-testid={`text-drm-response-${message.id}`}
-                    >
+                  <div 
+                    className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900" 
+                    style={{ backgroundColor: '#F3F0FF' }}
+                    data-testid={`text-drm-response-${message.id}`}
+                  >
+                    <p className="text-sm">
                       {message.textResponse ||
                         "Dr.M has responded with a video message"}
                     </p>
@@ -248,11 +250,12 @@ export default function DrMPage() {
                 
                 {/* Show fallback message only if there's a video but quota message */}
                 {isQuotaMessage(message.textResponse) && message.videoUrl && (
-                  <div className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900" style={{ backgroundColor: '#F3F0FF' }}>
-                    <p
-                      className="text-sm text-gray-600"
-                      data-testid={`text-drm-response-${message.id}`}
-                    >
+                  <div 
+                    className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900" 
+                    style={{ backgroundColor: '#F3F0FF' }}
+                    data-testid={`text-drm-response-${message.id}`}
+                  >
+                    <p className="text-sm text-gray-600">
                       Video response
                     </p>
                   </div>
