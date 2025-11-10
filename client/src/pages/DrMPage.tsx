@@ -27,6 +27,7 @@ export default function DrMPage() {
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
   const [currentSubtitlesUrl, setCurrentSubtitlesUrl] = useState<string>("");
   const [currentVideoId, setCurrentVideoId] = useState<string>("");
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
@@ -48,14 +49,31 @@ export default function DrMPage() {
     }
   }, []);
 
+  // Load video when URL changes
   useEffect(() => {
     if (currentVideoUrl && videoRef.current) {
       videoRef.current.load();
+      
+      if (shouldAutoPlay) {
+        videoRef.current.play().catch((error) => {
+          console.error("Error auto-playing video:", error);
+        });
+        setShouldAutoPlay(false);
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [currentVideoUrl]);
+  
+  // Handle auto-play flag changes (for when URL doesn't change but flag is set)
+  useEffect(() => {
+    if (shouldAutoPlay && currentVideoUrl && videoRef.current) {
       videoRef.current.play().catch((error) => {
         console.error("Error auto-playing video:", error);
       });
+      setShouldAutoPlay(false);
     }
-  }, [currentVideoUrl]);
+  }, [shouldAutoPlay]);
 
   const saveMessages = (newMessages: DrmMessage[]) => {
     const toSave = newMessages.slice(-MAX_CONVERSATIONS);
@@ -65,9 +83,19 @@ export default function DrMPage() {
 
   const handlePlayVideo = (message: DrmMessage) => {
     if (message.videoUrl) {
-      setCurrentVideoUrl(message.videoUrl);
-      setCurrentSubtitlesUrl(message.subtitlesUrl || "");
-      setCurrentVideoId(message.id);
+      // If clicking the same video that's already loaded, just play it directly
+      if (message.id === currentVideoId && videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch((error) => {
+          console.error("Error playing video:", error);
+        });
+      } else {
+        // Different video, load and auto-play
+        setShouldAutoPlay(true);
+        setCurrentVideoUrl(message.videoUrl);
+        setCurrentSubtitlesUrl(message.subtitlesUrl || "");
+        setCurrentVideoId(message.id);
+      }
     }
   };
 
@@ -105,6 +133,7 @@ export default function DrMPage() {
       const updatedMessages = [...messages, newMessage];
       saveMessages(updatedMessages);
 
+      setShouldAutoPlay(true);
       setCurrentVideoUrl(response.answerVideo.video || "");
       setCurrentSubtitlesUrl(response.answerVideo.subtitles || "");
       setCurrentVideoId(newMessage.id);
@@ -166,7 +195,6 @@ export default function DrMPage() {
               ref={videoRef}
               className="w-full h-full"
               controls
-              autoPlay
               playsInline
               data-testid="video-drm-response"
             >
