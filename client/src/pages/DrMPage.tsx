@@ -162,7 +162,7 @@ export default function DrMPage() {
         </div>
 
         {/* Chat History */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4" data-testid="chat-history">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-2" data-testid="chat-history">
           {messages.slice(-MAX_CONVERSATIONS).map((message) => (
             <div key={message.id} className="space-y-2">
               {/* User Question */}
@@ -193,7 +193,7 @@ export default function DrMPage() {
         </div>
 
         {/* Input Field */}
-        <form onSubmit={handleSubmit} className="p-4 border-t flex-shrink-0">
+        <form onSubmit={handleSubmit} className="p-3 border-t flex-shrink-0 bg-background">
           <div className="flex gap-2">
             <Input
               type="text"
