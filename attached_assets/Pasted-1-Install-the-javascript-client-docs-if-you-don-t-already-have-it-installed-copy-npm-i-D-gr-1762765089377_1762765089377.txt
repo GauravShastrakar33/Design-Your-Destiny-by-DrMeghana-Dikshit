@@ -1,0 +1,136 @@
+1. Install the javascript client (docs) if you don't already have it installed.
+
+copy
+$ npm i -D @gradio/client
+2. Find the API endpoint below corresponding to your desired function in the app. Copy the code snippet, replacing the placeholder values with your own input data. Or use the 
+API Recorder
+
+ to automatically generate your API requests.
+
+API name: /process_query Total requests: 12 (100% successful)  |  p50/p90/p99: 101.38 s / 185.82 s / 255.49 s
+copy
+import { Client } from "@gradio/client";
+	
+	const client = await Client.connect("https://dr-meghana-video.wowlabz.com/");
+	const result = await client.predict("/process_query", { 		
+			question: "Hello!!", 		
+			user_name: "Hello!!", 
+	});
+
+	console.log(result.data);
+	
+Accepts 2 parameters:
+question string Required
+
+The input value that is provided in the "Your Question" Textbox component.
+
+user_name string Required
+
+The input value that is provided in the "Your Name (Optional)" Textbox component.
+
+Returns list of 4 elements
+[0]
+
+The output value that appears in the "🎬 Message from Dr. M" Video component.
+
+[1]
+
+The output value that appears in the "🎬 Dr. M's Personalized Answer" Video component.
+
+[2] string
+
+The output value that appears in the "🎬 Related Video" Html component.
+
+[3] string
+
+The output value that appears in the "Response" Html component.
+
+API name: /process_query_1
+copy
+import { Client } from "@gradio/client";
+	
+	const client = await Client.connect("https://dr-meghana-video.wowlabz.com/");
+	const result = await client.predict("/process_query_1", { 		
+			question: "Hello!!", 		
+			user_name: "Hello!!", 
+	});
+
+	console.log(result.data);
+	
+Accepts 2 parameters:
+question string Required
+
+The input value that is provided in the "Your Question" Textbox component.
+
+user_name string Required
+
+The input value that is provided in the "Your Name (Optional)" Textbox component.
+
+Returns list of 4 elements
+[0]
+
+The output value that appears in the "🎬 Message from Dr. M" Video component.
+
+[1]
+
+The output value that appears in the "🎬 Dr. M's Personalized Answer" Video component.
+
+[2] string
+
+The output value that appears in the "🎬 Related Video" Html component.
+
+[3] string
+
+The output value that appears in the "Response" Html component.
+
+API name: /lambda
+copy
+import { Client } from "@gradio/client";
+	
+	const client = await Client.connect("https://dr-meghana-video.wowlabz.com/");
+	const result = await client.predict("/lambda", { 
+	});
+
+	console.log(result.data);
+	
+Accepts 0 parameters:
+Returns list of 2 elements
+[0]
+
+The output value that appears in the "🎬 Message from Dr. M" Video component.
+
+[1] string
+
+The output value that appears in the "🎬 Related Video" Html component.
+
+API name: /lambda_1
+copy
+import { Client } from "@gradio/client";
+	
+	const client = await Client.connect("https://dr-meghana-video.wowlabz.com/");
+	const result = await client.predict("/lambda_1", { 
+	});
+
+	console.log(result.data);
+	
+Accepts 0 parameters:
+Returns list of 5 elements
+[0] string
+
+The output value that appears in the "Your Question" Textbox component.
+
+[1]
+
+The output value that appears in the "🎬 Message from Dr. M" Video component.
+
+[2]
+
+The output value that appears in the "🎬 Dr. M's Personalized Answer" Video component.
+
+[3] string
+
+The output value that appears in the "🎬 Related Video" Html component.
+
+[4] string
+
+The output value that appears in the "Response" Html component.
