@@ -161,6 +161,29 @@ export default function DrMPage() {
           )}
         </div>
 
+        {/* Input Field */}
+        <form onSubmit={handleSubmit} className="p-4 border-b flex-shrink-0">
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Type your question..."
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              disabled={isLoading}
+              className="flex-1"
+              data-testid="input-question"
+            />
+            <Button
+              type="submit"
+              disabled={isLoading || !question.trim()}
+              size="icon"
+              data-testid="button-send"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </form>
+
         {/* Chat History */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4" data-testid="chat-history">
           {messages.slice(-MAX_CONVERSATIONS).map((message) => (
@@ -191,29 +214,6 @@ export default function DrMPage() {
             </div>
           )}
         </div>
-
-        {/* Input Field */}
-        <form onSubmit={handleSubmit} className="p-4 border-t flex-shrink-0">
-          <div className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="Type your question..."
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              disabled={isLoading}
-              className="flex-1"
-              data-testid="input-question"
-            />
-            <Button
-              type="submit"
-              disabled={isLoading || !question.trim()}
-              size="icon"
-              data-testid="button-send"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </form>
       </div>
     </div>
   );
