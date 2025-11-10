@@ -22,6 +22,15 @@ function extractVideoUrl(videoData: any): string {
   }
   
   if (typeof videoData === "object") {
+    // Handle Gradio update format: {value: {video: {url: "..."}}}
+    if (videoData.value?.video?.url) {
+      return videoData.value.video.url;
+    }
+    // Handle direct video object: {video: {url: "..."}}
+    if (videoData.video?.url) {
+      return videoData.video.url;
+    }
+    // Handle simple formats
     return videoData.video || videoData.url || videoData.path || "";
   }
   
@@ -30,6 +39,12 @@ function extractVideoUrl(videoData: any): string {
 
 function extractSubtitlesUrl(videoData: any): string | undefined {
   if (!videoData || typeof videoData !== "object") return undefined;
+  
+  // Handle Gradio update format: {value: {subtitles: "..."}}
+  if (videoData.value?.subtitles) {
+    return videoData.value.subtitles;
+  }
+  
   return videoData.subtitles || videoData.subtitle || undefined;
 }
 
