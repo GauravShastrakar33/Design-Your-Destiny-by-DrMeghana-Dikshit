@@ -160,7 +160,7 @@ export default function DrMPage() {
         )}
 
         {/* Video Player Section */}
-        <div className="flex-shrink-0 bg-black aspect-video relative">
+        <div className="flex-shrink-0 bg-black aspect-video relative mt-1">
           {currentVideoUrl ? (
             <video
               ref={videoRef}
