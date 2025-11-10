@@ -132,7 +132,7 @@ export default function DrMPage() {
         )}
 
         {/* Video Player Section */}
-        <div className="flex-shrink-0 bg-black h-48 relative">
+        <div className="flex-shrink-0 bg-black aspect-video relative">
           {currentVideoUrl ? (
             <video
               ref={videoRef}
@@ -162,7 +162,7 @@ export default function DrMPage() {
         </div>
 
         {/* Chat History */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-2 min-h-0" data-testid="chat-history">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-2" data-testid="chat-history">
           {messages.slice(-MAX_CONVERSATIONS).map((message) => (
             <div key={message.id} className="space-y-2">
               {/* User Question */}
