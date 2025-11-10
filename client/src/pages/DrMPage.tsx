@@ -276,7 +276,7 @@ export default function DrMPage() {
         {/* Input Field */}
         <form
           onSubmit={handleSubmit}
-          className="p-3 border-t flex-shrink-0 bg-background"
+          className="p-3 border-t flex-shrink-0 bg-background mb-16"
         >
           <div className="flex gap-2">
             <Input
