@@ -54,11 +54,11 @@ export default function HomePage() {
       testId: "card-my-playlist",
     },
     {
-      title: "Mental Health",
+      title: "Emotional Mastery",
       icon: Heart, // ✅ Lucide icon instead of Remix
       gradient: "bg-gradient-focus",
-      path: "/mental-health",
-      testId: "card-mental-health",
+      path: "/emotion-mastery",
+      testId: "card-emotional-mastery",
     },
     {
       title: "Articles",
