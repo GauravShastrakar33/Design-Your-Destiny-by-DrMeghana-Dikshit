@@ -2,9 +2,7 @@
 
 ## Overview
 
-Dr.M App is a comprehensive mobile-first wellness application designed to help users manage their spiritual practices, meditation routines, and personal growth journeys. The app combines guided practices, community engagement, challenge tracking, and personalized insights to support holistic well-being.
-
-The platform offers structured programs (DYD - Design Your Destiny, USM - Universal Success Meditation), emotional mastery tools, money mindset rewiring, workshops/masterclasses, and community practice sessions. Users can track streaks, create custom playlists, participate in challenges (7-day, 21-day, 90-day), and work on their "Project of Heart" - a personal vision and goal-setting framework.
+Dr.M App is a comprehensive mobile-first wellness application designed to help users manage spiritual practices, meditation routines, and personal growth. It offers guided practices, community engagement, challenge tracking, and personalized insights for holistic well-being. The platform includes structured programs (DYD, USM), emotional mastery tools, money mindset rewiring, workshops, masterclasses, and community practice sessions. Users can track streaks, create custom playlists, participate in challenges (7, 21, 90-day), and work on their "Project of Heart" vision.
 
 ## User Preferences
 
@@ -14,235 +12,105 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Architecture
 
-**Framework**: React 18 with TypeScript, using Vite as the build tool and development server.
-
-**Routing**: Wouter is used for client-side routing, providing a lightweight alternative to React Router. All routes are defined in `client/src/App.tsx` with a component-based structure.
-
-**State Management**: 
-- Local component state using React hooks (useState, useEffect)
-- LocalStorage for client-side persistence of user data (playlists, beliefs, challenges, streak data, preferences)
-- No global state management library - data is managed at the component level and persisted to localStorage
-
-**UI Component Library**: shadcn/ui components built on Radix UI primitives, providing accessible, customizable components. The design system uses Tailwind CSS with custom color schemes and gradients inspired by premium wellness apps (Calm, Headspace, Peloton).
-
-**Styling Approach**:
-- Tailwind CSS for utility-first styling
-- Custom CSS variables for theming (light/dark mode support)
-- Mobile-first responsive design with max-width container (max-w-md)
-- Custom gradient backgrounds for different app sections (wellness, calm, energy, growth)
-
-**Animation**: Framer Motion for smooth transitions, card interactions, and micro-animations.
-
-**Data Fetching**: TanStack Query (React Query) is configured but currently unused. The app is primarily client-side with localStorage persistence.
+**Frameworks & Tools**: React 18 with TypeScript, Vite, Wouter for routing, shadcn/ui (built on Radix UI) for components, Tailwind CSS for styling, Framer Motion for animations.
+**State Management**: Primarily local component state using React hooks and localStorage for client-side persistence of user data (playlists, challenges, preferences, streaks). No global state management library is currently used.
+**Styling**: Mobile-first responsive design, custom CSS variables, and gradient backgrounds for different app sections (wellness, calm, energy, growth).
+**Data Fetching**: TanStack Query (React Query) is configured but currently unused, as functionality is client-side.
 
 ### Backend Architecture
 
-**Server Framework**: Express.js with TypeScript, serving both API endpoints and the Vite-built frontend in production.
-
-**Current Implementation**: Minimal backend - the server is scaffolded but has no active routes. All functionality is currently client-side with localStorage.
-
-**Storage Interface**: A storage abstraction layer (`server/storage.ts`) with an in-memory implementation (`MemStorage`) is defined but not utilized. This provides a foundation for future database integration.
-
-**Session Management**: Dependencies for `connect-pg-simple` are included for PostgreSQL session storage, indicating planned authentication functionality.
+**Server Framework**: Express.js with TypeScript.
+**Current Implementation**: Minimal backend; primarily serves the frontend. All core application logic and data persistence are currently client-side.
+**Future Considerations**: Designed with a storage abstraction layer (`server/storage.ts`) and PostgreSQL session management dependencies for future database integration and authentication.
 
 ### Data Storage Strategy
 
-**Current**: All user data is stored in browser localStorage:
-- Practice playlists (`dr-m-playlists`)
-- Playlist progress tracking (`@app:playlist_progress`) - per-playlist resume data
-- Daily completion stats (`@app:daily_completions`) - per-playlist daily completion tracking
-- Challenge progress (`@app:active_challenge`, `@app:challenge_history`)
-- Belief pairs for rewiring (`@app:rewiring_beliefs`)
-- User preferences (karmic affirmation, accountability partner, streak visibility)
-- Streak tracking data
-- Daily practice logs
-- Project of Heart vision and reflections
-
-**Planned**: PostgreSQL database via Drizzle ORM. Configuration exists (`drizzle.config.ts`) for schema-based migrations with a simple user table defined in `shared/schema.ts`.
-
-**Design Decision**: Starting with localStorage allows rapid prototyping and offline-first functionality. Migration path to PostgreSQL is prepared through the storage abstraction layer and Drizzle schema definitions.
+**Current**: All user data is stored in browser localStorage. This includes practice playlists, progress tracking, daily completions, challenge progress, beliefs, user preferences, streak data, and "Project of Heart" details.
+**Planned**: Migration to PostgreSQL using Drizzle ORM. A basic user table schema is already defined (`shared/schema.ts`).
+**Design Decision**: Starting with localStorage enables rapid prototyping and offline functionality, with a prepared migration path to PostgreSQL.
 
 ### Authentication & Authorization
 
-**Current State**: No authentication implemented. The app operates as a single-user client-side application.
-
-**Prepared Infrastructure**: 
-- User schema defined in `shared/schema.ts` with username/password fields
-- Zod validation schemas for user input
-- Session storage dependencies installed
-
-**Future Implementation**: Traditional username/password authentication with Express sessions stored in PostgreSQL.
+**Current**: No authentication implemented; the app functions as a single-user client-side application.
+**Future Implementation**: Planned traditional username/password authentication using Express sessions stored in PostgreSQL, with user schemas and Zod validation already in place.
 
 ### Design System
 
-**Typography**: Inter or DM Sans for primary text, with Crimson Text or Playfair Display for quotes/headlines. Font loading configured via Google Fonts.
+**Typography**: Inter or DM Sans for primary text, Crimson Text or Playfair Display for quotes/headlines.
+**Color Themes**: Utilizes specific gradient themes for different sections (Wellness, Calm, Energy, Growth).
+**Component Patterns**: Includes a fixed bottom navigation bar, gradient action cards, expandable practice cards (video/audio/script), progress bars, streak calendars, and modal dialogs.
+**Layout**: Mobile-first with constrained container width (`max-w-md`) for optimal mobile viewing.
 
-**Color Themes**:
-- Wellness gradient: Purple to violet
-- Calm gradient: Blue to indigo  
-- Energy gradient: Orange to red
-- Growth gradient: Teal to cyan
+### Audio System
 
-**Component Patterns**:
-- Bottom navigation bar (fixed, 5 tabs)
-- Action cards with gradients and icons
-- Expandable practice cards with video/audio/script formats
-- Progress bars and streak calendars
-- Modal dialogs for data entry and confirmations
+**Overview**: Manages and plays audio content for practices, affirmations, and journaling.
+**Core Components**:
+- **Audio Library**: Centralized metadata for practices, affirmations, and journaling audios.
+- **AudioPlayer Component**: Reusable HTML5 audio player with play/pause, seek bar, time display, playback speed control, and two modes (`basic`, `playlist`).
+**Integration Points**: Used across various pages for meditation practices, guided affirmations, and background music.
+**Playlist Progress System**: Tracks per-playlist progress (current track + timestamp) in localStorage, saves progress every 3 seconds, advances tracks automatically, and marks tracks complete at 90% duration.
 
-**Layout System**: Mobile-first with consistent spacing units (3, 4, 6, 8, 12, 16). Container width constrained to max-w-md for optimal mobile viewing.
+### Dr.M AI Video Integration
+
+**Overview**: Custom chat interface integrating with a Gradio-hosted AI video generation service.
+**Functionality**:
+- Connects to an external API (`/process_query`) to generate personalized video responses from Dr.M.
+- Displays a 4-section layout: header, main video player, chat history (last 3 conversations with video thumbnails), and input field.
+- Stores the last 3 conversations and video URLs in localStorage.
+- Auto-plays Dr.M's response video and supports optional subtitles.
+- Provides clickable video thumbnails in chat history to replay videos.
+- Handles API loading states and filters quota messages.
 
 ## External Dependencies
 
 ### Third-Party UI Libraries
 
-- **Radix UI**: Comprehensive set of accessible component primitives (accordion, alert-dialog, avatar, checkbox, dialog, dropdown-menu, label, popover, progress, radio-group, scroll-area, select, separator, slider, switch, tabs, toast, tooltip, toggle)
-- **shadcn/ui**: Pre-built components using Radix UI and Tailwind CSS (configured in `components.json`)
-- **Lucide React**: Icon library for consistent iconography throughout the app
-- **cmdk**: Command menu component (included but not visibly used in current implementation)
-- **Embla Carousel**: Carousel/slider functionality for horizontal scrolling content
+- **Radix UI**: Accessible component primitives.
+- **shadcn/ui**: Components built on Radix UI and Tailwind CSS.
+- **Lucide React**: Icon library.
+- **Embla Carousel**: Carousel/slider functionality.
 
 ### Animation & Interaction
 
-- **Framer Motion**: Declarative animations for page transitions, card interactions, progress animations, and micro-interactions
+- **Framer Motion**: Declarative animations for UI elements.
 
 ### Forms & Validation
 
-- **React Hook Form**: Form state management (dependency present, usage limited)
-- **@hookform/resolvers**: Integration between React Hook Form and Zod
-- **Zod**: TypeScript-first schema validation
-- **drizzle-zod**: Bridge between Drizzle ORM schemas and Zod validation
+- **React Hook Form**: Form state management.
+- **Zod**: TypeScript-first schema validation.
+- **drizzle-zod**: Bridge between Drizzle ORM and Zod.
 
 ### Data Management
 
-- **TanStack Query (React Query)**: Async state management and caching (configured but not actively used)
-- **date-fns**: Date manipulation and formatting library
+- **TanStack Query (React Query)**: Async state management and caching (configured).
+- **date-fns**: Date manipulation and formatting.
 
 ### Database & ORM
 
-- **Drizzle ORM**: TypeScript ORM for PostgreSQL with type-safe queries
-- **@neondatabase/serverless**: Neon database driver for serverless PostgreSQL (indicates planned Neon deployment)
-- **drizzle-kit**: CLI tool for database migrations and schema management
+- **Drizzle ORM**: TypeScript ORM for PostgreSQL.
+- **@neondatabase/serverless**: Neon database driver for serverless PostgreSQL.
+- **drizzle-kit**: Database migrations and schema management.
 
 ### Styling
 
-- **Tailwind CSS**: Utility-first CSS framework
-- **tailwindcss-animate**: Animation utilities for Tailwind
-- **class-variance-authority**: Type-safe variant management for components
-- **clsx** + **tailwind-merge**: Class name composition utilities
+- **Tailwind CSS**: Utility-first CSS framework.
+- **tailwindcss-animate**: Animation utilities for Tailwind.
+- **class-variance-authority**: Type-safe variant management.
+- **clsx** + **tailwind-merge**: Class name composition.
 
 ### Build Tools
 
-- **Vite**: Fast build tool and dev server with React plugin
-- **TypeScript**: Type safety across the codebase
-- **esbuild**: JavaScript bundler used for server-side build
-- **PostCSS**: CSS processing with Autoprefixer
+- **Vite**: Fast build tool and dev server.
+- **TypeScript**: Type safety.
+- **esbuild**: JavaScript bundler for server-side.
+- **PostCSS**: CSS processing.
 
 ### Replit-Specific Integrations
 
-- **@replit/vite-plugin-runtime-error-modal**: Development error overlay
-- **@replit/vite-plugin-cartographer**: Code exploration tool
-- **@replit/vite-plugin-dev-banner**: Development mode banner
+- **@replit/vite-plugin-runtime-error-modal**: Development error overlay.
+- **@replit/vite-plugin-cartographer**: Code exploration tool.
+- **@replit/vite-plugin-dev-banner**: Development mode banner.
 
-### Audio System
+### AI Video Service
 
-**Audio Library** (`client/src/lib/audioLibrary.ts`): Centralized audio metadata management with three collections:
-- **Practices**: Audio files for meditation practices (Vibration Elevation, Neurolinking, Wealth Code Activations 1 & 2)
-- **Affirmations**: Guided breathwork audio (Memory Development Breath)
-- **Journaling Audios**: Background music for meditation journaling (Deep Theta Music)
-- Helper function `findAudioByTitle()` searches across all collections for audio file matching
-
-**AudioPlayer Component** (`client/src/components/AudioPlayer.tsx`): Reusable HTML5 audio player with:
-- Play/pause round button with visual feedback
-- Seekable progress bar with gradient fill
-- Time display (current time / total duration)
-- Playback speed controls (1x, 1.25x, 1.5x, 2x) via dropdown Select
-- Two modes:
-  - `basic`: Simple playback, no progress tracking
-  - `playlist`: Enables progress callbacks with 90% completion tracking
-- External control props:
-  - `isActive`: Allows parent to pause player when another starts
-  - `onPlay`: Callback when playback starts
-  - `onEnded`: Callback when audio finishes (enables sequential playback)
-  - `autoPlay`: Auto-loads and plays when src changes
-  - `initialTime`: Resume playback from specific position (for playlist mode)
-  - `onProgressUpdate`: Callback fired during playback with time/duration (for saving progress)
-  - `onComplete`: Callback fired at 90% completion (for completion tracking)
-
-**Audio Integration Points**:
-- **ProcessesPage**: Practice cards display AudioPlayer in Audio tab when audio file exists
-- **SpiritualBreathsPage**: Guided affirmation section uses AudioPlayer for Memory Development Breath
-- **MyPracticePlaylistPage**: Sequential playlist playback with single AudioPlayer that auto-advances through tracks, full progress tracking and resume functionality
-- **MusicJournalingPage**: Each journaling track has full-featured AudioPlayer, only one plays at a time
-
-**Technical Pattern**: 
-- AudioPlayer uses HTML5 `<audio>` element, no external media libraries
-- Parent components control playback via `isActive` prop to ensure single-player-at-a-time behavior
-- Playlist mode supports auto-advance via `onEnded` callback and `autoPlay` prop
-- Currently playing track highlighted in UI with primary color styling
-
-**Playlist Progress System** (`client/src/lib/storage.ts`):
-- **Per-Playlist Progress Tracking**: Each playlist maintains independent resume state (current track + timestamp)
-- **Resume Functionality**: Users can stop a playlist and return later to continue from exact position
-- **Practice Name Matching**: Progress saved using practice names from playlist (stable identifiers)
-- **Throttled Saves**: Progress auto-saved every 3 seconds during playback to minimize localStorage writes
-- **Immediate Track Advance**: When track ends, next track's progress immediately saved to prevent regression
-- **90% Completion Rule**: Tracks marked complete when reaching 90% duration (ensures completion even if user skips final seconds)
-- **Per-Playlist Daily Stats**: Completion tracking maintains separate stats for each playlist on each day
-- **Progress Persistence**: 
-  - Saved on manual stop (user can resume)
-  - Saved during playback (every 3 seconds)
-  - Saved on track advance (immediate)
-  - Cleared only on playlist completion (all tracks finished)
-- **Storage Keys**:
-  - `@app:playlist_progress`: Map of `playlistId -> { currentTrackId, currentTime }`
-  - `@app:daily_completions`: Nested map of `date -> playlistId -> { completedTracks, totalTracks }`
-
-### Dr.M AI Video Integration
-
-**Overview**: Custom chat interface integrated with Gradio-hosted AI video generation service at https://dr-meghana-video.wowlabz.com/
-
-**Implementation** (`client/src/pages/DrMPage.tsx`, `client/src/lib/gradioClient.ts`):
-- **Gradio Client**: Uses `@gradio/client` npm package to connect to external video generation API
-- **4-Section Layout**:
-  1. Compact header with Dr.M avatar and title
-  2. Main video player with auto-play and subtitle support
-  3. Chat history showing last 3 conversations with video thumbnails
-  4. Input field with send button (always visible at bottom)
-- **API Integration**: 
-  - Endpoint: `/process_query` with parameters `{ user_name: string, question: string }`
-  - Response: Array with [introVideo, answerVideo, relatedVideoHtml, textResponse]
-  - Video extraction handles multiple possible response formats (string URLs or objects)
-  - HTML stripping applied to text responses for clean display
-  - Quota messages (e.g., "📊 X questions remaining") automatically filtered from chat display
-- **Conversation Storage**: 
-  - Key: `@app:drm_conversations`
-  - Maintains last 3 conversations with full video URLs and text responses
-  - Persists across page reloads
-- **Loading States**: Horizontal progress bar appears during API calls (30-180 second response times)
-- **Video Playback**: 
-  - Auto-plays Dr.M's personalized answer video when response arrives
-  - Supports optional subtitle tracks if provided by API
-  - Native HTML5 video player with full controls
-- **Video Thumbnails** (November 2025 update):
-  - Clickable video preview (80×56px) next to each Dr.M response in chat history
-  - Gradient background (purple-900 to violet-800) with centered play icon
-  - Click any thumbnail to replay that video in the main player
-  - Currently playing video highlighted with purple border and ring effect
-  - Provides quick access to review any of the last 3 video responses
-
-**Technical Notes**:
-- Gradio API has daily usage quotas/limits
-- Quota messages intelligently filtered via `isQuotaMessage()` pattern matching
-- Robust video URL extraction handles multiple response structures
-- Error handling with user-friendly toast notifications
-- All user interactions tagged with `data-testid` attributes for testing
-
-### Future Integration Points
-
-Based on attached design documents and feature requests:
-- **Zoom API**: For joining live masterclass sessions (links present, integration not implemented)
-- **Push Notifications**: For practice reminders (UI exists but notification system not implemented)
-- **Backend Progress Tracking**: `/api/track-progress` endpoint for AudioPlayer playlist mode
-- **Expanded Audio Library**: Add more practice audio files, affirmations, and journaling tracks as assets become available
-- **AI Insights**: Mentioned in UI with "unlocks in 7 days" - planned feature not implemented
+- **@gradio/client**: For connecting to the external Dr.M AI video generation API (https://dr-meghana-video.wowlabz.com/).
