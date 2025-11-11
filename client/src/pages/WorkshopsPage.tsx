@@ -348,23 +348,23 @@ export default function WorkshopsPage() {
         {/* Top Navigation */}
         <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
           <div className="px-4 py-4 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-foreground">
-              Masterclasses
+            <h1 className="text-xl font-bold text-foreground tracking-wider" style={{ fontFamily: "Montserrat, sans-serif" }}>
+              MASTERCLASSES
             </h1>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setLocation("/search")}
-                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover-elevate active-elevate-2"
+                className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
                 data-testid="button-search"
               >
-                <Search className="w-5 h-5 text-foreground" />
+                <Search className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
               </button>
               <button
                 onClick={() => setLocation("/notifications")}
-                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover-elevate active-elevate-2"
+                className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
                 data-testid="button-notifications"
               >
-                <Bell className="w-5 h-5 text-foreground" />
+                <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
               </button>
             </div>
           </div>
@@ -394,45 +394,39 @@ export default function WorkshopsPage() {
         <div className="px-4 py-6">
           {/* Upcoming Tab */}
           {activeTab === "upcoming" && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {upcomingMasterclasses.map((masterclass) => (
-                <Card
+                <div
                   key={masterclass.id}
-                  className="overflow-hidden"
+                  className="bg-white border border-[#232A34]/10 rounded-2xl p-4 shadow-sm hover:shadow-md transition"
                   data-testid={`upcoming-${masterclass.id}`}
                 >
-                  <div
-                    className={`${masterclass.thumbnail} h-40 flex items-end p-4`}
-                  >
-                    <h3 className="text-white text-xl font-bold">
-                      {masterclass.title}
-                    </h3>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          {masterclass.date}, {masterclass.time}
-                        </span>
-                      </div>
+                  <h3 className="text-lg font-bold text-[#232A34] mb-3">
+                    {masterclass.title}
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Calendar className="w-4 h-4 text-[#703DFA]" strokeWidth={2} />
+                      <span>
+                        {masterclass.date}, {masterclass.time}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4 text-primary" />
-                      <span className="font-medium text-primary">
+                      <Clock className="w-4 h-4 text-[#703DFA]" strokeWidth={2} />
+                      <span className="font-medium text-[#703DFA]">
                         Starts in:{" "}
                         <CountdownTimer startTime={masterclass.startTime} />
                       </span>
                     </div>
-                    <Button
-                      onClick={() => handleJoin(masterclass.zoomLink)}
-                      className="w-full"
-                      data-testid={`button-join-${masterclass.id}`}
-                    >
-                      Join
-                    </Button>
                   </div>
-                </Card>
+                  <button
+                    onClick={() => handleJoin(masterclass.zoomLink)}
+                    className="w-full mt-4 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium shadow-md hover:opacity-90 transition text-sm"
+                    data-testid={`button-join-${masterclass.id}`}
+                  >
+                    JOIN NOW
+                  </button>
+                </div>
               ))}
             </div>
           )}
