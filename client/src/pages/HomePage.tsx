@@ -18,9 +18,11 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import ActionCard from "@/components/ActionCard";
+import { useToast } from "@/hooks/use-toast";
 
 export default function HomePage() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [practiceProgress] = useState({ current: 15, total: 30 });
   const [streakDays] = useState([true, true, false, true, true, false, false]);
 
@@ -55,7 +57,7 @@ export default function HomePage() {
     },
     {
       title: "Emotion Mastery",
-      icon: Heart, // ✅ Lucide icon instead of Remix
+      icon: Heart,
       gradient: "bg-gradient-focus",
       path: "/emotion-mastery",
       testId: "card-emotional-mastery",
@@ -100,23 +102,30 @@ export default function HomePage() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        {/* Header with Notification */}
-        <div className="pl-3 pr-4 pt-4 pb-3">
-          <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-[#232A34]/10 flex items-center justify-between gap-3">
-            <div className="flex-1">
-              <h1
-                className="text-[21px] font-bold"
-                style={{ fontFamily: "Bebas Neue" }}
-              >
-                Welcome back, Champion 🎖️
-              </h1>
-              <p className="text-sm text-gray-600 mt-0.5">
-                How’s your energy today?
-              </p>
-            </div>
+        {/* Header with Search and Notification */}
+        <div className="bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3">
+          <div className="flex-1">
+            <h1
+              className="text-[21px] font-bold"
+              style={{ fontFamily: "Bebas Neue" }}
+            >
+              Welcome back, Champion 🎖️
+            </h1>
+            <p className="text-sm text-gray-600 mt-0.5">
+              How's your energy today?
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => toast({ title: "Search coming soon!", description: "This feature is under development." })}
+              className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
+              data-testid="button-search"
+            >
+              <Search className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
+            </button>
             <button
               onClick={() => setLocation("/notifications")}
-              className="w-10 h-10 rounded-lg bg-white flex items-center justify-center hover-elevate active-elevate-2 shadow-sm border border-[#232A34]/10 flex-shrink-0"
+              className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
               data-testid="button-notifications"
             >
               <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
@@ -124,24 +133,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="pl-3 pr-4 pb-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search practices, workshops..."
-              className="w-full h-11 pl-11 pr-4 rounded-2xl bg-white text-[#232A34] placeholder:text-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#703DFA]/50 border border-[#232A34]/10 shadow-sm"
-              data-testid="input-search"
-            />
-            <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#703DFA] w-4 h-4"
-              strokeWidth={2}
-            />
-          </div>
-        </div>
-
         {/* Live Session Section */}
-        <div className="w-full mb-3">
+        <div className="w-full mt-3 mb-4">
           {/* Image Banner */}
           <div className="relative w-full h-56 overflow-hidden shadow-md">
             <img
@@ -165,6 +158,7 @@ export default function HomePage() {
               }
               className="mt-3 w-[85%] px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 
                          text-white font-medium shadow-md hover:opacity-90 transition text-sm"
+              data-testid="button-join-live"
             >
               JOIN NOW
             </button>
@@ -183,7 +177,6 @@ export default function HomePage() {
                   className="bg-white border border-[#232A34]/10 rounded-2xl p-3 flex items-center gap-3 shadow-sm hover:shadow-md active:scale-[0.98] transition h-[60px]"
                   data-testid={card.testId}
                 >
-                  {/* ✅ Icon without purple background */}
                   <div className="flex items-center justify-center flex-shrink-0">
                     <card.icon
                       className="w-[20px] h-[20px] text-[#703DFA]"
