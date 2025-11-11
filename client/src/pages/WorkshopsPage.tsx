@@ -53,38 +53,38 @@ interface LastWatchedData {
 const upcomingMasterclasses: UpcomingMasterclass[] = [
   {
     id: "1",
-    title: "Inner Circle",
+    title: "Inner Circle Call",
     subtitle: "Transform your mindset and manifest success",
-    date: "25 Oct",
+    date: "14 Nov",
     time: "06:00 pm - 08:00 pm",
     startTime: new Date("2025-10-25T18:00:00"),
     endTime: new Date("2025-10-25T20:00:00"),
     zoomLink: "https://zoom.us/j/example1",
-    thumbnail: "bg-gradient-to-br from-purple-400 to-pink-500",
+    thumbnail: "/workshopsimg/ic9.jpg",
     isLive: true,
   },
   {
     id: "2",
-    title: "DYD Session",
-    subtitle: "Design your destiny with clarity",
-    date: "28 Oct",
-    time: "06:00 pm - 08:00 pm",
+    title: "Soul Connection Masterclass",
+    subtitle: "Deepen your connection with self, others, and the divine.",
+    date: "16 Nov",
+    time: "07:30 pm - 08:30 pm",
     startTime: new Date("2025-10-28T18:00:00"),
     endTime: new Date("2025-10-28T20:00:00"),
     zoomLink: "https://zoom.us/j/example2",
-    thumbnail: "bg-gradient-to-br from-blue-400 to-indigo-500",
+    thumbnail: "/workshopsimg/SC2.jpg",
     isLive: false,
   },
   {
     id: "3",
     title: "Manifestation Mastery",
     subtitle: "Unlock your manifesting potential",
-    date: "8 Nov",
-    time: "06:00 pm - 08:00 pm",
+    date: "28 Nov",
+    time: "06:00 pm - 10:00 pm",
     startTime: new Date("2025-11-08T18:00:00"),
     endTime: new Date("2025-11-08T20:00:00"),
     zoomLink: "https://zoom.us/j/example3",
-    thumbnail: "bg-gradient-to-br from-green-400 to-emerald-500",
+    thumbnail: "/workshopsimg/MM2.jpg",
     isLive: false,
   },
 ];
@@ -141,7 +141,7 @@ const latestVideos: Video[] = [
   {
     id: "4",
     title: "Money Mastery",
-    thumbnail: "bg-gradient-to-br from-green-400 to-teal-500",
+    thumbnail: "/workshopsimg/MoneyMa.jpg",
     uploadDate: "12 Oct 2025",
     isCollection: false,
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -360,7 +360,10 @@ export default function WorkshopsPage() {
         {/* Top Navigation */}
         <div className="sticky top-0 bg-white border-b border-border z-10">
           <div className="px-6 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-500 tracking-wider" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <h1
+              className="text-xl font-bold text-gray-500 tracking-wider"
+              style={{ fontFamily: "Montserrat, sans-serif" }}
+            >
               MASTERCLASSES
             </h1>
             <div className="flex items-center gap-2">
@@ -409,7 +412,7 @@ export default function WorkshopsPage() {
         <div className="px-4 py-6">
           {/* Upcoming Tab */}
           {activeTab === "upcoming" && (
-            <div className="space-y-3">
+            <div className="space-y-5">
               {upcomingMasterclasses.map((masterclass) => (
                 <div
                   key={masterclass.id}
@@ -417,7 +420,20 @@ export default function WorkshopsPage() {
                   data-testid={`upcoming-${masterclass.id}`}
                 >
                   {/* Thumbnail - Reduced Height */}
-                  <div className={`${masterclass.thumbnail} h-44 relative`}>
+                  <div className="relative h-48">
+                    {masterclass.thumbnail?.startsWith("bg-") ? (
+                      // ✅ Case 1: Tailwind gradient background
+                      <div
+                        className={`${masterclass.thumbnail} w-full h-full`}
+                      />
+                    ) : (
+                      // ✅ Case 2: Image thumbnail
+                      <img
+                        src={masterclass.thumbnail || "/images/placeholder.jpg"} // fallback image
+                        alt={masterclass.title}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                     {/* LIVE Badge */}
                     {masterclass.isLive && (
                       <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-red-500 text-white text-xs font-bold">
@@ -425,18 +441,23 @@ export default function WorkshopsPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Info Section - Compact */}
                   <div className="p-3 space-y-1.5">
                     {/* Calendar + Date and Timing on Same Line */}
                     <div className="flex items-center gap-3 text-gray-600">
                       <div className="flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4 text-[#703DFA]" strokeWidth={2} />
-                        <span className="text-sm font-medium">{masterclass.date}</span>
+                        <Calendar
+                          className="w-4 h-4 text-[#703DFA]"
+                          strokeWidth={2}
+                        />
+                        <span className="text-sm font-medium">
+                          {masterclass.date}
+                        </span>
                       </div>
                       <span className="text-xs">{masterclass.time}</span>
                     </div>
-                    
+
                     {/* Title/Subtitle and JOIN Button Row */}
                     <div className="flex items-start justify-between gap-2 pt-0.5">
                       <div className="flex-1 min-w-0">
@@ -447,7 +468,7 @@ export default function WorkshopsPage() {
                           {masterclass.subtitle}
                         </p>
                       </div>
-                      
+
                       {/* JOIN Button (only for live sessions) */}
                       {masterclass.isLive && (
                         <button
@@ -478,14 +499,14 @@ export default function WorkshopsPage() {
                   {typeof video.thumbnail === "string" &&
                   video.thumbnail.startsWith("bg-") ? (
                     <div
-                      className={`${video.thumbnail} h-40 flex items-center justify-center`}
+                      className={`${video.thumbnail} h-48 flex items-center justify-center`}
                     >
                       <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
                         <Play className="w-7 h-7 text-white" fill="white" />
                       </div>
                     </div>
                   ) : (
-                    <div className="relative h-40 bg-black">
+                    <div className="relative h-48 bg-black">
                       <img
                         src={video.thumbnail}
                         alt={video.title}
@@ -498,8 +519,8 @@ export default function WorkshopsPage() {
                       </div>
                     </div>
                   )}
-                  <div className="p-4">
-                    <h3 className="font-semibold text-foreground mb-2">
+                  <div className="p-3 bg-white">
+                    <h3 className="font-semibold text-foreground mb-">
                       {video.title}
                     </h3>
                     {video.author && (
@@ -527,7 +548,7 @@ export default function WorkshopsPage() {
                   data-testid={`course-${course.id}`}
                 >
                   <div
-                    className={`${course.thumbnail} h-40 flex items-end p-4`}
+                    className={`${course.thumbnail} h-48 flex items-end p-4`}
                   >
                     <div>
                       <h3 className="text-white text-2xl font-bold">
@@ -552,7 +573,7 @@ export default function WorkshopsPage() {
                   data-testid={`course-${course.id}`}
                 >
                   <div
-                    className={`${course.thumbnail} h-40 flex items-end p-4`}
+                    className={`${course.thumbnail} h-48 flex items-end p-4`}
                   >
                     <div>
                       <h3 className="text-white text-2xl font-bold">
@@ -577,7 +598,7 @@ export default function WorkshopsPage() {
                   data-testid={`course-${course.id}`}
                 >
                   <div
-                    className={`${course.thumbnail} h-40 flex items-end p-4`}
+                    className={`${course.thumbnail} h-48 flex items-end p-4`}
                   >
                     <div>
                       <h3 className="text-white text-2xl font-bold">
@@ -602,7 +623,7 @@ export default function WorkshopsPage() {
                   data-testid={`course-${course.id}`}
                 >
                   <div
-                    className={`${course.thumbnail} h-40 flex items-end p-4`}
+                    className={`${course.thumbnail} h-48 flex items-end p-4`}
                   >
                     <div>
                       <h3 className="text-white text-2xl font-bold">
@@ -627,7 +648,7 @@ export default function WorkshopsPage() {
                   data-testid={`course-${course.id}`}
                 >
                   <div
-                    className={`${course.thumbnail} h-40 flex items-end p-4`}
+                    className={`${course.thumbnail} h-48 flex items-end p-4`}
                   >
                     <div>
                       <h3 className="text-white text-2xl font-bold">
@@ -646,7 +667,7 @@ export default function WorkshopsPage() {
       {/* Last Watched Reminder Bar */}
       {lastWatched && showLastWatched && (
         <div
-          className="fixed bottom-16 left-0 right-0 bg-card border-t border-border shadow-lg z-20"
+          className="fixed bottom-16 left-0 right-0 bg-white border-t border-[#E5E7EB] shadow-lg z-20"
           data-testid="last-watched-bar"
         >
           <div className="max-w-md mx-auto px-4 py-3">
@@ -664,13 +685,13 @@ export default function WorkshopsPage() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p
-                  className="text-sm font-medium text-foreground truncate"
+                  className="text-sm font-medium text-gray-900 truncate"
                   data-testid="last-watched-title"
                 >
                   {lastWatched.title}
                 </p>
                 <p
-                  className="text-xs text-muted-foreground"
+                  className="text-xs text-gray-500"
                   data-testid="last-watched-time"
                 >
                   Watched: {formatTime(lastWatched.progressInSeconds)}
@@ -679,21 +700,23 @@ export default function WorkshopsPage() {
 
               {/* Actions */}
               <div className="flex items-center gap-2 flex-shrink-0">
+                {/* ✅ Always purple with white text */}
                 <Button
                   size="sm"
                   onClick={handleResumeLastWatched}
-                  data-testid="button-resume-video"
+                  className="bg-[#703DFA] border border-[#703DFA] text-white hover:opacity-90 transition"
                 >
-                  <Play className="w-4 h-4 mr-1" fill="currentColor" />
+                  <Play className="w-4 h-4 mr-1" fill="white" />
                   Resume
                 </Button>
 
+                {/* Close Button — purple X */}
                 <button
                   onClick={handleCloseLastWatched}
-                  className="w-8 h-8 rounded-full hover-elevate active-elevate-2 flex items-center justify-center"
+                  className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#703DFA]/10 transition-colors"
                   data-testid="button-close-last-watched"
                 >
-                  <X className="w-4 h-4 text-muted-foreground" />
+                  <X className="w-4 h-4 text-[#703DFA]" />
                 </button>
               </div>
             </div>
