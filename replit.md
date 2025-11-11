@@ -8,6 +8,36 @@ Dr.M App is a comprehensive mobile-first wellness application designed to help u
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### Workshops Page Complete Redesign (November 2025)
+
+**Header Section**:
+- **Title**: "MASTERCLASSES" in grey (text-gray-500), Montserrat font, left-aligned with px-6 padding for good left margin
+- **Separator Line**: Horizontal grey line (border-gray-200) added between header and tab section
+- **Icons**: Purple search/notification icons with light purple circular backgrounds on the right
+
+**Tab System**:
+- **Active Tab**: Purple background (#703DFA) with white text
+- **Inactive Tabs**: Light purple background (#F3F0FF) with grey text
+- Balanced spacing with pt-3 added after separator line
+
+**Upcoming Masterclass Cards**:
+- **Data Model**: Enhanced with `subtitle`, `endTime`, and `isLive` fields
+- **Thumbnail**: 
+  - Height h-44 (176px) - optimized for card balance
+  - Red "LIVE" badge positioned top-right on live sessions (bg-red-500, white bold text)
+- **Info Section Layout**:
+  - **Row 1**: Calendar icon (w-4 h-4, purple) + Date (text-sm, font-medium) on left, Timing (text-xs, smaller) on right, all on same line
+  - **Row 2**: Title (text-base, bold) + Subtitle (text-sm, truncated) on left, JOIN button on right
+- **Typography**: All sizes increased for better readability
+  - Calendar date: text-sm
+  - Timing: text-xs (smaller than date)
+  - Title: text-base
+  - Subtitle: text-sm
+- **JOIN Button**: Larger size (px-4 py-2, text-sm), purple gradient, shows only on live sessions
+- **Visual Styling**: White cards, rounded corners, subtle borders, reduced spacing for compact appearance
+
 ## System Architecture
 
 ### Frontend Architecture
