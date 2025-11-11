@@ -406,49 +406,51 @@ export default function WorkshopsPage() {
         <div className="px-4 py-6">
           {/* Upcoming Tab */}
           {activeTab === "upcoming" && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {upcomingMasterclasses.map((masterclass) => (
                 <div
                   key={masterclass.id}
                   className="bg-white border border-[#232A34]/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition"
                   data-testid={`upcoming-${masterclass.id}`}
                 >
-                  {/* Large Thumbnail */}
-                  <div className={`${masterclass.thumbnail} h-48`} />
+                  {/* Large Thumbnail - Increased Height */}
+                  <div className={`${masterclass.thumbnail} h-56`} />
                   
-                  {/* Info Section */}
-                  <div className="p-4 space-y-3">
-                    {/* Date and Time Row */}
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Calendar className="w-4 h-4 text-[#703DFA]" strokeWidth={2} />
-                        <span>{masterclass.date}</span>
-                      </div>
-                      <div className="text-gray-600">
-                        {masterclass.time}
-                      </div>
+                  {/* Info Section - Compact */}
+                  <div className="p-3 space-y-1.5">
+                    {/* Calendar + Date */}
+                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <Calendar className="w-3.5 h-3.5 text-[#703DFA]" strokeWidth={2} />
+                      <span>{masterclass.date}</span>
                     </div>
                     
-                    {/* Title and Subtitle */}
-                    <div>
-                      <h3 className="text-lg font-bold text-[#232A34] mb-1">
-                        {masterclass.title}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {masterclass.subtitle}
-                      </p>
+                    {/* Timing */}
+                    <div className="text-xs text-gray-600">
+                      {masterclass.time}
                     </div>
                     
-                    {/* JOIN Button (only for live sessions) */}
-                    {masterclass.isLive && (
-                      <button
-                        onClick={() => handleJoin(masterclass.zoomLink)}
-                        className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium shadow-md hover:opacity-90 transition text-sm"
-                        data-testid={`button-join-${masterclass.id}`}
-                      >
-                        JOIN NOW
-                      </button>
-                    )}
+                    {/* Title/Subtitle and JOIN Button Row */}
+                    <div className="flex items-start justify-between gap-2 pt-0.5">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-[#232A34] leading-tight">
+                          {masterclass.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 line-clamp-1">
+                          {masterclass.subtitle}
+                        </p>
+                      </div>
+                      
+                      {/* Small JOIN Button (only for live sessions) */}
+                      {masterclass.isLive && (
+                        <button
+                          onClick={() => handleJoin(masterclass.zoomLink)}
+                          className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium text-xs whitespace-nowrap hover:opacity-90 transition shrink-0"
+                          data-testid={`button-join-${masterclass.id}`}
+                        >
+                          JOIN
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
