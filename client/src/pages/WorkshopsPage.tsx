@@ -10,11 +10,14 @@ type Tab = "upcoming" | "latest" | "dyd" | "usm" | "usc" | "usb" | "more";
 interface UpcomingMasterclass {
   id: string;
   title: string;
+  subtitle: string;
   date: string;
   time: string;
   startTime: Date;
+  endTime: Date;
   zoomLink: string;
   thumbnail: string;
+  isLive: boolean;
 }
 
 interface Video {
@@ -51,29 +54,38 @@ const upcomingMasterclasses: UpcomingMasterclass[] = [
   {
     id: "1",
     title: "Inner Circle",
+    subtitle: "Transform your mindset and manifest success",
     date: "25 Oct",
-    time: "7 PM",
-    startTime: new Date("2025-10-25T19:00:00"),
+    time: "06:00 pm - 08:00 pm",
+    startTime: new Date("2025-10-25T18:00:00"),
+    endTime: new Date("2025-10-25T20:00:00"),
     zoomLink: "https://zoom.us/j/example1",
     thumbnail: "bg-gradient-to-br from-purple-400 to-pink-500",
+    isLive: true,
   },
   {
     id: "2",
     title: "DYD Session",
+    subtitle: "Design your destiny with clarity",
     date: "28 Oct",
-    time: "6 PM",
+    time: "06:00 pm - 08:00 pm",
     startTime: new Date("2025-10-28T18:00:00"),
+    endTime: new Date("2025-10-28T20:00:00"),
     zoomLink: "https://zoom.us/j/example2",
     thumbnail: "bg-gradient-to-br from-blue-400 to-indigo-500",
+    isLive: false,
   },
   {
     id: "3",
     title: "Manifestation Mastery",
+    subtitle: "Unlock your manifesting potential",
     date: "8 Nov",
-    time: "6 PM",
+    time: "06:00 pm - 08:00 pm",
     startTime: new Date("2025-11-08T18:00:00"),
+    endTime: new Date("2025-11-08T20:00:00"),
     zoomLink: "https://zoom.us/j/example3",
     thumbnail: "bg-gradient-to-br from-green-400 to-emerald-500",
+    isLive: false,
   },
 ];
 
@@ -346,12 +358,12 @@ export default function WorkshopsPage() {
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
         {/* Top Navigation */}
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-foreground tracking-wider" style={{ fontFamily: "Montserrat, sans-serif" }}>
+        <div className="sticky top-0 bg-white border-b border-border z-10">
+          <div className="px-4 py-4 relative flex items-center justify-center">
+            <h1 className="text-xl font-bold text-gray-500 tracking-wider" style={{ fontFamily: "Montserrat, sans-serif" }}>
               MASTERCLASSES
             </h1>
-            <div className="flex items-center gap-2">
+            <div className="absolute right-4 flex items-center gap-2">
               <button
                 onClick={() => setLocation("/search")}
                 className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
@@ -370,7 +382,7 @@ export default function WorkshopsPage() {
           </div>
 
           {/* Horizontal Tab Selector */}
-          <div className="overflow-x-auto scrollbar-hide">
+          <div className="overflow-x-auto scrollbar-hide bg-white">
             <div className="flex gap-2 px-4 pb-3 min-w-max">
               {tabs.map((tab) => (
                 <button
@@ -378,8 +390,8 @@ export default function WorkshopsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap transition-all ${
                     activeTab === tab.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover-elevate"
+                      ? "bg-[#703DFA] text-white"
+                      : "bg-[#F3F0FF] text-gray-600 hover-elevate"
                   }`}
                   data-testid={`tab-${tab.id}`}
                 >
@@ -394,38 +406,50 @@ export default function WorkshopsPage() {
         <div className="px-4 py-6">
           {/* Upcoming Tab */}
           {activeTab === "upcoming" && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {upcomingMasterclasses.map((masterclass) => (
                 <div
                   key={masterclass.id}
-                  className="bg-white border border-[#232A34]/10 rounded-2xl p-4 shadow-sm hover:shadow-md transition"
+                  className="bg-white border border-[#232A34]/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition"
                   data-testid={`upcoming-${masterclass.id}`}
                 >
-                  <h3 className="text-lg font-bold text-[#232A34] mb-3">
-                    {masterclass.title}
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4 text-[#703DFA]" strokeWidth={2} />
-                      <span>
-                        {masterclass.date}, {masterclass.time}
-                      </span>
+                  {/* Large Thumbnail */}
+                  <div className={`${masterclass.thumbnail} h-48`} />
+                  
+                  {/* Info Section */}
+                  <div className="p-4 space-y-3">
+                    {/* Date and Time Row */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Calendar className="w-4 h-4 text-[#703DFA]" strokeWidth={2} />
+                        <span>{masterclass.date}</span>
+                      </div>
+                      <div className="text-gray-600">
+                        {masterclass.time}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4 text-[#703DFA]" strokeWidth={2} />
-                      <span className="font-medium text-[#703DFA]">
-                        Starts in:{" "}
-                        <CountdownTimer startTime={masterclass.startTime} />
-                      </span>
+                    
+                    {/* Title and Subtitle */}
+                    <div>
+                      <h3 className="text-lg font-bold text-[#232A34] mb-1">
+                        {masterclass.title}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {masterclass.subtitle}
+                      </p>
                     </div>
+                    
+                    {/* JOIN Button (only for live sessions) */}
+                    {masterclass.isLive && (
+                      <button
+                        onClick={() => handleJoin(masterclass.zoomLink)}
+                        className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium shadow-md hover:opacity-90 transition text-sm"
+                        data-testid={`button-join-${masterclass.id}`}
+                      >
+                        JOIN NOW
+                      </button>
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleJoin(masterclass.zoomLink)}
-                    className="w-full mt-4 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium shadow-md hover:opacity-90 transition text-sm"
-                    data-testid={`button-join-${masterclass.id}`}
-                  >
-                    JOIN NOW
-                  </button>
                 </div>
               ))}
             </div>
