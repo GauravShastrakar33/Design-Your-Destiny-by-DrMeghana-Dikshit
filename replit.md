@@ -18,6 +18,7 @@ Preferred communication style: Simple, everyday language.
 - **Icons**: Purple search/notification icons with light purple circular backgrounds on the right
 
 **Tab System**:
+- **Shape**: Rectangular with rounded corners (rounded-md, 6px border-radius) - changed from pill shape
 - **Active Tab**: Purple background (#703DFA) with white text
 - **Inactive Tabs**: Light purple background (#F3F0FF) with grey text
 - Balanced spacing with pt-3 added after separator line

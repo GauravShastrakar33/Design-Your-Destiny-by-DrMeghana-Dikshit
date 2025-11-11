@@ -394,7 +394,7 @@ export default function WorkshopsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap transition-all ${
+                  className={`px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-all ${
                     activeTab === tab.id
                       ? "bg-[#703DFA] text-white"
                       : "bg-[#F3F0FF] text-gray-600 hover-elevate"
