@@ -91,33 +91,32 @@ const upcomingMasterclasses: UpcomingMasterclass[] = [
 
 const latestVideos: Video[] = [
   {
-    id: "demo-1",
-    title: "Wealth Code Activation 2",
-    thumbnail: "/thumbnails/WealthCodeActivation2.png",
-    uploadDate: "27 Oct 2025",
+    id: "1",
+    title: "Money Mastery",
+    thumbnail: "/workshopsimg/MoneyMa.jpg",
+    uploadDate: "28 Oct 2025",
     isCollection: false,
     url: "/WealthCodeActivation2.mp4",
     author: "Dr. Meghana Dikshit",
     description:
-      "Shift your inner money blueprint, clear subconscious blocks, and raising the vibrational frequency to match the energy of massive financial success and flow.",
-    videoId: "demo-right-decisions",
-  },
-  {
-    id: "1",
-    title: "Lions Gate Portal",
-    thumbnail: "bg-gradient-to-br from-yellow-400 to-orange-500",
-    uploadDate: "20 Oct 2025",
-    isCollection: false,
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    author: "Dr. Meghana Dikshit",
-    description:
-      "Unlock the powerful energies of the Lions Gate Portal for manifestation and transformation.",
+      "Master your money mindset and attract abundance into your life.",
     videoId: "lions-gate-portal",
   },
   {
     id: "2",
+    title: "Influence Mastery",
+    thumbnail: "/workshopsimg/IM.jpg",
+    uploadDate: "15 Oct 2025",
+    isCollection: false,
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    author: "Dr. Meghana Dikshit",
+    description: "Powerful Presence and Persuasive Communication",
+    videoId: "self-sabotage",
+  },
+  {
+    id: "3",
     title: "Inner Circle Call — Turning Setbacks into Success",
-    thumbnail: "bg-gradient-to-br from-purple-400 to-pink-500",
+    thumbnail: "/workshopsimg/ic9.jpg",
     uploadDate: "18 Oct 2025",
     isCollection: false,
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -127,27 +126,14 @@ const latestVideos: Video[] = [
     videoId: "inner-circle-setbacks",
   },
   {
-    id: "3",
-    title: "Self Sabotage Downloads",
-    thumbnail: "bg-gradient-to-br from-blue-400 to-cyan-500",
-    uploadDate: "15 Oct 2025",
-    isCollection: false,
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    author: "Dr. Meghana Dikshit",
-    description:
-      "Identify and release self-sabotage patterns holding you back from your dreams.",
-    videoId: "self-sabotage",
-  },
-  {
     id: "4",
-    title: "Money Mastery",
-    thumbnail: "/workshopsimg/MoneyMa.jpg",
+    title: "Vibration Downloads",
+    thumbnail: "/workshopsimg/VD1.jpg",
     uploadDate: "12 Oct 2025",
     isCollection: false,
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     author: "Dr. Meghana Dikshit",
-    description:
-      "Master your money mindset and attract abundance into your life.",
+    description: "Tune Into Higher Frequencies of Awareness and Alignment",
     videoId: "money-mastery",
   },
 ];
@@ -156,24 +142,8 @@ const dydCourses: Course[] = [
   {
     id: "dyd-14",
     title: "DYD 14",
-    thumbnail: "bg-gradient-to-br from-purple-500 to-pink-500",
+    thumbnail: "/workshopsimg/DYD.jpg",
     year: "July 2025",
-    type: "dyd",
-    isCollection: true,
-  },
-  {
-    id: "dyd-13",
-    title: "DYD 13",
-    thumbnail: "bg-gradient-to-br from-blue-500 to-indigo-500",
-    year: "April 2025",
-    type: "dyd",
-    isCollection: true,
-  },
-  {
-    id: "dyd-12",
-    title: "DYD 12",
-    thumbnail: "bg-gradient-to-br from-green-500 to-emerald-500",
-    year: "January 2025",
     type: "dyd",
     isCollection: true,
   },
@@ -183,16 +153,8 @@ const usmCourses: Course[] = [
   {
     id: "usm-march",
     title: "USM",
-    thumbnail: "bg-gradient-to-br from-orange-400 to-red-500",
+    thumbnail: "/workshopsimg/USM.jpg",
     year: "March 2025",
-    type: "usm",
-    isCollection: true,
-  },
-  {
-    id: "usm-jan",
-    title: "USM",
-    thumbnail: "bg-gradient-to-br from-cyan-400 to-blue-500",
-    year: "January 2025",
     type: "usm",
     isCollection: true,
   },
@@ -202,7 +164,7 @@ const uscCourses: Course[] = [
   {
     id: "usc-march",
     title: "USC",
-    thumbnail: "bg-gradient-to-br from-pink-400 to-purple-500",
+    thumbnail: "/workshopsimg/USC.jpg",
     year: "March 2025",
     type: "usc",
     isCollection: true,
@@ -213,7 +175,7 @@ const usbCourses: Course[] = [
   {
     id: "usb-feb",
     title: "USB",
-    thumbnail: "bg-gradient-to-br from-teal-400 to-cyan-500",
+    thumbnail: "/workshopsimg/USB.jpg",
     year: "February 2025",
     type: "usb",
     isCollection: true,
@@ -224,7 +186,7 @@ const moreCourses: Course[] = [
   {
     id: "sleep",
     title: "Sleep Subconscious",
-    thumbnail: "bg-gradient-to-br from-indigo-400 to-purple-500",
+    thumbnail: "/workshopsimg/SSR.jpg",
     year: "2025",
     type: "more",
     isCollection: true,
@@ -232,7 +194,7 @@ const moreCourses: Course[] = [
   {
     id: "visions",
     title: "Build Your Visions",
-    thumbnail: "bg-gradient-to-br from-yellow-400 to-orange-500",
+    thumbnail: "/workshopsimg/BYV.jpg",
     year: "2025",
     type: "more",
     isCollection: true,
@@ -547,13 +509,25 @@ export default function WorkshopsPage() {
                   onClick={() => handleCourseClick(course)}
                   data-testid={`course-${course.id}`}
                 >
-                  <div
-                    className={`${course.thumbnail} h-48 flex items-end p-4`}
-                  >
-                    <div>
-                      <h3 className="text-white text-2xl font-bold">
-                        {course.title}
-                      </h3>
+                  <div className="relative h-48 flex items-end p-4 overflow-hidden rounded-2xl">
+                    {course.thumbnail.startsWith("bg-") ? (
+                      // ✅ Case 1: Tailwind gradient thumbnail
+                      <div className={`${course.thumbnail} absolute inset-0`} />
+                    ) : (
+                      // ✅ Case 2: Image thumbnail
+                      <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) =>
+                          (e.currentTarget.src = "/images/placeholder.jpg")
+                        } // fallback
+                      />
+                    )}
+
+                    {/* Overlay text */}
+                    <div className="relative z-10 text-white drop-shadow">
+                      <h3 className="text-2xl font-bold">{course.title}</h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
                     </div>
                   </div>
@@ -572,13 +546,25 @@ export default function WorkshopsPage() {
                   onClick={() => handleCourseClick(course)}
                   data-testid={`course-${course.id}`}
                 >
-                  <div
-                    className={`${course.thumbnail} h-48 flex items-end p-4`}
-                  >
-                    <div>
-                      <h3 className="text-white text-2xl font-bold">
-                        {course.title}
-                      </h3>
+                  <div className="relative h-48 flex items-end p-4 overflow-hidden">
+                    {course.thumbnail.startsWith("bg-") ? (
+                      // ✅ Case 1: Tailwind gradient background
+                      <div className={`${course.thumbnail} absolute inset-0`} />
+                    ) : (
+                      // ✅ Case 2: Image background
+                      <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) =>
+                          (e.currentTarget.src = "/images/placeholder.jpg")
+                        }
+                      />
+                    )}
+
+                    {/* Text overlay */}
+                    <div className="relative z-10 text-white">
+                      <h3 className="text-2xl font-bold">{course.title}</h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
                     </div>
                   </div>
@@ -597,13 +583,25 @@ export default function WorkshopsPage() {
                   onClick={() => handleCourseClick(course)}
                   data-testid={`course-${course.id}`}
                 >
-                  <div
-                    className={`${course.thumbnail} h-48 flex items-end p-4`}
-                  >
-                    <div>
-                      <h3 className="text-white text-2xl font-bold">
-                        {course.title}
-                      </h3>
+                  <div className="relative h-48 flex items-end p-4 overflow-hidden">
+                    {course.thumbnail.startsWith("bg-") ? (
+                      // ✅ Case 1: Tailwind gradient background
+                      <div className={`${course.thumbnail} absolute inset-0`} />
+                    ) : (
+                      // ✅ Case 2: Image thumbnail
+                      <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) =>
+                          (e.currentTarget.src = "/images/placeholder.jpg")
+                        }
+                      />
+                    )}
+
+                    {/* Text content */}
+                    <div className="relative z-10 text-white">
+                      <h3 className="text-2xl font-bold">{course.title}</h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
                     </div>
                   </div>
@@ -622,13 +620,25 @@ export default function WorkshopsPage() {
                   onClick={() => handleCourseClick(course)}
                   data-testid={`course-${course.id}`}
                 >
-                  <div
-                    className={`${course.thumbnail} h-48 flex items-end p-4`}
-                  >
-                    <div>
-                      <h3 className="text-white text-2xl font-bold">
-                        {course.title}
-                      </h3>
+                  <div className="relative h-48 flex items-end p-4 overflow-hidden">
+                    {course.thumbnail.startsWith("bg-") ? (
+                      // ✅ Case 1: Tailwind gradient background
+                      <div className={`${course.thumbnail} absolute inset-0`} />
+                    ) : (
+                      // ✅ Case 2: Image thumbnail
+                      <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) =>
+                          (e.currentTarget.src = "/images/placeholder.jpg")
+                        }
+                      />
+                    )}
+
+                    {/* Text content */}
+                    <div className="relative z-10 text-white">
+                      <h3 className="text-2xl font-bold">{course.title}</h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
                     </div>
                   </div>
@@ -647,13 +657,25 @@ export default function WorkshopsPage() {
                   onClick={() => handleCourseClick(course)}
                   data-testid={`course-${course.id}`}
                 >
-                  <div
-                    className={`${course.thumbnail} h-48 flex items-end p-4`}
-                  >
-                    <div>
-                      <h3 className="text-white text-2xl font-bold">
-                        {course.title}
-                      </h3>
+                  <div className="relative h-48 flex items-end p-4 overflow-hidden">
+                    {course.thumbnail.startsWith("bg-") ? (
+                      // ✅ Case 1: Tailwind gradient background
+                      <div className={`${course.thumbnail} absolute inset-0`} />
+                    ) : (
+                      // ✅ Case 2: Image thumbnail
+                      <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) =>
+                          (e.currentTarget.src = "/images/placeholder.jpg")
+                        }
+                      />
+                    )}
+
+                    {/* Text Layer */}
+                    <div className="relative z-10 text-white">
+                      <h3 className="text-2xl font-bold">{course.title}</h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
                     </div>
                   </div>
