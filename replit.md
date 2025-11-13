@@ -8,208 +8,55 @@ Dr.M App is a comprehensive mobile-first wellness application designed to help u
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes
-
-### Home Page Styling Updates (November 2025)
-
-**Welcome Header**:
-- **Font**: Changed from "Bebas Neue" to Inter, Bold
-- **Font Size**: 20pt (text-xl)
-- **Text**: "Welcome back, Champion 🎖️"
-
-**JOIN NOW Button**:
-- **Background**: Yellow (#E5AC19) - changed from purple gradient
-- **Text Color**: Dark (#0D131F) - changed from white
-- **Font**: Inter, 20pt (text-xl), Bold
-- **Border Radius**: Fully rounded (rounded-full) - changed from rounded-xl
-- **Visual**: High contrast (8.3:1 ratio), prominent yellow button with dark text
-
-### Workshops Page Complete Redesign (November 2025)
-
-**Header Section**:
-- **Title**: "MASTERCLASSES" in grey (text-gray-500), Montserrat font, left-aligned with px-6 padding for good left margin
-- **Separator Line**: Horizontal grey line (border-gray-200) added between header and tab section
-- **Icons**: Purple search/notification icons with light purple circular backgrounds on the right
-
-**Tab System**:
-- **Shape**: Rectangular with rounded corners (rounded-md, 6px border-radius) - changed from pill shape
-- **Active Tab**: Purple background (#703DFA) with white text
-- **Inactive Tabs**: Light purple background (#F3F0FF) with grey text
-- Balanced spacing with pt-3 added after separator line
-
-**Upcoming Masterclass Cards**:
-- **Data Model**: Enhanced with `subtitle`, `endTime`, and `isLive` fields
-- **Thumbnail**: 
-  - Height h-44 (176px) - optimized for card balance
-  - Red "LIVE" badge positioned top-right on live sessions (bg-red-500, white bold text)
-- **Info Section Layout**:
-  - **Row 1**: Calendar icon (w-4 h-4, purple) + Date (text-sm, font-medium) on left, Timing (text-xs, smaller) on right, all on same line
-  - **Row 2**: Title (text-base, bold) + Subtitle (text-sm, truncated) on left, JOIN button on right
-- **Typography**: All sizes increased for better readability
-  - Calendar date: text-sm
-  - Timing: text-xs (smaller than date)
-  - Title: text-base
-  - Subtitle: text-sm
-- **JOIN Button**: Larger size (px-4 py-2, text-sm), purple gradient, shows only on live sessions
-- **Visual Styling**: White cards, rounded corners, subtle borders, reduced spacing for compact appearance
-
-### Project of Heart Page Theme Update (November 2025)
-
-**Header Section**:
-- **Background**: White with back button for navigation
-- **Title**: "PROJECT OF HEART" in Montserrat font (all caps, grey text-gray-500)
-- **Layout**: Centered title with back button on left
-
-**Page Background**:
-- **Color**: Standardized to #F3F3F3 to match homepage and other pages
-
-**Special Preservation**:
-- **Heart Chakra**: Green heart chakra theme (#A8E6CF) intentionally preserved for heart icon and related elements
-
-**Tabs System**:
-- **Style**: Rectangular with rounded corners (matching Workshops page)
-- **Active Tab**: Purple background (#703DFA) with white text
-- **Inactive Tabs**: Light purple background (#F3F0FF) with grey text
-
-**Cards**:
-- **Background**: White with subtle borders
-- **Styling**: Clean, consistent cards across all tabs (Vision, Journey, Reflect)
-
-**Button Color Scheme**:
-- **Primary CTAs**: Yellow (#E5AC19) with dark text (#0D131F)
-  - "Set Vision & Earn ⭐"
-  - "Begin Self-Evaluation"
-  - "Start Your Journey"
-  - "Commit to Action"
-  - "Complete Reflection & Earn 🏅"
-- **Secondary Actions**: Purple (#703DFA) with white text
-  - "Save Reflection"
-  - Edit buttons (ghost variant)
-
-**Typography**:
-- **Headings**: Dark color (#3D3D3D) using Playfair Display for quotes
-- **Body Text**: Medium grey (#6B7280) for secondary information
-- **Labels**: Light grey for form labels and metadata
-
-### Project of Heart Page Refinements (November 2025)
-
-**Growth Card Improvements**:
-- **Spacing**: Reduced top padding from py-6 to py-3 for tighter header-to-card spacing
-- **Layout**: Removed "Your growth" header text; stars count now displays below the circular progress indicator (vertically centered)
-- **Milestones**: Removed all checkmark icons for cleaner appearance
-
-**Milestone Messages - Enhanced Motivation**:
-- **Structure**: Each milestone now has clear visual hierarchy with larger font (text-sm) and increased spacing (space-y-2)
-- **First Milestone**: "Set PROJECT OF HEART" (bold, dark color #3D3D3D)
-- **Cycle Milestones**: Motivational quotes in purple italic bold (#703DFA) with star counts on separate line below:
-  - "You showed up for yourself." → 4 stars
-  - "You stayed consistent." → 8 stars
-  - "You transformed." → 12 stars
-- **Final Milestone**: "Self Evaluate Golden Star" (bold, dark color)
-
-**Journey Tab**:
-- **Button**: "Start Your Journey" made smaller (py-3 instead of h-24) and more rounded (2rem border-radius)
-- **Cleanup**: Removed blinking affirmations text from bottom of page for cleaner design
-
-**Reflect Tab**:
-- **Quote Card**: Changed background from grey (#F5F5F5) to purple (#703DFA) with white text
-- **Completion Icon**: Uses Award icon instead of checkmark for self-evaluation completion
-
-### Project of Heart Card Layout Redesign (November 2025)
-
-**POH Card Structure** (Visual/UI update only - all functionality preserved):
-
-**Header**:
-- Removed glowing Heart Chakra icon from header (previously in top right)
-- Clean header with centered "PROJECT OF HEART" title and back button
-
-**Two-Column Layout**:
-- **LEFT COLUMN (70%)**:
-  - **Row 1**: Darker glowing Heart Chakra icon (#00C853, bigger w-12 h-12, animated pulse) + Title "Heart Chakra – Anahata" on same line
-  - **Row 2**: Description text starting from left below icon: "Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between who you were and who you're rising to be." (text-xs, gray #6B7280)
-- **RIGHT COLUMN (30%)**:
-  - Circular progress ring wrapping around a large gold star icon (w-12 h-12, ~48px)
-  - Achievement badge container below the progress ring:
-    - Rectangular container with rounded corners (rounded-lg)
-    - Light purple gradient background (linear-gradient 135deg, #E8D5F8 to #D4C5F9)
-    - Circular star badge on left edge (overlapping container) with gold gradient background
-    - White star icon (w-5 h-5) inside circular badge with white border
-    - Star count number (text-lg, purple #703DFA) displayed next to the badge
-  - Vertically stacked alignment with gap-3
-
-**Progress Ring Design**:
-- Golden stroke (#FDE68A) with light pink background stroke (#F9C5BD)
-- Big gold star icon centered inside the ring
-- Shows progress percentage based on stars earned (0-12 stars)
-
-**Achievement Badge Design**:
-- Game-like UI element similar to achievement displays
-- Purple gradient container matching app theme
-- Gold circular badge with star icon overlapping left edge
-- Clean, polished appearance with proper spacing
-
-**Removed Elements**:
-- Heart Chakra icon from header
-- "Keep glowing, Champion!" text
-- "Stars ✨" label text
-- Previous plain text star count display
-
-**Star Milestones Section**:
-- Remains unchanged below the two-column layout
-- Displays progress milestones with motivational messages
-
 ## System Architecture
 
 ### Frontend Architecture
 
-**Frameworks & Tools**: React 18 with TypeScript, Vite, Wouter for routing, shadcn/ui (built on Radix UI) for components, Tailwind CSS for styling, Framer Motion for animations.
-**State Management**: Primarily local component state using React hooks and localStorage for client-side persistence of user data (playlists, challenges, preferences, streaks). No global state management library is currently used.
-**Styling**: Mobile-first responsive design, custom CSS variables, and gradient backgrounds for different app sections (wellness, calm, energy, growth).
-**Data Fetching**: TanStack Query (React Query) is configured but currently unused, as functionality is client-side.
+**Frameworks & Tools**: React 18 with TypeScript, Vite, Wouter for routing, shadcn/ui (built on Radix UI), Tailwind CSS, Framer Motion.
+**State Management**: Local component state using React hooks and localStorage for client-side persistence.
+**Styling**: Mobile-first responsive design, custom CSS variables, gradient backgrounds.
+**Data Fetching**: TanStack Query is configured but currently unused.
 
 ### Backend Architecture
 
 **Server Framework**: Express.js with TypeScript.
-**Current Implementation**: Minimal backend; primarily serves the frontend. All core application logic and data persistence are currently client-side.
-**Future Considerations**: Designed with a storage abstraction layer (`server/storage.ts`) and PostgreSQL session management dependencies for future database integration and authentication.
+**Current Implementation**: Minimal backend, primarily serving the frontend. Core application logic and data persistence are client-side.
+**Future Considerations**: Designed with a storage abstraction layer and PostgreSQL session management for future database integration and authentication.
 
 ### Data Storage Strategy
 
-**Current**: All user data is stored in browser localStorage. This includes practice playlists, progress tracking, daily completions, challenge progress, beliefs, user preferences, streak data, and "Project of Heart" details.
-**Planned**: Migration to PostgreSQL using Drizzle ORM. A basic user table schema is already defined (`shared/schema.ts`).
-**Design Decision**: Starting with localStorage enables rapid prototyping and offline functionality, with a prepared migration path to PostgreSQL.
+**Current**: All user data is stored in browser localStorage (playlists, progress, challenges, preferences, streaks, "Project of Heart").
+**Planned**: Migration to PostgreSQL using Drizzle ORM.
 
 ### Authentication & Authorization
 
-**Current**: No authentication implemented; the app functions as a single-user client-side application.
-**Future Implementation**: Planned traditional username/password authentication using Express sessions stored in PostgreSQL, with user schemas and Zod validation already in place.
+**Current**: No authentication implemented (single-user client-side app).
+**Future Implementation**: Planned traditional username/password authentication using Express sessions stored in PostgreSQL.
 
 ### Design System
 
 **Typography**: Inter or DM Sans for primary text, Crimson Text or Playfair Display for quotes/headlines.
-**Color Themes**: Utilizes specific gradient themes for different sections (Wellness, Calm, Energy, Growth).
-**Component Patterns**: Includes a fixed bottom navigation bar, gradient action cards, expandable practice cards (video/audio/script), progress bars, streak calendars, and modal dialogs.
-**Layout**: Mobile-first with constrained container width (`max-w-md`) for optimal mobile viewing.
+**Color Themes**: Specific gradient themes for Wellness, Calm, Energy, Growth sections.
+**Component Patterns**: Fixed bottom navigation, gradient action cards, expandable practice cards, progress bars, streak calendars, modal dialogs.
+**Layout**: Mobile-first with constrained container width (`max-w-md`).
 
 ### Audio System
 
 **Overview**: Manages and plays audio content for practices, affirmations, and journaling.
-**Core Components**:
-- **Audio Library**: Centralized metadata for practices, affirmations, and journaling audios.
-- **AudioPlayer Component**: Reusable HTML5 audio player with play/pause, seek bar, time display, playback speed control, and two modes (`basic`, `playlist`).
-**Integration Points**: Used across various pages for meditation practices, guided affirmations, and background music.
-**Playlist Progress System**: Tracks per-playlist progress (current track + timestamp) in localStorage, saves progress every 3 seconds, advances tracks automatically, and marks tracks complete at 90% duration.
+**Core Components**: Centralized audio library metadata, `AudioPlayer` component (HTML5 player with play/pause, seek, speed, two modes).
+**Playlist Progress**: Tracks per-playlist progress in localStorage, saves every 3 seconds, auto-advances tracks, marks complete at 90% duration.
 
 ### Dr.M AI Video Integration
 
 **Overview**: Custom chat interface integrating with a Gradio-hosted AI video generation service.
-**Functionality**:
-- Connects to an external API (`/process_query`) to generate personalized video responses from Dr.M.
-- Displays a 4-section layout: header, main video player, chat history (last 3 conversations with video thumbnails), and input field.
-- Stores the last 3 conversations and video URLs in localStorage.
-- Auto-plays Dr.M's response video and supports optional subtitles.
-- Provides clickable video thumbnails in chat history to replay videos.
-- Handles API loading states and filters quota messages.
+**Functionality**: Connects to an external API (`/process_query`) for personalized video responses. Displays a 4-section layout (header, video player, chat history with thumbnails, input). Stores last 3 conversations and video URLs in localStorage. Auto-plays Dr.M's response video with optional subtitles.
+
+### Feature Specifications
+
+**Home Page**: Welcome header (Inter, Bold, 20pt), high-contrast yellow "JOIN NOW" button.
+**Workshops Page**: "MASTERCLASSES" header (Montserrat, grey), rectangular tab system (purple active, light purple inactive). Enhanced masterclass cards with `subtitle`, `endTime`, `isLive`, improved thumbnail sizing, "LIVE" badge, larger typography, and larger purple gradient "JOIN" button.
+**Project of Heart Page**: White background with "PROJECT OF HEART" title. Heart Chakra theme (#A8E6CF) preserved for specific elements. Rectangular tab system. White cards with subtle borders. Yellow primary CTAs and purple secondary actions. Typography uses Playfair Display for quotes.
+**Project of Heart Card Layout**: Two-column layout: Left (70%) with animated glowing authentic Anahata Heart Chakra SVG (green #00C853, 12 lotus petals, Star of David) and description. Right (30%) with circular progress ring around a gold star icon and an achievement badge showing star count. Milestone messages are enhanced with motivational quotes and star counts.
 
 ## External Dependencies
 
@@ -222,7 +69,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Animation & Interaction
 
-- **Framer Motion**: Declarative animations for UI elements.
+- **Framer Motion**: Declarative animations.
 
 ### Forms & Validation
 
@@ -238,13 +85,13 @@ Preferred communication style: Simple, everyday language.
 ### Database & ORM
 
 - **Drizzle ORM**: TypeScript ORM for PostgreSQL.
-- **@neondatabase/serverless**: Neon database driver for serverless PostgreSQL.
-- **drizzle-kit**: Database migrations and schema management.
+- **@neondatabase/serverless**: Neon database driver.
+- **drizzle-kit**: Database migrations.
 
 ### Styling
 
 - **Tailwind CSS**: Utility-first CSS framework.
-- **tailwindcss-animate**: Animation utilities for Tailwind.
+- **tailwindcss-animate**: Animation utilities.
 - **class-variance-authority**: Type-safe variant management.
 - **clsx** + **tailwind-merge**: Class name composition.
 
@@ -252,7 +99,7 @@ Preferred communication style: Simple, everyday language.
 
 - **Vite**: Fast build tool and dev server.
 - **TypeScript**: Type safety.
-- **esbuild**: JavaScript bundler for server-side.
+- **esbuild**: JavaScript bundler.
 - **PostCSS**: CSS processing.
 
 ### Replit-Specific Integrations
