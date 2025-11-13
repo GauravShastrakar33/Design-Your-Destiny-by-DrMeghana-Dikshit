@@ -10,6 +10,20 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### Home Page Styling Updates (November 2025)
+
+**Welcome Header**:
+- **Font**: Changed from "Bebas Neue" to Inter, Bold
+- **Font Size**: 20pt (text-xl)
+- **Text**: "Welcome back, Champion 🎖️"
+
+**JOIN NOW Button**:
+- **Background**: Yellow (#E5AC19) - changed from purple gradient
+- **Text Color**: Dark (#0D131F) - changed from white
+- **Font**: Inter, 20pt (text-xl), Bold
+- **Border Radius**: Fully rounded (rounded-full) - changed from rounded-xl
+- **Visual**: High contrast (8.3:1 ratio), prominent yellow button with dark text
+
 ### Workshops Page Complete Redesign (November 2025)
 
 **Header Section**:
