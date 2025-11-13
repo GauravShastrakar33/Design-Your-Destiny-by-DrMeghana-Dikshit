@@ -110,35 +110,50 @@ export default function DrMPage() {
       return;
     }
 
+    // Create message immediately with question only
+    const newMessage: DrmMessage = {
+      id: Date.now().toString(),
+      question: question,
+      userName: "",
+      videoUrl: "",
+      subtitlesUrl: "",
+      textResponse: "",
+      timestamp: Date.now(),
+    };
+
+    // Add to chat history immediately
+    const messagesWithQuestion = [...messages, newMessage];
+    saveMessages(messagesWithQuestion);
+
+    // Clear input field immediately
+    setQuestion("");
     setIsLoading(true);
 
     try {
-      const response = await askDrM(question, "");
+      const response = await askDrM(newMessage.question, "");
 
       console.log("Dr.M Response:", response);
       console.log("Answer Video:", response.answerVideo);
       console.log("Video URL:", response.answerVideo.video);
       console.log("Text Response:", response.textResponse);
 
-      const newMessage: DrmMessage = {
-        id: Date.now().toString(),
-        question: question,
-        userName: "",
+      // Update the existing message with video URLs
+      const updatedMessage: DrmMessage = {
+        ...newMessage,
         videoUrl: response.answerVideo.video || "",
         subtitlesUrl: response.answerVideo.subtitles || "",
         textResponse: response.textResponse,
-        timestamp: Date.now(),
       };
 
-      const updatedMessages = [...messages, newMessage];
+      const updatedMessages = messagesWithQuestion.map(msg => 
+        msg.id === newMessage.id ? updatedMessage : msg
+      );
       saveMessages(updatedMessages);
 
       setShouldAutoPlay(true);
       setCurrentVideoUrl(response.answerVideo.video || "");
       setCurrentSubtitlesUrl(response.answerVideo.subtitles || "");
       setCurrentVideoId(newMessage.id);
-
-      setQuestion("");
     } catch (error) {
       toast({
         title: "Error",
