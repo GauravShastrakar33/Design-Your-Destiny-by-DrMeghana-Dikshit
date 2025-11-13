@@ -56,7 +56,17 @@ Preferred communication style: Simple, everyday language.
 **Home Page**: Welcome header (Inter, Bold, 20pt), high-contrast yellow "JOIN NOW" button.
 **Workshops Page**: "MASTERCLASSES" header (Montserrat, grey), rectangular tab system (purple active, light purple inactive). Enhanced masterclass cards with `subtitle`, `endTime`, `isLive`, improved thumbnail sizing, "LIVE" badge, larger typography, and larger purple gradient "JOIN" button.
 **Project of Heart Page**: White background with "PROJECT OF HEART" title. Heart Chakra theme (#A8E6CF) preserved for specific elements. Rectangular tab system. White cards with subtle borders. Yellow primary CTAs and purple secondary actions. Typography uses Playfair Display for quotes.
-**Project of Heart Card Layout**: Two-column layout: Left (70%) with authentic Anahata Heart Chakra SVG (green #5FB77D, 12 symmetrically rotated lotus petals, Star of David) and description. Right (30%) with circular progress ring around a gold star icon and an achievement badge showing star count. Milestone messages are enhanced with motivational quotes and star counts. The chakra symbol uses clean SVG design with no glowing effects or animations for a professional, spiritual aesthetic.
+**Project of Heart Card Layout**: Two-column layout: Left (70%) with authentic Anahata Heart Chakra SVG (green #5FB77D, 12 symmetrically rotated lotus petals, Star of David) and description. Right (30%) with circular progress ring around a gold star icon and an achievement badge showing star count. The chakra symbol uses clean SVG design with no glowing effects or animations for a professional, spiritual aesthetic.
+
+**Project of Heart Milestones** (Updated November 2025):
+- **Star Progression**: Maximum 6 stars (Vision: 1, Cycle 1: +1, Cycle 2: +2, Cycle 3: +2)
+- **Milestone Display**: Purple auto-checking checkboxes (#703DFA) with star emojis
+  - ⭐ Set Project of Heart — Your first star begins here. (1+ stars)
+  - ⭐⭐ Cycle 1 — You took the first step. (2+ stars)
+  - ⭐⭐⭐⭐ Cycle 2 — You stayed consistent. (4+ stars)
+  - ⭐⭐⭐⭐⭐⭐ Cycle 3 — You grew stronger. (6+ stars)
+- **Self-Evaluation**: No longer awards stars, serves as reflection tool only
+- **Progress Ring**: Fills based on 6 max stars (100% at 6 stars)
 
 ## External Dependencies
 
