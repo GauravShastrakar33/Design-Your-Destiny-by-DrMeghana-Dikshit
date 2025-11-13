@@ -91,6 +91,30 @@ Preferred communication style: Simple, everyday language.
 - **Body Text**: Medium grey (#6B7280) for secondary information
 - **Labels**: Light grey for form labels and metadata
 
+### Project of Heart Page Refinements (November 2025)
+
+**Growth Card Improvements**:
+- **Spacing**: Reduced top padding from py-6 to py-3 for tighter header-to-card spacing
+- **Layout**: Removed "Your growth" header text; stars count now displays below the circular progress indicator (vertically centered)
+- **Milestones**: Removed all checkmark icons for cleaner appearance
+
+**Milestone Messages - Enhanced Motivation**:
+- **Structure**: Each milestone now has clear visual hierarchy with larger font (text-sm) and increased spacing (space-y-2)
+- **First Milestone**: "Set PROJECT OF HEART" (bold, dark color #3D3D3D)
+- **Cycle Milestones**: Motivational quotes in purple italic bold (#703DFA) with star counts on separate line below:
+  - "You showed up for yourself." → 4 stars
+  - "You stayed consistent." → 8 stars
+  - "You transformed." → 12 stars
+- **Final Milestone**: "Self Evaluate Golden Star" (bold, dark color)
+
+**Journey Tab**:
+- **Button**: "Start Your Journey" made smaller (py-3 instead of h-24) and more rounded (2rem border-radius)
+- **Cleanup**: Removed blinking affirmations text from bottom of page for cleaner design
+
+**Reflect Tab**:
+- **Quote Card**: Changed background from grey (#F5F5F5) to purple (#703DFA) with white text
+- **Completion Icon**: Uses Award icon instead of checkmark for self-evaluation completion
+
 ## System Architecture
 
 ### Frontend Architecture
