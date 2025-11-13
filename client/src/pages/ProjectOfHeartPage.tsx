@@ -8,6 +8,7 @@ import {
   Star,
   Award,
   ArrowLeft,
+  Pencil,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
@@ -629,25 +630,18 @@ export default function ProjectOfHeartPage() {
               ) : (
                 <div>
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Heart
-                        className="w-6 h-6"
-                        style={{ color: "#F9C5BD" }}
-                        fill="currentColor"
-                      />
-                      <h3
-                        className="text-xl font-semibold"
-                        style={{
-                          color: "#3D3D3D",
-                          fontFamily: "Playfair Display, serif",
-                        }}
-                      >
-                        Your Vision
-                      </h3>
-                    </div>
+                    <h3
+                      className="text-xl font-semibold"
+                      style={{
+                        color: "#3D3D3D",
+                        fontFamily: "Playfair Display, serif",
+                      }}
+                    >
+                      Your Vision
+                    </h3>
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => {
                         setVisionForm({
                           title: pohData.vision!.title,
@@ -657,13 +651,13 @@ export default function ProjectOfHeartPage() {
                       }}
                       data-testid="button-edit-vision"
                     >
-                      Edit
+                      <Pencil className="w-4 h-4" style={{ color: "#703DFA" }} />
                     </Button>
                   </div>
 
                   <div
                     className="p-4 rounded-lg mb-4"
-                    style={{ backgroundColor: "#FDECEF" }}
+                    style={{ backgroundColor: "#F9F5FF" }}
                   >
                     <p
                       className="font-semibold mb-2"
@@ -685,22 +679,22 @@ export default function ProjectOfHeartPage() {
                   <div className="mb-2 -mx-4">
                     <div className="flex space-x-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 py-2">
                       <div
-                        className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg bg-cover bg-center snap-start"
+                        className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
                         style={{ backgroundImage: "url('/Vision1.png')" }}
                         data-testid="image-vision-1"
                       />
                       <div
-                        className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg bg-cover bg-center snap-start"
+                        className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
                         style={{ backgroundImage: "url('/Vision2.png')" }}
                         data-testid="image-vision-2"
                       />
                       <div
-                        className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg bg-cover bg-center snap-start"
+                        className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
                         style={{ backgroundImage: "url('/Vision3.png')" }}
                         data-testid="image-vision-3"
                       />
                       <div
-                        className="flex-shrink-0 w-72 h-72 rounded-2xl shadow-lg flex items-center justify-center snap-start"
+                        className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg flex items-center justify-center snap-start"
                         style={{
                           background:
                             "linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)",
@@ -734,7 +728,7 @@ export default function ProjectOfHeartPage() {
             {!savedWeeklyAction ? (
               <Button
                 onClick={() => setShowJourneyModal(true)}
-                className="w-full mb-4 text-base font-bold shadow-md border-0 py-3"
+                className="w-full mb-4 font-semibold shadow-md border-0"
                 style={{
                   backgroundColor: "#E5AC19",
                   color: "#0D131F",
@@ -742,7 +736,6 @@ export default function ProjectOfHeartPage() {
                 }}
                 data-testid="button-start-journey"
               >
-                <Sparkles className="w-5 h-5 mr-2" />
                 Start Your Journey
               </Button>
             ) : (
