@@ -38,22 +38,24 @@ interface DailyLog {
 export default function ProcessChecklistPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   // User's custom checklist
   const [userChecklist, setUserChecklist] = useState<string[]>([]);
   const [isFirstTime, setIsFirstTime] = useState(true);
-  
+
   // Today's completed practices
   const [completedToday, setCompletedToday] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
-  
+
   // Edit mode
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [tempSelectedPractices, setTempSelectedPractices] = useState<string[]>([]);
+  const [tempSelectedPractices, setTempSelectedPractices] = useState<string[]>(
+    [],
+  );
 
   useEffect(() => {
     // Load user's custom checklist
-    const storedChecklist = localStorage.getItem('userChecklist');
+    const storedChecklist = localStorage.getItem("userChecklist");
     if (storedChecklist) {
       const checklist = JSON.parse(storedChecklist);
       setUserChecklist(checklist);
@@ -63,9 +65,11 @@ export default function ProcessChecklistPage() {
     }
 
     // Load today's completed practices
-    const today = new Date().toISOString().split('T')[0];
-    const dailyLogs: DailyLog[] = JSON.parse(localStorage.getItem('dailyLogs') || '[]');
-    const todayLog = dailyLogs.find(log => log.date === today);
+    const today = new Date().toISOString().split("T")[0];
+    const dailyLogs: DailyLog[] = JSON.parse(
+      localStorage.getItem("dailyLogs") || "[]",
+    );
+    const todayLog = dailyLogs.find((log) => log.date === today);
     if (todayLog) {
       setCompletedToday(todayLog.completed);
       setSaved(true);
@@ -83,10 +87,10 @@ export default function ProcessChecklistPage() {
   };
 
   const togglePracticeSelection = (practice: string) => {
-    setTempSelectedPractices(prev =>
+    setTempSelectedPractices((prev) =>
       prev.includes(practice)
-        ? prev.filter(p => p !== practice)
-        : [...prev, practice]
+        ? prev.filter((p) => p !== practice)
+        : [...prev, practice],
     );
   };
 
@@ -100,32 +104,37 @@ export default function ProcessChecklistPage() {
       return;
     }
 
-    localStorage.setItem('userChecklist', JSON.stringify(tempSelectedPractices));
+    localStorage.setItem(
+      "userChecklist",
+      JSON.stringify(tempSelectedPractices),
+    );
     setUserChecklist(tempSelectedPractices);
-    
+
     // Filter completedToday to only include practices still in the updated checklist
-    const filteredCompleted = completedToday.filter(practice => 
-      tempSelectedPractices.includes(practice)
+    const filteredCompleted = completedToday.filter((practice) =>
+      tempSelectedPractices.includes(practice),
     );
     setCompletedToday(filteredCompleted);
-    
+
     // Update today's daily log to remove practices no longer in checklist
-    const today = new Date().toISOString().split('T')[0];
-    const dailyLogs: DailyLog[] = JSON.parse(localStorage.getItem('dailyLogs') || '[]');
-    const filteredLogs = dailyLogs.filter(log => log.date !== today);
-    
+    const today = new Date().toISOString().split("T")[0];
+    const dailyLogs: DailyLog[] = JSON.parse(
+      localStorage.getItem("dailyLogs") || "[]",
+    );
+    const filteredLogs = dailyLogs.filter((log) => log.date !== today);
+
     if (filteredCompleted.length > 0) {
       filteredLogs.push({
         date: today,
         completed: filteredCompleted,
       });
     }
-    
-    localStorage.setItem('dailyLogs', JSON.stringify(filteredLogs));
-    
+
+    localStorage.setItem("dailyLogs", JSON.stringify(filteredLogs));
+
     setIsFirstTime(false);
     setIsEditModalOpen(false);
-    
+
     toast({
       title: "Checklist saved!",
       description: `${tempSelectedPractices.length} practices in your daily ritual`,
@@ -133,30 +142,32 @@ export default function ProcessChecklistPage() {
   };
 
   const toggleTodayPractice = (practice: string) => {
-    setCompletedToday(prev =>
+    setCompletedToday((prev) =>
       prev.includes(practice)
-        ? prev.filter(p => p !== practice)
-        : [...prev, practice]
+        ? prev.filter((p) => p !== practice)
+        : [...prev, practice],
     );
     setSaved(false);
   };
 
   const handleSaveToday = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const dailyLogs: DailyLog[] = JSON.parse(localStorage.getItem('dailyLogs') || '[]');
-    
+    const today = new Date().toISOString().split("T")[0];
+    const dailyLogs: DailyLog[] = JSON.parse(
+      localStorage.getItem("dailyLogs") || "[]",
+    );
+
     // Remove existing entry for today
-    const filteredLogs = dailyLogs.filter(log => log.date !== today);
-    
+    const filteredLogs = dailyLogs.filter((log) => log.date !== today);
+
     // Add today's entry
     filteredLogs.push({
       date: today,
       completed: completedToday,
     });
-    
-    localStorage.setItem('dailyLogs', JSON.stringify(filteredLogs));
+
+    localStorage.setItem("dailyLogs", JSON.stringify(filteredLogs));
     setSaved(true);
-    
+
     toast({
       title: "Well done, Champion",
       description: `You've completed ${completedToday.length} of ${userChecklist.length} practices today!`,
@@ -171,20 +182,23 @@ export default function ProcessChecklistPage() {
           <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
-          
+
           <div className="space-y-4">
             <h1 className="text-4xl font-bold text-foreground">
               Start Your Daily Practice Ritual
             </h1>
             <p className="text-xl text-foreground">Hello Champion,</p>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Ready to build your own Process Checklist — the practices that truly matter to you?
+              Ready to build your own Process Checklist — the practices that
+              truly matter to you?
             </p>
           </div>
 
           <Card className="p-6 bg-card shadow-xl border-2">
             <div className="space-y-4 text-left">
-              <p className="font-semibold text-foreground">This will help you:</p>
+              <p className="font-semibold text-foreground">
+                This will help you:
+              </p>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
@@ -192,11 +206,15 @@ export default function ProcessChecklistPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">Track your journey weekly & monthly</span>
+                  <span className="text-muted-foreground">
+                    Track your journey weekly & monthly
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">See your growth clearly</span>
+                  <span className="text-muted-foreground">
+                    See your growth clearly
+                  </span>
                 </li>
               </ul>
             </div>
@@ -215,9 +233,14 @@ export default function ProcessChecklistPage() {
 
         {/* Practice Selection Modal */}
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto" data-testid="dialog-select-practices">
+          <DialogContent
+            className="max-w-md max-h-[80vh] overflow-y-auto"
+            data-testid="dialog-select-practices"
+          >
             <DialogHeader>
-              <DialogTitle className="text-2xl">Select Your Daily Practices</DialogTitle>
+              <DialogTitle className="text-2xl">
+                Select Your Daily Practices
+              </DialogTitle>
               <DialogDescription>
                 Choose the practices you want to include in your daily checklist
               </DialogDescription>
@@ -228,7 +251,7 @@ export default function ProcessChecklistPage() {
                 <div
                   key={practice}
                   className="flex items-center gap-3 p-4 rounded-xl hover-elevate active-elevate-2 transition-all"
-                  data-testid={`select-practice-${practice.toLowerCase().replace(/\s+/g, '-')}`}
+                  data-testid={`select-practice-${practice.toLowerCase().replace(/\s+/g, "-")}`}
                 >
                   <Checkbox
                     id={`select-${practice}`}
@@ -284,7 +307,10 @@ export default function ProcessChecklistPage() {
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
             <div className="flex-1">
-              <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+              <h1
+                className="text-base font-semibold text-gray-500"
+                style={{ fontFamily: "Montserrat" }}
+              >
                 MY PRACTICE LOG
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -313,36 +339,37 @@ export default function ProcessChecklistPage() {
                 <CheckCircle2 className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1">
-                <h2 className="text-white text-xl font-bold mb-1">Today's Practices</h2>
-                <p className="text-white/90 text-sm">Check off what you've completed</p>
+                <h2 className="text-white text-xl font-bold mb-1">
+                  Today's Practices
+                </h2>
+                <p className="text-white/90 text-sm">
+                  Check off what you've completed
+                </p>
               </div>
             </div>
           </Card>
 
           {/* Practice List */}
-          <Card className="p-5 shadow-md rounded-xl bg-white">
+          <Card className="p-5 shadow-md rounded-xl bg-white border-[#703DFA]">
             <div className="space-y-2">
               {userChecklist.map((practice) => (
                 <div
                   key={practice}
                   className="flex items-center gap-4 p-4 rounded-xl hover-elevate active-elevate-2 transition-all"
-                  data-testid={`practice-${practice.toLowerCase().replace(/\s+/g, '-')}`}
+                  data-testid={`practice-${practice.toLowerCase().replace(/\s+/g, "-")}`}
                 >
                   <Checkbox
                     id={practice}
                     checked={completedToday.includes(practice)}
                     onCheckedChange={() => toggleTodayPractice(practice)}
-                    className="w-5 h-5 rounded-md data-[state=checked]:bg-[#703DFA] data-[state=checked]:border-[#703DFA]"
-                    style={{
-                      borderColor: completedToday.includes(practice) ? '#703DFA' : undefined,
-                    }}
+                    className="w-5 h-5 rounded-md border-[#703DFA] data-[state=checked]:bg-[#703DFA] data-[state=checked]:border-[#703DFA]"
                   />
                   <label
                     htmlFor={practice}
                     className={`flex-1 font-medium cursor-pointer transition-all ${
                       completedToday.includes(practice)
-                        ? 'text-muted-foreground line-through'
-                        : 'text-foreground'
+                        ? "text-muted-foreground line-through"
+                        : "text-foreground"
                     }`}
                   >
                     {practice}
@@ -355,7 +382,7 @@ export default function ProcessChecklistPage() {
           {/* Save Button */}
           <Button
             onClick={handleSaveToday}
-            className="w-full h-12 text-base font-semibold shadow-md"
+            className="w-full h-12 text-base font-semibold shadow-md border-0"
             style={{ backgroundColor: "#703DFA" }}
             disabled={completedToday.length === 0}
             data-testid="button-save-reflection"
@@ -374,9 +401,14 @@ export default function ProcessChecklistPage() {
 
       {/* Edit Checklist Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto" data-testid="dialog-edit-practices">
+        <DialogContent
+          className="max-w-md max-h-[80vh] overflow-y-auto"
+          data-testid="dialog-edit-practices"
+        >
           <DialogHeader>
-            <DialogTitle className="text-2xl">Edit Your Daily Practices</DialogTitle>
+            <DialogTitle className="text-2xl">
+              Edit Your Daily Practices
+            </DialogTitle>
             <DialogDescription>
               Add or remove practices from your daily checklist
             </DialogDescription>
@@ -387,7 +419,7 @@ export default function ProcessChecklistPage() {
               <div
                 key={practice}
                 className="flex items-center gap-3 p-4 rounded-xl hover-elevate active-elevate-2 transition-all"
-                data-testid={`edit-practice-${practice.toLowerCase().replace(/\s+/g, '-')}`}
+                data-testid={`edit-practice-${practice.toLowerCase().replace(/\s+/g, "-")}`}
               >
                 <Checkbox
                   id={`edit-${practice}`}
