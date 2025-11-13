@@ -324,32 +324,7 @@ export default function ProjectOfHeartPage() {
                 PROJECT OF HEART
               </h1>
             </div>
-            {/* Heart Chakra Symbol */}
-            <div className="relative group">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center animate-pulse"
-                style={{
-                  background: "radial-gradient(circle, #A8E6CF 0%, transparent 70%)",
-                }}
-              >
-                <Heart
-                  className="w-6 h-6"
-                  style={{ color: "#A8E6CF" }}
-                  fill="currentColor"
-                  data-testid="heart-chakra"
-                />
-              </div>
-              <div
-                className="absolute hidden group-hover:block top-full right-0 mt-2 w-56 p-3 rounded-lg shadow-lg text-xs"
-                style={{ backgroundColor: "#FFFFFF", color: "#3D3D3D" }}
-              >
-                <p className="font-semibold mb-1">Heart Chakra – Anahata 💚</p>
-                <p className="text-xs opacity-80">
-                  Center of Love, Balance, and Purpose. Your Project of Heart
-                  aligns with the bridge between physical and spiritual growth.
-                </p>
-              </div>
-            </div>
+            <div className="w-10"></div>
           </div>
         </div>
 
@@ -362,42 +337,6 @@ export default function ProjectOfHeartPage() {
             borderRadius: "1rem",
           }}
         >
-          <div className="flex flex-col items-center mb-4">
-            {/* Circular Progress */}
-            <div className="relative w-24 h-24">
-              <svg className="w-24 h-24 transform -rotate-90">
-                <circle
-                  cx="48"
-                  cy="48"
-                  r="42"
-                  stroke="#F9C5BD"
-                  strokeWidth="6"
-                  fill="none"
-                  opacity="0.2"
-                />
-                <circle
-                  cx="48"
-                  cy="48"
-                  r="42"
-                  stroke="#FDE68A"
-                  strokeWidth="6"
-                  fill="none"
-                  strokeDasharray={`${2 * Math.PI * 42}`}
-                  strokeDashoffset={`${2 * Math.PI * 42 * (1 - Math.min(progressPercentage, 100) / 100)}`}
-                  strokeLinecap="round"
-                  className="transition-all duration-500"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Star
-                  className="w-8 h-8"
-                  style={{ color: "#FDE68A" }}
-                  fill="currentColor"
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Two-Column Layout: Chakra Info + Star Count */}
           <div className="flex gap-4 mb-6">
             {/* LEFT SIDE (70%) - Heart Chakra Info */}
@@ -430,10 +369,37 @@ export default function ProjectOfHeartPage() {
               </div>
             </div>
 
-            {/* RIGHT SIDE (30%) - Star Achievement */}
-            <div className="flex-[3] flex flex-col items-center justify-center">
+            {/* RIGHT SIDE (30%) - Progress Ring + Star Achievement */}
+            <div className="flex-[3] flex flex-col items-center justify-center gap-2">
+              {/* Circular Progress */}
+              <div className="relative w-20 h-20">
+                <svg className="w-20 h-20 transform -rotate-90">
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="35"
+                    stroke="#F9C5BD"
+                    strokeWidth="5"
+                    fill="none"
+                    opacity="0.2"
+                  />
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="35"
+                    stroke="#FDE68A"
+                    strokeWidth="5"
+                    fill="none"
+                    strokeDasharray={`${2 * Math.PI * 35}`}
+                    strokeDashoffset={`${2 * Math.PI * 35 * (1 - Math.min(progressPercentage, 100) / 100)}`}
+                    strokeLinecap="round"
+                    className="transition-all duration-500"
+                  />
+                </svg>
+              </div>
+              
               <Star
-                className="w-12 h-12 mb-2"
+                className="w-12 h-12"
                 style={{ color: "#FDE68A" }}
                 fill="currentColor"
               />

@@ -119,25 +119,32 @@ Preferred communication style: Simple, everyday language.
 
 **POH Card Structure** (Visual/UI update only - all functionality preserved):
 
-**Progress Ring**:
-- Circular progress ring remains at top of card (unchanged)
-- Shows completion percentage with golden star icon in center
+**Header**:
+- Removed glowing Heart Chakra icon from header (previously in top right)
+- Clean header with centered "PROJECT OF HEART" title and back button
 
-**Two-Column Layout** (below progress ring):
+**Two-Column Layout**:
 - **LEFT COLUMN (70%)**:
   - Glowing Heart Chakra icon (green, animated pulse)
   - Title: "Heart Chakra – Anahata 💚" (bold, dark #3D3D3D)
   - Description: "Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between physical and spiritual growth." (text-xs, gray #6B7280)
   - Left-aligned, flex layout with icon and text
 - **RIGHT COLUMN (30%)**:
-  - Large gold star icon (w-12 h-12, ~48px)
+  - Circular progress ring at top (w-20 h-20, no inner icon)
+  - Large gold star icon below progress ring (w-12 h-12, ~48px)
   - Star count (text-2xl, bold, dark #3D3D3D)
   - "Stars ✨" label (text-xs, gray #9CA3AF)
-  - Vertically centered alignment
+  - Vertically stacked alignment with gap-2
+
+**Progress Ring Design**:
+- Golden stroke (#FDE68A) with light pink background stroke (#F9C5BD)
+- Empty center (no star icon inside)
+- Shows progress percentage based on stars earned
 
 **Removed Elements**:
+- Heart Chakra icon from header
 - "Keep glowing, Champion!" text
-- Previous star count text that was below progress ring
+- Small star icon that was inside progress ring
 
 **Star Milestones Section**:
 - Remains unchanged below the two-column layout
