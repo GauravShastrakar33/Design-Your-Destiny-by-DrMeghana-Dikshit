@@ -130,21 +130,19 @@ Preferred communication style: Simple, everyday language.
   - Description: "Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between physical and spiritual growth." (text-xs, gray #6B7280)
   - Left-aligned, flex layout with icon and text
 - **RIGHT COLUMN (30%)**:
-  - Circular progress ring at top (w-20 h-20, no inner icon)
-  - Large gold star icon below progress ring (w-12 h-12, ~48px)
-  - Star count (text-2xl, bold, dark #3D3D3D)
-  - "Stars ✨" label (text-xs, gray #9CA3AF)
-  - Vertically stacked alignment with gap-2
+  - Circular progress ring wrapping around a large gold star icon (w-12 h-12, ~48px)
+  - Star count below the progress ring (text-2xl, bold, dark #3D3D3D)
+  - Vertically stacked alignment with gap-3
 
 **Progress Ring Design**:
 - Golden stroke (#FDE68A) with light pink background stroke (#F9C5BD)
-- Empty center (no star icon inside)
-- Shows progress percentage based on stars earned
+- Big gold star icon centered inside the ring
+- Shows progress percentage based on stars earned (0-12 stars)
 
 **Removed Elements**:
 - Heart Chakra icon from header
 - "Keep glowing, Champion!" text
-- Small star icon that was inside progress ring
+- "Stars ✨" label text
 
 **Star Milestones Section**:
 - Remains unchanged below the two-column layout

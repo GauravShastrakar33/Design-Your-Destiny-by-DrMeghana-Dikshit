@@ -369,49 +369,48 @@ export default function ProjectOfHeartPage() {
               </div>
             </div>
 
-            {/* RIGHT SIDE (30%) - Progress Ring + Star Achievement */}
-            <div className="flex-[3] flex flex-col items-center justify-center gap-2">
-              {/* Circular Progress */}
-              <div className="relative w-20 h-20">
-                <svg className="w-20 h-20 transform -rotate-90">
+            {/* RIGHT SIDE (30%) - Progress Ring Around Star */}
+            <div className="flex-[3] flex flex-col items-center justify-center gap-3">
+              {/* Circular Progress with Star in Center */}
+              <div className="relative w-24 h-24">
+                <svg className="w-24 h-24 transform -rotate-90">
                   <circle
-                    cx="40"
-                    cy="40"
-                    r="35"
+                    cx="48"
+                    cy="48"
+                    r="42"
                     stroke="#F9C5BD"
-                    strokeWidth="5"
+                    strokeWidth="6"
                     fill="none"
                     opacity="0.2"
                   />
                   <circle
-                    cx="40"
-                    cy="40"
-                    r="35"
+                    cx="48"
+                    cy="48"
+                    r="42"
                     stroke="#FDE68A"
-                    strokeWidth="5"
+                    strokeWidth="6"
                     fill="none"
-                    strokeDasharray={`${2 * Math.PI * 35}`}
-                    strokeDashoffset={`${2 * Math.PI * 35 * (1 - Math.min(progressPercentage, 100) / 100)}`}
+                    strokeDasharray={`${2 * Math.PI * 42}`}
+                    strokeDashoffset={`${2 * Math.PI * 42 * (1 - Math.min(progressPercentage, 100) / 100)}`}
                     strokeLinecap="round"
                     className="transition-all duration-500"
                   />
                 </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Star
+                    className="w-12 h-12"
+                    style={{ color: "#FDE68A" }}
+                    fill="currentColor"
+                  />
+                </div>
               </div>
               
-              <Star
-                className="w-12 h-12"
-                style={{ color: "#FDE68A" }}
-                fill="currentColor"
-              />
               <p
                 className="text-2xl font-bold"
                 style={{ color: "#3D3D3D" }}
                 data-testid="text-stars-count"
               >
                 {pohData.stars}
-              </p>
-              <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                Stars ✨
               </p>
             </div>
           </div>
