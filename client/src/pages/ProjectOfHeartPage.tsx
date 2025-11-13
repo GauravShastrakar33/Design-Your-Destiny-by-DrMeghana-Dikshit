@@ -557,7 +557,7 @@ export default function ProjectOfHeartPage() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-3 bg-white h-auto p-1 rounded-md">
+          <TabsList className="grid w-full grid-cols-3 mb-2 bg-white h-auto p-1 rounded-md">
             <TabsTrigger 
               value="vision" 
               data-testid="tab-vision"
@@ -584,7 +584,7 @@ export default function ProjectOfHeartPage() {
           {/* Vision Board Tab */}
           <TabsContent value="vision">
             <Card
-              className="p-6 shadow-md bg-white"
+              className="p-4 shadow-md bg-white"
               style={{
                 borderRadius: "1rem",
               }}
@@ -629,7 +629,7 @@ export default function ProjectOfHeartPage() {
                 </div>
               ) : (
                 <div>
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-2">
                     <h3
                       className="text-xl font-semibold"
                       style={{
@@ -656,7 +656,7 @@ export default function ProjectOfHeartPage() {
                   </div>
 
                   <div
-                    className="p-4 rounded-lg mb-4"
+                    className="p-4 rounded-lg mb-2"
                     style={{ backgroundColor: "#F9F5FF" }}
                   >
                     <p
