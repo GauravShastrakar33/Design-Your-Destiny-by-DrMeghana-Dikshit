@@ -93,16 +93,21 @@ Preferred communication style: Simple, everyday language.
 
 ### Project of Heart Page Refinements (November 2025)
 
+**Page Header**:
+- **Removed**: Heart chakra icon and tooltip from header (moved to Stars card)
+- **Layout**: Clean header with only back button and centered "PROJECT OF HEART" title
+
 **Stars Card (Growth Progress)**:
-- **Spacing**: Reduced top padding from py-6 to py-3 for tighter header-to-card spacing
-- **Layout**: Removed "Your growth" header text; stars count now displays below the circular progress indicator (vertically centered)
-- **Milestones**: Horizontal feature list layout with milestone description on left, star count on right (golden yellow #FDE68A)
+- **Header Text**: "Earn your first star, Champion, by setting your POH" (centered, grey)
+- **Layout**: Heart chakra icon on left with radial gradient background, stars count (numeric only) on right
+- **Removed**: Circular progress indicator, centered star icon, "Stars ✨" text, "Keep glowing, Champion!" text
+- **Milestones**: Horizontal feature list layout with action description on left, star count on right (golden yellow #FDE68A)
 - **4 Achievement Items**:
   - "Set PROJECT OF HEART" → ⭐
-  - "You showed up for yourself." (Cycle 1 completion) → 4 ⭐
-  - "You stayed consistent." (Cycle 2 completion) → 8 ⭐
-  - "You transformed." (Cycle 3 completion) → 12 ⭐
-- **Removed**: "Self Evaluate Golden Star" milestone for cleaner focus on journey progression
+  - "Complete Cycle 1" → ⭐⭐⭐⭐
+  - "Complete Cycle 2" → ⭐⭐⭐⭐⭐⭐⭐⭐
+  - "Complete Cycle 3" → ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+- **Text Style**: All milestone text uses dark color (#3D3D3D) for clarity
 
 **Journey Tab**:
 - **Button**: "Start Your Journey" centered, narrower width (removed w-full, added px-8), more rounded (2rem border-radius)
