@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ListMusic, Trash2, Play, Pause, ChevronDown, ChevronUp, Bell, BellOff } from "lucide-react";
+import { ListMusic, Trash2, Play, Pause, ChevronDown, ChevronUp, Bell, BellOff, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -253,33 +253,47 @@ export default function MyPracticePlaylistPage() {
   if (playlists.length === 0) {
     return (
       <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
-        <div className="max-w-md mx-auto px-4 py-6">
-          <h1 className="text-sm font-semibold text-gray-500 text-center mb-2" style={{ fontFamily: "Montserrat" }}>
-            MY PROCESSES
-          </h1>
-          <p className="text-muted-foreground mb-8 text-center">
-            Your personalized practice collection
-          </p>
-
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center space-y-4">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: "#F3F0FF" }}>
-                <ListMusic className="w-10 h-10" style={{ color: "#703DFA" }} />
-              </div>
-              <h2 className="text-xl font-semibold text-foreground">
-                No Processes Yet
-              </h2>
-              <p className="text-muted-foreground max-w-xs">
-                Design your practice to create your custom process
-              </p>
-              <Button
-                onClick={() => setLocation("/design-practice")}
-                className="mt-4 border-0"
-                style={{ backgroundColor: "#703DFA" }}
-                data-testid="button-create-playlist"
+        <div className="max-w-md mx-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-white border-b border-border z-10">
+            <div className="px-4 py-4 flex items-center gap-4">
+              <button
+                onClick={() => setLocation("/")}
+                className="hover-elevate active-elevate-2 rounded-lg p-2"
+                data-testid="button-back"
               >
-                Create Your First Process
-              </Button>
+                <ArrowLeft className="w-6 h-6 text-foreground" />
+              </button>
+              <div className="flex-1 text-center">
+                <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+                  MY PROCESS
+                </h1>
+              </div>
+              <div className="w-10"></div>
+            </div>
+          </div>
+
+          <div className="px-4 py-6">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: "#F3F0FF" }}>
+                  <ListMusic className="w-10 h-10" style={{ color: "#703DFA" }} />
+                </div>
+                <h2 className="text-xl font-semibold text-foreground">
+                  No Processes Yet
+                </h2>
+                <p className="text-muted-foreground max-w-xs">
+                  Design your practice to create your custom process
+                </p>
+                <Button
+                  onClick={() => setLocation("/design-practice")}
+                  className="mt-4 border-0"
+                  style={{ backgroundColor: "#703DFA" }}
+                  data-testid="button-create-playlist"
+                >
+                  Create Your First Process
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -289,26 +303,27 @@ export default function MyPracticePlaylistPage() {
 
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
-      <div className="max-w-md mx-auto px-4 py-6">
-        <div className="flex flex-col items-center mb-6 space-y-4">
-          <div className="text-center">
-            <h1 className="text-sm font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
-              MY PROCESSES
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {playlists.length} {playlists.length === 1 ? 'process' : 'processes'}
-            </p>
+      <div className="max-w-md mx-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-border z-10">
+          <div className="px-4 py-4 flex items-center gap-4">
+            <button
+              onClick={() => setLocation("/")}
+              className="hover-elevate active-elevate-2 rounded-lg p-2"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-6 h-6 text-foreground" />
+            </button>
+            <div className="flex-1 text-center">
+              <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+                MY PROCESS
+              </h1>
+            </div>
+            <div className="w-10"></div>
           </div>
-          <Button
-            onClick={() => setLocation("/design-practice")}
-            style={{ backgroundColor: "#703DFA" }}
-            data-testid="button-new-playlist"
-          >
-            New Playlist
-          </Button>
         </div>
 
-        <div className="space-y-3">
+        <div className="px-4 py-6 space-y-3">
           {playlists.map((playlist) => (
             <Card key={playlist.id} className="overflow-hidden bg-white" data-testid={`playlist-${playlist.id}`}>
               <button
@@ -426,6 +441,17 @@ export default function MyPracticePlaylistPage() {
               </AnimatePresence>
             </Card>
           ))}
+          
+          {/* New Playlist Button */}
+          <div className="flex justify-end pt-3">
+            <Button
+              onClick={() => setLocation("/design-practice")}
+              style={{ backgroundColor: "#703DFA" }}
+              data-testid="button-new-playlist"
+            >
+              New Playlist
+            </Button>
+          </div>
         </div>
       </div>
 
