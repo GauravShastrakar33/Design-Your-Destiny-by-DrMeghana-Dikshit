@@ -155,7 +155,7 @@ export default function ArticlesPage() {
 
         <div className="relative h-52 overflow-hidden">
           <img
-            src="/articles/Dr.M’sGuide5.png"
+            src="/articles/articles-dr-m.png"
             alt="Dr. M's Guide"
             className="w-full h-full object-cover"
           />
