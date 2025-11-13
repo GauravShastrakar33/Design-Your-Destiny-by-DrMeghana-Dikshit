@@ -362,7 +362,7 @@ export default function ProjectOfHeartPage() {
             borderRadius: "1rem",
           }}
         >
-          <div className="flex flex-col items-center mb-3">
+          <div className="flex flex-col items-center mb-4">
             {/* Circular Progress */}
             <div className="relative w-24 h-24">
               <svg className="w-24 h-24 transform -rotate-90">
@@ -396,18 +396,56 @@ export default function ProjectOfHeartPage() {
                 />
               </div>
             </div>
-            
-            {/* Stars count below icon */}
-            <div className="text-center mt-2">
+          </div>
+
+          {/* Two-Column Layout: Chakra Info + Star Count */}
+          <div className="flex gap-4 mb-6">
+            {/* LEFT SIDE (70%) - Heart Chakra Info */}
+            <div className="flex-[7] flex items-start gap-3">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse"
+                style={{
+                  background: "radial-gradient(circle, #A8E6CF 0%, transparent 70%)",
+                }}
+              >
+                <Heart
+                  className="w-6 h-6"
+                  style={{ color: "#A8E6CF" }}
+                  fill="currentColor"
+                />
+              </div>
+              <div className="flex-1">
+                <h4 
+                  className="font-bold text-base mb-1" 
+                  style={{ color: "#3D3D3D" }}
+                >
+                  Heart Chakra – Anahata 💚
+                </h4>
+                <p 
+                  className="text-xs leading-relaxed" 
+                  style={{ color: "#6B7280" }}
+                >
+                  Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between physical and spiritual growth.
+                </p>
+              </div>
+            </div>
+
+            {/* RIGHT SIDE (30%) - Star Achievement */}
+            <div className="flex-[3] flex flex-col items-center justify-center">
+              <Star
+                className="w-12 h-12 mb-2"
+                style={{ color: "#FDE68A" }}
+                fill="currentColor"
+              />
               <p
                 className="text-2xl font-bold"
                 style={{ color: "#3D3D3D" }}
                 data-testid="text-stars-count"
               >
-                {pohData.stars} Stars ✨
+                {pohData.stars}
               </p>
-              <p className="text-xs mt-1" style={{ color: "#9CA3AF" }}>
-                Keep glowing, Champion!
+              <p className="text-xs" style={{ color: "#9CA3AF" }}>
+                Stars ✨
               </p>
             </div>
           </div>

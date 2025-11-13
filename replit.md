@@ -115,6 +115,34 @@ Preferred communication style: Simple, everyday language.
 - **Quote Card**: Changed background from grey (#F5F5F5) to purple (#703DFA) with white text
 - **Completion Icon**: Uses Award icon instead of checkmark for self-evaluation completion
 
+### Project of Heart Card Layout Redesign (November 2025)
+
+**POH Card Structure** (Visual/UI update only - all functionality preserved):
+
+**Progress Ring**:
+- Circular progress ring remains at top of card (unchanged)
+- Shows completion percentage with golden star icon in center
+
+**Two-Column Layout** (below progress ring):
+- **LEFT COLUMN (70%)**:
+  - Glowing Heart Chakra icon (green, animated pulse)
+  - Title: "Heart Chakra – Anahata 💚" (bold, dark #3D3D3D)
+  - Description: "Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between physical and spiritual growth." (text-xs, gray #6B7280)
+  - Left-aligned, flex layout with icon and text
+- **RIGHT COLUMN (30%)**:
+  - Large gold star icon (w-12 h-12, ~48px)
+  - Star count (text-2xl, bold, dark #3D3D3D)
+  - "Stars ✨" label (text-xs, gray #9CA3AF)
+  - Vertically centered alignment
+
+**Removed Elements**:
+- "Keep glowing, Champion!" text
+- Previous star count text that was below progress ring
+
+**Star Milestones Section**:
+- Remains unchanged below the two-column layout
+- Displays progress milestones with motivational messages
+
 ## System Architecture
 
 ### Frontend Architecture

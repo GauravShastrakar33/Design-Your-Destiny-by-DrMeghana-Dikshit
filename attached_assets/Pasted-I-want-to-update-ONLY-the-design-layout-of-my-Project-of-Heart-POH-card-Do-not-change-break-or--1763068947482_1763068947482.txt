@@ -1,0 +1,41 @@
+I want to update ONLY the design/layout of my Project of Heart (POH) card. Do not change, break, or remove any functionality, logic, props, state, data, or handlers. This is a visual/UI restructure only.
+Important: Keep the existing progress ring exactly as it is. Do not remove it.
+Apply these design changes inside the POH card:
+
+✅ 1. Remove the small header text at the top (like “Keep glowing, Champion!” or “1 Stars ✨”).
+
+✅ 2. Create a clean two-column section at the top of the card:
+LEFT SIDE (70% width):
+* Keep the glowing Heart Chakra icon.
+* Add Chakra title text: “Heart Chakra – Anahata 💚” (bold, dark text)
+* Add a short description under it (small, gray text): “Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between physical and spiritual growth.”
+* Make text left-aligned.
+RIGHT SIDE (30% width):
+* Add a big gold star icon (approx 40–48px, looks like a reward star)
+* Under it, show the user’s star count using the existing value: {pohData.stars}
+* Make this block vertically centered relative to the left text.
+
+✅ 3. DO NOT remove or modify the existing progress ring at the top of the screen.
+It should stay exactly where it is. Just redesign the card beneath it.
+
+✅ 4. Keep the Star Milestones list exactly the same:
+* “Set PROJECT OF HEART” – ⭐
+* “Complete Cycle 1” – ⭐⭐⭐⭐
+* “Complete Cycle 2” – ⭐⭐⭐⭐⭐⭐⭐⭐
+* “Complete Cycle 3” – ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+Only visually align and clean it if needed; don’t change the data.
+
+📌 Layout goal (visual reference):
+
+[ glowing heart icon ]  Heart Chakra – Anahata         [ ⭐ big gold star ]
+                        Chakra description text           [  star count     ]
+* Left = Chakra identity
+* Right = Achievement star visual
+* Milestones remain below
+
+⚠️ Critical instructions:
+* Do NOT modify any business logic.
+* Do NOT change any variables, hooks, props, states, or data structure.
+* Do NOT touch the progress ring component.
+* Do NOT change when or how stars are earned.
+* Only reorganize JSX + classes to achieve the new visual layout.
