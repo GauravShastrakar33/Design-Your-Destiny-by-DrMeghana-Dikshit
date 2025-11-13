@@ -8,7 +8,9 @@ import {
   Star,
   Award,
   CheckCircle2,
+  ArrowLeft,
 } from "lucide-react";
+import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +80,7 @@ const SELF_EVALUATION_QUESTIONS = [
 ];
 
 export default function ProjectOfHeartPage() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("vision");
   const [pohData, setPohData] = useState<POHData>({
@@ -305,43 +308,33 @@ export default function ProjectOfHeartPage() {
   const progressPercentage = (pohData.stars / 9) * 100;
 
   return (
-    <div
-      className="min-h-screen pb-20"
-      style={{
-        background:
-          "linear-gradient(to bottom right, #FDECEF, #F8E5E5, #E3F8E0)",
-      }}
-    >
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Header with Heart Chakra */}
-        <div className="relative mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1
-                className="text-3xl font-bold mb-1"
-                style={{
-                  color: "#3D3D3D",
-                  fontFamily: "Playfair Display, serif",
-                }}
-              >
-                Project of Heart
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-border z-10">
+          <div className="px-4 py-4 flex items-center gap-4">
+            <button
+              onClick={() => setLocation("/")}
+              className="hover-elevate active-elevate-2 rounded-lg p-2"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-6 h-6 text-foreground" />
+            </button>
+            <div className="flex-1 text-center">
+              <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+                PROJECT OF HEART
               </h1>
-              <p className="text-sm" style={{ color: "#6B7280" }}>
-                Your heart's purpose, guided by love and discipline
-              </p>
             </div>
-
             {/* Heart Chakra Symbol */}
             <div className="relative group">
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center animate-pulse"
+                className="w-10 h-10 rounded-full flex items-center justify-center animate-pulse"
                 style={{
-                  background:
-                    "radial-gradient(circle, #A8E6CF 0%, transparent 70%)",
+                  background: "radial-gradient(circle, #A8E6CF 0%, transparent 70%)",
                 }}
               >
                 <Heart
-                  className="w-10 h-10"
+                  className="w-6 h-6"
                   style={{ color: "#A8E6CF" }}
                   fill="currentColor"
                   data-testid="heart-chakra"
@@ -361,11 +354,12 @@ export default function ProjectOfHeartPage() {
           </div>
         </div>
 
+        <div className="px-4 py-6">
+
         {/* Star Progress */}
         <Card
-          className="mb-3 p-4 shadow-md shadow-rose-200"
+          className="mb-3 p-4 shadow-md bg-white"
           style={{
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
             borderRadius: "1rem",
           }}
         >
@@ -468,14 +462,26 @@ export default function ProjectOfHeartPage() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-3">
-            <TabsTrigger value="vision" data-testid="tab-vision">
+          <TabsList className="grid w-full grid-cols-3 mb-3 bg-white h-auto p-1 rounded-md">
+            <TabsTrigger 
+              value="vision" 
+              data-testid="tab-vision"
+              className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
+            >
               Vision
             </TabsTrigger>
-            <TabsTrigger value="journey" data-testid="tab-journey">
+            <TabsTrigger 
+              value="journey" 
+              data-testid="tab-journey"
+              className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
+            >
               Journey
             </TabsTrigger>
-            <TabsTrigger value="reflect" data-testid="tab-reflect">
+            <TabsTrigger 
+              value="reflect" 
+              data-testid="tab-reflect"
+              className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
+            >
               Reflect
             </TabsTrigger>
           </TabsList>
@@ -483,9 +489,8 @@ export default function ProjectOfHeartPage() {
           {/* Vision Board Tab */}
           <TabsContent value="vision">
             <Card
-              className="p-6 shadow-md shadow-rose-200"
+              className="p-6 shadow-md bg-white"
               style={{
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
                 borderRadius: "1rem",
               }}
             >
@@ -517,11 +522,10 @@ export default function ProjectOfHeartPage() {
                   </p>
                   <Button
                     onClick={() => setShowVisionDialog(true)}
-                    className="font-semibold"
+                    className="font-semibold border-0"
                     style={{
-                      background:
-                        "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
-                      color: "#3D3D3D",
+                      backgroundColor: "#E5AC19",
+                      color: "#0D131F",
                     }}
                     data-testid="button-set-vision"
                   >
@@ -636,11 +640,10 @@ export default function ProjectOfHeartPage() {
             {!savedWeeklyAction ? (
               <Button
                 onClick={() => setShowJourneyModal(true)}
-                className="w-full h-24 mb-4 text-lg font-bold shadow-md shadow-rose-200"
+                className="w-full h-24 mb-4 text-lg font-bold shadow-md border-0"
                 style={{
-                  background:
-                    "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
-                  color: "#3D3D3D",
+                  backgroundColor: "#E5AC19",
+                  color: "#0D131F",
                   borderRadius: "1rem",
                 }}
                 data-testid="button-start-journey"
@@ -650,10 +653,8 @@ export default function ProjectOfHeartPage() {
               </Button>
             ) : (
               <Card
-                className="p-6 shadow-md shadow-rose-200 mb-4"
+                className="p-6 shadow-md mb-4 bg-white"
                 style={{
-                  background:
-                    "linear-gradient(135deg, #FDECEF 0%, #F8E5E5 50%, #E3F8E0 100%)",
                   borderRadius: "1rem",
                 }}
               >
@@ -701,9 +702,8 @@ export default function ProjectOfHeartPage() {
             )}
 
             <Card
-              className="p-6 shadow-md shadow-rose-200"
+              className="p-6 shadow-md bg-white"
               style={{
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
                 borderRadius: "1rem",
               }}
             >
@@ -848,11 +848,10 @@ export default function ProjectOfHeartPage() {
 
                   <Button
                     onClick={handleSaveWeekReflection}
-                    className="w-full font-semibold"
+                    className="w-full font-semibold border-0"
                     style={{
-                      background:
-                        "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
-                      color: "#3D3D3D",
+                      backgroundColor: "#703DFA",
+                      color: "white",
                     }}
                     data-testid="button-save-week"
                   >
@@ -875,9 +874,8 @@ export default function ProjectOfHeartPage() {
           {/* Self Evaluation Tab */}
           <TabsContent value="reflect">
             <Card
-              className="p-6 shadow-md shadow-rose-200"
+              className="p-6 shadow-md bg-white"
               style={{
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
                 borderRadius: "1rem",
               }}
             >
@@ -925,11 +923,10 @@ export default function ProjectOfHeartPage() {
                       setEvalForm(pohData.selfEvaluation?.responses || {});
                       setShowEvalDialog(true);
                     }}
-                    className="font-semibold"
+                    className="font-semibold border-0"
                     style={{
-                      background:
-                        "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
-                      color: "#3D3D3D",
+                      backgroundColor: "#E5AC19",
+                      color: "#0D131F",
                     }}
                     data-testid="button-start-evaluation"
                   >
@@ -962,6 +959,7 @@ export default function ProjectOfHeartPage() {
               superpower
             </p>
           </div>
+        </div>
         </div>
       </div>
 
@@ -1007,11 +1005,10 @@ export default function ProjectOfHeartPage() {
             </div>
             <Button
               onClick={handleSetVision}
-              className="w-full font-semibold"
+              className="w-full font-semibold border-0"
               style={{
-                background:
-                  "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
-                color: "#3D3D3D",
+                backgroundColor: "#E5AC19",
+                color: "#0D131F",
               }}
               data-testid="button-save-vision"
             >
@@ -1055,11 +1052,10 @@ export default function ProjectOfHeartPage() {
             ))}
             <Button
               onClick={handleSaveSelfEvaluation}
-              className="w-full font-semibold"
+              className="w-full font-semibold border-0"
               style={{
-                background:
-                  "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
-                color: "#3D3D3D",
+                backgroundColor: "#E5AC19",
+                color: "#0D131F",
               }}
               data-testid="button-save-evaluation"
             >
@@ -1103,11 +1099,10 @@ export default function ProjectOfHeartPage() {
             </div>
             <Button
               onClick={handleSubmitWeeklyAction}
-              className="w-full font-semibold"
+              className="w-full font-semibold border-0"
               style={{
-                background:
-                  "linear-gradient(to right, #FAD0C4, #FFD1BA, #A8E6CF)",
-                color: "#3D3D3D",
+                backgroundColor: "#E5AC19",
+                color: "#0D131F",
               }}
               data-testid="button-submit-action"
             >
