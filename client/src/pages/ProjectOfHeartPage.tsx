@@ -213,10 +213,13 @@ export default function ProjectOfHeartPage() {
     let newStars = pohData.stars;
     if (allWeeksCompleted && !pohData.cycles[cycleKey]?.completed) {
       updatedCycles[cycleKey].completed = true;
-      newStars += 2; // Award 2 stars for completing a cycle
+      
+      // Award stars based on which cycle is completed
+      let starsToAward = selectedCycle === 1 ? 1 : 2; // Cycle 1: +1 star, Cycles 2&3: +2 stars
+      newStars += starsToAward;
 
       toast({
-        title: "Cycle Completed! 🌟🌟",
+        title: `Cycle Completed! ${"🌟".repeat(starsToAward)}`,
         description:
           "Each week, your heart expands through awareness and action.",
         className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]",
@@ -257,14 +260,11 @@ export default function ProjectOfHeartPage() {
         completed: true,
         responses: evalForm,
       },
-      stars: pohData.selfEvaluation?.completed
-        ? pohData.stars
-        : pohData.stars + 1,
     });
 
     toast({
-      title: "Reflection Complete 🌟",
-      description: "You've earned a Golden Star for your introspection!",
+      title: "Reflection Complete 🏅",
+      description: "Your self-evaluation has been saved.",
       className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]",
     });
 
@@ -304,7 +304,7 @@ export default function ProjectOfHeartPage() {
     }
   }, [selectedCycle, selectedWeek, pohData.cycles]);
 
-  const progressPercentage = (pohData.stars / 9) * 100;
+  const progressPercentage = (pohData.stars / 6) * 100;
 
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
@@ -491,24 +491,65 @@ export default function ProjectOfHeartPage() {
           </div>
 
           {/* Star Milestones */}
-          <div className="space-y-2 text-sm" style={{ color: "#6B7280" }}>
-            <div className="flex flex-col">
-              <span className="font-medium" style={{ color: "#3D3D3D" }}>Set PROJECT OF HEART</span>
+          <div className="space-y-3 text-sm" style={{ color: "#6B7280" }}>
+            <div className="flex items-start gap-2">
+              <div className="mt-0.5">
+                {pohData.stars >= 1 ? (
+                  <div className="w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
+                    <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
+                      <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded border-2" style={{ borderColor: "#D1D5DB" }}></div>
+                )}
+              </div>
+              <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐ Set Project of Heart — Your first star begins here.</span>
             </div>
-            <div className="flex flex-col">
-              <span className="italic font-medium" style={{ color: "#703DFA" }}>"You showed up for yourself."</span>
-              <span className="text-xs">4 stars</span>
+            
+            <div className="flex items-start gap-2">
+              <div className="mt-0.5">
+                {pohData.stars >= 2 ? (
+                  <div className="w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
+                    <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
+                      <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded border-2" style={{ borderColor: "#D1D5DB" }}></div>
+                )}
+              </div>
+              <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐⭐ Cycle 1 — You took the first step.</span>
             </div>
-            <div className="flex flex-col">
-              <span className="italic font-medium" style={{ color: "#703DFA" }}>"You stayed consistent."</span>
-              <span className="text-xs">8 stars</span>
+            
+            <div className="flex items-start gap-2">
+              <div className="mt-0.5">
+                {pohData.stars >= 4 ? (
+                  <div className="w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
+                    <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
+                      <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded border-2" style={{ borderColor: "#D1D5DB" }}></div>
+                )}
+              </div>
+              <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐⭐⭐⭐ Cycle 2 — You stayed consistent.</span>
             </div>
-            <div className="flex flex-col">
-              <span className="italic font-medium" style={{ color: "#703DFA" }}>"You transformed."</span>
-              <span className="text-xs">12 stars</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-medium" style={{ color: "#3D3D3D" }}>Self Evaluate Golden Star</span>
+            
+            <div className="flex items-start gap-2">
+              <div className="mt-0.5">
+                {pohData.stars >= 6 ? (
+                  <div className="w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
+                    <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
+                      <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded border-2" style={{ borderColor: "#D1D5DB" }}></div>
+                )}
+              </div>
+              <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐⭐⭐⭐⭐⭐ Cycle 3 — You grew stronger.</span>
             </div>
           </div>
         </Card>
@@ -1100,7 +1141,7 @@ export default function ProjectOfHeartPage() {
               }}
               data-testid="button-save-evaluation"
             >
-              Complete Reflection & Earn 🏅
+              Complete Reflection 🏅
             </Button>
           </div>
         </DialogContent>
