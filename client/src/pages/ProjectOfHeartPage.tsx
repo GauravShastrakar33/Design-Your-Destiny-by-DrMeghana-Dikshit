@@ -593,7 +593,7 @@ export default function ProjectOfHeartPage() {
                   <div
                     className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
                     style={{
-                      background: "linear-gradient(135deg, #F9C5BD, #A8E6CF)",
+                      background: "linear-gradient(135deg, #703DFA, #FFFFFF)",
                     }}
                   >
                     <Heart
