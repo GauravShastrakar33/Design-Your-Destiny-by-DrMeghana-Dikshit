@@ -308,7 +308,7 @@ export default function ProcessChecklistPage() {
             </button>
             <div className="flex-1">
               <h1
-                className="text-base font-semibold text-gray-500"
+                className="text-lg font-semibold text-gray-500"
                 style={{ fontFamily: "Montserrat" }}
               >
                 MY PRACTICE LOG
