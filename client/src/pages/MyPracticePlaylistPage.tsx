@@ -1,5 +1,15 @@
 import { useState, useEffect } from "react";
-import { ListMusic, Trash2, Play, Pause, ChevronDown, ChevronUp, Bell, BellOff, ArrowLeft } from "lucide-react";
+import {
+  ListMusic,
+  Trash2,
+  Play,
+  Pause,
+  ChevronDown,
+  ChevronUp,
+  Bell,
+  BellOff,
+  ArrowLeft,
+} from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,10 +34,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  getPlaylists, 
-  deletePlaylist, 
-  updatePlaylist, 
+import {
+  getPlaylists,
+  deletePlaylist,
+  updatePlaylist,
   type SavedPlaylist,
   saveProgress,
   loadProgress,
@@ -45,10 +55,13 @@ export default function MyPracticePlaylistPage() {
   const [expandedPlaylist, setExpandedPlaylist] = useState<string | null>(null);
   const [playlistToDelete, setPlaylistToDelete] = useState<string | null>(null);
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
-  const [selectedPlaylistForReminder, setSelectedPlaylistForReminder] = useState<SavedPlaylist | null>(null);
+  const [selectedPlaylistForReminder, setSelectedPlaylistForReminder] =
+    useState<SavedPlaylist | null>(null);
   const [reminderTime, setReminderTime] = useState("");
-  
-  const [currentPlaylistId, setCurrentPlaylistId] = useState<string | null>(null);
+
+  const [currentPlaylistId, setCurrentPlaylistId] = useState<string | null>(
+    null,
+  );
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlayingPlaylist, setIsPlayingPlaylist] = useState(false);
   const [initialTime, setInitialTime] = useState(0);
@@ -125,34 +138,34 @@ export default function MyPracticePlaylistPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
   const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
+    const [hours, minutes] = time.split(":");
     const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const ampm = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
   const handlePlayPlaylist = (playlistId: string) => {
-    const playlist = playlists.find(p => p.id === playlistId);
+    const playlist = playlists.find((p) => p.id === playlistId);
     if (!playlist) return;
 
     // Load saved progress
     const savedProgress = loadProgress(playlistId);
-    
+
     if (savedProgress) {
       // Resume from saved position - match by practice name
       const trackIndex = playlist.practices.findIndex(
-        p => p === savedProgress.currentTrackId
+        (p) => p === savedProgress.currentTrackId,
       );
-      
+
       if (trackIndex !== -1) {
         setCurrentTrackIndex(trackIndex);
         setInitialTime(savedProgress.currentTime);
@@ -166,7 +179,7 @@ export default function MyPracticePlaylistPage() {
       setCurrentTrackIndex(0);
       setInitialTime(0);
     }
-    
+
     setCurrentPlaylistId(playlistId);
     setIsPlayingPlaylist(true);
   };
@@ -181,17 +194,17 @@ export default function MyPracticePlaylistPage() {
   };
 
   const handleTrackEnded = () => {
-    const currentPlaylist = playlists.find(p => p.id === currentPlaylistId);
+    const currentPlaylist = playlists.find((p) => p.id === currentPlaylistId);
     if (!currentPlaylist) return;
 
     if (currentTrackIndex < currentPlaylist.practices.length - 1) {
       const nextTrackIndex = currentTrackIndex + 1;
       const nextPracticeName = currentPlaylist.practices[nextTrackIndex];
-      
+
       // Immediately save progress for next track at position 0
       saveProgress(currentPlaylistId!, nextPracticeName, 0);
       setLastSaveTime(Date.now()); // Reset throttle timer
-      
+
       setCurrentTrackIndex(nextTrackIndex);
       setInitialTime(0); // Reset initial time for next track
     } else {
@@ -204,12 +217,12 @@ export default function MyPracticePlaylistPage() {
   };
 
   const handleProgressUpdate = (time: number, duration: number) => {
-    const currentPlaylist = playlists.find(p => p.id === currentPlaylistId);
+    const currentPlaylist = playlists.find((p) => p.id === currentPlaylistId);
     if (!currentPlaylistId || !currentPlaylist) return;
-    
+
     // Save using the practice name from the playlist (not audio title)
     const practiceName = currentPlaylist.practices[currentTrackIndex];
-    
+
     // Throttle saves to every 3 seconds using timestamp check
     const now = Date.now();
     if (now - lastSaveTime >= 3000) {
@@ -219,19 +232,19 @@ export default function MyPracticePlaylistPage() {
   };
 
   const handleTrackComplete = () => {
-    const currentPlaylist = playlists.find(p => p.id === currentPlaylistId);
+    const currentPlaylist = playlists.find((p) => p.id === currentPlaylistId);
     if (!currentPlaylist) return;
-    
+
     // Use practice name from playlist for consistency
     const practiceName = currentPlaylist.practices[currentTrackIndex];
-    
+
     // Mark track as completed (90% rule)
     markTrackComplete(
       currentPlaylist.id,
       practiceName,
-      currentPlaylist.practices.length
+      currentPlaylist.practices.length,
     );
-    
+
     toast({
       title: "Track Completed!",
       description: `You completed "${practiceName}"`,
@@ -240,8 +253,8 @@ export default function MyPracticePlaylistPage() {
 
   const getCurrentAudio = () => {
     if (!currentPlaylistId) return null;
-    
-    const playlist = playlists.find(p => p.id === currentPlaylistId);
+
+    const playlist = playlists.find((p) => p.id === currentPlaylistId);
     if (!playlist) return null;
 
     const practiceName = playlist.practices[currentTrackIndex];
@@ -252,7 +265,10 @@ export default function MyPracticePlaylistPage() {
 
   if (playlists.length === 0) {
     return (
-      <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
+      <div
+        className="min-h-screen pb-20"
+        style={{ backgroundColor: "#F3F3F3" }}
+      >
         <div className="max-w-md mx-auto">
           {/* Header */}
           <div className="sticky top-0 bg-white border-b border-border z-10">
@@ -265,7 +281,10 @@ export default function MyPracticePlaylistPage() {
                 <ArrowLeft className="w-6 h-6 text-foreground" />
               </button>
               <div className="flex-1 text-center">
-                <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+                <h1
+                  className="text-xl font-semibold text-gray-500"
+                  style={{ fontFamily: "Montserrat" }}
+                >
                   MY PROCESS
                 </h1>
               </div>
@@ -276,8 +295,14 @@ export default function MyPracticePlaylistPage() {
           <div className="px-4 py-6">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center space-y-4">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: "#F3F0FF" }}>
-                  <ListMusic className="w-10 h-10" style={{ color: "#703DFA" }} />
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
+                  style={{ backgroundColor: "#F3F0FF" }}
+                >
+                  <ListMusic
+                    className="w-10 h-10"
+                    style={{ color: "#703DFA" }}
+                  />
                 </div>
                 <h2 className="text-xl font-semibold text-foreground">
                   No Processes Yet
@@ -315,7 +340,10 @@ export default function MyPracticePlaylistPage() {
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
             <div className="flex-1 text-center">
-              <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+              <h1
+                className="text-base font-semibold text-gray-500"
+                style={{ fontFamily: "Montserrat" }}
+              >
                 MY PROCESS
               </h1>
             </div>
@@ -325,26 +353,41 @@ export default function MyPracticePlaylistPage() {
 
         <div className="px-4 py-6 space-y-3">
           {playlists.map((playlist) => (
-            <Card key={playlist.id} className="overflow-hidden bg-white" data-testid={`playlist-${playlist.id}`}>
+            <Card
+              key={playlist.id}
+              className="overflow-hidden bg-white"
+              data-testid={`playlist-${playlist.id}`}
+            >
               <button
-                onClick={() => setExpandedPlaylist(
-                  expandedPlaylist === playlist.id ? null : playlist.id
-                )}
+                onClick={() =>
+                  setExpandedPlaylist(
+                    expandedPlaylist === playlist.id ? null : playlist.id,
+                  )
+                }
                 className="w-full p-4 flex items-center gap-3 hover-elevate active-elevate-2"
                 data-testid={`button-expand-${playlist.id}`}
               >
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F3F0FF" }}>
+                <div
+                  className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: "#F3F0FF" }}
+                >
                   <ListMusic className="w-6 h-6" style={{ color: "#703DFA" }} />
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-foreground">{playlist.name}</h3>
+                  <h3 className="font-semibold text-foreground">
+                    {playlist.name}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
-                    {playlist.practices.length} practices • {formatDate(playlist.createdAt)}
+                    {playlist.practices.length} practices •{" "}
+                    {formatDate(playlist.createdAt)}
                   </p>
                   {playlist.reminderTime && (
                     <div className="flex items-center gap-1 mt-1">
                       <Bell className="w-3 h-3" style={{ color: "#703DFA" }} />
-                      <span className="text-xs font-medium" style={{ color: "#703DFA" }}>
+                      <span
+                        className="text-xs font-medium"
+                        style={{ color: "#703DFA" }}
+                      >
                         {formatTime(playlist.reminderTime)}
                       </span>
                     </div>
@@ -374,34 +417,56 @@ export default function MyPracticePlaylistPage() {
                             className="flex items-center gap-2 text-sm text-foreground"
                             data-testid={`practice-item-${index}`}
                           >
-                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#703DFA" }} />
-                            <span className={currentPlaylistId === playlist.id && currentTrackIndex === index ? "font-semibold" : "font-medium"} style={currentPlaylistId === playlist.id && currentTrackIndex === index ? { color: "#703DFA" } : undefined}>
+                            <div
+                              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: "#703DFA" }}
+                            />
+                            <span
+                              className={
+                                currentPlaylistId === playlist.id &&
+                                currentTrackIndex === index
+                                  ? "font-semibold"
+                                  : "font-medium"
+                              }
+                              style={
+                                currentPlaylistId === playlist.id &&
+                                currentTrackIndex === index
+                                  ? { color: "#703DFA" }
+                                  : undefined
+                              }
+                            >
                               {practice}
                             </span>
                           </div>
                         ))}
                       </div>
 
-                      {currentPlaylistId === playlist.id && isPlayingPlaylist && currentAudio && (
-                        <div className="pt-2">
-                          <AudioPlayer
-                            src={currentAudio.file}
-                            title={currentAudio.title}
-                            mode="playlist"
-                            autoPlay={true}
-                            initialTime={initialTime}
-                            onEnded={handleTrackEnded}
-                            onProgressUpdate={handleProgressUpdate}
-                            onComplete={handleTrackComplete}
-                          />
-                        </div>
-                      )}
+                      {currentPlaylistId === playlist.id &&
+                        isPlayingPlaylist &&
+                        currentAudio && (
+                          <div className="pt-2">
+                            <AudioPlayer
+                              src={currentAudio.file}
+                              title={currentAudio.title}
+                              mode="playlist"
+                              autoPlay={true}
+                              initialTime={initialTime}
+                              onEnded={handleTrackEnded}
+                              onProgressUpdate={handleProgressUpdate}
+                              onComplete={handleTrackComplete}
+                            />
+                          </div>
+                        )}
 
                       <div className="flex gap-2 pt-2">
                         <Button
                           className="flex-1 border-0"
                           style={{ backgroundColor: "#703DFA", color: "white" }}
-                          onClick={() => currentPlaylistId === playlist.id ? handleStopPlaylist() : handlePlayPlaylist(playlist.id)}
+                          onClick={() =>
+                            currentPlaylistId === playlist.id
+                              ? handleStopPlaylist()
+                              : handlePlayPlaylist(playlist.id)
+                          }
                           data-testid={`button-play-${playlist.id}`}
                         >
                           {currentPlaylistId === playlist.id ? (
@@ -422,9 +487,16 @@ export default function MyPracticePlaylistPage() {
                           data-testid={`button-reminder-${playlist.id}`}
                         >
                           {playlist.reminderTime ? (
-                            <Bell className="w-4 h-4" style={{ color: "#703DFA" }} fill="currentColor" />
+                            <Bell
+                              className="w-4 h-4"
+                              style={{ color: "#703DFA" }}
+                              fill="currentColor"
+                            />
                           ) : (
-                            <Bell className="w-4 h-4" style={{ color: "#703DFA" }} />
+                            <Bell
+                              className="w-4 h-4"
+                              style={{ color: "#703DFA" }}
+                            />
                           )}
                         </Button>
                         <Button
@@ -432,7 +504,10 @@ export default function MyPracticePlaylistPage() {
                           onClick={() => setPlaylistToDelete(playlist.id)}
                           data-testid={`button-delete-${playlist.id}`}
                         >
-                          <Trash2 className="w-4 h-4" style={{ color: "#703DFA" }} />
+                          <Trash2
+                            className="w-4 h-4"
+                            style={{ color: "#703DFA" }}
+                          />
                         </Button>
                       </div>
                     </div>
@@ -441,7 +516,7 @@ export default function MyPracticePlaylistPage() {
               </AnimatePresence>
             </Card>
           ))}
-          
+
           {/* New Playlist Button */}
           <div className="flex justify-end pt-3">
             <Button
@@ -455,16 +530,22 @@ export default function MyPracticePlaylistPage() {
         </div>
       </div>
 
-      <AlertDialog open={!!playlistToDelete} onOpenChange={() => setPlaylistToDelete(null)}>
+      <AlertDialog
+        open={!!playlistToDelete}
+        onOpenChange={() => setPlaylistToDelete(null)}
+      >
         <AlertDialogContent data-testid="dialog-confirm-delete">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Playlist?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your playlist.
+              This action cannot be undone. This will permanently delete your
+              playlist.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-cancel-delete">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => playlistToDelete && handleDelete(playlistToDelete)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -481,7 +562,8 @@ export default function MyPracticePlaylistPage() {
           <DialogHeader>
             <DialogTitle>Set Daily Reminder</DialogTitle>
             <DialogDescription>
-              Choose a time to be reminded about "{selectedPlaylistForReminder?.name}"
+              Choose a time to be reminded about "
+              {selectedPlaylistForReminder?.name}"
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
