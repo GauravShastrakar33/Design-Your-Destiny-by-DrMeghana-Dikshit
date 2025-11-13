@@ -56,7 +56,7 @@ Preferred communication style: Simple, everyday language.
 **Home Page**: Welcome header (Inter, Bold, 20pt), high-contrast yellow "JOIN NOW" button.
 **Workshops Page**: "MASTERCLASSES" header (Montserrat, grey), rectangular tab system (purple active, light purple inactive). Enhanced masterclass cards with `subtitle`, `endTime`, `isLive`, improved thumbnail sizing, "LIVE" badge, larger typography, and larger purple gradient "JOIN" button.
 **Project of Heart Page**: White background with "PROJECT OF HEART" title. Heart Chakra theme (#A8E6CF) preserved for specific elements. Rectangular tab system. White cards with subtle borders. Yellow primary CTAs and purple secondary actions. Typography uses Playfair Display for quotes.
-**Project of Heart Card Layout**: Two-column layout: Left (70%) with animated glowing authentic Anahata Heart Chakra SVG (green #00C853, 12 lotus petals, Star of David) and description. Right (30%) with circular progress ring around a gold star icon and an achievement badge showing star count. Milestone messages are enhanced with motivational quotes and star counts.
+**Project of Heart Card Layout**: Two-column layout: Left (70%) with authentic Anahata Heart Chakra SVG (green #5FB77D, 12 symmetrically rotated lotus petals, Star of David) and description. Right (30%) with circular progress ring around a gold star icon and an achievement badge showing star count. Milestone messages are enhanced with motivational quotes and star counts. The chakra symbol uses clean SVG design with no glowing effects or animations for a professional, spiritual aesthetic.
 
 ## External Dependencies
 
