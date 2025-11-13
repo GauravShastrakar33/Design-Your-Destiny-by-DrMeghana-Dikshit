@@ -676,8 +676,8 @@ export default function ProjectOfHeartPage() {
                   </div>
 
                   {/* Image Gallery - Vision Board Style */}
-                  <div className="mb-2 -mx-4">
-                    <div className="flex space-x-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 py-2">
+                  <div className="mb-2">
+                    <div className="flex space-x-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-2">
                       <div
                         className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
                         style={{ backgroundImage: "url('/Vision1.png')" }}
