@@ -1047,7 +1047,7 @@ export default function ProjectOfHeartPage() {
 
       {/* Vision Dialog */}
       <Dialog open={showVisionDialog} onOpenChange={setShowVisionDialog}>
-        <DialogContent style={{ backgroundColor: "#F3F3F3" }}>
+        <DialogContent style={{ backgroundColor: "white" }}>
           <DialogHeader>
             <DialogTitle style={{ fontFamily: "Playfair Display, serif" }}>
               {pohData.vision ? "Edit Your Vision" : "Set Your Vision"}
@@ -1065,8 +1065,8 @@ export default function ProjectOfHeartPage() {
                   setVisionForm({ ...visionForm, title: e.target.value })
                 }
                 placeholder="e.g., Launch my wellness coaching business"
-                className="mt-2 bg-white"
-                style={{ borderColor: "#703DFA" }}
+                className="mt-2 focus-visible:ring-2 focus-visible:ring-[#703DFA]"
+                style={{ backgroundColor: "#F3F3F3" }}
                 data-testid="input-vision-title"
               />
             </div>
@@ -1081,8 +1081,8 @@ export default function ProjectOfHeartPage() {
                   setVisionForm({ ...visionForm, description: e.target.value })
                 }
                 placeholder="Describe your deeper purpose..."
-                className="mt-2 bg-white"
-                style={{ borderColor: "#703DFA" }}
+                className="mt-2 focus-visible:ring-2 focus-visible:ring-[#703DFA]"
+                style={{ backgroundColor: "#F3F3F3" }}
                 rows={4}
                 data-testid="input-vision-description"
               />
@@ -1106,7 +1106,7 @@ export default function ProjectOfHeartPage() {
       <Dialog open={showEvalDialog} onOpenChange={setShowEvalDialog}>
         <DialogContent
           className="max-w-2xl max-h-[80vh] overflow-y-auto"
-          style={{ backgroundColor: "#F3F3F3" }}
+          style={{ backgroundColor: "white" }}
         >
           <DialogHeader>
             <DialogTitle style={{ fontFamily: "Playfair Display, serif" }}>
@@ -1128,8 +1128,8 @@ export default function ProjectOfHeartPage() {
                     setEvalForm({ ...evalForm, [question]: e.target.value })
                   }
                   placeholder="Your reflection..."
-                  className="mt-2 bg-white"
-                  style={{ borderColor: "#703DFA" }}
+                  className="mt-2 focus-visible:ring-2 focus-visible:ring-[#703DFA]"
+                  style={{ backgroundColor: "#F3F3F3" }}
                   rows={3}
                   data-testid={`input-eval-${index}`}
                 />
