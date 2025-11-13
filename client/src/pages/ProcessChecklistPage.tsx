@@ -271,10 +271,10 @@ export default function ProcessChecklistPage() {
 
   // Regular daily checklist view
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
+        <div className="sticky top-0 bg-white border-b border-border z-10">
           <div className="px-4 py-4 flex items-center gap-4">
             <button
               onClick={() => setLocation("/")}
@@ -284,7 +284,9 @@ export default function ProcessChecklistPage() {
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">My Practice Log</h1>
+              <h1 className="text-sm font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+                MY PRACTICE LOG
+              </h1>
               <p className="text-sm text-muted-foreground">
                 {completedToday.length} of {userChecklist.length} completed
               </p>
@@ -296,7 +298,7 @@ export default function ProcessChecklistPage() {
               className="gap-2"
               data-testid="button-edit-checklist"
             >
-              <Edit className="w-4 h-4" />
+              <Edit className="w-4 h-4 text-[#703DFA]" />
               <span className="hidden sm:inline">Edit</span>
             </Button>
           </div>
@@ -318,7 +320,7 @@ export default function ProcessChecklistPage() {
           </Card>
 
           {/* Practice List */}
-          <Card className="p-5 shadow-md rounded-xl">
+          <Card className="p-5 shadow-md rounded-xl bg-white">
             <div className="space-y-2">
               {userChecklist.map((practice) => (
                 <div
@@ -330,7 +332,10 @@ export default function ProcessChecklistPage() {
                     id={practice}
                     checked={completedToday.includes(practice)}
                     onCheckedChange={() => toggleTodayPractice(practice)}
-                    className="w-5 h-5 rounded-md data-[state=checked]:bg-primary"
+                    className="w-5 h-5 rounded-md data-[state=checked]:bg-[#703DFA] data-[state=checked]:border-[#703DFA]"
+                    style={{
+                      borderColor: completedToday.includes(practice) ? '#703DFA' : undefined,
+                    }}
                   />
                   <label
                     htmlFor={practice}
@@ -351,6 +356,7 @@ export default function ProcessChecklistPage() {
           <Button
             onClick={handleSaveToday}
             className="w-full h-12 text-base font-semibold shadow-md"
+            style={{ backgroundColor: "#703DFA" }}
             disabled={completedToday.length === 0}
             data-testid="button-save-reflection"
           >
