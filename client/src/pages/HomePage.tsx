@@ -105,8 +105,8 @@ export default function HomePage() {
         {/* Header with Search and Notification */}
         <div className="bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3">
           <div className="flex-1">
-            <h1 className="text-lg font-bold" style={{ fontFamily: "Inter" }}>
-              Welcome back, Champion 🏆
+            <h1 className="text-xl font-bold" style={{ fontFamily: "Inter" }}>
+              Welcome back, Champion 🎖️
             </h1>
             <p className="text-sm text-gray-600 mt-0.5">
               How's your energy today?
