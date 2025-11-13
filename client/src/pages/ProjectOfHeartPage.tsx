@@ -1152,7 +1152,7 @@ export default function ProjectOfHeartPage() {
 
       {/* Journey Question Modal */}
       <Dialog open={showJourneyModal} onOpenChange={setShowJourneyModal}>
-        <DialogContent style={{ backgroundColor: "#FFFDF8" }}>
+        <DialogContent style={{ backgroundColor: "white" }}>
           <DialogHeader>
             <DialogTitle
               style={{
@@ -1177,7 +1177,8 @@ export default function ProjectOfHeartPage() {
                 value={weeklyAction}
                 onChange={(e) => setWeeklyAction(e.target.value)}
                 placeholder="I will..."
-                className="mt-3"
+                className="mt-3 focus-visible:!ring-2 focus-visible:!ring-[#703DFA]"
+                style={{ backgroundColor: "#F3F3F3" }}
                 rows={4}
                 data-testid="input-weekly-action"
               />
