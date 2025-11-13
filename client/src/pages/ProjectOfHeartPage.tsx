@@ -346,13 +346,44 @@ export default function ProjectOfHeartPage() {
                   className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse"
                   style={{
                     background: "radial-gradient(circle, #00C853 0%, transparent 70%)",
+                    boxShadow: "0 0 20px rgba(0, 200, 83, 0.6), 0 0 40px rgba(0, 200, 83, 0.3)",
                   }}
                 >
-                  <Heart
+                  <svg
                     className="w-7 h-7"
-                    style={{ color: "#00C853" }}
-                    fill="currentColor"
-                  />
+                    viewBox="0 0 100 100"
+                    style={{ 
+                      filter: "drop-shadow(0 0 4px rgba(0, 200, 83, 0.8))"
+                    }}
+                  >
+                    {/* Outer Lotus Petals */}
+                    <g stroke="#00C853" strokeWidth="2" fill="none">
+                      {/* 12 petals around the circle */}
+                      <path d="M 50 15 Q 40 20 40 30 Q 40 25 50 25 Q 60 25 60 30 Q 60 20 50 15 Z" />
+                      <path d="M 65 21 Q 60 28 62 37 Q 61 33 68 35 Q 75 37 75 30 Q 70 25 65 21 Z" />
+                      <path d="M 79 35 Q 75 43 78 52 Q 76 48 83 48 Q 90 48 88 40 Q 85 35 79 35 Z" />
+                      <path d="M 85 50 Q 83 58 87 65 Q 85 62 90 65 Q 95 68 95 60 Q 93 53 85 50 Z" />
+                      <path d="M 79 65 Q 78 73 83 78 Q 81 75 85 80 Q 89 85 88 77 Q 87 70 79 65 Z" />
+                      <path d="M 65 79 Q 66 86 72 89 Q 70 86 72 92 Q 74 98 72 91 Q 70 84 65 79 Z" />
+                      <path d="M 50 85 Q 52 92 58 93 Q 56 90 55 96 Q 54 102 52 95 Q 50 88 50 85 Z" />
+                      <path d="M 35 79 Q 38 86 45 87 Q 43 84 42 90 Q 41 96 39 89 Q 37 82 35 79 Z" />
+                      <path d="M 21 65 Q 25 72 32 72 Q 30 69 31 75 Q 32 81 29 74 Q 26 67 21 65 Z" />
+                      <path d="M 15 50 Q 20 57 27 56 Q 25 53 25 59 Q 25 65 22 58 Q 19 51 15 50 Z" />
+                      <path d="M 21 35 Q 27 42 34 40 Q 32 37 31 43 Q 30 49 27 42 Q 24 35 21 35 Z" />
+                      <path d="M 35 21 Q 42 27 49 24 Q 47 21 46 27 Q 45 33 42 26 Q 39 19 35 21 Z" />
+                    </g>
+                    
+                    {/* Central Circle */}
+                    <circle cx="50" cy="50" r="22" stroke="#00C853" strokeWidth="2" fill="none" />
+                    
+                    {/* Star of David (Two Triangles) */}
+                    <g stroke="#00C853" strokeWidth="2.5" fill="none">
+                      {/* Upward Triangle */}
+                      <path d="M 50 35 L 65 60 L 35 60 Z" />
+                      {/* Downward Triangle */}
+                      <path d="M 50 65 L 35 40 L 65 40 Z" />
+                    </g>
+                  </svg>
                 </div>
                 <h4 
                   className="font-bold text-base" 
