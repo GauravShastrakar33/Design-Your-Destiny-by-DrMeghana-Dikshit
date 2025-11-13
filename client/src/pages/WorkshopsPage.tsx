@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import rightDecisionThumbnail from "@assets/right-decision-thumbnail.png";
 
-type Tab = "upcoming" | "latest" | "dyd" | "usm" | "usc" | "usb" | "more";
+type Tab = "upcoming" | "latest" | "dyd" | "usm" | "usc" | "usb";
 
 interface UpcomingMasterclass {
   id: string;
@@ -37,7 +37,7 @@ interface Course {
   title: string;
   thumbnail: string;
   year: string;
-  type: "dyd" | "usm" | "usc" | "usb" | "more";
+  type: "dyd" | "usm" | "usc" | "usb";
   isCollection: boolean;
 }
 
@@ -182,25 +182,6 @@ const usbCourses: Course[] = [
   },
 ];
 
-const moreCourses: Course[] = [
-  {
-    id: "sleep",
-    title: "Sleep Subconscious",
-    thumbnail: "/workshopsimg/SSR.jpg",
-    year: "2025",
-    type: "more",
-    isCollection: true,
-  },
-  {
-    id: "visions",
-    title: "Build Your Visions",
-    thumbnail: "/workshopsimg/BYV.jpg",
-    year: "2025",
-    type: "more",
-    isCollection: true,
-  },
-];
-
 function CountdownTimer({ startTime }: { startTime: Date }) {
   const [timeLeft, setTimeLeft] = useState("");
 
@@ -248,7 +229,6 @@ export default function WorkshopsPage() {
     { id: "usm" as Tab, label: "USM" },
     { id: "usc" as Tab, label: "USC" },
     { id: "usb" as Tab, label: "USB" },
-    { id: "more" as Tab, label: "More" },
   ];
 
   // Load last watched data
@@ -637,43 +617,6 @@ export default function WorkshopsPage() {
                     )}
 
                     {/* Text content */}
-                    <div className="relative z-10 text-white">
-                      <h3 className="text-2xl font-bold">{course.title}</h3>
-                      <p className="text-white/90 text-sm">{course.year}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* More Tab */}
-          {activeTab === "more" && (
-            <div className="space-y-4">
-              {moreCourses.map((course) => (
-                <Card
-                  key={course.id}
-                  className="overflow-hidden cursor-pointer hover-elevate active-elevate-2"
-                  onClick={() => handleCourseClick(course)}
-                  data-testid={`course-${course.id}`}
-                >
-                  <div className="relative h-48 flex items-end p-4 overflow-hidden">
-                    {course.thumbnail.startsWith("bg-") ? (
-                      // ✅ Case 1: Tailwind gradient background
-                      <div className={`${course.thumbnail} absolute inset-0`} />
-                    ) : (
-                      // ✅ Case 2: Image thumbnail
-                      <img
-                        src={course.thumbnail}
-                        alt={course.title}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        onError={(e) =>
-                          (e.currentTarget.src = "/images/placeholder.jpg")
-                        }
-                      />
-                    )}
-
-                    {/* Text Layer */}
                     <div className="relative z-10 text-white">
                       <h3 className="text-2xl font-bold">{course.title}</h3>
                       <p className="text-white/90 text-sm">{course.year}</p>
