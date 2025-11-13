@@ -326,82 +326,97 @@ export default function ProjectOfHeartPage() {
           </div>
         </div>
 
-        <div className="px-4 py-3">
-          {/* Star Progress */}
-          <Card
-            className="mb-3 p-4 shadow-md bg-white"
-            style={{
-              borderRadius: "1rem",
-            }}
-          >
-            {/* Header Text */}
-            <p className="text-xs mb-4 text-center" style={{ color: "#6B7280" }}>
-              Earn your first star, Champion, by setting your POH
-            </p>
+          <div className="px-4 py-3">
+            {/* Star Progress */}
+            <Card
+              className="mb-3 p-4 shadow-md bg-white"
+              style={{ borderRadius: "1rem" }}
+            >
+              {/* Chakra + Star Progress Row */}
+              <div className="flex items-center justify-between mb-4">
 
-            {/* Heart Chakra Icon and Stars Count */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center"
-                  style={{
-                    background: "radial-gradient(circle, #A8E6CF 0%, transparent 70%)",
-                  }}
-                >
-                  <Heart
-                    className="w-6 h-6"
-                    style={{ color: "#A8E6CF" }}
-                    fill="currentColor"
-                  />
+                {/* LEFT: Glowing Heart + Chakra Text */}
+                <div className="flex items-start gap-3 w-2/3">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center mt-1"
+                    style={{
+                      background: "radial-gradient(circle, #A8E6CF 0%, transparent 70%)",
+                    }}
+                  >
+                    <Heart
+                      className="w-6 h-6"
+                      style={{ color: "#A8E6CF" }}
+                      fill="currentColor"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: "#3D3D3D" }}>
+                      Heart Chakra – Anahata 💚
+                    </p>
+                    <p className="text-xs leading-snug mt-1" style={{ color: "#6B7280" }}>
+                      Center of Love, Balance, and Purpose. Your Project of Heart aligns
+                      with the bridge between physical and spiritual growth.
+                    </p>
+                  </div>
+                </div>
+
+                {/* RIGHT: Big Star Count */}
+                <div className="flex flex-col items-center w-1/3">
+                  <p className="text-4xl font-bold" style={{ color: "#FBBF24" }}>
+                    ⭐
+                  </p>
+                  <p
+                    className="text-xl font-bold mt-1"
+                    style={{ color: "#3D3D3D" }}
+                    data-testid="text-stars-count"
+                  >
+                    {pohData.stars}
+                  </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p
-                  className="text-2xl font-bold"
-                  style={{ color: "#3D3D3D" }}
-                  data-testid="text-stars-count"
-                >
-                  {pohData.stars}
-                </p>
-              </div>
-            </div>
 
-            {/* Star Milestones */}
-            <div className="space-y-3 text-sm" style={{ color: "#6B7280" }}>
-              <div className="flex items-center justify-between">
-                <span className="font-medium" style={{ color: "#3D3D3D" }}>
-                  Set PROJECT OF HEART
-                </span>
-                <span className="font-semibold" style={{ color: "#FDE68A" }}>
-                  ⭐
-                </span>
+              {/* Star Milestones */}
+              <div className="space-y-3 text-sm" style={{ color: "#6B7280" }}>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium" style={{ color: "#3D3D3D" }}>
+                    Set PROJECT OF HEART
+                  </span>
+                  <span className="font-semibold" style={{ color: "#FDE68A" }}>
+                    ⭐
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="font-medium" style={{ color: "#3D3D3D" }}>
+                    Complete Cycle 1
+                  </span>
+                  <span className="font-semibold" style={{ color: "#FDE68A" }}>
+                    ⭐⭐⭐⭐
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="font-medium" style={{ color: "#3D3D3D" }}>
+                    Complete Cycle 2
+                  </span>
+                  <span className="font-semibold" style={{ color: "#FDE68A" }}>
+                    ⭐⭐⭐⭐⭐⭐⭐⭐
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="font-medium" style={{ color: "#3D3D3D" }}>
+                    Complete Cycle 3
+                  </span>
+                  <span className="font-semibold" style={{ color: "#FDE68A" }}>
+                    ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium" style={{ color: "#3D3D3D" }}>
-                  Complete Cycle 1
-                </span>
-                <span className="font-semibold" style={{ color: "#FDE68A" }}>
-                  ⭐⭐⭐⭐
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium" style={{ color: "#3D3D3D" }}>
-                  Complete Cycle 2
-                </span>
-                <span className="font-semibold" style={{ color: "#FDE68A" }}>
-                  ⭐⭐⭐⭐⭐⭐⭐⭐
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium" style={{ color: "#3D3D3D" }}>
-                  Complete Cycle 3
-                </span>
-                <span className="font-semibold" style={{ color: "#FDE68A" }}>
-                  ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
-                </span>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
+
 
           {/* Main Content Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
