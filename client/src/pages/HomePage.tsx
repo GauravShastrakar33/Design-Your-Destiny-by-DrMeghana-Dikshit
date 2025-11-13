@@ -105,10 +105,7 @@ export default function HomePage() {
         {/* Header with Search and Notification */}
         <div className="bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3">
           <div className="flex-1">
-            <h1
-              className="text-xl font-bold"
-              style={{ fontFamily: "Inter" }}
-            >
+            <h1 className="text-xl font-bold" style={{ fontFamily: "Inter" }}>
               Welcome back, Champion 🎖️
             </h1>
             <p className="text-sm text-gray-600 mt-0.5">
@@ -143,7 +140,7 @@ export default function HomePage() {
           {/* Image Banner */}
           <div className="relative w-full h-56 overflow-hidden shadow-md">
             <img
-              src="/DR-M-Banner-Intervention.png"
+              src="/DR-M-Banner-Intervention1.png"
               alt="Live Session"
               className="w-full h-full object-cover"
             />
@@ -162,7 +159,11 @@ export default function HomePage() {
                 window.open("https://zoom.us/j/your-meeting-id", "_blank")
               }
               className="mt-3 w-[85%] px-4 py-3 rounded-full font-bold shadow-md hover:opacity-90 transition text-xl"
-              style={{ backgroundColor: "#E5AC19", color: "#0D131F", fontFamily: "Inter" }}
+              style={{
+                backgroundColor: "#E5AC19",
+                color: "#0D131F",
+                fontFamily: "Inter",
+              }}
               data-testid="button-join-live"
             >
               JOIN NOW
