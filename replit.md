@@ -93,27 +93,27 @@ Preferred communication style: Simple, everyday language.
 
 ### Project of Heart Page Refinements (November 2025)
 
-**Growth Card Improvements**:
+**Stars Card (Growth Progress)**:
 - **Spacing**: Reduced top padding from py-6 to py-3 for tighter header-to-card spacing
 - **Layout**: Removed "Your growth" header text; stars count now displays below the circular progress indicator (vertically centered)
-- **Milestones**: Removed all checkmark icons for cleaner appearance
-
-**Milestone Messages - Enhanced Motivation**:
-- **Structure**: Each milestone now has clear visual hierarchy with larger font (text-sm) and increased spacing (space-y-2)
-- **First Milestone**: "Set PROJECT OF HEART" (bold, dark color #3D3D3D)
-- **Cycle Milestones**: Motivational quotes in purple italic bold (#703DFA) with star counts on separate line below:
-  - "You showed up for yourself." → 4 stars
-  - "You stayed consistent." → 8 stars
-  - "You transformed." → 12 stars
-- **Final Milestone**: "Self Evaluate Golden Star" (bold, dark color)
+- **Milestones**: Horizontal feature list layout with milestone description on left, star count on right (golden yellow #FDE68A)
+- **4 Achievement Items**:
+  - "Set PROJECT OF HEART" → ⭐
+  - "You showed up for yourself." (Cycle 1 completion) → 4 ⭐
+  - "You stayed consistent." (Cycle 2 completion) → 8 ⭐
+  - "You transformed." (Cycle 3 completion) → 12 ⭐
+- **Removed**: "Self Evaluate Golden Star" milestone for cleaner focus on journey progression
 
 **Journey Tab**:
-- **Button**: "Start Your Journey" made smaller (py-3 instead of h-24) and more rounded (2rem border-radius)
-- **Cleanup**: Removed blinking affirmations text from bottom of page for cleaner design
+- **Button**: "Start Your Journey" centered, narrower width (removed w-full, added px-8), more rounded (2rem border-radius)
+- **Icon**: Removed Sparkles icon for cleaner button appearance
+- **Cleanup**: Removed blinking affirmations text from bottom of page
 
-**Reflect Tab**:
-- **Quote Card**: Changed background from grey (#F5F5F5) to purple (#703DFA) with white text
-- **Completion Icon**: Uses Award icon instead of checkmark for self-evaluation completion
+**Reflect Tab (Self-Evaluation)**:
+- **Quote Placement**: Moved quote directly below "Self-Evaluation" title as italic text (removed separate purple card)
+- **Removed Text**: "Optional deep reflection on your journey" for cleaner presentation
+- **Quote**: "When we start, we are one person; months later, we are someone new. Reflection opens new doors and visions."
+- **Completion Icon**: Uses Award icon for self-evaluation completion state
 
 ## System Architecture
 
