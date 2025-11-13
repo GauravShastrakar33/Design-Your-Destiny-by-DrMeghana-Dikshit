@@ -284,7 +284,7 @@ export default function ProcessChecklistPage() {
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
             <div className="flex-1">
-              <h1 className="text-sm font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+              <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
                 MY PRACTICE LOG
               </h1>
               <p className="text-sm text-muted-foreground">
