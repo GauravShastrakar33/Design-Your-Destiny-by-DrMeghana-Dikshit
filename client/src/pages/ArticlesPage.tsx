@@ -16,17 +16,17 @@ const categories = [
       {
         id: 1,
         title: "How Gut Health Influences the Brain",
-        image: "/articles/GutHealth8.jpeg",
+        image: "/articles/GutHealth1.png",
       },
       {
         id: 2,
         title: "When the Mind Creates Pain",
-        image: "/articles/Psychosomatic1.jpeg",
+        image: "/articles/Healing.png",
       },
       {
         id: 3,
         title: "Superfoods for Brain Health, Energy & Longevity",
-        image: healthImage,
+        image: "/articles/Superfoods for Brain (1) (1).png",
       },
     ],
   },
@@ -36,17 +36,17 @@ const categories = [
       {
         id: 4,
         title: "Rewire Your Neocortex for Faster Learning",
-        image: "/articles/Neo.jpeg",
+        image: "/articles/Neocortex (1) (1).png",
       },
       {
         id: 5,
         title: "Memory Enhancement Techniques",
-        image: "/articles/BetterMemor.jpeg",
+        image: "/articles/Memory (1) (1).png",
       },
       {
         id: 6,
         title: "Reset your Focus in 90sec",
-        image: "/articles/Rese.jpeg",
+        image: "/articles/Focus in 90 secs (1) (1).png",
       },
     ],
   },
@@ -56,17 +56,17 @@ const categories = [
       {
         id: 7,
         title: "Why You Attract Emotionally Unavailable Partners",
-        image: "/articles/EmotionallyUA.jpeg",
+        image: "/articles/Emotionally Unavailable (1).png",
       },
       {
         id: 8,
         title: "Building Deeper Connections",
-        image: "/articles/BDC.jpeg",
+        image: "/articles/DeeperConnections.png",
       },
       {
         id: 9,
         title: "Healing & Forgiveness in Relationships",
-        image: "/articles/Forgiveness.jpeg",
+        image: "/articles/Forgiveness & Healing (1).png",
       },
     ],
   },
@@ -76,14 +76,18 @@ const categories = [
       {
         id: 10,
         title: "Healing the Shame that binds you ",
-        image: "/articles/ShameThatBindsYou.png",
+        image: "/articles/healing the shame that binds you (1).png",
       },
       {
         id: 11,
         title: "The Body Keeps the Score",
-        image: "/articles/TheBodyKeep.png",
+        image: "/articles/body keeps the score (1).png",
       },
-      { id: 12, title: "Atomic Habbits", image: "/articles/Atomic.png" },
+      {
+        id: 12,
+        title: "Atomic Habbits",
+        image: "/articles/atomic habits (1).png",
+      },
     ],
   },
   {
@@ -92,17 +96,18 @@ const categories = [
       {
         id: 13,
         title: "What Kids Really Want from You",
-        image: "/articles/Kid1.jpeg",
+        image:
+          "/articles/What Kids Really Want from You What Kids Really Want from You (1).png",
       },
       {
         id: 14,
         title: "Why “Connection Before Correction” Works",
-        image: "/articles/CC.jpeg",
+        image: "/articles/Connectionbeforecorection.png",
       },
       {
         id: 15,
         title: "Self-Care Isn’t Selfish: The Foundation of Calm Parenting",
-        image: "/articles/CP.jpeg",
+        image: "/articles/Selfcare isn't selfish (1).png",
       },
     ],
   },
@@ -112,17 +117,17 @@ const categories = [
       {
         id: 16,
         title: "Soul Lessons: Why Challenges Are Invitations to Grow",
-        image: "/articles/SL.jpeg",
+        image: "/articles/soul lessons (1).png",
       },
       {
         id: 17,
         title: "Chakras and Modern Science — Finding the Bridge",
-        image: "/articles/CS.jpeg",
+        image: "/articles/chakras and modern science (1).png",
       },
       {
         id: 18,
         title: "The Shift from 3D to 5D Consciousness",
-        image: "/articles/35D.jpeg",
+        image: "/articles/3d to 5d consciousness (1).png",
       },
     ],
   },

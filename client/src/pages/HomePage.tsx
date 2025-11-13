@@ -49,7 +49,7 @@ export default function HomePage() {
       testId: "card-community-practices",
     },
     {
-      title: "My ProcessList",
+      title: "My Processes",
       icon: ListMusic,
       gradient: "bg-gradient-harmony",
       path: "/playlist",
@@ -77,7 +77,7 @@ export default function HomePage() {
       testId: "card-money-mastery",
     },
     {
-      title: "Process Checklist",
+      title: "My Daily Tracker",
       icon: CheckSquare,
       gradient: "bg-gradient-desert",
       path: "/process-checklist",
@@ -202,7 +202,7 @@ export default function HomePage() {
           <div
             className="rounded-2xl p-4 shadow-md relative mt-6"
             style={{
-              background: '#703DFA'
+              background: "#703DFA",
             }}
             data-testid="card-quote"
           >
