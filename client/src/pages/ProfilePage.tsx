@@ -112,6 +112,17 @@ export default function ProfilePage() {
     }
   };
 
+  const handleClearDrMChats = () => {
+    if (
+      confirm(
+        "Are you sure you want to clear all your conversations with Dr.M? This cannot be undone.",
+      )
+    ) {
+      localStorage.removeItem("@app:drm_conversations");
+      alert("Dr.M chat history has been cleared successfully.");
+    }
+  };
+
   // Generate calendar days using persisted streak data and start date
   const generateCalendarDays = (): StreakDay[] => {
     const days: StreakDay[] = [];
@@ -472,6 +483,18 @@ export default function ProfilePage() {
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         Clear checklist and daily progress
+                      </p>
+                    </button>
+                    <button
+                      onClick={handleClearDrMChats}
+                      className="w-full text-left p-3 rounded-lg hover-elevate active-elevate-2 border border-orange-200 dark:border-orange-800/30"
+                      data-testid="button-clear-drm-chats"
+                    >
+                      <p className="font-medium text-orange-600 dark:text-orange-400">
+                        Clear Dr.M Chat History
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Delete all conversations with Dr.M avatar
                       </p>
                     </button>
                   </div>
