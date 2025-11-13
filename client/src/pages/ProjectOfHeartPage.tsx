@@ -613,15 +613,15 @@ export default function ProjectOfHeartPage() {
             {!savedWeeklyAction ? (
               <Button
                 onClick={() => setShowJourneyModal(true)}
-                className="w-full h-24 mb-4 text-lg font-bold shadow-md border-0"
+                className="w-full mb-4 text-base font-bold shadow-md border-0 py-3"
                 style={{
                   backgroundColor: "#E5AC19",
                   color: "#0D131F",
-                  borderRadius: "1rem",
+                  borderRadius: "2rem",
                 }}
                 data-testid="button-start-journey"
               >
-                <Sparkles className="w-6 h-6 mr-2" />
+                <Sparkles className="w-5 h-5 mr-2" />
                 Start Your Journey
               </Button>
             ) : (
@@ -909,7 +909,7 @@ export default function ProjectOfHeartPage() {
 
                 <div
                   className="mt-6 p-4 rounded-lg italic text-center"
-                  style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}
+                  style={{ backgroundColor: "#703DFA", color: "white" }}
                 >
                   <p className="text-xs leading-relaxed">
                     "When we start, we are one person; months later, we are
@@ -921,18 +921,6 @@ export default function ProjectOfHeartPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Background Affirmations */}
-        <div className="fixed bottom-32 left-0 right-0 pointer-events-none">
-          <div className="max-w-md mx-auto px-4">
-            <p
-              className="text-center text-xs opacity-20 animate-pulse"
-              style={{ color: "#3D3D3D" }}
-            >
-              You are becoming your vision • Act from your heart • Love is your
-              superpower
-            </p>
-          </div>
-        </div>
         </div>
       </div>
 
