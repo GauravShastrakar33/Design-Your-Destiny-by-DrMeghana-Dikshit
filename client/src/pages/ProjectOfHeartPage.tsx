@@ -460,27 +460,27 @@ export default function ProjectOfHeartPage() {
               
               {/* Star Count Container */}
               <div 
-                className="relative flex items-center px-6 py-2 rounded-lg"
+                className="relative flex items-center px-4 py-1.5 rounded-lg"
                 style={{
                   background: "linear-gradient(135deg, #E8D5F8 0%, #D4C5F9 100%)",
-                  minWidth: "100px"
+                  minWidth: "80px"
                 }}
               >
                 <div 
-                  className="absolute -left-3 w-8 h-8 rounded-full flex items-center justify-center"
+                  className="absolute -left-3 w-10 h-10 rounded-full flex items-center justify-center"
                   style={{
                     background: "linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%)",
-                    border: "2px solid white"
+                    border: "3px solid white"
                   }}
                 >
                   <Star
-                    className="w-4 h-4"
+                    className="w-5 h-5"
                     style={{ color: "#FFFFFF" }}
                     fill="currentColor"
                   />
                 </div>
                 <p
-                  className="text-lg font-bold ml-4"
+                  className="text-base font-bold ml-4"
                   style={{ color: "#703DFA" }}
                   data-testid="text-stars-count"
                 >
