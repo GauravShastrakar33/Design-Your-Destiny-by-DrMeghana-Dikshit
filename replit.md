@@ -129,7 +129,12 @@ Preferred communication style: Simple, everyday language.
   - **Row 2**: Description text starting from left below icon: "Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between who you were and who you're rising to be." (text-xs, gray #6B7280)
 - **RIGHT COLUMN (30%)**:
   - Circular progress ring wrapping around a large gold star icon (w-12 h-12, ~48px)
-  - Star count below the progress ring (text-2xl, bold, dark #3D3D3D)
+  - Achievement badge container below the progress ring:
+    - Rectangular container with rounded corners (rounded-lg)
+    - Light purple gradient background (linear-gradient 135deg, #E8D5F8 to #D4C5F9)
+    - Circular star badge on left edge (overlapping container) with gold gradient background
+    - White star icon (w-5 h-5) inside circular badge with white border
+    - Star count number (text-lg, purple #703DFA) displayed next to the badge
   - Vertically stacked alignment with gap-3
 
 **Progress Ring Design**:
@@ -137,10 +142,17 @@ Preferred communication style: Simple, everyday language.
 - Big gold star icon centered inside the ring
 - Shows progress percentage based on stars earned (0-12 stars)
 
+**Achievement Badge Design**:
+- Game-like UI element similar to achievement displays
+- Purple gradient container matching app theme
+- Gold circular badge with star icon overlapping left edge
+- Clean, polished appearance with proper spacing
+
 **Removed Elements**:
 - Heart Chakra icon from header
 - "Keep glowing, Champion!" text
 - "Stars ✨" label text
+- Previous plain text star count display
 
 **Star Milestones Section**:
 - Remains unchanged below the two-column layout
