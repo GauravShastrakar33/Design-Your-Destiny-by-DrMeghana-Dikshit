@@ -252,30 +252,33 @@ export default function MyPracticePlaylistPage() {
 
   if (playlists.length === 0) {
     return (
-      <div className="min-h-screen bg-background pb-20">
+      <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
         <div className="max-w-md mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">My Practice Playlist</h1>
-          <p className="text-muted-foreground mb-8">
+          <h1 className="text-sm font-semibold text-gray-500 text-center mb-2" style={{ fontFamily: "Montserrat" }}>
+            MY PROCESSES
+          </h1>
+          <p className="text-muted-foreground mb-8 text-center">
             Your personalized practice collection
           </p>
 
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center space-y-4">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                <ListMusic className="w-10 h-10 text-primary" />
+              <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: "#F3F0FF" }}>
+                <ListMusic className="w-10 h-10" style={{ color: "#703DFA" }} />
               </div>
               <h2 className="text-xl font-semibold text-foreground">
-                No Playlists Yet
+                No Processes Yet
               </h2>
               <p className="text-muted-foreground max-w-xs">
-                Design your practice to create your custom playlist
+                Design your practice to create your custom process
               </p>
               <Button
                 onClick={() => setLocation("/design-practice")}
-                className="mt-4"
+                className="mt-4 border-0"
+                style={{ backgroundColor: "#703DFA" }}
                 data-testid="button-create-playlist"
               >
-                Create Your First Playlist
+                Create Your First Process
               </Button>
             </div>
           </div>
@@ -285,17 +288,20 @@ export default function MyPracticePlaylistPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">My Playlists</h1>
+        <div className="flex flex-col items-center mb-6 space-y-4">
+          <div className="text-center">
+            <h1 className="text-sm font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+              MY PROCESSES
+            </h1>
             <p className="text-sm text-muted-foreground">
-              {playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}
+              {playlists.length} {playlists.length === 1 ? 'process' : 'processes'}
             </p>
           </div>
           <Button
             onClick={() => setLocation("/design-practice")}
+            style={{ backgroundColor: "#703DFA" }}
             data-testid="button-new-playlist"
           >
             New Playlist
@@ -304,7 +310,7 @@ export default function MyPracticePlaylistPage() {
 
         <div className="space-y-3">
           {playlists.map((playlist) => (
-            <Card key={playlist.id} className="overflow-hidden" data-testid={`playlist-${playlist.id}`}>
+            <Card key={playlist.id} className="overflow-hidden bg-white" data-testid={`playlist-${playlist.id}`}>
               <button
                 onClick={() => setExpandedPlaylist(
                   expandedPlaylist === playlist.id ? null : playlist.id
@@ -312,8 +318,8 @@ export default function MyPracticePlaylistPage() {
                 className="w-full p-4 flex items-center gap-3 hover-elevate active-elevate-2"
                 data-testid={`button-expand-${playlist.id}`}
               >
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <ListMusic className="w-6 h-6 text-primary" />
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F3F0FF" }}>
+                  <ListMusic className="w-6 h-6" style={{ color: "#703DFA" }} />
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="font-semibold text-foreground">{playlist.name}</h3>
@@ -322,8 +328,8 @@ export default function MyPracticePlaylistPage() {
                   </p>
                   {playlist.reminderTime && (
                     <div className="flex items-center gap-1 mt-1">
-                      <Bell className="w-3 h-3 text-primary" />
-                      <span className="text-xs text-primary font-medium">
+                      <Bell className="w-3 h-3" style={{ color: "#703DFA" }} />
+                      <span className="text-xs font-medium" style={{ color: "#703DFA" }}>
                         {formatTime(playlist.reminderTime)}
                       </span>
                     </div>
@@ -353,8 +359,8 @@ export default function MyPracticePlaylistPage() {
                             className="flex items-center gap-2 text-sm text-foreground"
                             data-testid={`practice-item-${index}`}
                           >
-                            <div className="w-1.5 h-1.5 bg-primary rounded-full flex-shrink-0" />
-                            <span className={currentPlaylistId === playlist.id && currentTrackIndex === index ? "font-semibold text-primary" : "font-medium"}>
+                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#703DFA" }} />
+                            <span className={currentPlaylistId === playlist.id && currentTrackIndex === index ? "font-semibold" : "font-medium"} style={currentPlaylistId === playlist.id && currentTrackIndex === index ? { color: "#703DFA" } : undefined}>
                               {practice}
                             </span>
                           </div>
@@ -378,8 +384,8 @@ export default function MyPracticePlaylistPage() {
 
                       <div className="flex gap-2 pt-2">
                         <Button
-                          variant="outline"
-                          className="flex-1"
+                          className="flex-1 border-0"
+                          style={{ backgroundColor: "#703DFA", color: "white" }}
                           onClick={() => currentPlaylistId === playlist.id ? handleStopPlaylist() : handlePlayPlaylist(playlist.id)}
                           data-testid={`button-play-${playlist.id}`}
                         >
@@ -396,22 +402,22 @@ export default function MyPracticePlaylistPage() {
                           )}
                         </Button>
                         <Button
-                          variant="outline"
+                          className="bg-white border-0"
                           onClick={() => handleSetReminder(playlist)}
                           data-testid={`button-reminder-${playlist.id}`}
                         >
                           {playlist.reminderTime ? (
-                            <Bell className="w-4 h-4" fill="currentColor" />
+                            <Bell className="w-4 h-4" style={{ color: "#703DFA" }} fill="currentColor" />
                           ) : (
-                            <Bell className="w-4 h-4" />
+                            <Bell className="w-4 h-4" style={{ color: "#703DFA" }} />
                           )}
                         </Button>
                         <Button
-                          variant="outline"
+                          className="bg-white border-0"
                           onClick={() => setPlaylistToDelete(playlist.id)}
                           data-testid={`button-delete-${playlist.id}`}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" style={{ color: "#703DFA" }} />
                         </Button>
                       </div>
                     </div>
