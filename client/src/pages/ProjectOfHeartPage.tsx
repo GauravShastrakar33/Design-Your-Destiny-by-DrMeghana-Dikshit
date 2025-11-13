@@ -354,7 +354,7 @@ export default function ProjectOfHeartPage() {
           </div>
         </div>
 
-        <div className="px-4 py-6">
+        <div className="px-4 py-3">
 
         {/* Star Progress */}
         <Card
@@ -363,23 +363,7 @@ export default function ProjectOfHeartPage() {
             borderRadius: "1rem",
           }}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <p className="text-sm font-medium" style={{ color: "#6B7280" }}>
-                Your Growth
-              </p>
-              <p
-                className="text-2xl font-bold"
-                style={{ color: "#3D3D3D" }}
-                data-testid="text-stars-count"
-              >
-                {pohData.stars} Stars ✨
-              </p>
-              <p className="text-xs mt-1" style={{ color: "#9CA3AF" }}>
-                Keep glowing, Champion!
-              </p>
-            </div>
-
+          <div className="flex flex-col items-center mb-3">
             {/* Circular Progress */}
             <div className="relative w-24 h-24">
               <svg className="w-24 h-24 transform -rotate-90">
@@ -413,49 +397,38 @@ export default function ProjectOfHeartPage() {
                 />
               </div>
             </div>
+            
+            {/* Stars count below icon */}
+            <div className="text-center mt-2">
+              <p
+                className="text-2xl font-bold"
+                style={{ color: "#3D3D3D" }}
+                data-testid="text-stars-count"
+              >
+                {pohData.stars} Stars ✨
+              </p>
+              <p className="text-xs mt-1" style={{ color: "#9CA3AF" }}>
+                Keep glowing, Champion!
+              </p>
+            </div>
           </div>
 
           {/* Star Milestones */}
           <div className="space-y-1 text-xs" style={{ color: "#6B7280" }}>
-            <div className="flex items-center gap-2">
-              {pohData.vision ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              ) : (
-                <div className="w-4 h-4 rounded-full border border-gray-300" />
-              )}
-              <span>Set POH → ⭐</span>
+            <div>
+              <span>Set PROJECT OF HEART</span>
             </div>
-            <div className="flex items-center gap-2">
-              {pohData.cycles.cycle1?.completed ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              ) : (
-                <div className="w-4 h-4 rounded-full border border-gray-300" />
-              )}
-              <span>Complete Cycle 1 → ⭐⭐</span>
+            <div>
+              <span>"You showed up for yourself." 4 stars</span>
             </div>
-            <div className="flex items-center gap-2">
-              {pohData.cycles.cycle2?.completed ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              ) : (
-                <div className="w-4 h-4 rounded-full border border-gray-300" />
-              )}
-              <span>Complete Cycle 2 → ⭐⭐</span>
+            <div>
+              <span>"You stayed consistent." 8 stars</span>
             </div>
-            <div className="flex items-center gap-2">
-              {pohData.cycles.cycle3?.completed ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              ) : (
-                <div className="w-4 h-4 rounded-full border border-gray-300" />
-              )}
-              <span>Complete Cycle 3 → ⭐⭐</span>
+            <div>
+              <span>"You transformed." 12 stars</span>
             </div>
-            <div className="flex items-center gap-2">
-              {pohData.selfEvaluation?.completed ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              ) : (
-                <div className="w-4 h-4 rounded-full border border-gray-300" />
-              )}
-              <span>Self-Evaluation → 🏅 Golden Star</span>
+            <div>
+              <span>Self Evaluate Golden Star</span>
             </div>
           </div>
         </Card>
