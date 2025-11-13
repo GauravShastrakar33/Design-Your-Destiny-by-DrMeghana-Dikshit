@@ -202,7 +202,7 @@ export default function HomePage() {
           <div
             className="rounded-2xl p-4 shadow-md relative mt-6"
             style={{
-              background: 'linear-gradient(to bottom right, #B9963B, #D4B45A, #E8D084)'
+              background: 'linear-gradient(to bottom right, #703DFA, #B9963B)'
             }}
             data-testid="card-quote"
           >
