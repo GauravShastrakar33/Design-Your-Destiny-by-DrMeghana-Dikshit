@@ -467,14 +467,14 @@ export default function ProjectOfHeartPage() {
                 }}
               >
                 <div 
-                  className="absolute -left-3 w-10 h-10 rounded-full flex items-center justify-center"
+                  className="absolute -left-3 w-8 h-8 rounded-full flex items-center justify-center"
                   style={{
                     background: "linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%)",
-                    border: "3px solid white"
+                    border: "2px solid white"
                   }}
                 >
                   <Star
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     style={{ color: "#FFFFFF" }}
                     fill="currentColor"
                   />
