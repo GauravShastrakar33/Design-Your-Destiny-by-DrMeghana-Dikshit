@@ -7,7 +7,6 @@ import {
   Calendar,
   Star,
   Award,
-  CheckCircle2,
   ArrowLeft,
 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -414,21 +413,24 @@ export default function ProjectOfHeartPage() {
           </div>
 
           {/* Star Milestones */}
-          <div className="space-y-1 text-xs" style={{ color: "#6B7280" }}>
-            <div>
-              <span>Set PROJECT OF HEART</span>
+          <div className="space-y-2 text-sm" style={{ color: "#6B7280" }}>
+            <div className="flex flex-col">
+              <span className="font-medium" style={{ color: "#3D3D3D" }}>Set PROJECT OF HEART</span>
             </div>
-            <div>
-              <span>"You showed up for yourself." 4 stars</span>
+            <div className="flex flex-col">
+              <span className="italic font-medium" style={{ color: "#703DFA" }}>"You showed up for yourself."</span>
+              <span className="text-xs">4 stars</span>
             </div>
-            <div>
-              <span>"You stayed consistent." 8 stars</span>
+            <div className="flex flex-col">
+              <span className="italic font-medium" style={{ color: "#703DFA" }}>"You stayed consistent."</span>
+              <span className="text-xs">8 stars</span>
             </div>
-            <div>
-              <span>"You transformed." 12 stars</span>
+            <div className="flex flex-col">
+              <span className="italic font-medium" style={{ color: "#703DFA" }}>"You transformed."</span>
+              <span className="text-xs">12 stars</span>
             </div>
-            <div>
-              <span>Self Evaluate Golden Star</span>
+            <div className="flex flex-col">
+              <span className="font-medium" style={{ color: "#3D3D3D" }}>Self Evaluate Golden Star</span>
             </div>
           </div>
         </Card>
@@ -879,7 +881,7 @@ export default function ProjectOfHeartPage() {
                     className="p-4 rounded-lg"
                     style={{ backgroundColor: "#F0FDF4" }}
                   >
-                    <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
+                    <Award className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
                     <p
                       className="font-semibold mb-1"
                       style={{ color: "#3D3D3D" }}
