@@ -53,6 +53,44 @@ Preferred communication style: Simple, everyday language.
 - **JOIN Button**: Larger size (px-4 py-2, text-sm), purple gradient, shows only on live sessions
 - **Visual Styling**: White cards, rounded corners, subtle borders, reduced spacing for compact appearance
 
+### Project of Heart Page Theme Update (November 2025)
+
+**Header Section**:
+- **Background**: White with back button for navigation
+- **Title**: "PROJECT OF HEART" in Montserrat font (all caps, grey text-gray-500)
+- **Layout**: Centered title with back button on left
+
+**Page Background**:
+- **Color**: Standardized to #F3F3F3 to match homepage and other pages
+
+**Special Preservation**:
+- **Heart Chakra**: Green heart chakra theme (#A8E6CF) intentionally preserved for heart icon and related elements
+
+**Tabs System**:
+- **Style**: Rectangular with rounded corners (matching Workshops page)
+- **Active Tab**: Purple background (#703DFA) with white text
+- **Inactive Tabs**: Light purple background (#F3F0FF) with grey text
+
+**Cards**:
+- **Background**: White with subtle borders
+- **Styling**: Clean, consistent cards across all tabs (Vision, Journey, Reflect)
+
+**Button Color Scheme**:
+- **Primary CTAs**: Yellow (#E5AC19) with dark text (#0D131F)
+  - "Set Vision & Earn ⭐"
+  - "Begin Self-Evaluation"
+  - "Start Your Journey"
+  - "Commit to Action"
+  - "Complete Reflection & Earn 🏅"
+- **Secondary Actions**: Purple (#703DFA) with white text
+  - "Save Reflection"
+  - Edit buttons (ghost variant)
+
+**Typography**:
+- **Headings**: Dark color (#3D3D3D) using Playfair Display for quotes
+- **Body Text**: Medium grey (#6B7280) for secondary information
+- **Labels**: Light grey for form labels and metadata
+
 ## System Architecture
 
 ### Frontend Architecture
