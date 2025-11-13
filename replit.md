@@ -125,10 +125,8 @@ Preferred communication style: Simple, everyday language.
 
 **Two-Column Layout**:
 - **LEFT COLUMN (70%)**:
-  - Glowing Heart Chakra icon (green, animated pulse)
-  - Title: "Heart Chakra – Anahata 💚" (bold, dark #3D3D3D)
-  - Description: "Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between physical and spiritual growth." (text-xs, gray #6B7280)
-  - Left-aligned, flex layout with icon and text
+  - **Row 1**: Darker glowing Heart Chakra icon (#00C853, bigger w-12 h-12, animated pulse) + Title "Heart Chakra – Anahata" on same line
+  - **Row 2**: Description text starting from left below icon: "Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between who you were and who you're rising to be." (text-xs, gray #6B7280)
 - **RIGHT COLUMN (30%)**:
   - Circular progress ring wrapping around a large gold star icon (w-12 h-12, ~48px)
   - Star count below the progress ring (text-2xl, bold, dark #3D3D3D)

@@ -340,33 +340,34 @@ export default function ProjectOfHeartPage() {
           {/* Two-Column Layout: Chakra Info + Star Count */}
           <div className="flex gap-4 mb-6">
             {/* LEFT SIDE (70%) - Heart Chakra Info */}
-            <div className="flex-[7] flex items-start gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse"
-                style={{
-                  background: "radial-gradient(circle, #A8E6CF 0%, transparent 70%)",
-                }}
-              >
-                <Heart
-                  className="w-6 h-6"
-                  style={{ color: "#A8E6CF" }}
-                  fill="currentColor"
-                />
-              </div>
-              <div className="flex-1">
+            <div className="flex-[7]">
+              <div className="flex items-center gap-3 mb-2">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse"
+                  style={{
+                    background: "radial-gradient(circle, #00C853 0%, transparent 70%)",
+                  }}
+                >
+                  <Heart
+                    className="w-7 h-7"
+                    style={{ color: "#00C853" }}
+                    fill="currentColor"
+                  />
+                </div>
                 <h4 
-                  className="font-bold text-base mb-1" 
+                  className="font-bold text-base" 
                   style={{ color: "#3D3D3D" }}
                 >
-                  Heart Chakra – Anahata 💚
+                  Heart Chakra – Anahata
                 </h4>
-                <p 
-                  className="text-xs leading-relaxed" 
-                  style={{ color: "#6B7280" }}
-                >
-                  Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between physical and spiritual growth.
-                </p>
               </div>
+              <p 
+                className="text-xs leading-relaxed" 
+                style={{ color: "#6B7280" }}
+              >
+                Center of Love, Balance, and Purpose.<br />
+                Your Project of Heart aligns with the bridge between who you were and who you're rising to be.
+              </p>
             </div>
 
             {/* RIGHT SIDE (30%) - Progress Ring Around Star */}
