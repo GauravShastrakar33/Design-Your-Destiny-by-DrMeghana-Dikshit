@@ -60,7 +60,7 @@ const upcomingMasterclasses: UpcomingMasterclass[] = [
     startTime: new Date("2025-10-25T18:00:00"),
     endTime: new Date("2025-10-25T20:00:00"),
     zoomLink: "https://zoom.us/j/example1",
-    thumbnail: "/workshopsimg/ic9.jpg",
+    thumbnail: "/workshopsimg/InnerCircleCall.png",
     isLive: true,
   },
   {
@@ -72,7 +72,7 @@ const upcomingMasterclasses: UpcomingMasterclass[] = [
     startTime: new Date("2025-10-28T18:00:00"),
     endTime: new Date("2025-10-28T20:00:00"),
     zoomLink: "https://zoom.us/j/example2",
-    thumbnail: "/workshopsimg/SC2.jpg",
+    thumbnail: "/workshopsimg/SoulConnectionMasterclass.png",
     isLive: false,
   },
   {
@@ -84,7 +84,7 @@ const upcomingMasterclasses: UpcomingMasterclass[] = [
     startTime: new Date("2025-11-08T18:00:00"),
     endTime: new Date("2025-11-08T20:00:00"),
     zoomLink: "https://zoom.us/j/example3",
-    thumbnail: "/workshopsimg/MM2.jpg",
+    thumbnail: "/workshopsimg/ManifestationMastery.png",
     isLive: false,
   },
 ];
@@ -93,7 +93,7 @@ const latestVideos: Video[] = [
   {
     id: "1",
     title: "Money Mastery",
-    thumbnail: "/workshopsimg/MoneyMa.jpg",
+    thumbnail: "/workshopsimg/MoneyMastery.png",
     uploadDate: "28 Oct 2025",
     isCollection: false,
     url: "/WealthCodeActivation2.mp4",
@@ -105,7 +105,7 @@ const latestVideos: Video[] = [
   {
     id: "2",
     title: "Influence Mastery",
-    thumbnail: "/workshopsimg/IM.jpg",
+    thumbnail: "/workshopsimg/InfluenceMastery.png",
     uploadDate: "15 Oct 2025",
     isCollection: false,
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -116,7 +116,7 @@ const latestVideos: Video[] = [
   {
     id: "3",
     title: "Inner Circle Call — Turning Setbacks into Success",
-    thumbnail: "/workshopsimg/ic9.jpg",
+    thumbnail: "/workshopsimg/InnerCircleCall.png",
     uploadDate: "18 Oct 2025",
     isCollection: false,
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -128,7 +128,7 @@ const latestVideos: Video[] = [
   {
     id: "4",
     title: "Vibration Downloads",
-    thumbnail: "/workshopsimg/VD1.jpg",
+    thumbnail: "/workshopsimg/VibrationDownloads.png",
     uploadDate: "12 Oct 2025",
     isCollection: false,
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -142,7 +142,7 @@ const dydCourses: Course[] = [
   {
     id: "dyd-14",
     title: "DYD 14",
-    thumbnail: "/workshopsimg/DYD.jpg",
+    thumbnail: "/workshopsimg/DesignYourDestiny.png",
     year: "July 2025",
     type: "dyd",
     isCollection: true,
@@ -153,7 +153,7 @@ const usmCourses: Course[] = [
   {
     id: "usm-march",
     title: "USM",
-    thumbnail: "/workshopsimg/USM.jpg",
+    thumbnail: "/workshopsimg/UltimateSuccessMastery.png",
     year: "March 2025",
     type: "usm",
     isCollection: true,
@@ -164,7 +164,7 @@ const uscCourses: Course[] = [
   {
     id: "usc-march",
     title: "USC",
-    thumbnail: "/workshopsimg/USC.jpg",
+    thumbnail: "/workshopsimg/UltimateSuccessChampion.png",
     year: "March 2025",
     type: "usc",
     isCollection: true,
@@ -175,7 +175,7 @@ const usbCourses: Course[] = [
   {
     id: "usb-feb",
     title: "USB",
-    thumbnail: "/workshopsimg/USB.jpg",
+    thumbnail: "/workshopsimg/UltimateSuccessBuilder.png",
     year: "February 2025",
     type: "usb",
     isCollection: true,
