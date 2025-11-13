@@ -480,7 +480,7 @@ export default function ProjectOfHeartPage() {
                   />
                 </div>
                 <p
-                  className="text-base font-bold ml-4"
+                  className="text-base font-bold ml-6"
                   style={{ color: "#703DFA" }}
                   data-testid="text-stars-count"
                 >
