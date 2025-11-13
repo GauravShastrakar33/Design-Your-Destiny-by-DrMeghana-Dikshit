@@ -328,7 +328,7 @@ export default function ProjectOfHeartPage() {
           </div>
         </div>
 
-        <div className="px-4 py-3">
+        <div className="px-4 py-2">
 
         {/* Star Progress */}
         <Card
@@ -338,7 +338,7 @@ export default function ProjectOfHeartPage() {
           }}
         >
           {/* Two-Column Layout: Chakra Info + Star Count */}
-          <div className="flex gap-4 mb-6">
+          <div className="flex gap-2 mb-4">
             {/* LEFT SIDE (70%) - Heart Chakra Info */}
             <div className="flex-[7]">
               <div className="flex items-center gap-3 mb-2">
@@ -491,17 +491,17 @@ export default function ProjectOfHeartPage() {
           </div>
 
           {/* Star Milestones */}
-          <div className="space-y-3 text-sm" style={{ color: "#6B7280" }}>
+          <div className="space-y-1.5 text-xs" style={{ color: "#6B7280" }}>
             <div className="flex items-start gap-2">
               <div className="mt-0.5">
                 {pohData.stars >= 1 ? (
-                  <div className="w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
-                    <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
+                    <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
                       <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                 ) : (
-                  <div className="w-5 h-5 rounded border-2" style={{ borderColor: "#D1D5DB" }}></div>
+                  <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: "#D1D5DB" }}></div>
                 )}
               </div>
               <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐ Set Project of Heart — Your first star begins here.</span>
@@ -510,13 +510,13 @@ export default function ProjectOfHeartPage() {
             <div className="flex items-start gap-2">
               <div className="mt-0.5">
                 {pohData.stars >= 2 ? (
-                  <div className="w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
-                    <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
+                    <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
                       <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                 ) : (
-                  <div className="w-5 h-5 rounded border-2" style={{ borderColor: "#D1D5DB" }}></div>
+                  <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: "#D1D5DB" }}></div>
                 )}
               </div>
               <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐⭐ Cycle 1 — You took the first step.</span>
@@ -525,13 +525,13 @@ export default function ProjectOfHeartPage() {
             <div className="flex items-start gap-2">
               <div className="mt-0.5">
                 {pohData.stars >= 4 ? (
-                  <div className="w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
-                    <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
+                    <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
                       <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                 ) : (
-                  <div className="w-5 h-5 rounded border-2" style={{ borderColor: "#D1D5DB" }}></div>
+                  <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: "#D1D5DB" }}></div>
                 )}
               </div>
               <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐⭐⭐⭐ Cycle 2 — You stayed consistent.</span>
@@ -540,13 +540,13 @@ export default function ProjectOfHeartPage() {
             <div className="flex items-start gap-2">
               <div className="mt-0.5">
                 {pohData.stars >= 6 ? (
-                  <div className="w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
-                    <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
+                    <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
                       <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                 ) : (
-                  <div className="w-5 h-5 rounded border-2" style={{ borderColor: "#D1D5DB" }}></div>
+                  <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: "#D1D5DB" }}></div>
                 )}
               </div>
               <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐⭐⭐⭐⭐⭐ Cycle 3 — You grew stronger.</span>
