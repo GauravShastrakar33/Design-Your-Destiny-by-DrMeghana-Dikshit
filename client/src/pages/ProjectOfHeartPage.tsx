@@ -308,7 +308,7 @@ export default function ProjectOfHeartPage() {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
+          <div className="px-4 py-4 flex items-center justify-between">
             <button
               onClick={() => setLocation("/")}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
@@ -317,11 +317,12 @@ export default function ProjectOfHeartPage() {
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
             <h1
-              className="text-base font-semibold text-gray-500 text-center flex-1"
+              className="text-base font-semibold text-gray-500 absolute left-1/2 transform -translate-x-1/2"
               style={{ fontFamily: "Montserrat" }}
             >
               PROJECT OF HEART
             </h1>
+            <div className="w-10"></div>
           </div>
         </div>
 
