@@ -290,7 +290,13 @@ export default function ProfilePage() {
 
       // 4️⃣ PRE-STREAK MIX LOGIC
       const seed = parseInt(day.date.replaceAll("-", ""));
-      if (seed % 3 === 0 || seed % 5 === 0) {
+
+      if (day.date.endsWith("-31")) {
+        day.status = "neutral"; // or "missed"
+        return;
+      }
+
+      if (seed % 3 === 0 || seed % 7 === 0) {
         day.status = "streak"; // green
       } else {
         day.status = "missed"; // red
