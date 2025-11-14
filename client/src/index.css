@@ -68,6 +68,10 @@
 
   --destructive-foreground: 0 72% 98%;
 
+  --brand-purple: 253 95% 61%;
+
+  --brand-purple-foreground: 0 0% 100%;
+
   --input: 210 5% 72%;
   --ring: 195 85% 42%;
   --chart-1: 195 85% 42%;
@@ -120,6 +124,10 @@
   /* Fallback for older browsers */
   --destructive-border: hsl(var(--destructive));
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --brand-purple-border: hsl(var(--brand-purple));
+  --brand-purple-border: hsl(from hsl(var(--brand-purple)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
 .dark {
@@ -185,6 +193,10 @@
   --destructive: 0 72% 48%;
 
   --destructive-foreground: 0 72% 98%;
+
+  --brand-purple: 253 95% 61%;
+
+  --brand-purple-foreground: 0 0% 100%;
 
   --input: 210 5% 32%;
   --ring: 195 85% 48%;

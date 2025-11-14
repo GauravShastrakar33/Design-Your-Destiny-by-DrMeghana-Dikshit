@@ -33,12 +33,12 @@ export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, 
         className="w-full p-4 flex items-center gap-3 hover-elevate active-elevate-2"
         data-testid={`button-expand-${title.toLowerCase().replace(/\s+/g, '-')}`}
       >
-        <Icon className="w-6 h-6 flex-shrink-0" style={{ color: "#703DFA" }} />
+        <Icon className="w-6 h-6 flex-shrink-0 text-brand" />
         <span className="flex-1 text-left font-medium text-gray-900">{title}</span>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5" style={{ color: "#703DFA" }} />
+          <ChevronUp className="w-5 h-5 text-brand" />
         ) : (
-          <ChevronDown className="w-5 h-5" style={{ color: "#703DFA" }} />
+          <ChevronDown className="w-5 h-5 text-brand" />
         )}
       </button>
 

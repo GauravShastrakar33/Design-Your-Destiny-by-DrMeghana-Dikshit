@@ -90,6 +90,11 @@ export default {
           foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
           border: "var(--destructive-border)",
         },
+        brand: {
+          DEFAULT: "hsl(var(--brand-purple) / <alpha-value>)",
+          foreground: "hsl(var(--brand-purple-foreground) / <alpha-value>)",
+          border: "var(--brand-purple-border)",
+        },
         ring: "hsl(var(--ring) / <alpha-value>)",
         chart: {
           "1": "hsl(var(--chart-1) / <alpha-value>)",

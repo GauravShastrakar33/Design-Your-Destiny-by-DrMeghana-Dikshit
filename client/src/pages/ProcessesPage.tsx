@@ -89,10 +89,10 @@ export default function ProcessesPage() {
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
         <div className="sticky top-0 bg-white border-b z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
+          <div className="px-4 py-4 flex items-center justify-center relative">
             <button
               onClick={() => setLocation("/")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
+              className="absolute left-4 hover-elevate active-elevate-2 rounded-lg p-2"
               data-testid="button-back"
             >
               <ArrowLeft className="w-6 h-6 text-gray-500" />
@@ -109,12 +109,9 @@ export default function ProcessesPage() {
                   onClick={() => setSelectedCategory(option as "DYD" | "USM")}
                   className={`flex-1 px-6 py-2 text-sm font-medium rounded-md transition-colors ${
                     selectedCategory === option
-                      ? "text-white"
+                      ? "bg-brand text-brand-foreground"
                       : "text-gray-600 hover-elevate"
                   }`}
-                  style={{
-                    backgroundColor: selectedCategory === option ? "#703DFA" : "transparent",
-                  }}
                   data-testid={`segment-${option.toLowerCase()}`}
                 >
                   {option}
@@ -158,15 +155,13 @@ export default function ProcessesPage() {
                         data-testid={`category-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                       >
                         <div className="flex items-center gap-3">
-                          <Icon className="w-6 h-6 flex-shrink-0" style={{ color: "#703DFA" }} />
+                          <Icon className="w-6 h-6 flex-shrink-0 text-brand" />
                           <span className="font-semibold text-gray-900">{item.title}</span>
                         </div>
                         <ChevronDown
-                          className="w-5 h-5 transition-transform duration-200"
-                          style={{
-                            color: "#703DFA",
-                            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-                          }}
+                          className={`w-5 h-5 text-brand transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : "rotate-0"
+                          }`}
                         />
                       </div>
                     </CollapsibleTrigger>

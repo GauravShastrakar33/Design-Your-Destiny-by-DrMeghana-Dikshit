@@ -16,7 +16,7 @@ export default function SegmentedControl({ options, selected, onChange, testId }
           onClick={() => onChange(option)}
           className={`flex-1 relative px-6 py-2 text-sm font-medium transition-colors rounded-full ${
             selected === option
-              ? "text-foreground"
+              ? "text-brand-foreground"
               : "text-muted-foreground hover-elevate"
           }`}
           data-testid={`segment-${option.toLowerCase()}`}
@@ -24,7 +24,7 @@ export default function SegmentedControl({ options, selected, onChange, testId }
           {selected === option && (
             <motion.div
               layoutId="segmented-control"
-              className="absolute inset-0 bg-background rounded-full border border-border"
+              className="absolute inset-0 bg-brand rounded-full"
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
             />
           )}
