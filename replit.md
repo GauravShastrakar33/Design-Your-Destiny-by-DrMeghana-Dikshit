@@ -57,11 +57,12 @@ Preferred communication style: Simple, everyday language.
 
 **Workshops Page**: "MASTERCLASSES" header (Montserrat, grey), rectangular tab system (purple active, light purple inactive). Enhanced masterclass cards with `subtitle`, `endTime`, `isLive`, improved thumbnail sizing, "LIVE" badge, larger typography, and larger purple gradient "JOIN" button.
 
-**Profile Page** (Updated November 2025): Violet-themed design (#703DFA primary color) with white background. Features reordered sections: Profile Card → Streak Calendar → AI Insights → My Prescription → Settings.
+**Profile Page** (Updated November 2025): Clean design with light gray page background (#F3F3F3) and white cards. Purple accent color (#703DFA) for icons. Features reordered sections: Profile Card → Streak Calendar → AI Insights → My Prescription → Settings.
+- **Page Background**: Light gray (#F3F3F3) creating contrast with white cards
 - **Profile Card**: Full-width gradient background with centered content (max-w-md), reduced padding (py-4), bold "PROFILE" header (text-xl, Montserrat font), Playfair_Display font for karmic affirmation quote
-- **AI Insights Card**: Solid violet background (#703DFA), uppercase title left-aligned, Sparkles icon right, description below, full card clickable with navigation to /ai-insights, ChevronRight indicator
-- **My Prescription Card**: Light purple background (#F3F0FF), uppercase title left-aligned in violet, Heart icon right in violet, description below, expandable/collapsible to show/hide prescription details (Morning/Afternoon/Evening practices), ChevronDown indicator rotates on toggle
-- **Settings Card**: Light purple background (#F3F0FF), uppercase title left-aligned in violet, Settings icon right in violet, all options visible by default (Account, Notifications, Get Support, Logout), only Account submenu expandable with reset options
+- **AI Insights Card**: White background, black title (uppercase, left-aligned), dark gray description, purple Sparkles icon right, full card clickable with navigation to /ai-insights, gray ChevronRight indicator
+- **My Prescription Card**: White background, black title (uppercase, left-aligned), dark gray description, purple Heart icon right, expandable/collapsible to show/hide prescription details (Morning/Afternoon/Evening practices), purple ChevronDown indicator rotates on toggle
+- **Settings Card**: White background, black title (uppercase, left-aligned), dark gray description, purple Settings icon right, all options visible by default (Account, Notifications, Get Support, Logout), only Account submenu expandable with reset options. All icons purple except Logout (red)
 
 **Project of Heart Page**: White background with "PROJECT OF HEART" title. Heart Chakra theme (#A8E6CF) preserved for specific elements. Rectangular tab system. White cards with subtle borders. Yellow primary CTAs (#E5AC19) and purple secondary actions. Typography uses Playfair Display for quotes.
 - **Journey Tab**: "Start Your Journey" button features reduced height (size="sm"), 92% width (w-11/12), centered with mx-auto, yellow background (#E5AC19), rounded pill shape
