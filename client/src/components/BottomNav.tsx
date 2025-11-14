@@ -1,5 +1,6 @@
 import { Home, BookOpen, Bot, Heart, User } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import chatIcon from "@assets/chat icon_1763078697186.png";
 
 interface NavItem {
   path: string;
@@ -33,12 +34,22 @@ export default function BottomNav() {
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 <button className="flex flex-col items-center justify-center min-w-[60px] py-1 hover-elevate active-elevate-2 rounded-lg px-2">
-                  <Icon
-                    className={`w-6 h-6 ${
-                      isActive ? "text-[#703DFA]" : "text-[#703DFA] opacity-50"
-                    }`}
-                    fill={isActive ? "currentColor" : "none"}
-                  />
+                  {item.label === "Dr.M" ? (
+                    <img
+                      src={chatIcon}
+                      alt="Dr.M"
+                      className={`w-6 h-6 ${
+                        isActive ? "opacity-100" : "opacity-50"
+                      }`}
+                    />
+                  ) : (
+                    <Icon
+                      className={`w-6 h-6 ${
+                        isActive ? "text-[#703DFA]" : "text-[#703DFA] opacity-50"
+                      }`}
+                      fill={isActive ? "currentColor" : "none"}
+                    />
+                  )}
                   <span
                     className={`text-xs mt-1 ${
                       isActive ? "font-semibold text-gray-900" : "font-medium text-gray-600"
