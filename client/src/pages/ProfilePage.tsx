@@ -225,15 +225,16 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        {/* PROFILE Header */}
-        <h1 className="text-center text-gray-500 text-sm tracking-[0.3em] font-['Montserrat'] uppercase mb-4">
+      {/* White Header Section */}
+      <div className="bg-white border-b py-4">
+        <h1 className="text-center font-bold text-foreground text-lg">
           PROFILE
         </h1>
+      </div>
 
-        {/* Profile Card */}
-        <Card className="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-50 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-amber-950/30 border-purple-200/50 dark:border-purple-800/30 shadow-lg">
-          <CardContent className="p-6">
+      {/* Profile Card - Full Width */}
+      <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-50 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-amber-950/30 border-b border-purple-200/50 dark:border-purple-800/30">
+        <div className="max-w-md mx-auto px-4 py-6">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
                 GS
@@ -257,9 +258,11 @@ export default function ProfilePage() {
                 grace and courage."
               </p>
             </div>
-          </CardContent>
-        </Card>
+        </div>
+      </div>
 
+      {/* Other Cards Container */}
+      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         {/* Streak Tracker */}
         <Card className="bg-white border shadow-sm rounded-xl">
           <CardContent className="p-6">
