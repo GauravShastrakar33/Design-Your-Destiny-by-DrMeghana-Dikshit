@@ -245,19 +245,18 @@ export default function ProfilePage() {
       <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-50 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-amber-950/30 border-b border-purple-200/50 dark:border-purple-800/30 mt-2">
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
-              GS
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
+              UN
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-foreground">
-                Gaurav Shastrakar
-              </h2>
+              <h2 className="text-2xl font-bold text-foreground">UserName</h2>
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-lg text-muted-foreground mb-2">
+            <p className="text-lg text-muted-foreground mb-2 text-center">
               My Karmic Affirmation
             </p>
+
             <p
               className="text-foreground font-['Playfair_Display'] text-base sm:text-lg leading-relaxed tracking-wide"
               data-testid="text-affirmation"
@@ -346,7 +345,7 @@ export default function ProfilePage() {
                 <div className="mt-4 text-left">
                   <p className="text-sm text-gray-500 tracking-wide">
                     BEST STREAK ----&gt;{" "}
-                    <span className="text-green-600 font-semibold">
+                    <span className="text-green-600 font-semibold ml-3">
                       {bestStreak} Days
                     </span>
                   </p>

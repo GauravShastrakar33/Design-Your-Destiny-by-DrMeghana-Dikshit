@@ -214,7 +214,7 @@ export default function ProjectOfHeartPage() {
     let newStars = pohData.stars;
     if (allWeeksCompleted && !pohData.cycles[cycleKey]?.completed) {
       updatedCycles[cycleKey].completed = true;
-      
+
       // Award stars based on which cycle is completed
       let starsToAward = selectedCycle === 1 ? 1 : 2; // Cycle 1: +1 star, Cycles 2&3: +2 stars
       newStars += starsToAward;
@@ -321,7 +321,10 @@ export default function ProjectOfHeartPage() {
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
             <div className="flex-1 text-center">
-              <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+              <h1
+                className="text-base font-semibold text-gray-500"
+                style={{ fontFamily: "Montserrat" }}
+              >
                 PROJECT OF HEART
               </h1>
             </div>
@@ -330,277 +333,755 @@ export default function ProjectOfHeartPage() {
         </div>
 
         <div className="px-4 py-2">
-
-        {/* Star Progress */}
-        <Card
-          className="mb-3 p-4 shadow-md bg-white"
-          style={{
-            borderRadius: "1rem",
-          }}
-        >
-          {/* Two-Column Layout: Chakra Info + Star Count */}
-          <div className="flex gap-2 mb-4">
-            {/* LEFT SIDE (70%) - Heart Chakra Info */}
-            <div className="flex-[7]">
-              <div className="flex items-center gap-3 mb-2">
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{
-                    background: "radial-gradient(circle, #00C853 0%, transparent 70%)",
-                  }}
-                >
-                  <svg
-                    className="w-12 h-12"
-                    viewBox="0 0 200 200"
-                    fill="none"
-                  >
-                    {/* 12 Symmetrically Rotated Lotus Petals */}
-                    <g stroke="#5FB77D" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                      {/* Each petal is rotated 30 degrees from the previous one */}
-                      <g transform="rotate(0 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(30 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(60 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(90 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(120 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(150 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(180 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(210 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(240 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(270 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(300 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                      <g transform="rotate(330 100 100)">
-                        <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                      </g>
-                    </g>
-                    
-                    {/* Central Circle */}
-                    <circle cx="100" cy="100" r="45" stroke="#5FB77D" strokeWidth="3.5" fill="none" />
-                    
-                    {/* Star of David - Two Overlapping Triangles */}
-                    <g stroke="#5FB77D" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                      {/* Upward Triangle */}
-                      <path d="M 100 70 L 125 120 L 75 120 Z" />
-                      {/* Downward Triangle */}
-                      <path d="M 100 130 L 75 80 L 125 80 Z" />
-                    </g>
-                  </svg>
-                </div>
-                <h4 
-                  className="font-bold text-base" 
-                  style={{ color: "#3D3D3D" }}
-                >
-                  Heart Chakra – Anahata
-                </h4>
-              </div>
-              <p 
-                className="text-xs leading-relaxed" 
-                style={{ color: "#6B7280" }}
-              >
-                Center of Love, Balance, and Purpose.<br />
-                Your Project of Heart aligns with the bridge between who you were and who you're rising to be.
-              </p>
-            </div>
-
-            {/* RIGHT SIDE (30%) - Progress Ring Around Star */}
-            <div className="flex-[3] flex flex-col items-center justify-center gap-3">
-              {/* Circular Progress with Star in Center */}
-              <div className="relative w-24 h-24">
-                <svg className="w-24 h-24 transform -rotate-90">
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="42"
-                    stroke="#F9C5BD"
-                    strokeWidth="6"
-                    fill="none"
-                    opacity="0.2"
-                  />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="42"
-                    stroke="#FDE68A"
-                    strokeWidth="6"
-                    fill="none"
-                    strokeDasharray={`${2 * Math.PI * 42}`}
-                    strokeDashoffset={`${2 * Math.PI * 42 * (1 - Math.min(progressPercentage, 100) / 100)}`}
-                    strokeLinecap="round"
-                    className="transition-all duration-500"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Star
-                    className="w-12 h-12"
-                    style={{ color: "#FDE68A" }}
-                    fill="currentColor"
-                  />
-                </div>
-              </div>
-              
-              {/* Star Count Container */}
-              <div 
-                className="relative flex items-center px-4 py-1.5 rounded-lg"
-                style={{
-                  background: "linear-gradient(135deg, #E8D5F8 0%, #D4C5F9 100%)",
-                  minWidth: "80px"
-                }}
-              >
-                <div 
-                  className="absolute -left-3 w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%)",
-                    border: "3px solid white"
-                  }}
-                >
-                  <Star
-                    className="w-5 h-5"
-                    style={{ color: "#FFFFFF" }}
-                    fill="currentColor"
-                  />
-                </div>
-                <p
-                  className="text-base font-bold ml-6"
-                  style={{ color: "#703DFA" }}
-                  data-testid="text-stars-count"
-                >
-                  {pohData.stars}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Star Milestones */}
-          <div className="space-y-1.5 text-xs" style={{ color: "#6B7280" }}>
-            <div className="flex items-start gap-2">
-              <div className="mt-0.5">
-                {pohData.stars >= 1 ? (
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
-                    <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: "#D1D5DB" }}></div>
-                )}
-              </div>
-              <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐ Set Project of Heart — Your first star begins here.</span>
-            </div>
-            
-            <div className="flex items-start gap-2">
-              <div className="mt-0.5">
-                {pohData.stars >= 2 ? (
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
-                    <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: "#D1D5DB" }}></div>
-                )}
-              </div>
-              <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐⭐ Cycle 1 — You took the first step.</span>
-            </div>
-            
-            <div className="flex items-start gap-2">
-              <div className="mt-0.5">
-                {pohData.stars >= 4 ? (
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
-                    <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: "#D1D5DB" }}></div>
-                )}
-              </div>
-              <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐⭐⭐⭐ Cycle 2 — You stayed consistent.</span>
-            </div>
-            
-            <div className="flex items-start gap-2">
-              <div className="mt-0.5">
-                {pohData.stars >= 6 ? (
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
-                    <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M2 6 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: "#D1D5DB" }}></div>
-                )}
-              </div>
-              <span className="font-medium" style={{ color: "#3D3D3D" }}>⭐⭐⭐⭐⭐⭐ Cycle 3 — You grew stronger.</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-2 bg-white h-auto p-1 rounded-md">
-            <TabsTrigger 
-              value="vision" 
-              data-testid="tab-vision"
-              className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
-            >
-              Vision
-            </TabsTrigger>
-            <TabsTrigger 
-              value="journey" 
-              data-testid="tab-journey"
-              className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
-            >
-              Journey
-            </TabsTrigger>
-            <TabsTrigger 
-              value="reflect" 
-              data-testid="tab-reflect"
-              className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
-            >
-              Reflect
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Vision Board Tab */}
-          <TabsContent value="vision">
-            <Card
-              className="p-4 shadow-md bg-white"
-              style={{
-                borderRadius: "1rem",
-              }}
-            >
-              {!pohData.vision ? (
-                <div className="text-center py-8">
+          {/* Star Progress */}
+          <Card
+            className="mb-3 p-4 shadow-md bg-white"
+            style={{
+              borderRadius: "1rem",
+            }}
+          >
+            {/* Two-Column Layout: Chakra Info + Star Count */}
+            <div className="flex gap-2 mb-4">
+              {/* LEFT SIDE (70%) - Heart Chakra Info */}
+              <div className="flex-[6]">
+                <div className="flex items-center gap-3 mb-2">
                   <div
-                    className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+                    className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{
-                      background: "linear-gradient(135deg, #703DFA, #FFFFFF)",
+                      background:
+                        "radial-gradient(circle, #00C853 0%, transparent 70%)",
                     }}
                   >
-                    <Heart
-                      className="w-10 h-10 text-white"
+                    <svg
+                      className="w-12 h-12"
+                      viewBox="0 0 200 200"
+                      fill="none"
+                    >
+                      {/* 12 Symmetrically Rotated Lotus Petals */}
+                      <g
+                        stroke="#5FB77D"
+                        strokeWidth="3.5"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        {/* Each petal is rotated 30 degrees from the previous one */}
+                        <g transform="rotate(0 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(30 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(60 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(90 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(120 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(150 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(180 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(210 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(240 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(270 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(300 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                        <g transform="rotate(330 100 100)">
+                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
+                        </g>
+                      </g>
+
+                      {/* Central Circle */}
+                      <circle
+                        cx="100"
+                        cy="100"
+                        r="45"
+                        stroke="#5FB77D"
+                        strokeWidth="3.5"
+                        fill="none"
+                      />
+
+                      {/* Star of David - Two Overlapping Triangles */}
+                      <g
+                        stroke="#5FB77D"
+                        strokeWidth="4"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        {/* Upward Triangle */}
+                        <path d="M 100 70 L 125 120 L 75 120 Z" />
+                        {/* Downward Triangle */}
+                        <path d="M 100 130 L 75 80 L 125 80 Z" />
+                      </g>
+                    </svg>
+                  </div>
+                  <h4
+                    className="font-bold text-base"
+                    style={{ color: "#3D3D3D" }}
+                  >
+                    Heart Chakra – Anahata
+                  </h4>
+                </div>
+                <p
+                  className="text-xs leading-relaxed"
+                  style={{ color: "#6B7280" }}
+                >
+                  Center of Love, Balance, and Purpose.
+                  <br />
+                  Your Project of Heart aligns with the bridge between who you
+                  were and who you're rising to be.
+                </p>
+              </div>
+
+              {/* RIGHT SIDE (30%) - Progress Ring Around Star */}
+              <div className="flex-[4] flex flex-col items-center justify-center gap-3">
+                {/* Circular Progress with Star in Center */}
+                <div className="relative w-24 h-24">
+                  <svg className="w-24 h-24 transform -rotate-90">
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="42"
+                      stroke="#F9C5BD"
+                      strokeWidth="6"
+                      fill="none"
+                      opacity="0.2"
+                    />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="42"
+                      stroke="#FDE68A"
+                      strokeWidth="6"
+                      fill="none"
+                      strokeDasharray={`${2 * Math.PI * 42}`}
+                      strokeDashoffset={`${2 * Math.PI * 42 * (1 - Math.min(progressPercentage, 100) / 100)}`}
+                      strokeLinecap="round"
+                      className="transition-all duration-500"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Star
+                      className="w-12 h-12"
+                      style={{ color: "#FDE68A" }}
                       fill="currentColor"
                     />
+                  </div>
+                </div>
+
+                {/* Star Count Container */}
+                <div
+                  className="relative flex items-center px-4 py-1.5 rounded-lg"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #E8D5F8 0%, #D4C5F9 100%)",
+                    minWidth: "80px",
+                  }}
+                >
+                  <div
+                    className="absolute -left-3 w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%)",
+                      border: "3px solid white",
+                    }}
+                  >
+                    <Star
+                      className="w-5 h-5"
+                      style={{ color: "#FFFFFF" }}
+                      fill="currentColor"
+                    />
+                  </div>
+                  <p
+                    className="text-base font-bold ml-6"
+                    style={{ color: "#703DFA" }}
+                    data-testid="text-stars-count"
+                  >
+                    {pohData.stars}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Star Milestones */}
+            <div className="space-y-1.5 text-xs" style={{ color: "#6B7280" }}>
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5">
+                  {pohData.stars >= 1 ? (
+                    <div
+                      className="w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "#703DFA" }}
+                    >
+                      <svg
+                        className="w-2.5 h-2.5"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2"
+                      >
+                        <path
+                          d="M2 6 L5 9 L10 3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div
+                      className="w-4 h-4 rounded-full border-2"
+                      style={{ borderColor: "#D1D5DB" }}
+                    ></div>
+                  )}
+                </div>
+                <span className="font-medium" style={{ color: "#3D3D3D" }}>
+                  ⭐ Set Project of Heart — Your first star begins here.
+                </span>
+              </div>
+
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5">
+                  {pohData.stars >= 2 ? (
+                    <div
+                      className="w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "#703DFA" }}
+                    >
+                      <svg
+                        className="w-2.5 h-2.5"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2"
+                      >
+                        <path
+                          d="M2 6 L5 9 L10 3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div
+                      className="w-4 h-4 rounded-full border-2"
+                      style={{ borderColor: "#D1D5DB" }}
+                    ></div>
+                  )}
+                </div>
+                <span className="font-medium" style={{ color: "#3D3D3D" }}>
+                  ⭐⭐ Cycle 1 — You took the first step.
+                </span>
+              </div>
+
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5">
+                  {pohData.stars >= 4 ? (
+                    <div
+                      className="w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "#703DFA" }}
+                    >
+                      <svg
+                        className="w-2.5 h-2.5"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2"
+                      >
+                        <path
+                          d="M2 6 L5 9 L10 3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div
+                      className="w-4 h-4 rounded-full border-2"
+                      style={{ borderColor: "#D1D5DB" }}
+                    ></div>
+                  )}
+                </div>
+                <span className="font-medium" style={{ color: "#3D3D3D" }}>
+                  ⭐⭐⭐⭐ Cycle 2 — You stayed consistent.
+                </span>
+              </div>
+
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5">
+                  {pohData.stars >= 6 ? (
+                    <div
+                      className="w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "#703DFA" }}
+                    >
+                      <svg
+                        className="w-2.5 h-2.5"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2"
+                      >
+                        <path
+                          d="M2 6 L5 9 L10 3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div
+                      className="w-4 h-4 rounded-full border-2"
+                      style={{ borderColor: "#D1D5DB" }}
+                    ></div>
+                  )}
+                </div>
+                <span className="font-medium" style={{ color: "#3D3D3D" }}>
+                  ⭐⭐⭐⭐⭐⭐ Cycle 3 — You grew stronger.
+                </span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Main Content Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3 mb-2 bg-white h-auto p-1 rounded-md">
+              <TabsTrigger
+                value="vision"
+                data-testid="tab-vision"
+                className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
+              >
+                Vision
+              </TabsTrigger>
+              <TabsTrigger
+                value="journey"
+                data-testid="tab-journey"
+                className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
+              >
+                Journey
+              </TabsTrigger>
+              <TabsTrigger
+                value="reflect"
+                data-testid="tab-reflect"
+                className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
+              >
+                Reflect
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Vision Board Tab */}
+            <TabsContent value="vision">
+              <Card
+                className="p-4 shadow-md bg-white"
+                style={{
+                  borderRadius: "1rem",
+                }}
+              >
+                {!pohData.vision ? (
+                  <div className="text-center py-8">
+                    <div
+                      className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+                      style={{
+                        background: "linear-gradient(135deg, #703DFA, #FFFFFF)",
+                      }}
+                    >
+                      <Heart
+                        className="w-10 h-10 text-white"
+                        fill="currentColor"
+                      />
+                    </div>
+                    <h3
+                      className="text-xl font-semibold mb-2"
+                      style={{
+                        color: "#3D3D3D",
+                        fontFamily: "Playfair Display, serif",
+                      }}
+                    >
+                      Define Your Heart's Purpose
+                    </h3>
+                    <p className="text-sm mb-6" style={{ color: "#6B7280" }}>
+                      A serene, heart-centered space to define your Project of
+                      Heart
+                    </p>
+                    <Button
+                      onClick={() => setShowVisionDialog(true)}
+                      className="font-semibold border-0"
+                      style={{
+                        backgroundColor: "#E5AC19",
+                        color: "#0D131F",
+                      }}
+                      data-testid="button-set-vision"
+                    >
+                      Set Your Vision
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-start justify-between mb-2">
+                      <h3
+                        className="text-xl font-semibold"
+                        style={{
+                          color: "#3D3D3D",
+                          fontFamily: "Playfair Display, serif",
+                        }}
+                      >
+                        Your Vision
+                      </h3>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setVisionForm({
+                            title: pohData.vision!.title,
+                            description: pohData.vision!.description,
+                          });
+                          setShowVisionDialog(true);
+                        }}
+                        data-testid="button-edit-vision"
+                      >
+                        <Pencil
+                          className="w-4 h-4"
+                          style={{ color: "#703DFA" }}
+                        />
+                      </Button>
+                    </div>
+
+                    <div
+                      className="p-4 rounded-lg mb-2"
+                      style={{ backgroundColor: "#F9F5FF" }}
+                    >
+                      <p
+                        className="font-semibold mb-2"
+                        style={{ color: "#3D3D3D" }}
+                        data-testid="text-vision-title"
+                      >
+                        {pohData.vision.title}
+                      </p>
+                      <p
+                        className="text-sm"
+                        style={{ color: "#6B7280" }}
+                        data-testid="text-vision-description"
+                      >
+                        {pohData.vision.description}
+                      </p>
+                    </div>
+
+                    {/* Image Gallery - Vision Board Style */}
+                    <div className="mb-2">
+                      <div className="flex space-x-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-2">
+                        <div
+                          className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
+                          style={{ backgroundImage: "url('/Vision1.png')" }}
+                          data-testid="image-vision-1"
+                        />
+                        <div
+                          className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
+                          style={{ backgroundImage: "url('/Vision2.png')" }}
+                          data-testid="image-vision-2"
+                        />
+                        <div
+                          className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
+                          style={{ backgroundImage: "url('/Vision3.png')" }}
+                          data-testid="image-vision-3"
+                        />
+                        <div
+                          className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg flex items-center justify-center snap-start"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)",
+                          }}
+                          data-testid="image-placeholder-4"
+                        >
+                          <Upload
+                            className="w-12 h-12 opacity-40"
+                            style={{ color: "#9CA3AF" }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      className="p-4 rounded-lg text-center italic"
+                      style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}
+                    >
+                      <p className="text-sm">
+                        "Your heart's vision is the seed of transformation."
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </TabsContent>
+
+            {/* Journey Planner Tab */}
+            <TabsContent value="journey">
+              {/* Start Your Journey - CTA or Action Card */}
+              {!savedWeeklyAction ? (
+                <Button
+                  onClick={() => setShowJourneyModal(true)}
+                  size="sm"
+                  className="w-8/12 mx-auto mb-4 font-semibold shadow-md border-0 block py-4 text-base"
+                  style={{
+                    backgroundColor: "#E5AC19",
+                    color: "#0D131F",
+                    borderRadius: "2rem",
+                  }}
+                  data-testid="button-start-journey"
+                >
+                  Start Your Journey
+                </Button>
+              ) : (
+                <Card
+                  className="p-6 shadow-md mb-4 bg-white"
+                  style={{
+                    borderRadius: "1rem",
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Target
+                        className="w-6 h-6"
+                        style={{ color: "#A8E6CF" }}
+                      />
+                      <h3
+                        className="text-lg font-semibold"
+                        style={{ color: "#3D3D3D" }}
+                      >
+                        This Week's Action
+                      </h3>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSavedWeeklyAction(null);
+                        localStorage.removeItem("@app:weekly_action");
+                      }}
+                      data-testid="button-edit-action"
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                  <div
+                    className="p-4 rounded-lg"
+                    style={{ backgroundColor: "rgba(255, 255, 255, 0.6)" }}
+                  >
+                    <p
+                      className="text-base"
+                      style={{ color: "#3D3D3D" }}
+                      data-testid="text-weekly-action"
+                    >
+                      {savedWeeklyAction}
+                    </p>
+                  </div>
+                  <p
+                    className="text-xs mt-3 text-center"
+                    style={{ color: "#6B7280" }}
+                  >
+                    Choose yourself, every single day.
+                  </p>
+                </Card>
+              )}
+
+              <Card
+                className="p-6 shadow-md bg-white"
+                style={{
+                  borderRadius: "1rem",
+                }}
+              >
+                <div className="mb-6">
+                  <h3
+                    className="text-xl font-semibold mb-2"
+                    style={{
+                      color: "#3D3D3D",
+                      fontFamily: "Playfair Display, serif",
+                    }}
+                  >
+                    Cycles of Growth
+                  </h3>
+                  <p className="text-sm mb-4" style={{ color: "#6B7280" }}>
+                    Each week, your heart expands through awareness and action.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div>
+                      <Label className="text-xs" style={{ color: "#6B7280" }}>
+                        Cycle
+                      </Label>
+                      <Select
+                        value={String(selectedCycle)}
+                        onValueChange={(v) => setSelectedCycle(parseInt(v))}
+                      >
+                        <SelectTrigger data-testid="select-cycle">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Cycle 1</SelectItem>
+                          <SelectItem value="2">Cycle 2</SelectItem>
+                          <SelectItem value="3">Cycle 3</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs" style={{ color: "#6B7280" }}>
+                        Week
+                      </Label>
+                      <Select
+                        value={String(selectedWeek)}
+                        onValueChange={(v) => setSelectedWeek(parseInt(v))}
+                      >
+                        <SelectTrigger data-testid="select-week">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Week 1</SelectItem>
+                          <SelectItem value="2">Week 2</SelectItem>
+                          <SelectItem value="3">Week 3</SelectItem>
+                          <SelectItem value="4">Week 4</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label
+                        htmlFor="actions"
+                        className="text-xs"
+                        style={{ color: "#6B7280" }}
+                      >
+                        Actions Taken *
+                      </Label>
+                      <Textarea
+                        id="actions"
+                        value={weekForm.actions}
+                        onChange={(e) =>
+                          setWeekForm({ ...weekForm, actions: e.target.value })
+                        }
+                        placeholder="What actions did you take this week?"
+                        className="mt-1"
+                        rows={3}
+                        data-testid="input-actions"
+                      />
+                    </div>
+
+                    <div>
+                      <Label
+                        htmlFor="learnings"
+                        className="text-xs"
+                        style={{ color: "#6B7280" }}
+                      >
+                        Learnings *
+                      </Label>
+                      <Textarea
+                        id="learnings"
+                        value={weekForm.learnings}
+                        onChange={(e) =>
+                          setWeekForm({
+                            ...weekForm,
+                            learnings: e.target.value,
+                          })
+                        }
+                        placeholder="What did you learn?"
+                        className="mt-1"
+                        rows={3}
+                        data-testid="input-learnings"
+                      />
+                    </div>
+
+                    <div>
+                      <Label
+                        htmlFor="wins"
+                        className="text-xs"
+                        style={{ color: "#6B7280" }}
+                      >
+                        Wins *
+                      </Label>
+                      <Textarea
+                        id="wins"
+                        value={weekForm.wins}
+                        onChange={(e) =>
+                          setWeekForm({ ...weekForm, wins: e.target.value })
+                        }
+                        placeholder="What were your wins?"
+                        className="mt-1"
+                        rows={3}
+                        data-testid="input-wins"
+                      />
+                    </div>
+
+                    <div>
+                      <Label
+                        htmlFor="nextStep"
+                        className="text-xs"
+                        style={{ color: "#6B7280" }}
+                      >
+                        Next Step (Optional)
+                      </Label>
+                      <Textarea
+                        id="nextStep"
+                        value={weekForm.nextStep}
+                        onChange={(e) =>
+                          setWeekForm({ ...weekForm, nextStep: e.target.value })
+                        }
+                        placeholder="What's your next step?"
+                        className="mt-1"
+                        rows={2}
+                        data-testid="input-next-step"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={handleSaveWeekReflection}
+                      className="w-full font-semibold border-0"
+                      style={{
+                        backgroundColor: "#703DFA",
+                        color: "white",
+                      }}
+                      data-testid="button-save-week"
+                    >
+                      Save Reflection
+                    </Button>
+                  </div>
+
+                  <div
+                    className="mt-6 p-3 rounded-lg text-center"
+                    style={{ backgroundColor: "#F0F9FF" }}
+                  >
+                    <p className="text-xs" style={{ color: "#6B7280" }}>
+                      💚 Reflect with your heart every Sunday
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </TabsContent>
+
+            {/* Self Evaluation Tab */}
+            <TabsContent value="reflect">
+              <Card
+                className="p-6 shadow-md bg-white"
+                style={{
+                  borderRadius: "1rem",
+                }}
+              >
+                <div className="text-center">
+                  <div
+                    className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg, #FDE68A, #F9C5BD)",
+                    }}
+                  >
+                    <Award className="w-8 h-8 text-white" />
                   </div>
                   <h3
                     className="text-xl font-semibold mb-2"
@@ -609,433 +1090,58 @@ export default function ProjectOfHeartPage() {
                       fontFamily: "Playfair Display, serif",
                     }}
                   >
-                    Define Your Heart's Purpose
+                    Self-Evaluation
                   </h3>
                   <p className="text-sm mb-6" style={{ color: "#6B7280" }}>
-                    A serene, heart-centered space to define your Project of
-                    Heart
+                    Optional deep reflection on your journey
                   </p>
-                  <Button
-                    onClick={() => setShowVisionDialog(true)}
-                    className="font-semibold border-0"
-                    style={{
-                      backgroundColor: "#E5AC19",
-                      color: "#0D131F",
-                    }}
-                    data-testid="button-set-vision"
-                  >
-                    Set Your Vision
-                  </Button>
-                </div>
-              ) : (
-                <div>
-                  <div className="flex items-start justify-between mb-2">
-                    <h3
-                      className="text-xl font-semibold"
-                      style={{
-                        color: "#3D3D3D",
-                        fontFamily: "Playfair Display, serif",
-                      }}
-                    >
-                      Your Vision
-                    </h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setVisionForm({
-                          title: pohData.vision!.title,
-                          description: pohData.vision!.description,
-                        });
-                        setShowVisionDialog(true);
-                      }}
-                      data-testid="button-edit-vision"
-                    >
-                      <Pencil className="w-4 h-4" style={{ color: "#703DFA" }} />
-                    </Button>
-                  </div>
 
-                  <div
-                    className="p-4 rounded-lg mb-2"
-                    style={{ backgroundColor: "#F9F5FF" }}
-                  >
-                    <p
-                      className="font-semibold mb-2"
-                      style={{ color: "#3D3D3D" }}
-                      data-testid="text-vision-title"
+                  {pohData.selfEvaluation?.completed ? (
+                    <div
+                      className="p-4 rounded-lg"
+                      style={{ backgroundColor: "#F0FDF4" }}
                     >
-                      {pohData.vision.title}
-                    </p>
-                    <p
-                      className="text-sm"
-                      style={{ color: "#6B7280" }}
-                      data-testid="text-vision-description"
-                    >
-                      {pohData.vision.description}
-                    </p>
-                  </div>
-
-                  {/* Image Gallery - Vision Board Style */}
-                  <div className="mb-2">
-                    <div className="flex space-x-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-2">
-                      <div
-                        className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
-                        style={{ backgroundImage: "url('/Vision1.png')" }}
-                        data-testid="image-vision-1"
-                      />
-                      <div
-                        className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
-                        style={{ backgroundImage: "url('/Vision2.png')" }}
-                        data-testid="image-vision-2"
-                      />
-                      <div
-                        className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
-                        style={{ backgroundImage: "url('/Vision3.png')" }}
-                        data-testid="image-vision-3"
-                      />
-                      <div
-                        className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg flex items-center justify-center snap-start"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)",
-                        }}
-                        data-testid="image-placeholder-4"
+                      <Award className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
+                      <p
+                        className="font-semibold mb-1"
+                        style={{ color: "#3D3D3D" }}
                       >
-                        <Upload
-                          className="w-12 h-12 opacity-40"
-                          style={{ color: "#9CA3AF" }}
-                        />
-                      </div>
+                        Reflection Complete!
+                      </p>
+                      <p className="text-sm" style={{ color: "#6B7280" }}>
+                        You've earned a Golden Star 🏅
+                      </p>
                     </div>
-                  </div>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        setEvalForm(pohData.selfEvaluation?.responses || {});
+                        setShowEvalDialog(true);
+                      }}
+                      className="font-semibold border-0"
+                      style={{
+                        backgroundColor: "#E5AC19",
+                        color: "#0D131F",
+                      }}
+                      data-testid="button-start-evaluation"
+                    >
+                      Begin Self-Evaluation
+                    </Button>
+                  )}
 
                   <div
-                    className="p-4 rounded-lg text-center italic"
-                    style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}
+                    className="mt-6 p-4 rounded-lg italic text-center"
+                    style={{ backgroundColor: "#703DFA", color: "white" }}
                   >
-                    <p className="text-sm">
-                      "Your heart's vision is the seed of transformation."
+                    <p className="text-xs leading-relaxed">
+                      "When we start, we are one person; months later, we are
+                      someone new. Reflection opens new doors and visions."
                     </p>
                   </div>
                 </div>
-              )}
-            </Card>
-          </TabsContent>
-
-          {/* Journey Planner Tab */}
-          <TabsContent value="journey">
-            {/* Start Your Journey - CTA or Action Card */}
-            {!savedWeeklyAction ? (
-              <Button
-                onClick={() => setShowJourneyModal(true)}
-                size="sm"
-                className="w-11/12 mx-auto mb-4 font-semibold shadow-md border-0 block"
-                style={{
-                  backgroundColor: "#E5AC19",
-                  color: "#0D131F",
-                  borderRadius: "2rem",
-                }}
-                data-testid="button-start-journey"
-              >
-                Start Your Journey
-              </Button>
-            ) : (
-              <Card
-                className="p-6 shadow-md mb-4 bg-white"
-                style={{
-                  borderRadius: "1rem",
-                }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Target className="w-6 h-6" style={{ color: "#A8E6CF" }} />
-                    <h3
-                      className="text-lg font-semibold"
-                      style={{ color: "#3D3D3D" }}
-                    >
-                      This Week's Action
-                    </h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSavedWeeklyAction(null);
-                      localStorage.removeItem("@app:weekly_action");
-                    }}
-                    data-testid="button-edit-action"
-                  >
-                    Edit
-                  </Button>
-                </div>
-                <div
-                  className="p-4 rounded-lg"
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.6)" }}
-                >
-                  <p
-                    className="text-base"
-                    style={{ color: "#3D3D3D" }}
-                    data-testid="text-weekly-action"
-                  >
-                    {savedWeeklyAction}
-                  </p>
-                </div>
-                <p
-                  className="text-xs mt-3 text-center"
-                  style={{ color: "#6B7280" }}
-                >
-                  Choose yourself, every single day.
-                </p>
               </Card>
-            )}
-
-            <Card
-              className="p-6 shadow-md bg-white"
-              style={{
-                borderRadius: "1rem",
-              }}
-            >
-              <div className="mb-6">
-                <h3
-                  className="text-xl font-semibold mb-2"
-                  style={{
-                    color: "#3D3D3D",
-                    fontFamily: "Playfair Display, serif",
-                  }}
-                >
-                  Cycles of Growth
-                </h3>
-                <p className="text-sm mb-4" style={{ color: "#6B7280" }}>
-                  Each week, your heart expands through awareness and action.
-                </p>
-
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div>
-                    <Label className="text-xs" style={{ color: "#6B7280" }}>
-                      Cycle
-                    </Label>
-                    <Select
-                      value={String(selectedCycle)}
-                      onValueChange={(v) => setSelectedCycle(parseInt(v))}
-                    >
-                      <SelectTrigger data-testid="select-cycle">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Cycle 1</SelectItem>
-                        <SelectItem value="2">Cycle 2</SelectItem>
-                        <SelectItem value="3">Cycle 3</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs" style={{ color: "#6B7280" }}>
-                      Week
-                    </Label>
-                    <Select
-                      value={String(selectedWeek)}
-                      onValueChange={(v) => setSelectedWeek(parseInt(v))}
-                    >
-                      <SelectTrigger data-testid="select-week">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Week 1</SelectItem>
-                        <SelectItem value="2">Week 2</SelectItem>
-                        <SelectItem value="3">Week 3</SelectItem>
-                        <SelectItem value="4">Week 4</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <Label
-                      htmlFor="actions"
-                      className="text-xs"
-                      style={{ color: "#6B7280" }}
-                    >
-                      Actions Taken *
-                    </Label>
-                    <Textarea
-                      id="actions"
-                      value={weekForm.actions}
-                      onChange={(e) =>
-                        setWeekForm({ ...weekForm, actions: e.target.value })
-                      }
-                      placeholder="What actions did you take this week?"
-                      className="mt-1"
-                      rows={3}
-                      data-testid="input-actions"
-                    />
-                  </div>
-
-                  <div>
-                    <Label
-                      htmlFor="learnings"
-                      className="text-xs"
-                      style={{ color: "#6B7280" }}
-                    >
-                      Learnings *
-                    </Label>
-                    <Textarea
-                      id="learnings"
-                      value={weekForm.learnings}
-                      onChange={(e) =>
-                        setWeekForm({ ...weekForm, learnings: e.target.value })
-                      }
-                      placeholder="What did you learn?"
-                      className="mt-1"
-                      rows={3}
-                      data-testid="input-learnings"
-                    />
-                  </div>
-
-                  <div>
-                    <Label
-                      htmlFor="wins"
-                      className="text-xs"
-                      style={{ color: "#6B7280" }}
-                    >
-                      Wins *
-                    </Label>
-                    <Textarea
-                      id="wins"
-                      value={weekForm.wins}
-                      onChange={(e) =>
-                        setWeekForm({ ...weekForm, wins: e.target.value })
-                      }
-                      placeholder="What were your wins?"
-                      className="mt-1"
-                      rows={3}
-                      data-testid="input-wins"
-                    />
-                  </div>
-
-                  <div>
-                    <Label
-                      htmlFor="nextStep"
-                      className="text-xs"
-                      style={{ color: "#6B7280" }}
-                    >
-                      Next Step (Optional)
-                    </Label>
-                    <Textarea
-                      id="nextStep"
-                      value={weekForm.nextStep}
-                      onChange={(e) =>
-                        setWeekForm({ ...weekForm, nextStep: e.target.value })
-                      }
-                      placeholder="What's your next step?"
-                      className="mt-1"
-                      rows={2}
-                      data-testid="input-next-step"
-                    />
-                  </div>
-
-                  <Button
-                    onClick={handleSaveWeekReflection}
-                    className="w-full font-semibold border-0"
-                    style={{
-                      backgroundColor: "#703DFA",
-                      color: "white",
-                    }}
-                    data-testid="button-save-week"
-                  >
-                    Save Reflection
-                  </Button>
-                </div>
-
-                <div
-                  className="mt-6 p-3 rounded-lg text-center"
-                  style={{ backgroundColor: "#F0F9FF" }}
-                >
-                  <p className="text-xs" style={{ color: "#6B7280" }}>
-                    💚 Reflect with your heart every Sunday
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* Self Evaluation Tab */}
-          <TabsContent value="reflect">
-            <Card
-              className="p-6 shadow-md bg-white"
-              style={{
-                borderRadius: "1rem",
-              }}
-            >
-              <div className="text-center">
-                <div
-                  className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, #FDE68A, #F9C5BD)",
-                  }}
-                >
-                  <Award className="w-8 h-8 text-white" />
-                </div>
-                <h3
-                  className="text-xl font-semibold mb-2"
-                  style={{
-                    color: "#3D3D3D",
-                    fontFamily: "Playfair Display, serif",
-                  }}
-                >
-                  Self-Evaluation
-                </h3>
-                <p className="text-sm mb-6" style={{ color: "#6B7280" }}>
-                  Optional deep reflection on your journey
-                </p>
-
-                {pohData.selfEvaluation?.completed ? (
-                  <div
-                    className="p-4 rounded-lg"
-                    style={{ backgroundColor: "#F0FDF4" }}
-                  >
-                    <Award className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
-                    <p
-                      className="font-semibold mb-1"
-                      style={{ color: "#3D3D3D" }}
-                    >
-                      Reflection Complete!
-                    </p>
-                    <p className="text-sm" style={{ color: "#6B7280" }}>
-                      You've earned a Golden Star 🏅
-                    </p>
-                  </div>
-                ) : (
-                  <Button
-                    onClick={() => {
-                      setEvalForm(pohData.selfEvaluation?.responses || {});
-                      setShowEvalDialog(true);
-                    }}
-                    className="font-semibold border-0"
-                    style={{
-                      backgroundColor: "#E5AC19",
-                      color: "#0D131F",
-                    }}
-                    data-testid="button-start-evaluation"
-                  >
-                    Begin Self-Evaluation
-                  </Button>
-                )}
-
-                <div
-                  className="mt-6 p-4 rounded-lg italic text-center"
-                  style={{ backgroundColor: "#703DFA", color: "white" }}
-                >
-                  <p className="text-xs leading-relaxed">
-                    "When we start, we are one person; months later, we are
-                    someone new. Reflection opens new doors and visions."
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
