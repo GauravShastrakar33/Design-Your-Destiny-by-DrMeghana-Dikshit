@@ -85,7 +85,10 @@ Preferred communication style: Simple, everyday language.
 - **Self-Evaluation**: No longer awards stars, serves as reflection tool only
 - **Progress Ring**: Fills based on 6 max stars (100% at 6 stars)
 
-**Processes Page** (Updated November 2025): Organized practice structure with collapsible category dropdowns for DYD tab.
+**Processes Page** (Updated November 2025): Organized practice structure with collapsible category dropdowns for DYD tab. Clean design with light gray page background (#F3F3F3) and white cards. Purple accent color (#703DFA) for icons.
+- **Page Background**: Light gray (#F3F3F3) creating contrast with white cards
+- **Header**: White background, sticky at top, grey bold uppercase title "PROCESSES" (Montserrat font), grey back arrow button
+- **Segmented Control**: Custom rectangular buttons (rounded-lg). Active state: purple background (#703DFA) with white text. Inactive state: grey text on transparent background
 - **DYD Tab**: Practices grouped into expandable categories using Radix UI Collapsible
   - **Wealth Code Activation** (4 practices): WCA 1-4
   - **Birth story-Specialisation** (6 practices): Birth Story Healing, Adoption, Miscarriage, Cesarean, Clearing the Birth Energy, Pre-Birth Story Process
@@ -93,6 +96,8 @@ Preferred communication style: Simple, everyday language.
   - **Happiness Code Activation** (2 practices): HAC 1-2
   - **Story Burning** (standalone practice)
 - **USM Tab**: Flat list of 9 individual practices (Recognition, Vibration Elevation, Neurolinking, EET, Hoponopono, Soul Connection, Donald Duck, Inner Child Healing, Journaling)
+- **Category Cards**: White background, purple icons (#703DFA) without background circles, purple chevron, dark text (grey-900)
+- **Practice Cards**: White background, purple icons (#703DFA) without background circles, purple chevron, dark text (grey-900)
 - **Category Interaction**: Click category header to expand/collapse sub-practices. Chevron rotates 180° when expanded. Sub-practices indented (ml-4). Multiple categories can be open simultaneously
 - **Technical Implementation**: Container uses `key={selectedCategory}` to force complete re-render when switching tabs, preventing React reconciliation issues with Collapsible components
 

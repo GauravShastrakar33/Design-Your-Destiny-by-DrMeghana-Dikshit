@@ -25,20 +25,18 @@ export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, 
     : null;
 
   return (
-    <Card className="overflow-hidden" data-testid={testId}>
+    <Card className="overflow-hidden bg-white" data-testid={testId}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full p-4 flex items-center gap-3 hover-elevate active-elevate-2"
         data-testid={`button-expand-${title.toLowerCase().replace(/\s+/g, '-')}`}
       >
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-          <Icon className="w-6 h-6 text-primary" />
-        </div>
-        <span className="flex-1 text-left font-medium text-foreground">{title}</span>
+        <Icon className="w-6 h-6 flex-shrink-0" style={{ color: "#703DFA" }} />
+        <span className="flex-1 text-left font-medium text-gray-900">{title}</span>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-muted-foreground" />
+          <ChevronUp className="w-5 h-5" style={{ color: "#703DFA" }} />
         ) : (
-          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          <ChevronDown className="w-5 h-5" style={{ color: "#703DFA" }} />
         )}
       </button>
 

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, Brain, Zap, Link2, Heart, Waves, Users, Laugh, Baby, BookHeart, DollarSign, AlertCircle, Smile, Flame, ChevronDown } from "lucide-react";
 import { useLocation } from "wouter";
-import SegmentedControl from "@/components/SegmentedControl";
 import PracticeCard from "@/components/PracticeCard";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -86,26 +85,41 @@ export default function ProcessesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
+        <div className="sticky top-0 bg-white border-b z-10">
           <div className="px-4 py-4 flex items-center gap-4">
             <button
               onClick={() => setLocation("/")}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
               data-testid="button-back"
             >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
+              <ArrowLeft className="w-6 h-6 text-gray-500" />
             </button>
-            <h1 className="text-2xl font-bold text-foreground">Processes</h1>
+            <h1 className="text-xl font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase">
+              PROCESSES
+            </h1>
           </div>
           <div className="px-4 pb-4">
-            <SegmentedControl
-              options={["DYD", "USM"]}
-              selected={selectedCategory}
-              onChange={(val) => setSelectedCategory(val as "DYD" | "USM")}
-              testId="category-selector"
-            />
+            <div className="bg-white border border-gray-200 p-1 rounded-lg inline-flex w-full max-w-xs mx-auto" data-testid="category-selector">
+              {["DYD", "USM"].map((option) => (
+                <button
+                  key={option}
+                  onClick={() => setSelectedCategory(option as "DYD" | "USM")}
+                  className={`flex-1 px-6 py-2 text-sm font-medium rounded-md transition-colors ${
+                    selectedCategory === option
+                      ? "text-white"
+                      : "text-gray-600 hover-elevate"
+                  }`}
+                  style={{
+                    backgroundColor: selectedCategory === option ? "#703DFA" : "transparent",
+                  }}
+                  data-testid={`segment-${option.toLowerCase()}`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -133,18 +147,17 @@ export default function ProcessesPage() {
                   >
                     <CollapsibleTrigger asChild>
                       <div
-                        className="bg-card border border-border rounded-lg p-4 flex items-center justify-between cursor-pointer hover-elevate active-elevate-2"
+                        className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between cursor-pointer hover-elevate active-elevate-2"
                         data-testid={`category-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Icon className="w-5 h-5" style={{ color: "#703DFA" }} />
-                          </div>
-                          <span className="font-semibold text-foreground">{item.title}</span>
+                          <Icon className="w-6 h-6 flex-shrink-0" style={{ color: "#703DFA" }} />
+                          <span className="font-semibold text-gray-900">{item.title}</span>
                         </div>
                         <ChevronDown
-                          className="w-5 h-5 text-muted-foreground transition-transform duration-200"
+                          className="w-5 h-5 transition-transform duration-200"
                           style={{
+                            color: "#703DFA",
                             transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
                           }}
                         />
