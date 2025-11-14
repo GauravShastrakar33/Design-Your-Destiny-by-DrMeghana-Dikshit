@@ -295,8 +295,15 @@ export default function ProfilePage() {
       } else {
         day.status = "missed"; // red
       }
+    });
+  }
 
-      
+  // 🚨 FINAL SAFETY OVERRIDE — NOTHING CAN OVERRIDE THIS
+  for (const m in daysByMonth) {
+    daysByMonth[m].forEach((day) => {
+      if (day.date === "2025-12-31") {
+        day.status = "neutral"; // FORCE GREY
+      }
     });
   }
 
