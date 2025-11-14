@@ -35,7 +35,7 @@ export default function SpiritualBreathsPage() {
     <div className="min-h-screen bg-page-bg pb-20">
       <div className="max-w-md mx-auto">
         <div className="sticky top-0 bg-white border-b z-10">
-          <div className="py-4 flex items-center justify-center relative">
+          <div className="py-4 relative flex items-center">
             <button
               onClick={() => setLocation("/")}
               className="absolute left-4 hover-elevate active-elevate-2 rounded-lg p-2"
@@ -43,7 +43,8 @@ export default function SpiritualBreathsPage() {
             >
               <ArrowLeft className="w-6 h-6 text-gray-500" />
             </button>
-            <h1 className="text-xl font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase">
+
+            <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase whitespace-nowrap">
               SPIRITUAL BREATHS
             </h1>
           </div>
@@ -62,9 +63,7 @@ export default function SpiritualBreathsPage() {
                   <h3 className="text-lg font-medium text-gray-900 mb-1">
                     {session.title}
                   </h3>
-                  <p className="text-sm text-gray-600">
-                    {session.description}
-                  </p>
+                  <p className="text-sm text-gray-600">{session.description}</p>
                 </div>
 
                 {media?.videoUrl ? (
