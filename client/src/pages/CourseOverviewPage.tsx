@@ -25,7 +25,7 @@ const coursesData: Record<string, CourseData> = {
     id: "dyd-14",
     title: "DYD 14",
     fullTitle: "Design Your Destiny",
-    thumbnail: "/workshopsimg/DYD.jpg",
+    thumbnail: "/workshopsimg/DesignYourDestiny.png",
     year: "July 2025",
     lessons: [
       {
@@ -213,7 +213,7 @@ const coursesData: Record<string, CourseData> = {
     id: "usm-march",
     title: "USM",
     fullTitle: "Ultimate Success Mastery",
-    thumbnail: "/workshopsimg/USM.jpg",
+    thumbnail: "/workshopsimg/UltimateSuccessMastery.png",
     year: "March 2025",
     lessons: [
       {
@@ -273,7 +273,7 @@ const coursesData: Record<string, CourseData> = {
     id: "usc-march",
     title: "USC",
     fullTitle: "Ultimate Success Champion",
-    thumbnail: "/workshopsimg/USC.jpg",
+    thumbnail: "/workshopsimg/UltimateSuccessChampion.png",
     year: "March 2025",
     lessons: [
       {
@@ -303,7 +303,7 @@ const coursesData: Record<string, CourseData> = {
     id: "usb-feb",
     title: "USB",
     fullTitle: "Ultimate Success Blueprint",
-    thumbnail: "/workshopsimg/USB.jpg",
+    thumbnail: "/workshopsimg/UltimateSuccessBuilder.png",
     year: "February 2025",
     lessons: [
       {
