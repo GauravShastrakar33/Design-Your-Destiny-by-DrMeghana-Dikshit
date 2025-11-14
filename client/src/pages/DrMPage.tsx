@@ -204,56 +204,58 @@ export default function DrMPage() {
           </div>
         )}
 
-        {/* Video Player Section */}
-        <div className="flex-shrink-0 bg-black aspect-video relative mt-1">
-          {currentVideoUrl ? (
-            <video
-              ref={videoRef}
-              className="w-full h-full"
-              controls
-              playsInline
-              data-testid="video-drm-response"
-            >
-              <source src={currentVideoUrl} type="video/mp4" />
-              {currentSubtitlesUrl && (
-                <track
-                  kind="subtitles"
-                  src={currentSubtitlesUrl}
-                  srcLang="en"
-                  label="English"
-                  default
-                />
+        {messages.length === 0 ? (
+          /* Empty State - covers video and chat area */
+          <div className="flex-1 flex flex-col items-center justify-center p-4" data-testid="empty-state-drm">
+            <img 
+              src={chatIcon} 
+              alt="Chat Icon" 
+              className="w-32 h-32 mb-4"
+              data-testid="img-chat-icon-empty"
+            />
+            <p className="text-gray-500 text-center" data-testid="text-empty-chat">
+              Start a conversation<br />with Dr. M
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Video Player Section */}
+            <div className="flex-shrink-0 bg-black aspect-video relative mt-1">
+              {currentVideoUrl ? (
+                <video
+                  ref={videoRef}
+                  className="w-full h-full"
+                  controls
+                  playsInline
+                  data-testid="video-drm-response"
+                >
+                  <source src={currentVideoUrl} type="video/mp4" />
+                  {currentSubtitlesUrl && (
+                    <track
+                      kind="subtitles"
+                      src={currentSubtitlesUrl}
+                      srcLang="en"
+                      label="English"
+                      default
+                    />
+                  )}
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white/60">
+                  <p className="text-sm" data-testid="text-no-video">
+                    Ask Dr.M a question to get started
+                  </p>
+                </div>
               )}
-              Your browser does not support the video tag.
-            </video>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white/60">
-              <p className="text-sm" data-testid="text-no-video">
-                Ask Dr.M a question to get started
-              </p>
             </div>
-          )}
-        </div>
 
-        {/* Chat History */}
-        <div
-          className="flex-1 overflow-y-auto p-4 space-y-4 pb-2"
-          data-testid="chat-history"
-        >
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full" data-testid="empty-state-drm">
-              <img 
-                src={chatIcon} 
-                alt="Chat Icon" 
-                className="w-32 h-32 mb-4"
-                data-testid="img-chat-icon-empty"
-              />
-              <p className="text-gray-500 text-center" data-testid="text-empty-chat">
-                Start a conversation<br />with Dr. M
-              </p>
-            </div>
-          ) : (
-            messages.slice(-MAX_CONVERSATIONS).map((message) => (
+            {/* Chat History */}
+            <div
+              className="flex-1 overflow-y-auto p-4 space-y-4 pb-2"
+              data-testid="chat-history"
+            >
+              {messages.slice(-MAX_CONVERSATIONS).map((message) => (
             <div key={message.id} className="space-y-2">
               {/* User Question */}
               <div className="flex justify-end">
@@ -319,9 +321,10 @@ export default function DrMPage() {
                 )}
               </div>
             </div>
-          ))
-          )}
-        </div>
+          ))}
+            </div>
+          </>
+        )}
 
         {/* Input Field */}
         <form
