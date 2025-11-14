@@ -227,7 +227,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-background pb-24">
       {/* White Header Section */}
       <div className="bg-white border-b py-4">
-        <h1 className="text-center text-gray-500 text-sm tracking-[0.2em] font-['Montserrat'] uppercase">
+        <h1 className="text-center text-gray-500 text-xl font-bold tracking-wider font-['Montserrat'] uppercase">
           PROFILE
         </h1>
       </div>
