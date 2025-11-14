@@ -246,7 +246,7 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="mt-3">
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-lg text-muted-foreground mb-2">
                 Karmic Affirmation
               </p>
               <p
