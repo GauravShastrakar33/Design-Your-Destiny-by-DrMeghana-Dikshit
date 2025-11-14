@@ -224,6 +224,7 @@ export default function ProcessesPage() {
                               audioUrl={media?.audioUrl}
                               script={media?.script}
                               testId={`practice-${practice.title.toLowerCase().replace(/\s+/g, "-")}`}
+                              hideIcon={true}
                             />
                           );
                         })}
@@ -242,6 +243,7 @@ export default function ProcessesPage() {
                       audioUrl={media?.audioUrl}
                       script={media?.script}
                       testId={`practice-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
+                      hideIcon={true}
                     />
                   );
                 }
