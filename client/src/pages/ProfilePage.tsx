@@ -227,14 +227,14 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-background pb-24">
       {/* White Header Section */}
       <div className="bg-white border-b py-4">
-        <h1 className="text-center font-bold text-foreground text-lg">
+        <h1 className="text-center text-gray-500 text-sm tracking-[0.2em] font-['Montserrat'] uppercase">
           PROFILE
         </h1>
       </div>
 
       {/* Profile Card - Full Width */}
       <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-50 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-amber-950/30 border-b border-purple-200/50 dark:border-purple-800/30">
-        <div className="max-w-md mx-auto px-4 py-6">
+        <div className="max-w-md mx-auto px-4 py-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
                 GS
@@ -245,8 +245,8 @@ export default function ProfilePage() {
                 </h2>
               </div>
             </div>
-            <div className="mt-3">
-              <p className="text-base text-muted-foreground mb-2">
+            <div className="mt-2">
+              <p className="text-sm text-muted-foreground mb-1">
                 Karmic Affirmation
               </p>
               <p
@@ -379,7 +379,7 @@ export default function ProfilePage() {
         <Card className="bg-[#f5fff8] dark:bg-green-950/20 border-green-200/50 dark:border-green-800/30 shadow-md">
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold text-foreground mb-3">
-              Your Prescription
+              My Prescription
             </h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
