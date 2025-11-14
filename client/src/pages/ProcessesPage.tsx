@@ -89,7 +89,7 @@ export default function ProcessesPage() {
     <div className="min-h-screen pb-20 bg-page-bg">
       <div className="max-w-md mx-auto">
         <div className="sticky top-0 bg-white border-b z-10">
-          <div className="px-4 py-4 flex items-center justify-center relative">
+          <div className="py-4 flex items-center justify-center relative">
             <button
               onClick={() => setLocation("/")}
               className="absolute left-4 hover-elevate active-elevate-2 rounded-lg p-2"
