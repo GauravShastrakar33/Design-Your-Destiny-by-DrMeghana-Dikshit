@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import drMAvatar from "@assets/DrM_1761365497901.webp";
+import chatIcon from "@assets/chat icon_1763078697186.png";
 import { askDrM } from "@/lib/gradioClient";
 import { DrmMessage } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -239,7 +240,20 @@ export default function DrMPage() {
           className="flex-1 overflow-y-auto p-4 space-y-4 pb-2"
           data-testid="chat-history"
         >
-          {messages.slice(-MAX_CONVERSATIONS).map((message) => (
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full" data-testid="empty-state-drm">
+              <img 
+                src={chatIcon} 
+                alt="Chat Icon" 
+                className="w-32 h-32 mb-4"
+                data-testid="img-chat-icon-empty"
+              />
+              <p className="text-gray-500 text-center" data-testid="text-empty-chat">
+                Start a conversation<br />with Dr. M
+              </p>
+            </div>
+          ) : (
+            messages.slice(-MAX_CONVERSATIONS).map((message) => (
             <div key={message.id} className="space-y-2">
               {/* User Question */}
               <div className="flex justify-end">
@@ -305,14 +319,7 @@ export default function DrMPage() {
                 )}
               </div>
             </div>
-          ))}
-
-          {messages.length === 0 && !isLoading && (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p className="text-sm" data-testid="text-empty-chat">
-                Start a conversation with Dr.M
-              </p>
-            </div>
+          ))
           )}
         </div>
 
