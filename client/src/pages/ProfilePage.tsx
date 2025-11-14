@@ -226,10 +226,14 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* White Header Section */}
-      <div className="bg-white border-b py-4">
-         <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
-          PROFILE
-        </h1>
+      <div className="bg-white border-b py-4 px-4">
+        <div className="flex items-center">
+          <div className="flex-1 text-center">
+            <h1 className="text-xl font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase">
+              PROFILE
+            </h1>
+          </div>
+        </div>
       </div>
 
       {/* Profile Card - Full Width */}
