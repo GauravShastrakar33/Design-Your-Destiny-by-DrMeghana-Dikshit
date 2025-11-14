@@ -7,7 +7,12 @@ interface ArticleCardProps {
   testId?: string;
 }
 
-export default function ArticleCard({ title, image, onClick, testId }: ArticleCardProps) {
+export default function ArticleCard({
+  title,
+  image,
+  onClick,
+  testId,
+}: ArticleCardProps) {
   return (
     <motion.div
       whileTap={{ scale: 1.05 }}

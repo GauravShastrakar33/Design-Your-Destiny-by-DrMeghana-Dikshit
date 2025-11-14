@@ -200,7 +200,7 @@ export default function ProfilePage() {
   const streaks = calculateStreaks();
   // Override with specified values
   const currentStreak = 9;
-  const bestStreak = 25;
+  const bestStreak = 45;
 
   // Group days by month
   const daysByMonth = calendarDays.reduce(
@@ -212,6 +212,98 @@ export default function ProfilePage() {
     },
     {} as Record<number, StreakDay[]>,
   );
+
+  const hardcodedGreenDates = [
+    // October 2025
+    "2025-10-01",
+    "2025-10-02",
+    "2025-10-03",
+    "2025-10-04",
+    "2025-10-05",
+    "2025-10-06",
+    "2025-10-07",
+    "2025-10-08",
+    "2025-10-09",
+    "2025-10-10",
+    "2025-10-11",
+    "2025-10-12",
+    "2025-10-13",
+    "2025-10-14",
+    "2025-10-15",
+    "2025-10-16",
+    "2025-10-17",
+    "2025-10-18",
+    "2025-10-19",
+    "2025-10-20",
+    "2025-10-21",
+    "2025-10-22",
+    "2025-10-23",
+    "2025-10-24",
+    "2025-10-25",
+    "2025-10-26",
+    "2025-10-27",
+    "2025-10-28",
+    "2025-10-29",
+    "2025-10-30",
+    "2025-10-31",
+
+    // November 2025
+    "2025-11-01",
+    "2025-11-02",
+    "2025-11-03",
+    "2025-11-04",
+    "2025-11-05",
+    "2025-11-06",
+    "2025-11-07",
+    "2025-11-08",
+    "2025-11-09",
+    "2025-11-10",
+    "2025-11-11",
+    "2025-11-12",
+    "2025-11-13",
+    "2025-11-14",
+  ];
+
+  // 🎯 Apply final hardcoded + mixed + future logic
+  // 🎯 Apply final hardcoded + mixed + future logic
+  for (const [month, days] of Object.entries(daysByMonth)) {
+    days.forEach((day) => {
+      const isFuture = new Date(day.date) > new Date();
+
+      // 💚 1. Your hardcoded continuous green streak
+      if (hardcodedGreenDates.includes(day.date)) {
+        day.status = "streak";
+        return;
+      }
+
+      // ⚪ 2. Future days must always be neutral
+      if (isFuture) {
+        day.status = "neutral";
+        return;
+      }
+
+      // ❗ 3. Force 30 November 2025 to be RED
+      if (day.date === "2025-11-30") {
+        day.status = "missed";
+        return;
+      }
+
+      // ❗ 4. Force 31 December 2025 to be RED
+      if (day.date === "2025-12-31") {
+        day.status = "missed";
+        return;
+      }
+
+      // 💚🔴 5. Pre-streak days: balanced mix of green + red
+      const seed = parseInt(day.date.split("-").join("")); // "2025-09-23" -> 20250923
+
+      if (seed % 3 === 0 || seed % 5 === 0) {
+        day.status = "streak"; // GREEN
+      } else {
+        day.status = "missed"; // RED
+      }
+    });
+  }
 
   const monthNames = [
     "January",
@@ -229,7 +321,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen pb-24" style={{ backgroundColor: '#F3F3F3' }}>
+    <div className="min-h-screen pb-24" style={{ backgroundColor: "#F3F3F3" }}>
       {/* White Header Section */}
       <div className="bg-white border-b py-4 px-4">
         <div className="flex items-center">
