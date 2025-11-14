@@ -54,9 +54,18 @@ Preferred communication style: Simple, everyday language.
 ### Feature Specifications
 
 **Home Page**: Welcome header (Inter, Bold, 20pt), high-contrast yellow "JOIN NOW" button.
+
 **Workshops Page**: "MASTERCLASSES" header (Montserrat, grey), rectangular tab system (purple active, light purple inactive). Enhanced masterclass cards with `subtitle`, `endTime`, `isLive`, improved thumbnail sizing, "LIVE" badge, larger typography, and larger purple gradient "JOIN" button.
-**Project of Heart Page**: White background with "PROJECT OF HEART" title. Heart Chakra theme (#A8E6CF) preserved for specific elements. Rectangular tab system. White cards with subtle borders. Yellow primary CTAs and purple secondary actions. Typography uses Playfair Display for quotes.
-**Project of Heart Card Layout**: Two-column layout: Left (70%) with authentic Anahata Heart Chakra SVG (green #5FB77D, 12 symmetrically rotated lotus petals, Star of David) and description. Right (30%) with circular progress ring around a gold star icon and an achievement badge showing star count. The chakra symbol uses clean SVG design with no glowing effects or animations for a professional, spiritual aesthetic.
+
+**Profile Page** (Updated November 2025): Violet-themed design (#703DFA primary color) with white background. Features reordered sections: Profile Card → Streak Calendar → AI Insights → My Prescription → Settings.
+- **Profile Card**: Full-width gradient background with centered content (max-w-md), reduced padding (py-4), bold "PROFILE" header (text-xl, Montserrat font), Playfair_Display font for karmic affirmation quote
+- **AI Insights Card**: Solid violet background (#703DFA), uppercase title left-aligned, Sparkles icon right, description below, full card clickable with navigation to /ai-insights, ChevronRight indicator
+- **My Prescription Card**: Light purple background (#F3F0FF), uppercase title left-aligned in violet, Heart icon right in violet, description below, expandable/collapsible to show/hide prescription details (Morning/Afternoon/Evening practices), ChevronDown indicator rotates on toggle
+- **Settings Card**: Light purple background (#F3F0FF), uppercase title left-aligned in violet, Settings icon right in violet, all options visible by default (Account, Notifications, Get Support, Logout), only Account submenu expandable with reset options
+
+**Project of Heart Page**: White background with "PROJECT OF HEART" title. Heart Chakra theme (#A8E6CF) preserved for specific elements. Rectangular tab system. White cards with subtle borders. Yellow primary CTAs (#E5AC19) and purple secondary actions. Typography uses Playfair Display for quotes.
+- **Journey Tab**: "Start Your Journey" button features reduced height (size="sm"), 92% width (w-11/12), centered with mx-auto, yellow background (#E5AC19), rounded pill shape
+- **Vision Tab**: Two-column layout: Left (70%) with authentic Anahata Heart Chakra SVG (green #5FB77D, 12 symmetrically rotated lotus petals, Star of David) and description. Right (30%) with circular progress ring around a gold star icon and an achievement badge showing star count. The chakra symbol uses clean SVG design with no glowing effects or animations for a professional, spiritual aesthetic.
 
 **Project of Heart Milestones** (Updated November 2025):
 - **Star Progression**: Maximum 6 stars (Vision: 1, Cycle 1: +1, Cycle 2: +2, Cycle 3: +2)
