@@ -8,22 +8,19 @@ const challenges = [
     id: "7-day",
     title: "7-Day Calm Mind",
     description: "Build a foundation of daily mindfulness practice",
-    duration: 7,
-    gradient: "bg-gradient-to-br from-green-400 to-emerald-500"
+    duration: 7
   },
   {
     id: "21-day",
     title: "21-Day Mind Discipline",
     description: "Develop mental strength and consistency",
-    duration: 21,
-    gradient: "bg-gradient-to-br from-blue-400 to-indigo-500"
+    duration: 21
   },
   {
     id: "90-day",
     title: "90-Day Life Transformation",
     description: "Complete transformation of habits and mindset",
-    duration: 90,
-    gradient: "bg-gradient-to-br from-purple-400 to-pink-500"
+    duration: 90
   }
 ];
 
@@ -31,54 +28,50 @@ export default function LevelUpPage() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-page-bg pb-20">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
+        <div className="sticky top-0 bg-white border-b z-10">
+          <div className="py-4 relative flex items-center">
             <button
               onClick={() => setLocation("/")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
+              className="absolute left-4 top-1/2 translate-y-[4px] hover-elevate active-elevate-2 rounded-lg p-2"
               data-testid="button-back"
             >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
+              <ArrowLeft className="w-6 h-6 text-gray-500" />
             </button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Level Up Challenge</h1>
-              <p className="text-sm text-muted-foreground">Choose your transformation journey</p>
-            </div>
+
+            <h1 className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase whitespace-nowrap">
+              LEVEL UP CHALLENGE
+            </h1>
           </div>
         </div>
 
         <div className="px-4 py-6 space-y-6">
-          <Card className="p-6 bg-gradient-to-br from-yellow-400 to-orange-500 border-0">
+          <Card className="p-6 bg-white border border-gray-200">
             <div className="flex items-center gap-3">
-              <Trophy className="w-10 h-10 text-white" />
+              <Trophy className="w-10 h-10 text-brand" />
               <div>
-                <h2 className="text-white text-xl font-bold">Choose Your Challenge</h2>
-                <p className="text-white/90 text-sm">Commit to growth and transformation</p>
+                <h2 className="text-gray-900 text-xl font-bold">Choose Your Challenge</h2>
+                <p className="text-gray-600 text-sm">Commit to growth and transformation</p>
               </div>
             </div>
           </Card>
 
           <div className="space-y-4">
             {challenges.map((challenge) => (
-              <Card key={challenge.id} className="overflow-hidden" data-testid={`challenge-${challenge.id}`}>
-                <div className={`${challenge.gradient} p-4`}>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-white text-xl font-bold mb-1">{challenge.title}</h3>
-                      <p className="text-white/90 text-sm mb-3">{challenge.description}</p>
-                      <div className="flex items-center gap-2 text-white/80">
-                        <Flame className="w-4 h-4" />
-                        <span className="text-sm font-medium">{challenge.duration} Days</span>
-                      </div>
+              <Card key={challenge.id} className="bg-white border border-gray-200 p-5" data-testid={`challenge-${challenge.id}`}>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-gray-900 text-xl font-bold mb-2">{challenge.title}</h3>
+                    <p className="text-gray-600 text-sm mb-3">{challenge.description}</p>
+                    <div className="flex items-center gap-2 text-brand">
+                      <Flame className="w-4 h-4" />
+                      <span className="text-sm font-medium">{challenge.duration} Days</span>
                     </div>
                   </div>
-                </div>
-                <div className="p-4">
                   <Button
                     onClick={() => setLocation(`/level-up/${challenge.id}`)}
-                    className="w-full"
+                    className="w-full bg-brand hover:bg-brand/90 text-white"
                     data-testid={`button-start-${challenge.id}`}
                   >
                     Start Challenge
@@ -88,12 +81,12 @@ export default function LevelUpPage() {
             ))}
           </div>
 
-          <Card className="p-6">
+          <Card className="p-6 bg-white border border-gray-200">
             <div className="flex items-start gap-3">
-              <TrendingUp className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+              <TrendingUp className="w-6 h-6 text-brand flex-shrink-0 mt-1" />
               <div>
-                <h3 className="font-semibold text-foreground mb-2">Challenge History</h3>
-                <p className="text-sm text-muted-foreground mb-3">
+                <h3 className="font-semibold text-gray-900 mb-2">Challenge History</h3>
+                <p className="text-sm text-gray-600 mb-3">
                   View your completed challenges and achievements
                 </p>
                 <Button
