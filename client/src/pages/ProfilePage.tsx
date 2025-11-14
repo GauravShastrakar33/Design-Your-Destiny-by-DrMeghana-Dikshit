@@ -233,7 +233,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile Card - Full Width */}
-      <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-50 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-amber-950/30 border-b border-purple-200/50 dark:border-purple-800/30">
+      <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-50 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-amber-950/30 border-b border-purple-200/50 dark:border-purple-800/30 mt-4">
         <div className="max-w-md mx-auto px-4 py-5">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
@@ -250,7 +250,7 @@ export default function ProfilePage() {
                 Karmic Affirmation
               </p>
               <p
-                className="text-foreground italic font-serif leading-relaxed text-sm"
+                className="text-foreground italic font-['Inspiration'] leading-relaxed text-sm"
                 data-testid="text-affirmation"
               >
                 "I trust the universe to guide me toward my highest purpose. Every
