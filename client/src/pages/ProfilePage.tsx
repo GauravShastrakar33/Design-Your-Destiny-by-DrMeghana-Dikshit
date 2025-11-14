@@ -226,96 +226,36 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+        {/* PROFILE Header */}
+        <h1 className="text-center text-gray-500 text-sm tracking-[0.3em] font-['Montserrat'] uppercase mb-4">
+          PROFILE
+        </h1>
+
         {/* Profile Card */}
         <Card className="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-50 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-amber-950/30 border-purple-200/50 dark:border-purple-800/30 shadow-lg">
           <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-20 h-24 rounded-lg overflow-hidden bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-2xl font-bold border-2 border-white/30 shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
                 GS
               </div>
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-foreground">
                   Gaurav Shastrakar
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Member Since 2023
-                </p>
               </div>
             </div>
-
-            {/* Stars Earned Section */}
-            <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border border-yellow-200/50 dark:border-yellow-800/30 shadow-md">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                    Stars Earned
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Star className="w-6 h-6 text-yellow-600 fill-yellow-600 animate-pulse" />
-                    <span
-                      className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
-                      data-testid="text-stars-earned"
-                    >
-                      33
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">from Dr.M</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Keep shining!
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Karmic Affirmation */}
-        <Card className="bg-[#fffdf5] dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-800/30 shadow-md">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-3 tracking-wide">
-              Karmic Affirmation
-            </h3>
-            <p
-              className="text-foreground italic font-serif leading-relaxed text-center"
-              data-testid="text-affirmation"
-            >
-              "I trust the universe to guide me toward my highest purpose. Every
-              challenge is an opportunity for growth, and I embrace it with
-              grace and courage."
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Prescription Card */}
-        <Card className="bg-[#f5fff8] dark:bg-green-950/20 border-green-200/50 dark:border-green-800/30 shadow-md">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-3">
-              Your Prescription
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Sunrise className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">Morning:</span> USM Practice +
-                  Gratitude Journal
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Leaf className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">Afternoon:</span> 15-min Money
-                  Meditation
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Moon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">Evening:</span> Project of
-                  Heart Reflection
-                </p>
-              </div>
+            <div className="mt-3">
+              <p className="text-base text-muted-foreground mb-2">
+                Karmic Affirmation
+              </p>
+              <p
+                className="text-foreground italic font-serif leading-relaxed text-sm"
+                data-testid="text-affirmation"
+              >
+                "I trust the universe to guide me toward my highest purpose. Every
+                challenge is an opportunity for growth, and I embrace it with
+                grace and courage."
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -431,6 +371,38 @@ export default function ProfilePage() {
             View Insights
           </button>
         </div>
+
+        {/* Prescription Card */}
+        <Card className="bg-[#f5fff8] dark:bg-green-950/20 border-green-200/50 dark:border-green-800/30 shadow-md">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-3">
+              Your Prescription
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Sunrise className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                <p className="text-sm text-foreground">
+                  <span className="font-semibold">Morning:</span> USM Practice +
+                  Gratitude Journal
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Leaf className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <p className="text-sm text-foreground">
+                  <span className="font-semibold">Afternoon:</span> 15-min Money
+                  Meditation
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Moon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+                <p className="text-sm text-foreground">
+                  <span className="font-semibold">Evening:</span> Project of
+                  Heart Reflection
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Settings */}
         <Card>
