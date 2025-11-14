@@ -172,6 +172,11 @@ export const practiceMediaLibrary: PracticeMedia[] = [
     audioUrl:
       "https://drmeghana-app.s3.ap-south-1.amazonaws.com/dyd/audios/Birth_Story_Specifics/INDUCED_BIRTH.mp3",
   },
+  {
+    id: 100,
+    videoUrl:
+      "https://drmeghana-app.s3.ap-south-1.amazonaws.com/dyd/videos/spiritual_breaths/Spiritual_Breaths_Coach_Rashmi_14mins-29secs-onwards-July_2024.mp4",
+  },
 ];
 
 export function getPracticeMedia(
