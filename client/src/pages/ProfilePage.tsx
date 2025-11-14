@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   ChevronRight,
+  ChevronDown,
   Settings as SettingsIcon,
   Bell,
   MessageCircle,
@@ -15,6 +16,8 @@ import {
   Leaf,
   Moon,
   Lock,
+  Sparkles,
+  Heart,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -33,6 +36,8 @@ export default function ProfilePage() {
   const [startDate, setStartDate] = useState("");
   const [streakData, setStreakData] = useState<StreakData>({});
   const [accountExpanded, setAccountExpanded] = useState(false);
+  const [prescriptionExpanded, setPrescriptionExpanded] = useState(false);
+  const [settingsExpanded, setSettingsExpanded] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -352,40 +357,61 @@ export default function ProfilePage() {
         </Card>
 
         {/* AI Insights Card */}
-        <div
-          className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-4 shadow-md relative"
+        <button
+          onClick={() => setLocation("/ai-insights")}
+          className="w-full text-left bg-[#703DFA] rounded-2xl p-5 shadow-md hover-elevate active-elevate-2"
           data-testid="card-ai-insights"
         >
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="text-white text-lg font-bold mb-1">
-                AI Insights ✨
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="text-white text-sm font-bold tracking-wider uppercase mb-2">
+                AI INSIGHTS
               </h3>
-              <p className="text-white/90 text-xs">
+              <p className="text-white/80 text-sm">
                 Receive personalised insights for your streak
               </p>
             </div>
-            <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Lock className="w-4 h-4 text-white" />
+            <div className="flex-shrink-0 ml-3">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
           </div>
-          <p className="text-white/70 text-[11px] mt-2">Unlocks in 7 days</p>
-          <button
-            onClick={() => setLocation("/ai-insights")}
-            className="mt-3 w-full py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-xs font-semibold rounded-xl backdrop-blur-sm transition"
-            data-testid="button-ai-insights"
-          >
-            View Insights
-          </button>
-        </div>
+          <div className="flex items-center justify-end mt-3">
+            <ChevronRight className="w-5 h-5 text-white/70" data-testid="button-ai-insights" />
+          </div>
+        </button>
 
-        {/* Prescription Card */}
-        <Card className="bg-[#f5fff8] dark:bg-green-950/20 border-green-200/50 dark:border-green-800/30 shadow-md">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-3">
-              My Prescription
-            </h3>
-            <div className="space-y-3">
+        {/* My Prescription Card */}
+        <div
+          className="bg-[#F3F0FF] rounded-2xl shadow-md overflow-hidden"
+          data-testid="card-prescription"
+        >
+          <button
+            onClick={() => setPrescriptionExpanded(!prescriptionExpanded)}
+            className="w-full text-left p-5 hover-elevate active-elevate-2"
+            data-testid="button-prescription"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-[#703DFA] text-sm font-bold tracking-wider uppercase mb-2">
+                  MY PRESCRIPTION
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  View your personalized daily practices
+                </p>
+              </div>
+              <div className="flex-shrink-0 ml-3">
+                <Heart className="w-6 h-6 text-[#703DFA]" />
+              </div>
+            </div>
+            <div className="flex items-center justify-end mt-3">
+              <ChevronDown
+                className={`w-5 h-5 text-[#703DFA] transition-transform ${prescriptionExpanded ? "rotate-180" : ""}`}
+              />
+            </div>
+          </button>
+
+          {prescriptionExpanded && (
+            <div className="px-5 pb-5 space-y-3">
               <div className="flex items-center gap-3">
                 <Sunrise className="w-5 h-5 text-orange-500 flex-shrink-0" />
                 <p className="text-sm text-foreground">
@@ -408,15 +434,29 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
 
-        {/* Settings */}
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              Settings
-            </h3>
+        {/* Settings Card */}
+        <div
+          className="bg-[#F3F0FF] rounded-2xl shadow-md overflow-hidden"
+          data-testid="card-settings"
+        >
+          <div className="p-5">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <h3 className="text-[#703DFA] text-sm font-bold tracking-wider uppercase mb-2">
+                  SETTINGS
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Manage your account and preferences
+                </p>
+              </div>
+              <div className="flex-shrink-0 ml-3">
+                <SettingsIcon className="w-6 h-6 text-[#703DFA]" />
+              </div>
+            </div>
+
             <div className="space-y-1">
               <div>
                 <button
@@ -528,8 +568,8 @@ export default function ProfilePage() {
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
