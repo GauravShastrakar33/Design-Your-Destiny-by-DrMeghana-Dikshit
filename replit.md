@@ -64,6 +64,13 @@ Preferred communication style: Simple, everyday language.
 - **My Prescription Card**: White background, black title (uppercase, left-aligned), dark gray description, purple Heart icon right, expandable/collapsible to show/hide prescription details (Morning/Afternoon/Evening practices), purple ChevronDown indicator rotates on toggle
 - **Settings Card**: White background, black title (uppercase, left-aligned), dark gray description, purple Settings icon right, all options visible by default (Account, Notifications, Get Support, Logout), only Account submenu expandable with reset options. All icons purple except Logout (red)
 
+**AI Insights Page** (Updated November 2025): Clean design with light gray page background (#F3F3F3) and white cards. Purple accent color (#703DFA) for icons and active states. Features practice tracking insights with weekly and monthly views.
+- **Page Background**: Light gray (#F3F3F3) creating contrast with white cards
+- **Header**: White background, sticky at top, grey bold uppercase title "AI INSIGHTS" (Montserrat font), no emoji, grey back arrow button
+- **View Toggle (Segmented Buttons)**: White container, two buttons (Weekly View / Monthly View). Active state: purple background (#703DFA) with white text. Inactive state: grey text on white background
+- **Weekly View Cards**: All cards white background with purple icons (#703DFA). Playlist cards show Music icon, Process Checklist card shows CheckSquare icon. Cards display practice activity and most practiced items
+- **Monthly View Card**: White background, title shows "{Month} {Year} Progress" (no emoji), purple Music icon for Playlist Practices section, purple CheckSquare icon for Process Checklist section, horizontal progress bars, inspirational quote (no emoji)
+
 **Project of Heart Page**: White background with "PROJECT OF HEART" title. Heart Chakra theme (#A8E6CF) preserved for specific elements. Rectangular tab system. White cards with subtle borders. Yellow primary CTAs (#E5AC19) and purple secondary actions. Typography uses Playfair Display for quotes.
 - **Journey Tab**: "Start Your Journey" button features reduced height (size="sm"), 92% width (w-11/12), centered with mx-auto, yellow background (#E5AC19), rounded pill shape
 - **Vision Tab**: Two-column layout: Left (70%) with authentic Anahata Heart Chakra SVG (green #5FB77D, 12 symmetrically rotated lotus petals, Star of David) and description. Right (30%) with circular progress ring around a gold star icon and an achievement badge showing star count. The chakra symbol uses clean SVG design with no glowing effects or animations for a professional, spiritual aesthetic.
