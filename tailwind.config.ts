@@ -95,6 +95,7 @@ export default {
           foreground: "hsl(var(--brand-purple-foreground) / <alpha-value>)",
           border: "var(--brand-purple-border)",
         },
+        "page-bg": "hsl(var(--page-background) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
         chart: {
           "1": "hsl(var(--chart-1) / <alpha-value>)",

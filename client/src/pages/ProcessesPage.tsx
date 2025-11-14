@@ -86,7 +86,7 @@ export default function ProcessesPage() {
   };
 
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
+    <div className="min-h-screen pb-20 bg-page-bg">
       <div className="max-w-md mx-auto">
         <div className="sticky top-0 bg-white border-b z-10">
           <div className="px-4 py-4 flex items-center justify-center relative">

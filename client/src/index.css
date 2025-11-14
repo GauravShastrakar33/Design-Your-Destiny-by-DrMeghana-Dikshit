@@ -72,6 +72,8 @@
 
   --brand-purple-foreground: 0 0% 100%;
 
+  --page-background: 0 0% 95%;
+
   --input: 210 5% 72%;
   --ring: 195 85% 42%;
   --chart-1: 195 85% 42%;
@@ -197,6 +199,8 @@
   --brand-purple: 253 95% 61%;
 
   --brand-purple-foreground: 0 0% 100%;
+
+  --page-background: 210 6% 12%;
 
   --input: 210 5% 32%;
   --ring: 195 85% 48%;
