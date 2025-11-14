@@ -14,9 +14,10 @@ interface PracticeCardProps {
   audioUrl?: string;
   script?: string;
   testId?: string;
+  hideIcon?: boolean;
 }
 
-export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, audioUrl, script, testId }: PracticeCardProps) {
+export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, audioUrl, script, testId, hideIcon = false }: PracticeCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeFormat, setActiveFormat] = useState<"Video" | "Audio" | "Script">("Video");
 
@@ -33,7 +34,7 @@ export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, 
         className="w-full p-4 flex items-center gap-3 hover-elevate active-elevate-2"
         data-testid={`button-expand-${title.toLowerCase().replace(/\s+/g, '-')}`}
       >
-        <Icon className="w-6 h-6 flex-shrink-0 text-brand" />
+        {!hideIcon && <Icon className="w-6 h-6 flex-shrink-0 text-brand" />}
         <span className="flex-1 text-left font-medium text-gray-900">{title}</span>
         {isExpanded ? (
           <ChevronUp className="w-5 h-5 text-brand" />
