@@ -360,7 +360,7 @@ export default function ProfilePage() {
         <button
           onClick={() => setLocation("/ai-insights")}
           className="w-full text-left bg-[#703DFA] rounded-2xl p-5 shadow-md hover-elevate active-elevate-2"
-          data-testid="card-ai-insights"
+          data-testid="button-ai-insights"
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -376,7 +376,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <div className="flex items-center justify-end mt-3">
-            <ChevronRight className="w-5 h-5 text-white/70" data-testid="button-ai-insights" />
+            <ChevronRight className="w-5 h-5 text-white/70" />
           </div>
         </button>
 

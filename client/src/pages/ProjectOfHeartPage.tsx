@@ -728,7 +728,8 @@ export default function ProjectOfHeartPage() {
             {!savedWeeklyAction ? (
               <Button
                 onClick={() => setShowJourneyModal(true)}
-                className="w-full mb-4 font-semibold shadow-md border-0"
+                size="sm"
+                className="w-11/12 mx-auto mb-4 font-semibold shadow-md border-0 block"
                 style={{
                   backgroundColor: "#E5AC19",
                   color: "#0D131F",
