@@ -184,15 +184,14 @@ export function AudioPlayer({
   };
 
   return (
-    <div className="w-full bg-card border border-border rounded-lg p-4 space-y-3" data-testid="audio-player">
+    <div className="w-full bg-white border border-gray-200 rounded-lg p-4 space-y-3" data-testid="audio-player">
       <audio ref={audioRef} src={src} preload="metadata" />
 
       <div className="flex items-center gap-4">
         <Button
           size="icon"
-          variant="default"
           onClick={togglePlayPause}
-          className="w-12 h-12 rounded-full flex-shrink-0"
+          className="w-12 h-12 rounded-full flex-shrink-0 bg-brand hover:bg-brand/90 text-brand-foreground"
           data-testid="button-play-pause"
         >
           {isPlaying ? (
@@ -203,7 +202,7 @@ export function AudioPlayer({
         </Button>
 
         <div className="flex-1 space-y-2">
-          <div className="text-sm font-medium text-foreground truncate" data-testid="text-audio-title">
+          <div className="text-sm font-medium text-gray-900 truncate" data-testid="text-audio-title">
             {title}
           </div>
 
@@ -214,13 +213,13 @@ export function AudioPlayer({
               max={duration || 0}
               value={currentTime}
               onChange={handleSeek}
-              className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+              className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand"
               style={{
-                background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${(currentTime / duration) * 100}%, hsl(var(--muted)) ${(currentTime / duration) * 100}%, hsl(var(--muted)) 100%)`,
+                background: `linear-gradient(to right, hsl(var(--brand-purple)) 0%, hsl(var(--brand-purple)) ${(currentTime / duration) * 100}%, #e5e7eb ${(currentTime / duration) * 100}%, #e5e7eb 100%)`,
               }}
               data-testid="input-audio-seek"
             />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center justify-between text-xs text-gray-600">
               <span data-testid="text-current-time">{formatTime(currentTime)}</span>
               <span data-testid="text-duration">{formatTime(duration)}</span>
             </div>
