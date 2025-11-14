@@ -194,25 +194,25 @@ export default function ProcessChecklistPage() {
             </p>
           </div>
 
-          <Card className="p-6 bg-card shadow-xl border-2">
+          <Card className="p-6 bg-white border border-gray-200 shadow-xl">
             <div className="space-y-4 text-left">
-              <p className="font-semibold text-foreground">
+              <p className="font-semibold text-gray-900">
                 This will help you:
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">Stay consistent</span>
+                  <Check className="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-600">Stay consistent</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">
+                  <Check className="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-600">
                     Track your journey weekly & monthly
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">
+                  <Check className="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-600">
                     See your growth clearly
                   </span>
                 </li>
@@ -223,7 +223,7 @@ export default function ProcessChecklistPage() {
           <Button
             onClick={handleCreateChecklist}
             size="lg"
-            className="w-full h-14 text-lg font-semibold shadow-lg"
+            className="w-full h-14 text-lg font-semibold shadow-lg bg-brand hover:bg-brand/90 text-white"
             data-testid="button-create-checklist"
           >
             <Sparkles className="w-5 h-5 mr-2" />
