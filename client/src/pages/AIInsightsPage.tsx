@@ -209,31 +209,31 @@ export default function AIInsightsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen pb-20" style={{ backgroundColor: '#F3F3F3' }}>
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
+        <div className="sticky top-0 bg-white border-b border-border z-10">
           <div className="px-4 py-4 flex items-center gap-4">
             <button
               onClick={() => setLocation("/")}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
               data-testid="button-back"
             >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
+              <ArrowLeft className="w-6 h-6 text-gray-600" />
             </button>
-            <h1 className="text-2xl font-bold text-foreground">AI Insights ✨</h1>
+            <h1 className="text-xl font-bold text-gray-600 uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>AI Insights</h1>
           </div>
         </div>
 
         <div className="px-4 py-6 space-y-6">
           {/* Toggle */}
-          <div className="flex gap-2 bg-muted p-1 rounded-lg">
+          <div className="flex gap-2 bg-white p-1 rounded-lg">
             <button
               onClick={() => setViewMode("weekly")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-all ${
                 viewMode === "weekly"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover-elevate"
+                  ? "bg-[#703DFA] text-white shadow-sm"
+                  : "text-gray-600 hover-elevate"
               }`}
               data-testid="button-weekly-view"
             >
@@ -243,8 +243,8 @@ export default function AIInsightsPage() {
               onClick={() => setViewMode("monthly")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-all ${
                 viewMode === "monthly"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover-elevate"
+                  ? "bg-[#703DFA] text-white shadow-sm"
+                  : "text-gray-600 hover-elevate"
               }`}
               data-testid="button-monthly-view"
             >
@@ -258,9 +258,9 @@ export default function AIInsightsPage() {
               {/* Playlist Sections */}
               {weeklyData.playlists.length > 0 ? (
                 weeklyData.playlists.map((playlist: any, idx: number) => (
-                  <Card key={idx} className="p-5 shadow-sm" data-testid={`card-playlist-${idx}`}>
+                  <Card key={idx} className="p-5 shadow-sm bg-white" data-testid={`card-playlist-${idx}`}>
                     <div className="flex items-center gap-2 mb-4">
-                      <Music className="w-5 h-5 text-primary" />
+                      <Music className="w-5 h-5 text-[#703DFA]" />
                       <h3 className="text-md font-semibold text-foreground">
                         {playlist.name}
                       </h3>
@@ -284,7 +284,7 @@ export default function AIInsightsPage() {
                   </Card>
                 ))
               ) : (
-                <Card className="p-5 text-center">
+                <Card className="p-5 text-center bg-white">
                   <p className="text-sm text-muted-foreground">
                     No playlist activity this week. Start practicing!
                   </p>
@@ -292,9 +292,9 @@ export default function AIInsightsPage() {
               )}
 
               {/* Process Checklist Section */}
-              <Card className="p-5 shadow-sm" data-testid="card-checklist">
+              <Card className="p-5 shadow-sm bg-white" data-testid="card-checklist">
                 <div className="flex items-center gap-2 mb-4">
-                  <CheckSquare className="w-5 h-5 text-green-500" />
+                  <CheckSquare className="w-5 h-5 text-[#703DFA]" />
                   <h3 className="text-md font-semibold text-foreground">
                     My Process Checklist
                   </h3>
@@ -332,9 +332,9 @@ export default function AIInsightsPage() {
 
           {/* Monthly View */}
           {viewMode === "monthly" && monthlyData && (
-            <Card className="p-5 shadow-sm" data-testid="card-monthly-progress">
+            <Card className="p-5 shadow-sm bg-white" data-testid="card-monthly-progress">
               <h2 className="text-lg font-semibold text-foreground mb-1">
-                📅 {getMonthName()} {new Date().getFullYear()} Progress
+                {getMonthName()} {new Date().getFullYear()} Progress
               </h2>
               <p className="text-sm text-muted-foreground mb-5">
                 Your practice journey this month
@@ -344,7 +344,7 @@ export default function AIInsightsPage() {
               {monthlyData.playlist.length > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <Music className="w-4 h-4 text-purple-500" />
+                    <Music className="w-4 h-4 text-[#703DFA]" />
                     <h3 className="text-md font-medium text-foreground">Playlist Practices</h3>
                   </div>
                   {monthlyData.playlist.map(([practice, count]: [string, number], idx: number) => (
@@ -363,7 +363,7 @@ export default function AIInsightsPage() {
               {monthlyData.checklist.length > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <CheckSquare className="w-4 h-4 text-green-500" />
+                    <CheckSquare className="w-4 h-4 text-[#703DFA]" />
                     <h3 className="text-md font-medium text-foreground">Process Checklist</h3>
                   </div>
                   {monthlyData.checklist.map(([practice, count]: [string, number], idx: number) => (
@@ -380,9 +380,9 @@ export default function AIInsightsPage() {
 
               {/* Inspirational Message */}
               {(monthlyData.playlist.length > 0 || monthlyData.checklist.length > 0) && (
-                <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg">
+                <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
                   <p className="text-sm italic text-center text-foreground/80">
-                    ✨ "You came back again and again. That's growth."
+                    "You came back again and again. That's growth."
                   </p>
                 </div>
               )}
