@@ -3,6 +3,7 @@ import { ArrowLeft, Brain, Zap, Link2, Heart, Waves, Users, Laugh, Baby, BookHea
 import { useLocation } from "wouter";
 import PracticeCard from "@/components/PracticeCard";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { getPracticeMedia } from "@/lib/practiceMedia";
 
 const usmPractices = [
   { id: 1, title: "Recognition", icon: Brain },
@@ -125,17 +126,23 @@ export default function ProcessesPage() {
 
         <div className="px-4 py-6 space-y-3" key={selectedCategory}>
           {selectedCategory === "USM" ? (
-            usmPractices.map((practice) => (
-              <PracticeCard
-                key={practice.id}
-                title={practice.title}
-                icon={practice.icon}
-                practiceId={practice.id}
-                testId={`practice-${practice.title.toLowerCase().replace(/\s+/g, '-')}`}
-              />
-            ))
+            usmPractices.map((practice) => {
+              const media = getPracticeMedia(practice.id);
+              return (
+                <PracticeCard
+                  key={practice.id}
+                  title={practice.title}
+                  icon={practice.icon}
+                  practiceId={practice.id}
+                  videoUrl={media?.videoUrl}
+                  audioUrl={media?.audioUrl}
+                  script={media?.script}
+                  testId={`practice-${practice.title.toLowerCase().replace(/\s+/g, '-')}`}
+                />
+              );
+            })
           ) : (
-            dydPracticesData.map((item, index) => {
+            dydPracticesData.map((item) => {
               if (item.type === "category") {
                 const isOpen = openCategories.has(item.title);
                 const Icon = item.icon;
@@ -164,25 +171,35 @@ export default function ProcessesPage() {
                       </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="space-y-2 mt-2 ml-4">
-                      {item.practices.map((practice) => (
-                        <PracticeCard
-                          key={practice.id}
-                          title={practice.title}
-                          icon={practice.icon}
-                          practiceId={practice.id}
-                          testId={`practice-${practice.title.toLowerCase().replace(/\s+/g, '-')}`}
-                        />
-                      ))}
+                      {item.practices.map((practice) => {
+                        const media = getPracticeMedia(practice.id);
+                        return (
+                          <PracticeCard
+                            key={practice.id}
+                            title={practice.title}
+                            icon={practice.icon}
+                            practiceId={practice.id}
+                            videoUrl={media?.videoUrl}
+                            audioUrl={media?.audioUrl}
+                            script={media?.script}
+                            testId={`practice-${practice.title.toLowerCase().replace(/\s+/g, '-')}`}
+                          />
+                        );
+                      })}
                     </CollapsibleContent>
                   </Collapsible>
                 );
               } else {
+                const media = getPracticeMedia(item.id);
                 return (
                   <PracticeCard
                     key={item.id}
                     title={item.title}
                     icon={item.icon}
                     practiceId={item.id}
+                    videoUrl={media?.videoUrl}
+                    audioUrl={media?.audioUrl}
+                    script={media?.script}
                     testId={`practice-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                   />
                 );

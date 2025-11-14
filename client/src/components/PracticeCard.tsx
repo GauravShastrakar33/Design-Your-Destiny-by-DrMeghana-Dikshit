@@ -20,9 +20,11 @@ export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, 
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeFormat, setActiveFormat] = useState<"Video" | "Audio" | "Script">("Video");
 
-  const audioFile = practiceId 
+  const legacyAudioFile = practiceId 
     ? audioLibrary.practices.find(p => p.id === practiceId)
     : null;
+  
+  const finalAudioUrl = audioUrl || legacyAudioFile?.file;
 
   return (
     <Card className="overflow-hidden bg-white" data-testid={testId}>
@@ -59,19 +61,34 @@ export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, 
 
               <div className="pt-2">
                 {activeFormat === "Video" && (
-                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center" data-testid="video-player">
-                    <div className="text-center text-muted-foreground">
-                      <p className="text-sm">Video Player</p>
-                      <p className="text-xs mt-1">{title}</p>
-                    </div>
-                  </div>
+                  <>
+                    {videoUrl ? (
+                      <div className="aspect-video bg-black rounded-lg overflow-hidden" data-testid="video-player">
+                        <video
+                          className="w-full h-full"
+                          controls
+                          controlsList="nodownload"
+                          src={videoUrl}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    ) : (
+                      <div className="aspect-video bg-muted rounded-lg flex items-center justify-center" data-testid="video-placeholder">
+                        <div className="text-center text-muted-foreground">
+                          <p className="text-sm">Video coming soon</p>
+                          <p className="text-xs mt-1">{title}</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {activeFormat === "Audio" && (
                   <>
-                    {audioFile ? (
+                    {finalAudioUrl ? (
                       <AudioPlayer
-                        src={audioFile.file}
+                        src={finalAudioUrl}
                         title={title}
                         mode="basic"
                       />
