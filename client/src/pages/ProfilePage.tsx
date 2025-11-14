@@ -213,6 +213,13 @@ export default function ProfilePage() {
     {} as Record<number, StreakDay[]>,
   );
 
+  // ✅ Sort each month by actual day number (fixes 31 appearing first)
+  for (const month in daysByMonth) {
+    daysByMonth[month].sort((a, b) => {
+      return new Date(a.date).getDate() - new Date(b.date).getDate();
+    });
+  }
+
   const hardcodedGreenDates = [
     // October 2025
     "2025-10-01",
@@ -265,43 +272,31 @@ export default function ProfilePage() {
   ];
 
   // 🎯 Apply final hardcoded + mixed + future logic
-  // 🎯 Apply final hardcoded + mixed + future logic
   for (const [month, days] of Object.entries(daysByMonth)) {
     days.forEach((day) => {
-      const isFuture = new Date(day.date) > new Date();
+      const isFuture = new Date(day.date) > new Date("2025-11-14"); // today
 
-      // 💚 1. Your hardcoded continuous green streak
+      // 2️⃣ YOUR 25-DAY STREAK (OCT 1 → NOV 14)
       if (hardcodedGreenDates.includes(day.date)) {
         day.status = "streak";
         return;
       }
 
-      // ⚪ 2. Future days must always be neutral
+      // 3️⃣ All future dates → GREY
       if (isFuture) {
         day.status = "neutral";
         return;
       }
 
-      // ❗ 3. Force 30 November 2025 to be RED
-      if (day.date === "2025-11-30") {
-        day.status = "missed";
-        return;
-      }
-
-      // ❗ 4. Force 31 December 2025 to be RED
-      if (day.date === "2025-12-31") {
-        day.status = "missed";
-        return;
-      }
-
-      // 💚🔴 5. Pre-streak days: balanced mix of green + red
-      const seed = parseInt(day.date.split("-").join("")); // "2025-09-23" -> 20250923
-
+      // 4️⃣ PRE-STREAK MIX LOGIC
+      const seed = parseInt(day.date.replaceAll("-", ""));
       if (seed % 3 === 0 || seed % 5 === 0) {
-        day.status = "streak"; // GREEN
+        day.status = "streak"; // green
       } else {
-        day.status = "missed"; // RED
+        day.status = "missed"; // red
       }
+
+      
     });
   }
 
