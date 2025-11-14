@@ -229,7 +229,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen pb-24" style={{ backgroundColor: '#F3F3F3' }}>
       {/* White Header Section */}
       <div className="bg-white border-b py-4 px-4">
         <div className="flex items-center">
@@ -358,30 +358,30 @@ export default function ProfilePage() {
         {/* AI Insights Card */}
         <button
           onClick={() => setLocation("/ai-insights")}
-          className="w-full text-left bg-[#703DFA] rounded-2xl p-5 shadow-md hover-elevate active-elevate-2"
+          className="w-full text-left bg-white rounded-2xl p-5 shadow-md hover-elevate active-elevate-2"
           data-testid="button-ai-insights"
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="text-white text-sm font-bold tracking-wider uppercase mb-2">
+              <h3 className="text-black text-sm font-bold tracking-wider uppercase mb-2">
                 AI INSIGHTS
               </h3>
-              <p className="text-white/80 text-sm">
+              <p className="text-gray-700 text-sm">
                 Receive personalised insights for your streak
               </p>
             </div>
             <div className="flex-shrink-0 ml-3">
-              <Sparkles className="w-6 h-6 text-white" />
+              <Sparkles className="w-6 h-6 text-[#703DFA]" />
             </div>
           </div>
           <div className="flex items-center justify-end mt-3">
-            <ChevronRight className="w-5 h-5 text-white/70" />
+            <ChevronRight className="w-5 h-5 text-gray-400" />
           </div>
         </button>
 
         {/* My Prescription Card */}
         <div
-          className="bg-[#F3F0FF] rounded-2xl shadow-md overflow-hidden"
+          className="bg-white rounded-2xl shadow-md overflow-hidden"
           data-testid="card-prescription"
         >
           <button
@@ -391,10 +391,10 @@ export default function ProfilePage() {
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="text-[#703DFA] text-sm font-bold tracking-wider uppercase mb-2">
+                <h3 className="text-black text-sm font-bold tracking-wider uppercase mb-2">
                   MY PRESCRIPTION
                 </h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-gray-700 text-sm">
                   View your personalized daily practices
                 </p>
               </div>
@@ -438,16 +438,16 @@ export default function ProfilePage() {
 
         {/* Settings Card */}
         <div
-          className="bg-[#F3F0FF] rounded-2xl shadow-md overflow-hidden"
+          className="bg-white rounded-2xl shadow-md overflow-hidden"
           data-testid="card-settings"
         >
           <div className="p-5">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <h3 className="text-[#703DFA] text-sm font-bold tracking-wider uppercase mb-2">
+                <h3 className="text-black text-sm font-bold tracking-wider uppercase mb-2">
                   SETTINGS
                 </h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-gray-700 text-sm">
                   Manage your account and preferences
                 </p>
               </div>
@@ -464,7 +464,7 @@ export default function ProfilePage() {
                   data-testid="button-account"
                 >
                   <div className="flex items-center gap-3">
-                    <SettingsIcon className="w-5 h-5 text-muted-foreground" />
+                    <SettingsIcon className="w-5 h-5 text-[#703DFA]" />
                     <div className="text-left">
                       <p className="font-medium text-foreground">Account</p>
                       <p className="text-xs text-muted-foreground">
@@ -524,7 +524,7 @@ export default function ProfilePage() {
                 data-testid="button-notifications-settings"
               >
                 <div className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-muted-foreground" />
+                  <Bell className="w-5 h-5 text-[#703DFA]" />
                   <div className="text-left">
                     <p className="font-medium text-foreground">Notifications</p>
                     <p className="text-xs text-muted-foreground">
@@ -540,7 +540,7 @@ export default function ProfilePage() {
                 data-testid="button-support"
               >
                 <div className="flex items-center gap-3">
-                  <MessageCircle className="w-5 h-5 text-muted-foreground" />
+                  <MessageCircle className="w-5 h-5 text-[#703DFA]" />
                   <div className="text-left">
                     <p className="font-medium text-foreground">Get Support</p>
                     <p className="text-xs text-muted-foreground">
