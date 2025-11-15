@@ -42,9 +42,24 @@ export default function DrMPage() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        setMessages(parsed);
-        if (parsed.length > 0) {
-          const lastMessage = parsed[parsed.length - 1];
+        
+        // Guard against corrupted storage
+        if (!Array.isArray(parsed)) {
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+        
+        // Filter out incomplete messages (questions without video responses)
+        const completeMessages = parsed.filter((msg: DrmMessage) => msg.videoUrl);
+        
+        // Save cleaned messages back to storage
+        if (completeMessages.length !== parsed.length) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(completeMessages));
+        }
+        
+        setMessages(completeMessages);
+        if (completeMessages.length > 0) {
+          const lastMessage = completeMessages[completeMessages.length - 1];
           setCurrentVideoUrl(lastMessage.videoUrl);
           setCurrentSubtitlesUrl(lastMessage.subtitlesUrl || "");
           setCurrentVideoId(lastMessage.id);
@@ -162,6 +177,10 @@ export default function DrMPage() {
       setCurrentSubtitlesUrl(response.answerVideo.subtitles || "");
       setCurrentVideoId(newMessage.id);
     } catch (error) {
+      // Remove the incomplete message from chat history
+      const cleanedMessages = messages.filter((msg) => msg.id !== newMessage.id);
+      saveMessages(cleanedMessages);
+      
       toast({
         title: "Error",
         description:
