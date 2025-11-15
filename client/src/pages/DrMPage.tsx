@@ -136,7 +136,8 @@ export default function DrMPage() {
     setIsLoading(true);
 
     try {
-      const response = await askDrM(newMessage.question, userName || "Friend");
+      const firstName = userName ? userName.trim().split(/\s+/)[0] : "Friend";
+      const response = await askDrM(newMessage.question, firstName);
 
       console.log("Dr.M Response:", response);
       console.log("Answer Video:", response.answerVideo);
