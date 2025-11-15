@@ -377,7 +377,18 @@ export default function ProfilePage() {
 
       {/* Profile Card - Full Width */}
       <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-50 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-amber-950/30 border-b border-purple-200/50 dark:border-purple-800/30 mt-2">
-        <div className="max-w-md mx-auto px-4 py-4">
+        <div className="max-w-md mx-auto px-4 py-4 relative">
+          {/* Edit button at top right */}
+          {!isEditingName && (
+            <button
+              onClick={handleEditName}
+              className="absolute top-3 right-3 p-1.5 hover:bg-white/50 rounded-lg transition"
+              data-testid="button-edit-name"
+            >
+              <Edit2 className="w-4 h-4 text-brand" />
+            </button>
+          )}
+          
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
               {getInitials(userName)}
@@ -410,16 +421,7 @@ export default function ProfilePage() {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <h2 className="text-2xl font-bold text-foreground" data-testid="text-username">{userName}</h2>
-                  <button
-                    onClick={handleEditName}
-                    className="p-1 hover:bg-white/50 rounded-lg transition"
-                    data-testid="button-edit-name"
-                  >
-                    <Edit2 className="w-5 h-5 text-brand" />
-                  </button>
-                </div>
+                <h2 className="text-2xl font-bold text-foreground" data-testid="text-username">{userName}</h2>
               )}
             </div>
           </div>
