@@ -18,6 +18,9 @@ import {
   Lock,
   Sparkles,
   Heart,
+  Edit2,
+  Check,
+  X,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -38,12 +41,16 @@ export default function ProfilePage() {
   const [accountExpanded, setAccountExpanded] = useState(false);
   const [prescriptionExpanded, setPrescriptionExpanded] = useState(false);
   const [settingsExpanded, setSettingsExpanded] = useState(false);
+  const [userName, setUserName] = useState("UserName");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState("");
 
   // Load from localStorage on mount
   useEffect(() => {
     const savedStartDate = localStorage.getItem("streakStartDate");
     const savedStreakVisible = localStorage.getItem("streakVisible");
     const savedStreakData = localStorage.getItem("streakData");
+    const savedUserName = localStorage.getItem("@app:userName");
 
     setStartDate(savedStartDate || "2025-01-01");
     setStreakVisible(
@@ -54,6 +61,7 @@ export default function ProfilePage() {
         ? JSON.parse(savedStreakData)
         : generateInitialStreakData(),
     );
+    setUserName(savedUserName || "UserName");
   }, []);
 
   // Generate initial streak data (deterministic based on date)
@@ -126,6 +134,32 @@ export default function ProfilePage() {
       localStorage.removeItem("@app:drm_conversations");
       alert("Dr.M chat history has been cleared successfully.");
     }
+  };
+
+  const handleEditName = () => {
+    setTempName(userName);
+    setIsEditingName(true);
+  };
+
+  const handleSaveName = () => {
+    if (tempName.trim()) {
+      setUserName(tempName.trim());
+      localStorage.setItem("@app:userName", tempName.trim());
+      setIsEditingName(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingName(false);
+    setTempName("");
+  };
+
+  const getInitials = (name: string) => {
+    const words = name.trim().split(/\s+/);
+    if (words.length === 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
   };
 
   // Generate calendar days using persisted streak data and start date
@@ -346,10 +380,47 @@ export default function ProfilePage() {
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
-              UN
+              {getInitials(userName)}
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-foreground">UserName</h2>
+              {isEditingName ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={tempName}
+                    onChange={(e) => setTempName(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand text-foreground bg-white"
+                    placeholder="Enter your name"
+                    autoFocus
+                    data-testid="input-username"
+                  />
+                  <button
+                    onClick={handleSaveName}
+                    className="p-2 bg-brand text-white rounded-lg hover:bg-brand/90"
+                    data-testid="button-save-name"
+                  >
+                    <Check className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="p-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                    data-testid="button-cancel-edit"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-bold text-foreground" data-testid="text-username">{userName}</h2>
+                  <button
+                    onClick={handleEditName}
+                    className="p-1 hover:bg-white/50 rounded-lg transition"
+                    data-testid="button-edit-name"
+                  >
+                    <Edit2 className="w-5 h-5 text-brand" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-3">

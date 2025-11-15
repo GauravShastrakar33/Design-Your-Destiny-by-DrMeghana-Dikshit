@@ -29,11 +29,16 @@ export default function DrMPage() {
   const [currentSubtitlesUrl, setCurrentSubtitlesUrl] = useState<string>("");
   const [currentVideoId, setCurrentVideoId] = useState<string>("");
   const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
+  const [userName, setUserName] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
+    const savedUserName = localStorage.getItem("@app:userName");
+    
+    setUserName(savedUserName || "");
+    
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -115,7 +120,7 @@ export default function DrMPage() {
     const newMessage: DrmMessage = {
       id: Date.now().toString(),
       question: question,
-      userName: "",
+      userName: userName,
       videoUrl: "",
       subtitlesUrl: "",
       textResponse: "",
@@ -131,7 +136,7 @@ export default function DrMPage() {
     setIsLoading(true);
 
     try {
-      const response = await askDrM(newMessage.question, "");
+      const response = await askDrM(newMessage.question, userName || "Friend");
 
       console.log("Dr.M Response:", response);
       console.log("Answer Video:", response.answerVideo);
