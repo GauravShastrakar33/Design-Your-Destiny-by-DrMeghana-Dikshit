@@ -218,17 +218,6 @@ export default function DrMPage() {
           </div>
         </div>
 
-        {/* Loading Progress Bar */}
-        {isLoading && (
-          <div className="w-full">
-            <Progress
-              value={undefined}
-              className="h-1 rounded-none"
-              data-testid="progress-loading"
-            />
-          </div>
-        )}
-
         {messages.length === 0 ? (
           /* Empty State - covers video and chat area */
           <div
@@ -389,6 +378,17 @@ export default function DrMPage() {
             </Button>
           </div>
         </form>
+
+        {/* Bottom Loading Bar */}
+        {isLoading && (
+          <div className="fixed bottom-0 left-0 right-0 z-50">
+            <Progress
+              value={undefined}
+              className="h-1 rounded-none"
+              data-testid="progress-loading"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
