@@ -256,7 +256,7 @@ export default function DrMPage() {
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/60">
                   <p className="text-sm" data-testid="text-no-video">
-                    Your guidance session is preparing…
+                    Your guidance session is being prepared.
                   </p>
                 </div>
               )}
@@ -318,7 +318,7 @@ export default function DrMPage() {
                       >
                         <p className="text-sm">
                           {message.textResponse ||
-                            "Dr. M’s Avatar is crafting your video response…"}
+                            "Dr. M’s Avatar is crafting your video response..."}
                         </p>
                       </div>
                     )}
