@@ -220,7 +220,7 @@ export default function DrMPage() {
               data-testid="img-chat-icon-empty"
             />
             <p className="text-gray-500 text-center" data-testid="text-empty-chat">
-              Start a conversation<br />with Dr. M
+              + Chat with Dr.M's AI Avatar
             </p>
           </div>
         ) : (
