@@ -376,8 +376,8 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile Card - Full Width */}
-      <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-50 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-amber-950/30 border-b border-purple-200/50 dark:border-purple-800/30 mt-2">
-        <div className="max-w-md mx-auto px-4 py-4 relative">
+      <div className="bg-white border rounded-xl mt-2 mx-2 sm:mx-6">
+        <div className="max-w-sm mx-auto px-3 py-3 relative">
           {/* Edit button at top right */}
           {!isEditingName && (
             <button
@@ -388,9 +388,9 @@ export default function ProfilePage() {
               <Edit2 className="w-4 h-4 text-brand" />
             </button>
           )}
-          
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
+
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
               {getInitials(userName)}
             </div>
             <div className="flex-1">
@@ -421,17 +421,19 @@ export default function ProfilePage() {
                   </button>
                 </div>
               ) : (
-                <h2 className="text-2xl font-bold text-foreground" data-testid="text-username">{userName}</h2>
+                <h2 className="text-xl font-['Poppins'] font-semibold text-gray-600 dark:text-gray-200 tracking-tight">
+                  {userName}
+                </h2>
               )}
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-1">
             <p className="text-lg text-muted-foreground mb-2 text-center">
               My Karmic Affirmation
             </p>
 
             <p
-              className="text-foreground font-['Playfair_Display'] text-base sm:text-lg leading-relaxed tracking-wide"
+              className="text-foreground font-['Playfair_Display'] text-base sm:text-lg leading-normal tracking-wide"
               data-testid="text-affirmation"
             >
               I trust the universe to guide me toward my highest purpose. Every
@@ -587,22 +589,23 @@ export default function ProfilePage() {
               <div className="flex items-center gap-3">
                 <Sunrise className="w-5 h-5 text-orange-500 flex-shrink-0" />
                 <p className="text-sm text-foreground">
-                  <span className="font-semibold">Morning:</span> USM Practice +
-                  Gratitude Journal
+                  <span className="font-semibold">Morning: </span>
+                  Vibration Elevation • Neuro-coupling • WCA 1 & 2 • Birth Story
+                  + Late Birth
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <Leaf className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <p className="text-sm text-foreground">
-                  <span className="font-semibold">Afternoon:</span> 15-min Money
-                  Meditation
+                  <span className="font-semibold">Afternoon: </span>{" "}
+                  Journaling{" "}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <Moon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
                 <p className="text-sm text-foreground">
-                  <span className="font-semibold">Evening:</span> Project of
-                  Heart Reflection
+                  <span className="font-semibold">Evening: </span>
+                  WCA 3 • Anxiety Code 1 • Happiness Code 1
                 </p>
               </div>
             </div>

@@ -36,9 +36,9 @@ export default function DrMPage() {
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     const savedUserName = localStorage.getItem("@app:userName");
-    
+
     setUserName(savedUserName || "");
-    
+
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -59,7 +59,7 @@ export default function DrMPage() {
   useEffect(() => {
     if (currentVideoUrl && videoRef.current) {
       videoRef.current.load();
-      
+
       if (shouldAutoPlay) {
         videoRef.current.play().catch((error) => {
           console.error("Error auto-playing video:", error);
@@ -70,7 +70,7 @@ export default function DrMPage() {
       }
     }
   }, [currentVideoUrl]);
-  
+
   // Handle auto-play flag changes (for when URL doesn't change but flag is set)
   useEffect(() => {
     if (shouldAutoPlay && currentVideoUrl && videoRef.current) {
@@ -152,8 +152,8 @@ export default function DrMPage() {
         textResponse: response.textResponse,
       };
 
-      const updatedMessages = messagesWithQuestion.map(msg => 
-        msg.id === newMessage.id ? updatedMessage : msg
+      const updatedMessages = messagesWithQuestion.map((msg) =>
+        msg.id === newMessage.id ? updatedMessage : msg,
       );
       saveMessages(updatedMessages);
 
@@ -193,8 +193,8 @@ export default function DrMPage() {
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border border-white rounded-full" />
             </div>
             <div className="text-white">
-              <h1 className="text-base font-bold">Dr.M</h1>
-              <p className="text-xs opacity-90">Your AI Wellness Companion</p>
+              <h1 className="text-base font-bold">Dr. M's AI Avatar</h1>
+              <p className="text-xs opacity-90">Your AI Wellness Guide</p>
             </div>
           </div>
         </div>
@@ -212,15 +212,21 @@ export default function DrMPage() {
 
         {messages.length === 0 ? (
           /* Empty State - covers video and chat area */
-          <div className="flex-1 flex flex-col items-center justify-center p-4" data-testid="empty-state-drm">
-            <img 
-              src={chatIcon} 
-              alt="Chat Icon" 
+          <div
+            className="flex-1 flex flex-col items-center justify-center p-4"
+            data-testid="empty-state-drm"
+          >
+            <img
+              src={chatIcon}
+              alt="Chat Icon"
               className="w-32 h-32 mb-4"
               data-testid="img-chat-icon-empty"
             />
-            <p className="text-gray-500 text-center" data-testid="text-empty-chat">
-              + Chat with Dr.M's AI Avatar
+            <p
+              className="text-gray-500 text-center"
+              data-testid="text-empty-chat"
+            >
+              Chat with Dr. M's AI Avatar
             </p>
           </div>
         ) : (
@@ -250,7 +256,7 @@ export default function DrMPage() {
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/60">
                   <p className="text-sm" data-testid="text-no-video">
-                    Ask Dr.M a question to get started
+                    Your guidance session is preparing…
                   </p>
                 </div>
               )}
@@ -262,72 +268,77 @@ export default function DrMPage() {
               data-testid="chat-history"
             >
               {messages.slice(-MAX_CONVERSATIONS).map((message) => (
-            <div key={message.id} className="space-y-2">
-              {/* User Question */}
-              <div className="flex justify-end">
-                <div
-                  className="text-white rounded-lg px-4 py-2 max-w-[80%]"
-                  style={{ backgroundColor: "#703DFA" }}
-                  data-testid={`text-user-question-${message.id}`}
-                >
-                  <p className="text-sm">{message.question}</p>
-                </div>
-              </div>
-
-              {/* Dr.M Response */}
-              <div className="flex justify-start gap-2">
-                {/* Video Thumbnail */}
-                {message.videoUrl && (
-                  <button
-                    onClick={() => handlePlayVideo(message)}
-                    className={`relative flex-shrink-0 w-16 h-11 rounded-lg overflow-hidden border-2 transition-all ${
-                      currentVideoId === message.id
-                        ? "ring-2 ring-purple-300"
-                        : "border-gray-300 hover:border-purple-400"
-                    }`}
-                    style={{
-                      backgroundColor: "#703DFA",
-                      borderColor:
-                        currentVideoId === message.id ? "#703DFA" : undefined,
-                    }}
-                    data-testid={`button-video-thumbnail-${message.id}`}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Play
-                        className="w-6 h-6 text-white drop-shadow-lg"
-                        fill="white"
-                      />
+                <div key={message.id} className="space-y-2">
+                  {/* User Question */}
+                  <div className="flex justify-end">
+                    <div
+                      className="text-white rounded-lg px-4 py-2 max-w-[80%]"
+                      style={{ backgroundColor: "#703DFA" }}
+                      data-testid={`text-user-question-${message.id}`}
+                    >
+                      <p className="text-sm">{message.question}</p>
                     </div>
-                  </button>
-                )}
-
-                {/* Text Response - hide if it's just a quota message */}
-                {!isQuotaMessage(message.textResponse) && (
-                  <div
-                    className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900"
-                    style={{ backgroundColor: "#F3F0FF" }}
-                    data-testid={`text-drm-response-${message.id}`}
-                  >
-                    <p className="text-sm">
-                      {message.textResponse ||
-                        "Dr.M has responded with a video message"}
-                    </p>
                   </div>
-                )}
 
-                {/* Show fallback message only if there's a video but quota message */}
-                {isQuotaMessage(message.textResponse) && message.videoUrl && (
-                  <div
-                    className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900"
-                    style={{ backgroundColor: "#F3F0FF" }}
-                    data-testid={`text-drm-response-${message.id}`}
-                  >
-                    <p className="text-sm text-gray-600">Video response</p>
+                  {/* Dr.M Response */}
+                  <div className="flex justify-start gap-2">
+                    {/* Video Thumbnail */}
+                    {message.videoUrl && (
+                      <button
+                        onClick={() => handlePlayVideo(message)}
+                        className={`relative flex-shrink-0 w-16 h-11 rounded-lg overflow-hidden border-2 transition-all ${
+                          currentVideoId === message.id
+                            ? "ring-2 ring-purple-300"
+                            : "border-gray-300 hover:border-purple-400"
+                        }`}
+                        style={{
+                          backgroundColor: "#703DFA",
+                          borderColor:
+                            currentVideoId === message.id
+                              ? "#703DFA"
+                              : undefined,
+                        }}
+                        data-testid={`button-video-thumbnail-${message.id}`}
+                      >
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Play
+                            className="w-6 h-6 text-white drop-shadow-lg"
+                            fill="white"
+                          />
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Text Response - hide if it's just a quota message */}
+                    {!isQuotaMessage(message.textResponse) && (
+                      <div
+                        className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900"
+                        style={{ backgroundColor: "#F3F0FF" }}
+                        data-testid={`text-drm-response-${message.id}`}
+                      >
+                        <p className="text-sm">
+                          {message.textResponse ||
+                            "Dr. M’s Avatar is crafting your video response…"}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Show fallback message only if there's a video but quota message */}
+                    {isQuotaMessage(message.textResponse) &&
+                      message.videoUrl && (
+                        <div
+                          className="rounded-lg px-4 py-2 max-w-[70%] text-gray-900"
+                          style={{ backgroundColor: "#F3F0FF" }}
+                          data-testid={`text-drm-response-${message.id}`}
+                        >
+                          <p className="text-sm text-gray-600">
+                            Video response
+                          </p>
+                        </div>
+                      )}
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
+                </div>
+              ))}
             </div>
           </>
         )}
