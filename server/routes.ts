@@ -311,6 +311,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== PUBLIC PROCESS LIBRARY ROUTE ====================
+  
+  // Public: Get complete process library with nested structure grouped by type
+  app.get("/api/process-library", async (req, res) => {
+    try {
+      const [folders, subfolders, processes] = await Promise.all([
+        storage.getAllProcessFolders(),
+        storage.getAllProcessSubfolders(),
+        storage.getAllProcesses(),
+      ]);
+
+      // Build nested structure for each folder
+      const foldersWithNesting = folders.map(folder => ({
+        ...folder,
+        subfolders: subfolders
+          .filter(sf => sf.folderId === folder.id)
+          .map(subfolder => ({
+            ...subfolder,
+            processes: processes.filter(p => p.subfolderId === subfolder.id),
+          })),
+        processes: processes.filter(p => p.folderId === folder.id && !p.subfolderId),
+      }));
+
+      // Group folders by type for tab-based UI
+      const groupedByType = foldersWithNesting.reduce((acc, folder) => {
+        const type = folder.type;
+        if (!acc[type]) {
+          acc[type] = [];
+        }
+        acc[type].push(folder);
+        return acc;
+      }, {} as Record<string, typeof foldersWithNesting>);
+
+      res.json(groupedByType);
+    } catch (error) {
+      console.error("Error fetching process library:", error);
+      res.status(500).json({ error: "Failed to fetch process library" });
+    }
+  });
+
   // ==================== PROCESS FOLDERS ROUTES ====================
   
   // Admin: Get all process folders

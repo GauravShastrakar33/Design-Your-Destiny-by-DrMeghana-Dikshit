@@ -88,6 +88,54 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### Practice Library Management (November 2024)
+Complete practice library management system with AWS S3 media storage:
+
+**Database Schema:**
+- **Process Folders Table**: ID (serial), name (varchar), type (varchar - "DYD", "USM"), displayOrder (integer)
+- **Process Subfolders Table**: ID (serial), name (varchar), folderId (integer FK with CASCADE), displayOrder (integer)
+- **Processes Table**: ID (serial), title (varchar), description (text nullable), folderId (integer FK with CASCADE, NOT NULL), subfolderId (integer FK with CASCADE, nullable), videoUrl (varchar), audioUrl (varchar), scriptUrl (varchar), iconName (varchar), displayOrder (integer)
+- **Spiritual Breaths Table**: ID (serial), title (varchar), description (text), videoUrl (varchar), audioUrl (varchar), displayOrder (integer)
+
+**API Endpoints:**
+- Public Routes:
+  - `GET /api/process-library` - Returns folders grouped by type with nested subfolders and processes
+  - `GET /api/processes` - Returns all processes (flat list)
+  - `GET /api/spiritual-breaths` - Returns all spiritual breaths
+- Admin Routes (Bearer token required):
+  - Process Folders: GET, POST, PUT, DELETE at `/api/admin/process-folders`
+  - Process Subfolders: GET, POST, PUT, DELETE at `/api/admin/process-subfolders`
+  - Processes: GET, POST, PUT, DELETE at `/api/admin/processes`
+  - Spiritual Breaths: GET, POST, PUT, DELETE at `/api/admin/spiritual-breaths`
+  - Media Upload: POST `/api/admin/upload/process-media` and `/api/admin/upload/spiritual-breath-media` (AWS S3)
+
+**AWS S3 Integration:**
+- S3 upload service with credential validation
+- Environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, AWS_BUCKET_NAME
+- Graceful error handling when credentials not configured
+- Supports video, audio, and document file uploads (up to 100MB)
+
+**Security & Validation:**
+- All admin endpoints protected with Bearer token authentication
+- Foreign key constraints with CASCADE delete to prevent orphaned records
+- FolderId required (NOT NULL) for processes
+- Zod validation for all request bodies
+- File type validation for uploads
+
+**Admin Features:**
+- Tabbed interface for managing Folders, Subfolders, Processes, and Spiritual Breaths
+- Full CRUD operations with table views
+- Dialog forms with validation for required fields
+- File upload support with current URL display when editing
+- Parent folder/subfolder selection dropdowns
+- Display order management for custom sorting
+
+**Technical Implementation:**
+- React Query for data fetching with proper cache invalidation
+- Multer with memory storage for S3 uploads
+- Nested response structure grouped by folder type for mobile UI
+- Form validation preventing submission with invalid required fields
+
 ### Articles Feature (November 2024)
 Complete articles management system with the following capabilities:
 

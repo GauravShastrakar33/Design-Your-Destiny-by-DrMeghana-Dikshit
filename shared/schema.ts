@@ -93,7 +93,7 @@ export type ProcessFolder = typeof processFolders.$inferSelect;
 export const processSubfolders = pgTable("process_subfolders", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  folderId: integer("folder_id").notNull(),
+  folderId: integer("folder_id").notNull().references(() => processFolders.id, { onDelete: 'cascade' }),
   displayOrder: integer("display_order").notNull().default(0),
 });
 
@@ -107,8 +107,9 @@ export type ProcessSubfolder = typeof processSubfolders.$inferSelect;
 export const processes = pgTable("processes", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  subfolderId: integer("subfolder_id"),
-  folderId: integer("folder_id"),
+  description: text("description"),
+  subfolderId: integer("subfolder_id").references(() => processSubfolders.id, { onDelete: 'cascade' }),
+  folderId: integer("folder_id").notNull().references(() => processFolders.id, { onDelete: 'cascade' }),
   videoUrl: text("video_url"),
   audioUrl: text("audio_url"),
   scriptUrl: text("script_url"),
