@@ -189,13 +189,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public route: Get single article
+  // Public route: Get single article (published only)
   app.get("/api/articles/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const article = await storage.getArticle(id);
       
-      if (!article) {
+      if (!article || !article.isPublished) {
         res.status(404).json({ error: "Article not found" });
         return;
       }
