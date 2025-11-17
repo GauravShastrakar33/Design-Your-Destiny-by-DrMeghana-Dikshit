@@ -1,5 +1,7 @@
+import { type ReactNode } from "react";
+
 interface AdminLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

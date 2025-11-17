@@ -1,7 +1,8 @@
+import { type ReactNode } from "react";
 import BottomNav from "@/components/BottomNav";
 
 interface AppLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
