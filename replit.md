@@ -30,13 +30,15 @@ Preferred communication style: Simple, everyday language.
 - **Profile Page**: Reordered sections: Profile Card, Streak Calendar, AI Insights, My Prescription, Settings. Features a full-width gradient profile card, clickable AI Insights card, expandable My Prescription card, and settings options.
 - **AI Insights Page**: Practice tracking insights with weekly and monthly views, segmented view toggle, and dedicated cards for playlists and process checklists.
 - **Project of Heart Page**: White background with "PROJECT OF HEART" title, heart chakra theme, rectangular tab system. Features a "Start Your Journey" button, a two-column Vision tab with Anahata Heart Chakra SVG and progress ring, and milestone tracking (up to 6 stars).
-- **Processes Page**: Organizes practices into collapsible categories (e.g., Wealth Code Activation, Birth story-Specialisation) for the DYD tab, and a flat list for the USM tab. Uses Radix UI Collapsible components.
+- **Processes Page**: Fetches real-time data from PostgreSQL via `/api/process-library`. DYD tab shows collapsible categories for folders and subfolders, USM tab displays a flat list of all processes. Handles mixed folder/subfolder structures, uses unique ID tracking for collapsibles, comprehensive Lucide icon mapping (Brain, Heart, Sparkles, etc.), loading states, and gracefully renders all nesting levels (folder-only processes, subfolder-only processes, or mixed).
 - **Community Practices Page**: Displays real-time community practice sessions fetched from a PostgreSQL database, with session cards and "JOIN" functionality opening meeting links.
 - **Articles Page**: Mobile-first article listing displaying published articles grouped by category in horizontal scrollable sections. Fetches real data from PostgreSQL. Each article card shows image and title, clicking navigates to full article view.
 - **Article Detail Page**: Full article view with hero image, category badge, title, publication date, and formatted HTML content (from React Quill WYSIWYG editor). Gracefully handles 404 for unpublished/missing articles.
-- **Admin Panel**: Desktop-optimized interface for managing platform features. Includes a dashboard, sidebar navigation, and full CRUD management for Community Practices (sessions) and Articles via table interfaces. Features include:
+- **Spiritual Breaths Page**: Fetches spiritual breath practices from PostgreSQL via `/api/spiritual-breaths`. Displays title, description, video player (when available), and audio player (when available). Shows "coming soon" placeholders for missing media, loading states, and empty state handling.
+- **Admin Panel**: Desktop-optimized interface for managing platform features. Includes a dashboard, sidebar navigation, and full CRUD management for Community Practices, Articles, and Practice Library via table interfaces. Features include:
   - **Articles Management**: Create/edit/delete articles with React Quill rich text editor, image upload to public/articles/ folder, category assignment, and publish/draft toggle. Table view shows title, category, published status, creation date, and actions.
   - **Category Management**: Create new categories on-the-fly from article form dialog.
+  - **Practice Library Management**: Tabbed interface for managing folders, subfolders, processes, and spiritual breaths with AWS S3 file upload support.
 
 ## External Dependencies
 
@@ -125,16 +127,22 @@ Complete practice library management system with AWS S3 media storage:
 **Admin Features:**
 - Tabbed interface for managing Folders, Subfolders, Processes, and Spiritual Breaths
 - Full CRUD operations with table views
-- Dialog forms with validation for required fields
+- Dialog forms with validation for required fields (Select controls initialize with undefined to show placeholders, Number.isFinite() validation)
 - File upload support with current URL display when editing
 - Parent folder/subfolder selection dropdowns
 - Display order management for custom sorting
+- Field-specific error messages in toasts for validation failures
+
+**Mobile Features:**
+- ProcessesPage: DYD/USM segmented control, fetches from `/api/process-library`, unique ID-based collapsible tracking (folder.id/subfolder.id), comprehensive icon mapping, handles all folder/subfolder/process combinations (folder-only processes, subfolder-only processes, or mixed)
+- SpiritualBreathsPage: Fetches from `/api/spiritual-breaths`, displays video and audio players with conditional rendering, loading and empty states
 
 **Technical Implementation:**
 - React Query for data fetching with proper cache invalidation
 - Multer with memory storage for S3 uploads
-- Nested response structure grouped by folder type for mobile UI
+- Nested response structure grouped by folder type for mobile UI (`{DYD: [...folders], USM: [...folders]}`)
 - Form validation preventing submission with invalid required fields
+- Icon mapping from database iconName strings to Lucide components (Sparkles, Feather, BookHeart, Laugh, Flame, Target, Shield, Star, Crown, Gift, Lightbulb, Brain, Zap, Link2, Heart, Waves, Users, Baby, DollarSign, AlertCircle, Smile)
 
 ### Articles Feature (November 2024)
 Complete articles management system with the following capabilities:
