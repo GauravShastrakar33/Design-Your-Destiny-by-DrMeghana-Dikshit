@@ -25,13 +25,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Storage Strategy
 
-**Current**: All user data is stored in browser localStorage (playlists, progress, challenges, preferences, streaks, "Project of Heart").
-**Planned**: Migration to PostgreSQL using Drizzle ORM.
+**Current**: Hybrid approach - user data (playlists, progress, challenges, preferences, streaks, "Project of Heart") stored in browser localStorage. Community practice sessions stored in PostgreSQL database.
+**Database**: PostgreSQL with Drizzle ORM for community sessions management.
 
 ### Authentication & Authorization
 
-**Current**: No authentication implemented (single-user client-side app).
-**Future Implementation**: Planned traditional username/password authentication using Express sessions stored in PostgreSQL.
+**Current**: Admin panel uses password-based authentication with Bearer token for managing community sessions. Public-facing app remains authentication-free for users.
+**Admin Auth**: Simple password protection with token stored in localStorage, sent as Bearer header to protected endpoints.
+**Security**: Server-side middleware (`requireAdmin`) protects all admin CRUD endpoints.
 
 ### Design System
 
@@ -100,6 +101,24 @@ Preferred communication style: Simple, everyday language.
 - **Practice Cards**: White background, purple icons (#703DFA) without background circles, purple chevron, dark text (grey-900)
 - **Category Interaction**: Click category header to expand/collapse sub-practices. Chevron rotates 180° when expanded. Sub-practices indented (ml-4). Multiple categories can be open simultaneously
 - **Technical Implementation**: Container uses `key={selectedCategory}` to force complete re-render when switching tabs, preventing React reconciliation issues with Collapsible components
+
+**Community Practices Page** (Added November 2025): Mobile-first page displaying real-time community practice sessions from PostgreSQL database. Light gray background (#F3F3F3) with white session cards. Purple accent color (#703DFA).
+- **Data Source**: Fetches active sessions from `/api/sessions` endpoint (public, no authentication required)
+- **Session Cards**: White background, purple gradient "JOIN" button, displays title, time, participant count
+- **Join Functionality**: Opens actual meeting links in new window when user clicks JOIN button
+- **Mobile Layout**: Constrained max-w-md container with responsive card grid
+
+**Admin Panel** (Added November 2025): Desktop-optimized admin interface for managing community practice sessions. Separate routes from main mobile app (/admin/login, /admin/sessions).
+- **Admin Login** (/admin/login): Password-based authentication page, stores Bearer token in localStorage
+- **Admin Sessions** (/admin/sessions): Full CRUD management interface with responsive table and dialogs
+  - **Layout**: Desktop-optimized with max-w-7xl container, responsive table (desktop) or stacked cards (mobile)
+  - **Table Columns**: Title, Time, Meeting Link (URL), Participants (number), Active Status (boolean), Actions
+  - **CRUD Operations**: Add new sessions, edit existing sessions (preserves unchanged fields), delete sessions, toggle active status
+  - **Forms**: Dialog-based forms with validation, edit form prefills with existing session data
+  - **Authentication**: All admin endpoints protected by `requireAdmin` middleware, client sends Bearer token in Authorization header
+  - **Security**: Server-side authentication on all admin CRUD endpoints (GET/POST/PUT/DELETE /api/admin/sessions)
+- **Database**: PostgreSQL `community_sessions` table with Drizzle ORM schema
+- **Storage**: Switched from MemStorage to DbStorage for persistent session management
 
 ## External Dependencies
 
