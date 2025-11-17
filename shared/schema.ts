@@ -75,3 +75,66 @@ export const insertArticleSchema = createInsertSchema(articles).omit({
 
 export type InsertArticle = z.infer<typeof insertArticleSchema>;
 export type Article = typeof articles.$inferSelect;
+
+export const processFolders = pgTable("process_folders", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export const insertProcessFolderSchema = createInsertSchema(processFolders).omit({
+  id: true,
+});
+
+export type InsertProcessFolder = z.infer<typeof insertProcessFolderSchema>;
+export type ProcessFolder = typeof processFolders.$inferSelect;
+
+export const processSubfolders = pgTable("process_subfolders", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  folderId: integer("folder_id").notNull(),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export const insertProcessSubfolderSchema = createInsertSchema(processSubfolders).omit({
+  id: true,
+});
+
+export type InsertProcessSubfolder = z.infer<typeof insertProcessSubfolderSchema>;
+export type ProcessSubfolder = typeof processSubfolders.$inferSelect;
+
+export const processes = pgTable("processes", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  subfolderId: integer("subfolder_id"),
+  folderId: integer("folder_id"),
+  videoUrl: text("video_url"),
+  audioUrl: text("audio_url"),
+  scriptUrl: text("script_url"),
+  iconName: text("icon_name").notNull().default("Brain"),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export const insertProcessSchema = createInsertSchema(processes).omit({
+  id: true,
+});
+
+export type InsertProcess = z.infer<typeof insertProcessSchema>;
+export type Process = typeof processes.$inferSelect;
+
+export const spiritualBreaths = pgTable("spiritual_breaths", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  videoUrl: text("video_url"),
+  audioUrl: text("audio_url"),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export const insertSpiritualBreathSchema = createInsertSchema(spiritualBreaths).omit({
+  id: true,
+});
+
+export type InsertSpiritualBreath = z.infer<typeof insertSpiritualBreathSchema>;
+export type SpiritualBreath = typeof spiritualBreaths.$inferSelect;
