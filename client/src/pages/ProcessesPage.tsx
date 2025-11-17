@@ -7,123 +7,130 @@ import {
   Heart,
   Waves,
   Users,
-  Laugh,
   Baby,
-  BookHeart,
   DollarSign,
   AlertCircle,
   Smile,
-  Flame,
   ChevronDown,
+  LucideIcon,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import PracticeCard from "@/components/PracticeCard";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { getPracticeMedia } from "@/lib/practiceMedia";
 
-const usmPractices = [
-  { id: 1, title: "Growth Activation", icon: Brain },
-  { id: 2, title: "Release Processes", icon: Brain },
-  { id: 3, title: "Neuro-Coupling", icon: Link2 },
-  { id: 4, title: "CAB Processes", icon: Heart },
-  { id: 5, title: "OTB", icon: Waves },
-  { id: 6, title: "Soul Connection", icon: Users },
-];
+// Comprehensive icon mapping from string names to Lucide components
+// Import all common Lucide icons for flexibility
+import {
+  Sparkles,
+  Feather,
+  BookHeart as BookHeartIcon,
+  Laugh as LaughIcon,
+  Flame,
+  Target,
+  Shield,
+  Star,
+  Crown,
+  Gift,
+  Lightbulb,
+} from "lucide-react";
 
-const dydPracticesData = [
-  {
-    type: "category" as const,
-    title: "Wealth Code Activation",
-    icon: DollarSign,
-    practices: [
-      { id: 10, title: "Wealth Code Activation 1", icon: DollarSign },
-      { id: 11, title: "Wealth Code Activation 2", icon: DollarSign },
-      { id: 12, title: "Wealth Code Activation 3", icon: DollarSign },
-      { id: 13, title: "Wealth Code Activation 4", icon: DollarSign },
-    ],
-  },
-  {
-    type: "category" as const,
-    title: "Birth story-Specialisation",
-    icon: Baby,
-    practices: [
-      { id: 14, title: "Clearing the Birth Energy", icon: Baby },
-      { id: 15, title: "ADOPTION.mp3", icon: Heart },
-      { id: 16, title: "ATTEMPTED_ABORTION_OR_MISCARRIAGE", icon: Heart },
-      { id: 17, title: "CESAREAN_SECTION", icon: AlertCircle },
-      { id: 18, title: "DRUGS", icon: Zap },
-      { id: 34, title: "FORCEPS", icon: Baby },
-      { id: 36, title: "INDUCED_BIRTH", icon: Baby },
-      { id: 35, title: "PASSED_YOUR_DUE_DATE_LATE.mp3", icon: Baby },
-      { id: 27, title: "SLOW_AND_LONG_LABOUR", icon: Baby },
-      { id: 28, title: "TOO_SOON_OR_TOO_FAST", icon: Baby },
-      {
-        id: 29,
-        title: "TRANSVERSE_OR_BREACH_BIRTH_AND_POSTERIOR_BIRTH",
-        icon: Baby,
-      },
-      { id: 30, title: "TRAUMA_OR_EMERGENCY_SITUATION", icon: Baby },
-      { id: 31, title: "TWINS", icon: Baby },
-      { id: 32, title: "UNWANTED_UNPLANNED_ILLEGITIMATE", icon: Baby },
-      { id: 33, title: "WRONG_SEX", icon: Baby },
-      { id: 19, title: "Pre-BirthStory-RashmiMam", icon: Baby },
-      { id: 26, title: "Pre-BirthStory", icon: Baby },
-    ],
-  },
-  {
-    type: "category" as const,
-    title: "Anxiety Relief Code",
-    icon: Waves,
-    practices: [
-      { id: 20, title: "Anxiety Relief Code 1", icon: Waves },
-      { id: 21, title: "Anxiety Relief Code 2", icon: Waves },
-    ],
-  },
-  {
-    type: "category" as const,
-    title: "Happiness Code Activation",
-    icon: Smile,
-    practices: [
-      { id: 22, title: "Happiness Code Activation 1", icon: Smile },
-      { id: 23, title: "Happiness Code Activation 2", icon: Smile },
-    ],
-  },
-  {
-    type: "practice" as const,
-    id: 24,
-    title: "Kaya Kalp Kriya",
-    icon: Smile,
-  },
-  {
-    type: "practice" as const,
-    id: 25,
-    title: "Masculaline Feminine Energy Balance",
-    icon: Smile,
-  },
-];
+const iconMap: Record<string, LucideIcon> = {
+  Brain,
+  Zap,
+  Link2,
+  Heart,
+  Waves,
+  Users,
+  Baby,
+  DollarSign,
+  AlertCircle,
+  Smile,
+  Sparkles,
+  Feather,
+  BookHeart: BookHeartIcon,
+  Laugh: LaughIcon,
+  Flame,
+  Target,
+  Shield,
+  Star,
+  Crown,
+  Gift,
+  Lightbulb,
+};
+
+interface Process {
+  id: number;
+  title: string;
+  description: string | null;
+  folderId: number;
+  subfolderId: number | null;
+  videoUrl: string | null;
+  audioUrl: string | null;
+  scriptUrl: string | null;
+  iconName: string;
+  displayOrder: number;
+}
+
+interface ProcessSubfolder {
+  id: number;
+  name: string;
+  folderId: number;
+  displayOrder: number;
+  processes: Process[];
+}
+
+interface ProcessFolder {
+  id: number;
+  name: string;
+  type: string;
+  displayOrder: number;
+  subfolders: ProcessSubfolder[];
+  processes: Process[];
+}
+
+interface ProcessLibrary {
+  [type: string]: ProcessFolder[];
+}
 
 export default function ProcessesPage() {
   const [, setLocation] = useLocation();
-  const [selectedCategory, setSelectedCategory] = useState<"DYD" | "USM">(
-    "DYD",
-  );
-  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+  const [selectedCategory, setSelectedCategory] = useState<"DYD" | "USM">("DYD");
+  const [openCategories, setOpenCategories] = useState<Set<number>>(new Set());
 
-  const toggleCategory = (title: string) => {
+  const { data: library, isLoading } = useQuery<ProcessLibrary>({
+    queryKey: ["/api/process-library"],
+  });
+
+  const toggleCategory = (id: number) => {
     setOpenCategories((prev) => {
       const next = new Set(prev);
-      if (next.has(title)) {
-        next.delete(title);
+      if (next.has(id)) {
+        next.delete(id);
       } else {
-        next.add(title);
+        next.add(id);
       }
       return next;
     });
   };
+
+  const getIcon = (iconName: string): LucideIcon => {
+    return iconMap[iconName] || Brain;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pb-20 bg-page-bg flex items-center justify-center">
+        <div className="text-gray-500">Loading processes...</div>
+      </div>
+    );
+  }
+
+  const currentFolders = library?.[selectedCategory] || [];
 
   return (
     <div className="min-h-screen pb-20 bg-page-bg">
@@ -167,41 +174,132 @@ export default function ProcessesPage() {
         </div>
 
         <div className="px-4 py-6 space-y-3" key={selectedCategory}>
-          {selectedCategory === "USM"
-            ? usmPractices.map((practice) => {
-                const media = getPracticeMedia(practice.id);
-                return (
+          {selectedCategory === "USM" ? (
+            currentFolders.flatMap((folder) => {
+              const folderProcesses = folder.processes.map((process) => (
+                <PracticeCard
+                  key={process.id}
+                  title={process.title}
+                  icon={getIcon(process.iconName)}
+                  practiceId={process.id}
+                  videoUrl={process.videoUrl}
+                  audioUrl={process.audioUrl}
+                  script={process.scriptUrl}
+                  testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
+                />
+              ));
+              
+              const subfolderProcesses = folder.subfolders.flatMap((subfolder) =>
+                subfolder.processes.map((process) => (
                   <PracticeCard
-                    key={practice.id}
-                    title={practice.title}
-                    icon={practice.icon}
-                    practiceId={practice.id}
-                    videoUrl={media?.videoUrl}
-                    audioUrl={media?.audioUrl}
-                    script={media?.script}
-                    testId={`practice-${practice.title.toLowerCase().replace(/\s+/g, "-")}`}
+                    key={process.id}
+                    title={process.title}
+                    icon={getIcon(process.iconName)}
+                    practiceId={process.id}
+                    videoUrl={process.videoUrl}
+                    audioUrl={process.audioUrl}
+                    script={process.scriptUrl}
+                    testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
                   />
+                ))
+              );
+              
+              return [...folderProcesses, ...subfolderProcesses];
+            })
+          ) : (
+            currentFolders.flatMap((folder) => {
+              const hasSubfolders = folder.subfolders.length > 0;
+              const hasProcesses = folder.processes.length > 0;
+              const elements = [];
+              
+              // If folder has processes without subfolders, show as collapsible category
+              if (!hasSubfolders && hasProcesses) {
+                const isOpen = openCategories.has(folder.id);
+                const Icon = getIcon(folder.processes[0]?.iconName || "Brain");
+                
+                elements.push(
+                  <Collapsible
+                    key={folder.id}
+                    open={isOpen}
+                    onOpenChange={() => toggleCategory(folder.id)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <div
+                        className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between cursor-pointer hover-elevate active-elevate-2"
+                        data-testid={`category-${folder.name.toLowerCase().replace(/\s+/g, "-")}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="w-6 h-6 flex-shrink-0 text-brand" />
+                          <span className="font-semibold text-gray-900">
+                            {folder.name}
+                          </span>
+                        </div>
+                        <ChevronDown
+                          className={`w-5 h-5 text-brand transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : "rotate-0"
+                          }`}
+                        />
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-2 mt-2 ml-4">
+                      {folder.processes.map((process) => (
+                        <PracticeCard
+                          key={process.id}
+                          title={process.title}
+                          icon={getIcon(process.iconName)}
+                          practiceId={process.id}
+                          videoUrl={process.videoUrl}
+                          audioUrl={process.audioUrl}
+                          script={process.scriptUrl}
+                          testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
+                          hideIcon={true}
+                        />
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
                 );
-              })
-            : dydPracticesData.map((item) => {
-                if (item.type === "category") {
-                  const isOpen = openCategories.has(item.title);
-                  const Icon = item.icon;
-                  return (
+              }
+              
+              // Render folder-level processes (when folder also has subfolders)
+              if (hasProcesses && hasSubfolders) {
+                folder.processes.forEach((process) => {
+                  elements.push(
+                    <PracticeCard
+                      key={process.id}
+                      title={process.title}
+                      icon={getIcon(process.iconName)}
+                      practiceId={process.id}
+                      videoUrl={process.videoUrl}
+                      audioUrl={process.audioUrl}
+                      script={process.scriptUrl}
+                      testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
+                      hideIcon={true}
+                    />
+                  );
+                });
+              }
+              
+              // Render subfolders (whether or not folder has processes)
+              if (hasSubfolders) {
+                folder.subfolders.forEach((subfolder) => {
+                  const isOpen = openCategories.has(subfolder.id);
+                  const Icon = getIcon(subfolder.processes[0]?.iconName || "Brain");
+                  
+                  elements.push(
                     <Collapsible
-                      key={item.title}
+                      key={subfolder.id}
                       open={isOpen}
-                      onOpenChange={() => toggleCategory(item.title)}
+                      onOpenChange={() => toggleCategory(subfolder.id)}
                     >
                       <CollapsibleTrigger asChild>
                         <div
                           className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between cursor-pointer hover-elevate active-elevate-2"
-                          data-testid={`category-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
+                          data-testid={`category-${subfolder.name.toLowerCase().replace(/\s+/g, "-")}`}
                         >
                           <div className="flex items-center gap-3">
                             <Icon className="w-6 h-6 flex-shrink-0 text-brand" />
                             <span className="font-semibold text-gray-900">
-                              {item.title}
+                              {subfolder.name}
                             </span>
                           </div>
                           <ChevronDown
@@ -212,42 +310,28 @@ export default function ProcessesPage() {
                         </div>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="space-y-2 mt-2 ml-4">
-                        {item.practices.map((practice) => {
-                          const media = getPracticeMedia(practice.id);
-                          return (
-                            <PracticeCard
-                              key={practice.id}
-                              title={practice.title}
-                              icon={practice.icon}
-                              practiceId={practice.id}
-                              videoUrl={media?.videoUrl}
-                              audioUrl={media?.audioUrl}
-                              script={media?.script}
-                              testId={`practice-${practice.title.toLowerCase().replace(/\s+/g, "-")}`}
-                              hideIcon={true}
-                            />
-                          );
-                        })}
+                        {subfolder.processes.map((process) => (
+                          <PracticeCard
+                            key={process.id}
+                            title={process.title}
+                            icon={getIcon(process.iconName)}
+                            practiceId={process.id}
+                            videoUrl={process.videoUrl}
+                            audioUrl={process.audioUrl}
+                            script={process.scriptUrl}
+                            testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
+                            hideIcon={true}
+                          />
+                        ))}
                       </CollapsibleContent>
                     </Collapsible>
                   );
-                } else {
-                  const media = getPracticeMedia(item.id);
-                  return (
-                    <PracticeCard
-                      key={item.id}
-                      title={item.title}
-                      icon={item.icon}
-                      practiceId={item.id}
-                      videoUrl={media?.videoUrl}
-                      audioUrl={media?.audioUrl}
-                      script={media?.script}
-                      testId={`practice-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
-                      hideIcon={true}
-                    />
-                  );
-                }
-              })}
+                });
+              }
+              
+              return elements;
+            })
+          )}
         </div>
       </div>
     </div>
