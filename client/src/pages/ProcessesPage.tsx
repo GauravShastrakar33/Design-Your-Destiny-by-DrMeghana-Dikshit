@@ -100,19 +100,19 @@ interface ProcessLibrary {
 export default function ProcessesPage() {
   const [, setLocation] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<"DYD" | "USM">("DYD");
-  const [openCategories, setOpenCategories] = useState<Set<number>>(new Set());
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
   const { data: library, isLoading } = useQuery<ProcessLibrary>({
     queryKey: ["/api/process-library"],
   });
 
-  const toggleCategory = (id: number) => {
+  const toggleCategory = (key: string) => {
     setOpenCategories((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
+      if (next.has(key)) {
+        next.delete(key);
       } else {
-        next.add(id);
+        next.add(key);
       }
       return next;
     });
@@ -210,126 +210,112 @@ export default function ProcessesPage() {
             currentFolders.flatMap((folder) => {
               const hasSubfolders = folder.subfolders.length > 0;
               const hasProcesses = folder.processes.length > 0;
-              const elements = [];
               
-              // If folder has processes without subfolders, show as collapsible category
-              if (!hasSubfolders && hasProcesses) {
-                const isOpen = openCategories.has(folder.id);
-                const Icon = getIcon(folder.processes[0]?.iconName || "Brain");
-                
-                elements.push(
-                  <Collapsible
-                    key={folder.id}
-                    open={isOpen}
-                    onOpenChange={() => toggleCategory(folder.id)}
-                  >
-                    <CollapsibleTrigger asChild>
-                      <div
-                        className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between cursor-pointer hover-elevate active-elevate-2"
-                        data-testid={`category-${folder.name.toLowerCase().replace(/\s+/g, "-")}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className="w-6 h-6 flex-shrink-0 text-brand" />
-                          <span className="font-semibold text-gray-900">
-                            {folder.name}
-                          </span>
-                        </div>
-                        <ChevronDown
-                          className={`w-5 h-5 text-brand transition-transform duration-200 ${
-                            isOpen ? "rotate-180" : "rotate-0"
-                          }`}
-                        />
-                      </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-2 mt-2 ml-4">
-                      {folder.processes.map((process) => (
-                        <PracticeCard
-                          key={process.id}
-                          title={process.title}
-                          icon={getIcon(process.iconName)}
-                          practiceId={process.id}
-                          videoUrl={process.videoUrl || undefined}
-                          audioUrl={process.audioUrl || undefined}
-                          script={process.scriptUrl || undefined}
-                          testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
-                          hideIcon={true}
-                        />
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-                );
+              // Skip empty folders
+              if (!hasSubfolders && !hasProcesses) {
+                return [];
               }
               
-              // Render folder-level processes (when folder also has subfolders)
-              if (hasProcesses && hasSubfolders) {
-                folder.processes.forEach((process) => {
-                  elements.push(
-                    <PracticeCard
-                      key={process.id}
-                      title={process.title}
-                      icon={getIcon(process.iconName)}
-                      practiceId={process.id}
-                      videoUrl={process.videoUrl || undefined}
-                      audioUrl={process.audioUrl || undefined}
-                      script={process.scriptUrl || undefined}
-                      testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
-                      hideIcon={true}
-                    />
-                  );
-                });
-              }
+              // If folder has content (processes and/or subfolders), wrap in folder header
+              const folderKey = `folder-${folder.id}`;
+              const isOpen = openCategories.has(folderKey);
+              const Icon = getIcon(
+                folder.processes[0]?.iconName || 
+                folder.subfolders[0]?.processes[0]?.iconName || 
+                "Brain"
+              );
               
-              // Render subfolders (whether or not folder has processes)
-              if (hasSubfolders) {
-                folder.subfolders.forEach((subfolder) => {
-                  const isOpen = openCategories.has(subfolder.id);
-                  const Icon = getIcon(subfolder.processes[0]?.iconName || "Brain");
-                  
-                  elements.push(
-                    <Collapsible
-                      key={subfolder.id}
-                      open={isOpen}
-                      onOpenChange={() => toggleCategory(subfolder.id)}
+              return (
+                <Collapsible
+                  key={folder.id}
+                  open={isOpen}
+                  onOpenChange={() => toggleCategory(folderKey)}
+                >
+                  <CollapsibleTrigger asChild>
+                    <div
+                      className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between cursor-pointer hover-elevate active-elevate-2"
+                      data-testid={`category-${folder.name.toLowerCase().replace(/\s+/g, "-")}`}
                     >
-                      <CollapsibleTrigger asChild>
-                        <div
-                          className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between cursor-pointer hover-elevate active-elevate-2"
-                          data-testid={`category-${subfolder.name.toLowerCase().replace(/\s+/g, "-")}`}
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-6 h-6 flex-shrink-0 text-brand" />
+                        <span className="font-semibold text-gray-900">
+                          {folder.name}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={`w-5 h-5 text-brand transition-transform duration-200 ${
+                          isOpen ? "rotate-180" : "rotate-0"
+                        }`}
+                      />
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-2 mt-2 ml-4">
+                    {/* Render folder-level processes first */}
+                    {folder.processes.map((process) => (
+                      <PracticeCard
+                        key={`process-${process.id}`}
+                        title={process.title}
+                        icon={getIcon(process.iconName)}
+                        practiceId={process.id}
+                        videoUrl={process.videoUrl || undefined}
+                        audioUrl={process.audioUrl || undefined}
+                        script={process.scriptUrl || undefined}
+                        testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
+                        hideIcon={true}
+                      />
+                    ))}
+                    
+                    {/* Render subfolders as nested collapsibles */}
+                    {folder.subfolders.map((subfolder) => {
+                      const subfolderKey = `subfolder-${subfolder.id}`;
+                      const subfolderIsOpen = openCategories.has(subfolderKey);
+                      const SubfolderIcon = getIcon(subfolder.processes[0]?.iconName || "Brain");
+                      
+                      return (
+                        <Collapsible
+                          key={`subfolder-${subfolder.id}`}
+                          open={subfolderIsOpen}
+                          onOpenChange={() => toggleCategory(subfolderKey)}
                         >
-                          <div className="flex items-center gap-3">
-                            <Icon className="w-6 h-6 flex-shrink-0 text-brand" />
-                            <span className="font-semibold text-gray-900">
-                              {subfolder.name}
-                            </span>
-                          </div>
-                          <ChevronDown
-                            className={`w-5 h-5 text-brand transition-transform duration-200 ${
-                              isOpen ? "rotate-180" : "rotate-0"
-                            }`}
-                          />
-                        </div>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="space-y-2 mt-2 ml-4">
-                        {subfolder.processes.map((process) => (
-                          <PracticeCard
-                            key={process.id}
-                            title={process.title}
-                            icon={getIcon(process.iconName)}
-                            practiceId={process.id}
-                            videoUrl={process.videoUrl || undefined}
-                            audioUrl={process.audioUrl || undefined}
-                            script={process.scriptUrl || undefined}
-                            testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
-                            hideIcon={true}
-                          />
-                        ))}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  );
-                });
-              }
-              
-              return elements;
+                          <CollapsibleTrigger asChild>
+                            <div
+                              className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between cursor-pointer hover-elevate active-elevate-2"
+                              data-testid={`category-${subfolder.name.toLowerCase().replace(/\s+/g, "-")}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <SubfolderIcon className="w-6 h-6 flex-shrink-0 text-brand" />
+                                <span className="font-semibold text-gray-900">
+                                  {subfolder.name}
+                                </span>
+                              </div>
+                              <ChevronDown
+                                className={`w-5 h-5 text-brand transition-transform duration-200 ${
+                                  subfolderIsOpen ? "rotate-180" : "rotate-0"
+                                }`}
+                              />
+                            </div>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="space-y-2 mt-2 ml-4">
+                            {subfolder.processes.map((process) => (
+                              <PracticeCard
+                                key={`subfolder-${subfolder.id}-process-${process.id}`}
+                                title={process.title}
+                                icon={getIcon(process.iconName)}
+                                practiceId={process.id}
+                                videoUrl={process.videoUrl || undefined}
+                                audioUrl={process.audioUrl || undefined}
+                                script={process.scriptUrl || undefined}
+                                testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
+                                hideIcon={true}
+                              />
+                            ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      );
+                    })}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
             })
           )}
         </div>
