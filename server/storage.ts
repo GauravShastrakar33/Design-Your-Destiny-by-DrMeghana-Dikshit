@@ -1,4 +1,10 @@
-import { type User, type InsertUser, type CommunitySession, type InsertCommunitySession, communitySessions, users as usersTable } from "@shared/schema";
+import { 
+  type User, type InsertUser, 
+  type CommunitySession, type InsertCommunitySession, 
+  type Category, type InsertCategory,
+  type Article, type InsertArticle,
+  communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable
+} from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -13,17 +19,36 @@ export interface IStorage {
   createCommunitySession(session: InsertCommunitySession): Promise<CommunitySession>;
   updateCommunitySession(id: number, session: Partial<InsertCommunitySession>): Promise<CommunitySession | undefined>;
   deleteCommunitySession(id: number): Promise<boolean>;
+
+  getAllCategories(): Promise<Category[]>;
+  getCategory(id: number): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+
+  getAllArticles(): Promise<Article[]>;
+  getPublishedArticles(): Promise<Article[]>;
+  getArticle(id: number): Promise<Article | undefined>;
+  createArticle(article: InsertArticle): Promise<Article>;
+  updateArticle(id: number, article: Partial<InsertArticle>): Promise<Article | undefined>;
+  deleteArticle(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private communitySessions: Map<number, CommunitySession>;
+  private categories: Map<number, Category>;
+  private articles: Map<number, Article>;
   private nextSessionId: number;
+  private nextCategoryId: number;
+  private nextArticleId: number;
 
   constructor() {
     this.users = new Map();
     this.communitySessions = new Map();
+    this.categories = new Map();
+    this.articles = new Map();
     this.nextSessionId = 1;
+    this.nextCategoryId = 1;
+    this.nextArticleId = 1;
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -74,6 +99,58 @@ export class MemStorage implements IStorage {
 
   async deleteCommunitySession(id: number): Promise<boolean> {
     return this.communitySessions.delete(id);
+  }
+
+  async getAllCategories(): Promise<Category[]> {
+    return Array.from(this.categories.values());
+  }
+
+  async getCategory(id: number): Promise<Category | undefined> {
+    return this.categories.get(id);
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const id = this.nextCategoryId++;
+    const newCategory: Category = { ...category, id };
+    this.categories.set(id, newCategory);
+    return newCategory;
+  }
+
+  async getAllArticles(): Promise<Article[]> {
+    return Array.from(this.articles.values());
+  }
+
+  async getPublishedArticles(): Promise<Article[]> {
+    return Array.from(this.articles.values()).filter(a => a.isPublished);
+  }
+
+  async getArticle(id: number): Promise<Article | undefined> {
+    return this.articles.get(id);
+  }
+
+  async createArticle(article: InsertArticle): Promise<Article> {
+    const id = this.nextArticleId++;
+    const newArticle: Article = { 
+      ...article, 
+      id,
+      isPublished: article.isPublished ?? false,
+      createdAt: new Date().toISOString(),
+    };
+    this.articles.set(id, newArticle);
+    return newArticle;
+  }
+
+  async updateArticle(id: number, article: Partial<InsertArticle>): Promise<Article | undefined> {
+    const existing = this.articles.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Article = { ...existing, ...article };
+    this.articles.set(id, updated);
+    return updated;
+  }
+
+  async deleteArticle(id: number): Promise<boolean> {
+    return this.articles.delete(id);
   }
 }
 
@@ -127,6 +204,64 @@ export class DbStorage implements IStorage {
     const result = await db
       .delete(communitySessions)
       .where(eq(communitySessions.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getAllCategories(): Promise<Category[]> {
+    return await db.query.categories.findMany({
+      orderBy: (categories, { asc }) => [asc(categories.name)],
+    });
+  }
+
+  async getCategory(id: number): Promise<Category | undefined> {
+    return await db.query.categories.findFirst({
+      where: (categories, { eq }) => eq(categories.id, id),
+    });
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db.insert(categoriesTable).values(category).returning();
+    return newCategory;
+  }
+
+  async getAllArticles(): Promise<Article[]> {
+    return await db.query.articles.findMany({
+      orderBy: (articles, { desc }) => [desc(articles.createdAt)],
+    });
+  }
+
+  async getPublishedArticles(): Promise<Article[]> {
+    return await db.query.articles.findMany({
+      where: (articles, { eq }) => eq(articles.isPublished, true),
+      orderBy: (articles, { desc }) => [desc(articles.createdAt)],
+    });
+  }
+
+  async getArticle(id: number): Promise<Article | undefined> {
+    return await db.query.articles.findFirst({
+      where: (articles, { eq }) => eq(articles.id, id),
+    });
+  }
+
+  async createArticle(article: InsertArticle): Promise<Article> {
+    const [newArticle] = await db.insert(articlesTable).values(article).returning();
+    return newArticle;
+  }
+
+  async updateArticle(id: number, article: Partial<InsertArticle>): Promise<Article | undefined> {
+    const [updated] = await db
+      .update(articlesTable)
+      .set(article)
+      .where(eq(articlesTable.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteArticle(id: number): Promise<boolean> {
+    const result = await db
+      .delete(articlesTable)
+      .where(eq(articlesTable.id, id))
       .returning();
     return result.length > 0;
   }
