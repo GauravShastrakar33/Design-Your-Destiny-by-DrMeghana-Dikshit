@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit, Trash2, LogOut, ArrowLeft } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import type { CommunitySession } from "@shared/schema";
 
 export default function AdminSessionsPage() {
@@ -153,43 +153,26 @@ export default function AdminSessionsPage() {
     setIsAddDialogOpen(true);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("@app:admin_auth");
-    setLocation("/admin/login");
-  };
-
   return (
-    <div className="min-h-screen bg-page-bg pb-8">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
-        <Card className="bg-white border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+    <div className="p-8">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Community Practices</h1>
+            <p className="text-gray-600 mt-2">Manage practice sessions and meeting links</p>
+          </div>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setLocation("/")}
-                data-testid="button-back-home"
+                onClick={handleAddNew}
+                style={{ backgroundColor: "#703DFA" }}
+                data-testid="button-add-session"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <Plus className="w-4 h-4 mr-2" />
+                Add Session
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Community Sessions Admin</h1>
-                <p className="text-gray-600">Manage practice sessions and meeting links</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    onClick={handleAddNew}
-                    style={{ backgroundColor: "#703DFA" }}
-                    data-testid="button-add-session"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Session
-                  </Button>
-                </DialogTrigger>
+            </DialogTrigger>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>Add New Session</DialogTitle>
@@ -278,20 +261,11 @@ export default function AdminSessionsPage() {
                   </form>
                 </DialogContent>
               </Dialog>
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                data-testid="button-admin-logout"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </Card>
+        </div>
+      </div>
 
-        {/* Sessions Table */}
-        <Card className="bg-white border border-gray-200 p-6">
+      {/* Sessions Table */}
+      <Card className="bg-white border border-gray-200 p-6">
           {isLoading ? (
             <p className="text-center text-gray-500 py-8">Loading sessions...</p>
           ) : sessions.length === 0 ? (
@@ -449,8 +423,7 @@ export default function AdminSessionsPage() {
               </table>
             </div>
           )}
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 }
