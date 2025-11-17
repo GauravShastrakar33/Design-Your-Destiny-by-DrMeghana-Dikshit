@@ -19,7 +19,7 @@ Preferred communication style: Simple, everyday language.
 ### Technical Implementations
 - **Frontend**: React 18 with TypeScript, Vite, Wouter for routing, shadcn/ui (Radix UI), Tailwind CSS, Framer Motion for animations. State managed using React hooks and localStorage.
 - **Backend**: Express.js with TypeScript, currently minimal, serving frontend and community practice sessions. Designed for future database integration and authentication.
-- **Data Storage**: Hybrid approach using browser localStorage for user-specific data (playlists, progress, preferences) and PostgreSQL with Drizzle ORM for community practice sessions.
+- **Data Storage**: Hybrid approach using browser localStorage for user-specific data (playlists, progress, preferences) and PostgreSQL with Drizzle ORM for community practice sessions, articles, and categories.
 - **Authentication**: Admin panel uses password-based authentication with Bearer tokens; public app is authentication-free. Server-side middleware (`requireAdmin`) protects admin CRUD endpoints.
 - **Audio System**: Manages audio playback via an `AudioPlayer` component (HTML5), tracks per-playlist progress in localStorage, and auto-advances tracks.
 - **AI Video Integration**: Custom chat interface connecting to an external Gradio-hosted AI video generation service (`/process_query`) for personalized video responses. Stores conversation history and video URLs in localStorage.
@@ -32,7 +32,11 @@ Preferred communication style: Simple, everyday language.
 - **Project of Heart Page**: White background with "PROJECT OF HEART" title, heart chakra theme, rectangular tab system. Features a "Start Your Journey" button, a two-column Vision tab with Anahata Heart Chakra SVG and progress ring, and milestone tracking (up to 6 stars).
 - **Processes Page**: Organizes practices into collapsible categories (e.g., Wealth Code Activation, Birth story-Specialisation) for the DYD tab, and a flat list for the USM tab. Uses Radix UI Collapsible components.
 - **Community Practices Page**: Displays real-time community practice sessions fetched from a PostgreSQL database, with session cards and "JOIN" functionality opening meeting links.
-- **Admin Panel**: Desktop-optimized interface for managing platform features. Includes a dashboard, sidebar navigation, and full CRUD management for Community Practices (sessions) via a table interface. Placeholder sections for other features.
+- **Articles Page**: Mobile-first article listing displaying published articles grouped by category in horizontal scrollable sections. Fetches real data from PostgreSQL. Each article card shows image and title, clicking navigates to full article view.
+- **Article Detail Page**: Full article view with hero image, category badge, title, publication date, and formatted HTML content (from React Quill WYSIWYG editor). Gracefully handles 404 for unpublished/missing articles.
+- **Admin Panel**: Desktop-optimized interface for managing platform features. Includes a dashboard, sidebar navigation, and full CRUD management for Community Practices (sessions) and Articles via table interfaces. Features include:
+  - **Articles Management**: Create/edit/delete articles with React Quill rich text editor, image upload to public/articles/ folder, category assignment, and publish/draft toggle. Table view shows title, category, published status, creation date, and actions.
+  - **Category Management**: Create new categories on-the-fly from article form dialog.
 
 ## External Dependencies
 
@@ -49,6 +53,9 @@ Preferred communication style: Simple, everyday language.
 - **React Hook Form**: Form state management.
 - **Zod**: TypeScript-first schema validation.
 - **drizzle-zod**: Bridge between Drizzle ORM and Zod.
+
+### Content Editing
+- **React Quill**: WYSIWYG rich text editor for article content with HTML output.
 
 ### Data Management
 - **TanStack Query (React Query)**: Async state management and caching.
@@ -78,3 +85,56 @@ Preferred communication style: Simple, everyday language.
 
 ### AI Video Service
 - **@gradio/client**: For connecting to the external Dr.M AI video generation API (https://dr-meghana-video.wowlabz.com/).
+
+## Recent Changes
+
+### Articles Feature (November 2024)
+Complete articles management system with the following capabilities:
+
+**Database Schema:**
+- **Categories Table**: ID (serial), name (varchar)
+- **Articles Table**: ID (serial), title (varchar), categoryId (integer FK), imageUrl (varchar), content (text/HTML), isPublished (boolean), createdAt (timestamp)
+
+**API Endpoints:**
+- Public Routes:
+  - `GET /api/categories` - Returns all categories
+  - `GET /api/articles` - Returns only published articles
+  - `GET /api/articles/:id` - Returns article only if published (404 otherwise)
+- Admin Routes (Bearer token required):
+  - `GET /api/admin/articles` - Returns all articles including drafts
+  - `POST /api/admin/articles` - Create article with Zod validation
+  - `PUT /api/admin/articles/:id` - Update article with Zod validation
+  - `DELETE /api/admin/articles/:id` - Delete article
+  - `POST /api/admin/categories` - Create category with Zod validation
+  - `POST /api/admin/upload/article-image` - Upload article image (saved to public/articles/)
+
+**Security & Validation:**
+- All admin endpoints protected with Bearer token authentication
+- Request body validation using Zod schemas (insertArticleSchema, insertCategorySchema)
+- Published flag enforced server-side - unpublished articles return 404 on public endpoints
+- Image uploads restricted to admin users with authentication check
+
+**User Features:**
+- Browse articles by category on mobile-optimized interface
+- Click article cards to view full content with formatted text
+- Graceful error handling for missing/unpublished articles
+
+**Admin Features:**
+- Table view of all articles with status badges (Published/Draft)
+- Create/edit articles with React Quill WYSIWYG editor supporting:
+  - Headers (H1, H2, H3)
+  - Text formatting (bold, italic, underline, strike)
+  - Lists (ordered, unordered)
+  - Blockquotes and code blocks
+  - Links
+- Image upload with preview
+- Category dropdown with inline category creation
+- Publish/draft toggle
+- Edit and delete functionality
+
+**Technical Implementation:**
+- React Query for data fetching with proper cache invalidation
+- Custom queryFn for admin authentication headers
+- Mobile-first responsive design following app patterns
+- HTML content safely rendered with Tailwind prose classes
+- 404 handling returns null instead of throwing to show proper fallback UI
