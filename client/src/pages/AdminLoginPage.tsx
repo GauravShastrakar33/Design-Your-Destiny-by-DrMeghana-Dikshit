@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
           title: "Login successful",
           description: "Welcome to the admin panel",
         });
-        setLocation("/admin/sessions");
+        setLocation("/admin");
       } else {
         toast({
           title: "Login failed",
