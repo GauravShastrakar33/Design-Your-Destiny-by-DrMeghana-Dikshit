@@ -182,9 +182,9 @@ export default function ProcessesPage() {
                   title={process.title}
                   icon={getIcon(process.iconName)}
                   practiceId={process.id}
-                  videoUrl={process.videoUrl}
-                  audioUrl={process.audioUrl}
-                  script={process.scriptUrl}
+                  videoUrl={process.videoUrl || undefined}
+                  audioUrl={process.audioUrl || undefined}
+                  script={process.scriptUrl || undefined}
                   testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
                 />
               ));
@@ -196,9 +196,9 @@ export default function ProcessesPage() {
                     title={process.title}
                     icon={getIcon(process.iconName)}
                     practiceId={process.id}
-                    videoUrl={process.videoUrl}
-                    audioUrl={process.audioUrl}
-                    script={process.scriptUrl}
+                    videoUrl={process.videoUrl || undefined}
+                    audioUrl={process.audioUrl || undefined}
+                    script={process.scriptUrl || undefined}
                     testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
                   />
                 ))
@@ -248,9 +248,9 @@ export default function ProcessesPage() {
                           title={process.title}
                           icon={getIcon(process.iconName)}
                           practiceId={process.id}
-                          videoUrl={process.videoUrl}
-                          audioUrl={process.audioUrl}
-                          script={process.scriptUrl}
+                          videoUrl={process.videoUrl || undefined}
+                          audioUrl={process.audioUrl || undefined}
+                          script={process.scriptUrl || undefined}
                           testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
                           hideIcon={true}
                         />
@@ -269,9 +269,9 @@ export default function ProcessesPage() {
                       title={process.title}
                       icon={getIcon(process.iconName)}
                       practiceId={process.id}
-                      videoUrl={process.videoUrl}
-                      audioUrl={process.audioUrl}
-                      script={process.scriptUrl}
+                      videoUrl={process.videoUrl || undefined}
+                      audioUrl={process.audioUrl || undefined}
+                      script={process.scriptUrl || undefined}
                       testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
                       hideIcon={true}
                     />
@@ -316,9 +316,9 @@ export default function ProcessesPage() {
                             title={process.title}
                             icon={getIcon(process.iconName)}
                             practiceId={process.id}
-                            videoUrl={process.videoUrl}
-                            audioUrl={process.audioUrl}
-                            script={process.scriptUrl}
+                            videoUrl={process.videoUrl || undefined}
+                            audioUrl={process.audioUrl || undefined}
+                            script={process.scriptUrl || undefined}
                             testId={`practice-${process.title.toLowerCase().replace(/\s+/g, "-")}`}
                             hideIcon={true}
                           />
