@@ -16,6 +16,12 @@ Preferred communication style: Simple, everyday language.
 **State Management**: Local component state using React hooks and localStorage for client-side persistence.
 **Styling**: Mobile-first responsive design, custom CSS variables, gradient backgrounds.
 **Data Fetching**: TanStack Query is configured but currently unused.
+**Layout System**: Layout-based routing with separate layouts for mobile app and admin panel.
+  - **AppLayout** (`client/src/layouts/AppLayout.tsx`): Wraps all mobile app routes, includes BottomNav for navigation
+  - **AdminLayout** (`client/src/layouts/AdminLayout.tsx`): Wraps admin routes, clean desktop interface without BottomNav
+  - **AppRoutes** (`client/src/routes/AppRoutes.tsx`): All mobile app page routes
+  - **AdminRoutes** (`client/src/routes/AdminRoutes.tsx`): Admin panel routes (/admin/*)
+  - Conditional routing in App.tsx: `/admin/*` paths use AdminLayout, all others use AppLayout
 
 ### Backend Architecture
 
