@@ -1,181 +1,80 @@
 # Dr.M App - Wellness & Practice Management Platform
 
 ## Overview
-
-Dr.M App is a comprehensive mobile-first wellness application designed to help users manage spiritual practices, meditation routines, and personal growth. It offers guided practices, community engagement, challenge tracking, and personalized insights for holistic well-being. The platform includes structured programs (DYD, USM), emotional mastery tools, money mindset rewiring, workshops, masterclasses, and community practice sessions. Users can track streaks, create custom playlists, participate in challenges (7, 21, 90-day), and work on their "Project of Heart" vision.
+Dr.M App is a comprehensive mobile-first wellness application designed to help users manage spiritual practices, meditation routines, and personal growth. It offers guided practices, community engagement, challenge tracking, and personalized insights for holistic well-being. The platform includes structured programs, emotional mastery tools, money mindset rewiring, workshops, masterclasses, and community practice sessions. Users can track streaks, create custom playlists, participate in challenges, and work on their "Project of Heart" vision.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend Architecture
+### UI/UX Decisions
+- **Design System**: Mobile-first responsive design with a focus on constrained container width (`max-w-md`).
+- **Typography**: Inter or DM Sans for primary text, Crimson Text or Playfair Display for quotes/headlines.
+- **Color Themes**: Specific gradient themes for Wellness, Calm, Energy, Growth sections; purple accent color (#703DFA) for active states and icons; light gray page background (#F3F3F3) with white cards.
+- **Component Patterns**: Fixed bottom navigation, gradient action cards, expandable practice cards, progress bars, streak calendars, modal dialogs, segmented controls.
+- **Project of Heart**: Incorporates authentic Anahata Heart Chakra SVG with 12 lotus petals and Star of David for the Vision tab.
+- **Admin Panel**: Desktop-optimized interface with sidebar navigation, distinct from the mobile app's UI.
 
-**Frameworks & Tools**: React 18 with TypeScript, Vite, Wouter for routing, shadcn/ui (built on Radix UI), Tailwind CSS, Framer Motion.
-**State Management**: Local component state using React hooks and localStorage for client-side persistence.
-**Styling**: Mobile-first responsive design, custom CSS variables, gradient backgrounds.
-**Data Fetching**: TanStack Query is configured but currently unused.
-**Layout System**: Layout-based routing with separate layouts for mobile app and admin panel.
-  - **AppLayout** (`client/src/layouts/AppLayout.tsx`): Wraps all mobile app routes, includes BottomNav for navigation
-  - **AdminLayout** (`client/src/layouts/AdminLayout.tsx`): Wraps admin routes, clean desktop interface without BottomNav
-  - **AppRoutes** (`client/src/routes/AppRoutes.tsx`): All mobile app page routes
-  - **AdminRoutes** (`client/src/routes/AdminRoutes.tsx`): Admin panel routes (/admin/*)
-  - Conditional routing in App.tsx: `/admin/*` paths use AdminLayout, all others use AppLayout
-
-### Backend Architecture
-
-**Server Framework**: Express.js with TypeScript.
-**Current Implementation**: Minimal backend, primarily serving the frontend. Core application logic and data persistence are client-side.
-**Future Considerations**: Designed with a storage abstraction layer and PostgreSQL session management for future database integration and authentication.
-
-### Data Storage Strategy
-
-**Current**: Hybrid approach - user data (playlists, progress, challenges, preferences, streaks, "Project of Heart") stored in browser localStorage. Community practice sessions stored in PostgreSQL database.
-**Database**: PostgreSQL with Drizzle ORM for community sessions management.
-
-### Authentication & Authorization
-
-**Current**: Admin panel uses password-based authentication with Bearer token for managing community sessions. Public-facing app remains authentication-free for users.
-**Admin Auth**: Simple password protection with token stored in localStorage, sent as Bearer header to protected endpoints.
-**Security**: Server-side middleware (`requireAdmin`) protects all admin CRUD endpoints.
-
-### Design System
-
-**Typography**: Inter or DM Sans for primary text, Crimson Text or Playfair Display for quotes/headlines.
-**Color Themes**: Specific gradient themes for Wellness, Calm, Energy, Growth sections.
-**Component Patterns**: Fixed bottom navigation, gradient action cards, expandable practice cards, progress bars, streak calendars, modal dialogs.
-**Layout**: Mobile-first with constrained container width (`max-w-md`).
-
-### Audio System
-
-**Overview**: Manages and plays audio content for practices, affirmations, and journaling.
-**Core Components**: Centralized audio library metadata, `AudioPlayer` component (HTML5 player with play/pause, seek, speed, two modes).
-**Playlist Progress**: Tracks per-playlist progress in localStorage, saves every 3 seconds, auto-advances tracks, marks complete at 90% duration.
-
-### Dr.M AI Video Integration
-
-**Overview**: Custom chat interface integrating with a Gradio-hosted AI video generation service.
-**Functionality**: Connects to an external API (`/process_query`) for personalized video responses. Displays a 4-section layout (header, video player, chat history with thumbnails, input). Stores last 3 conversations and video URLs in localStorage. Auto-plays Dr.M's response video with optional subtitles.
+### Technical Implementations
+- **Frontend**: React 18 with TypeScript, Vite, Wouter for routing, shadcn/ui (Radix UI), Tailwind CSS, Framer Motion for animations. State managed using React hooks and localStorage.
+- **Backend**: Express.js with TypeScript, currently minimal, serving frontend and community practice sessions. Designed for future database integration and authentication.
+- **Data Storage**: Hybrid approach using browser localStorage for user-specific data (playlists, progress, preferences) and PostgreSQL with Drizzle ORM for community practice sessions.
+- **Authentication**: Admin panel uses password-based authentication with Bearer tokens; public app is authentication-free. Server-side middleware (`requireAdmin`) protects admin CRUD endpoints.
+- **Audio System**: Manages audio playback via an `AudioPlayer` component (HTML5), tracks per-playlist progress in localStorage, and auto-advances tracks.
+- **AI Video Integration**: Custom chat interface connecting to an external Gradio-hosted AI video generation service (`/process_query`) for personalized video responses. Stores conversation history and video URLs in localStorage.
 
 ### Feature Specifications
-
-**Home Page**: Welcome header (Inter, Bold, 20pt), high-contrast yellow "JOIN NOW" button.
-
-**Workshops Page**: "MASTERCLASSES" header (Montserrat, grey), rectangular tab system (purple active, light purple inactive). Enhanced masterclass cards with `subtitle`, `endTime`, `isLive`, improved thumbnail sizing, "LIVE" badge, larger typography, and larger purple gradient "JOIN" button.
-
-**Profile Page** (Updated November 2025): Clean design with light gray page background (#F3F3F3) and white cards. Purple accent color (#703DFA) for icons. Features reordered sections: Profile Card → Streak Calendar → AI Insights → My Prescription → Settings.
-- **Page Background**: Light gray (#F3F3F3) creating contrast with white cards
-- **Profile Card**: Full-width gradient background with centered content (max-w-md), reduced padding (py-4), bold "PROFILE" header (text-xl, Montserrat font), Playfair_Display font for karmic affirmation quote
-- **AI Insights Card**: White background, black title (uppercase, left-aligned), dark gray description, purple Sparkles icon right, full card clickable with navigation to /ai-insights, gray ChevronRight indicator
-- **My Prescription Card**: White background, black title (uppercase, left-aligned), dark gray description, purple Heart icon right, expandable/collapsible to show/hide prescription details (Morning/Afternoon/Evening practices), purple ChevronDown indicator rotates on toggle
-- **Settings Card**: White background, black title (uppercase, left-aligned), dark gray description, purple Settings icon right, all options visible by default (Account, Notifications, Get Support, Logout), only Account submenu expandable with reset options. All icons purple except Logout (red)
-
-**AI Insights Page** (Updated November 2025): Clean design with light gray page background (#F3F3F3) and white cards. Purple accent color (#703DFA) for icons and active states. Features practice tracking insights with weekly and monthly views.
-- **Page Background**: Light gray (#F3F3F3) creating contrast with white cards
-- **Header**: White background, sticky at top, grey bold uppercase title "AI INSIGHTS" (Montserrat font), no emoji, grey back arrow button
-- **View Toggle (Segmented Buttons)**: White container, two buttons (Weekly View / Monthly View). Active state: purple background (#703DFA) with white text. Inactive state: grey text on white background
-- **Weekly View Cards**: All cards white background with purple icons (#703DFA). Playlist cards show Music icon, Process Checklist card shows CheckSquare icon. Cards display practice activity and most practiced items
-- **Monthly View Card**: White background, title shows "{Month} {Year} Progress" (no emoji), purple Music icon for Playlist Practices section, purple CheckSquare icon for Process Checklist section, horizontal progress bars, inspirational quote (no emoji)
-
-**Project of Heart Page**: White background with "PROJECT OF HEART" title. Heart Chakra theme (#A8E6CF) preserved for specific elements. Rectangular tab system. White cards with subtle borders. Yellow primary CTAs (#E5AC19) and purple secondary actions. Typography uses Playfair Display for quotes.
-- **Journey Tab**: "Start Your Journey" button features reduced height (size="sm"), 92% width (w-11/12), centered with mx-auto, yellow background (#E5AC19), rounded pill shape
-- **Vision Tab**: Two-column layout: Left (70%) with authentic Anahata Heart Chakra SVG (green #5FB77D, 12 symmetrically rotated lotus petals, Star of David) and description. Right (30%) with circular progress ring around a gold star icon and an achievement badge showing star count. The chakra symbol uses clean SVG design with no glowing effects or animations for a professional, spiritual aesthetic.
-
-**Project of Heart Milestones** (Updated November 2025):
-- **Star Progression**: Maximum 6 stars (Vision: 1, Cycle 1: +1, Cycle 2: +2, Cycle 3: +2)
-- **Milestone Display**: Purple auto-checking checkboxes (#703DFA) with star emojis
-  - ⭐ Set Project of Heart — Your first star begins here. (1+ stars)
-  - ⭐⭐ Cycle 1 — You took the first step. (2+ stars)
-  - ⭐⭐⭐⭐ Cycle 2 — You stayed consistent. (4+ stars)
-  - ⭐⭐⭐⭐⭐⭐ Cycle 3 — You grew stronger. (6+ stars)
-- **Self-Evaluation**: No longer awards stars, serves as reflection tool only
-- **Progress Ring**: Fills based on 6 max stars (100% at 6 stars)
-
-**Processes Page** (Updated November 2025): Organized practice structure with collapsible category dropdowns for DYD tab. Clean design with light gray page background (#F3F3F3) and white cards. Purple accent color (#703DFA) for icons.
-- **Page Background**: Light gray (#F3F3F3) creating contrast with white cards
-- **Header**: White background, sticky at top, grey bold uppercase title "PROCESSES" (Montserrat font), grey back arrow button
-- **Segmented Control**: Custom rectangular buttons (rounded-lg). Active state: purple background (#703DFA) with white text. Inactive state: grey text on transparent background
-- **DYD Tab**: Practices grouped into expandable categories using Radix UI Collapsible
-  - **Wealth Code Activation** (4 practices): WCA 1-4
-  - **Birth story-Specialisation** (6 practices): Birth Story Healing, Adoption, Miscarriage, Cesarean, Clearing the Birth Energy, Pre-Birth Story Process
-  - **Anxiety Relief Code** (2 practices): ARC 1-2
-  - **Happiness Code Activation** (2 practices): HAC 1-2
-  - **Story Burning** (standalone practice)
-- **USM Tab**: Flat list of 9 individual practices (Recognition, Vibration Elevation, Neurolinking, EET, Hoponopono, Soul Connection, Donald Duck, Inner Child Healing, Journaling)
-- **Category Cards**: White background, purple icons (#703DFA) without background circles, purple chevron, dark text (grey-900)
-- **Practice Cards**: White background, purple icons (#703DFA) without background circles, purple chevron, dark text (grey-900)
-- **Category Interaction**: Click category header to expand/collapse sub-practices. Chevron rotates 180° when expanded. Sub-practices indented (ml-4). Multiple categories can be open simultaneously
-- **Technical Implementation**: Container uses `key={selectedCategory}` to force complete re-render when switching tabs, preventing React reconciliation issues with Collapsible components
-
-**Community Practices Page** (Added November 2025): Mobile-first page displaying real-time community practice sessions from PostgreSQL database. Light gray background (#F3F3F3) with white session cards. Purple accent color (#703DFA).
-- **Data Source**: Fetches active sessions from `/api/sessions` endpoint (public, no authentication required)
-- **Session Cards**: White background, purple gradient "JOIN" button, displays title, time, participant count
-- **Join Functionality**: Opens actual meeting links in new window when user clicks JOIN button
-- **Mobile Layout**: Constrained max-w-md container with responsive card grid
-
-**Admin Panel** (Added November 2025): Desktop-optimized admin interface for managing community practice sessions. Separate routes from main mobile app (/admin/login, /admin/sessions).
-- **Admin Login** (/admin/login): Password-based authentication page, stores Bearer token in localStorage
-- **Admin Sessions** (/admin/sessions): Full CRUD management interface with responsive table and dialogs
-  - **Layout**: Desktop-optimized with max-w-7xl container, responsive table (desktop) or stacked cards (mobile)
-  - **Table Columns**: Title, Time, Meeting Link (URL), Participants (number), Active Status (boolean), Actions
-  - **CRUD Operations**: Add new sessions, edit existing sessions (preserves unchanged fields), delete sessions, toggle active status
-  - **Forms**: Dialog-based forms with validation, edit form prefills with existing session data
-  - **Authentication**: All admin endpoints protected by `requireAdmin` middleware, client sends Bearer token in Authorization header
-  - **Security**: Server-side authentication on all admin CRUD endpoints (GET/POST/PUT/DELETE /api/admin/sessions)
-- **Database**: PostgreSQL `community_sessions` table with Drizzle ORM schema
-- **Storage**: Switched from MemStorage to DbStorage for persistent session management
+- **Home Page**: Welcome header, high-contrast "JOIN NOW" button.
+- **Workshops Page**: "MASTERCLASSES" header, rectangular tab system, enhanced masterclass cards with live indicators and larger typography.
+- **Profile Page**: Reordered sections: Profile Card, Streak Calendar, AI Insights, My Prescription, Settings. Features a full-width gradient profile card, clickable AI Insights card, expandable My Prescription card, and settings options.
+- **AI Insights Page**: Practice tracking insights with weekly and monthly views, segmented view toggle, and dedicated cards for playlists and process checklists.
+- **Project of Heart Page**: White background with "PROJECT OF HEART" title, heart chakra theme, rectangular tab system. Features a "Start Your Journey" button, a two-column Vision tab with Anahata Heart Chakra SVG and progress ring, and milestone tracking (up to 6 stars).
+- **Processes Page**: Organizes practices into collapsible categories (e.g., Wealth Code Activation, Birth story-Specialisation) for the DYD tab, and a flat list for the USM tab. Uses Radix UI Collapsible components.
+- **Community Practices Page**: Displays real-time community practice sessions fetched from a PostgreSQL database, with session cards and "JOIN" functionality opening meeting links.
+- **Admin Panel**: Desktop-optimized interface for managing platform features. Includes a dashboard, sidebar navigation, and full CRUD management for Community Practices (sessions) via a table interface. Placeholder sections for other features.
 
 ## External Dependencies
 
 ### Third-Party UI Libraries
-
 - **Radix UI**: Accessible component primitives.
 - **shadcn/ui**: Components built on Radix UI and Tailwind CSS.
 - **Lucide React**: Icon library.
 - **Embla Carousel**: Carousel/slider functionality.
 
 ### Animation & Interaction
-
 - **Framer Motion**: Declarative animations.
 
 ### Forms & Validation
-
 - **React Hook Form**: Form state management.
 - **Zod**: TypeScript-first schema validation.
 - **drizzle-zod**: Bridge between Drizzle ORM and Zod.
 
 ### Data Management
-
-- **TanStack Query (React Query)**: Async state management and caching (configured).
+- **TanStack Query (React Query)**: Async state management and caching.
 - **date-fns**: Date manipulation and formatting.
 
 ### Database & ORM
-
 - **Drizzle ORM**: TypeScript ORM for PostgreSQL.
 - **@neondatabase/serverless**: Neon database driver.
 - **drizzle-kit**: Database migrations.
 
 ### Styling
-
 - **Tailwind CSS**: Utility-first CSS framework.
 - **tailwindcss-animate**: Animation utilities.
 - **class-variance-authority**: Type-safe variant management.
 - **clsx** + **tailwind-merge**: Class name composition.
 
 ### Build Tools
-
 - **Vite**: Fast build tool and dev server.
 - **TypeScript**: Type safety.
 - **esbuild**: JavaScript bundler.
 - **PostCSS**: CSS processing.
 
 ### Replit-Specific Integrations
-
 - **@replit/vite-plugin-runtime-error-modal**: Development error overlay.
 - **@replit/vite-plugin-cartographer**: Code exploration tool.
 - **@replit/vite-plugin-dev-banner**: Development mode banner.
 
 ### AI Video Service
-
 - **@gradio/client**: For connecting to the external Dr.M AI video generation API (https://dr-meghana-video.wowlabz.com/).
