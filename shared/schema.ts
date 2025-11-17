@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -16,6 +16,23 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+export const communitySessions = pgTable("community_sessions", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  time: text("time").notNull(),
+  displayTime: text("display_time").notNull(),
+  meetingLink: text("meeting_link").notNull(),
+  participants: integer("participants").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+});
+
+export const insertCommunitySessionSchema = createInsertSchema(communitySessions).omit({
+  id: true,
+});
+
+export type InsertCommunitySession = z.infer<typeof insertCommunitySessionSchema>;
+export type CommunitySession = typeof communitySessions.$inferSelect;
 
 export const drmMessageSchema = z.object({
   id: z.string(),

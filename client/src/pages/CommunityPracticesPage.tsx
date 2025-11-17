@@ -1,32 +1,33 @@
 import { ArrowLeft, Users, Video } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-
-interface PracticeSession {
-  time: string;
-  displayTime: string;
-  participants: number;
-}
-
-const sessions: PracticeSession[] = [
-  { time: "05:00", displayTime: "5:00 AM", participants: 12 },
-  { time: "07:00", displayTime: "7:00 AM", participants: 24 },
-  { time: "09:00", displayTime: "9:00 AM", participants: 18 },
-  { time: "14:30", displayTime: "2:30 PM", participants: 15 },
-  { time: "21:00", displayTime: "9:00 PM", participants: 32 },
-];
+import type { CommunitySession } from "@shared/schema";
 
 export default function CommunityPracticesPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const handleJoin = (time: string) => {
-    toast({
-      title: "Joining Session",
-      description: `Connecting you to the ${time} practice session...`,
-    });
+  const { data: sessions = [], isLoading } = useQuery<CommunitySession[]>({
+    queryKey: ["/api/sessions"],
+  });
+
+  const handleJoin = (meetingLink: string, displayTime: string) => {
+    if (meetingLink) {
+      window.open(meetingLink, "_blank");
+      toast({
+        title: "Opening Session",
+        description: `Launching ${displayTime} practice session...`,
+      });
+    } else {
+      toast({
+        title: "Link unavailable",
+        description: "Meeting link not set for this session",
+        variant: "destructive",
+      });
+    }
   };
 
   const getCurrentStatus = (sessionTime: string) => {
@@ -86,58 +87,67 @@ export default function CommunityPracticesPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Today's Sessions
             </h2>
-            {sessions.map((session) => {
-              const { status, label } = getCurrentStatus(session.time);
-              
-              return (
-                <Card
-                  key={session.time}
-                  className="bg-white border border-gray-200 p-4"
-                  data-testid={`session-${session.time}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-14 h-14 bg-brand/10 rounded-lg flex items-center justify-center">
-                        <Video className="w-7 h-7 text-brand" />
+            {isLoading ? (
+              <p className="text-center text-gray-500 py-8">Loading sessions...</p>
+            ) : sessions.length === 0 ? (
+              <Card className="bg-white border border-gray-200 p-8">
+                <p className="text-center text-gray-500">No sessions scheduled yet</p>
+              </Card>
+            ) : (
+              sessions.map((session) => {
+                const { status, label } = getCurrentStatus(session.time);
+                
+                return (
+                  <Card
+                    key={session.id}
+                    className="bg-white border border-gray-200 p-4"
+                    data-testid={`session-${session.id}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex-shrink-0">
+                        <div className="w-14 h-14 bg-brand/10 rounded-lg flex items-center justify-center">
+                          <Video className="w-7 h-7 text-brand" />
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {session.displayTime}
-                        </h3>
-                        {status === 'live' && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 text-xs font-medium">
-                            <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse" />
-                            {label}
-                          </span>
-                        )}
-                        {status === 'starting-soon' && (
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-medium">
-                            {label}
-                          </span>
-                        )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {session.title}
+                          </h3>
+                          {status === 'live' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 text-xs font-medium">
+                              <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse" />
+                              {label}
+                            </span>
+                          )}
+                          {status === 'starting-soon' && (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-medium">
+                              {label}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-1">{session.displayTime}</p>
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Users className="w-3.5 h-3.5" />
+                          <span>{session.participants} members</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Users className="w-3.5 h-3.5" />
-                        <span>{session.participants} members</span>
-                      </div>
-                    </div>
 
-                    <Button
-                      onClick={() => handleJoin(session.displayTime)}
-                      variant={status === 'live' ? 'default' : 'outline'}
-                      size="default"
-                      disabled={status === 'ended'}
-                      data-testid={`button-join-${session.time}`}
-                    >
-                      {status === 'ended' ? 'Ended' : 'Join'}
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
+                      <Button
+                        onClick={() => handleJoin(session.meetingLink, session.displayTime)}
+                        variant={status === 'live' ? 'default' : 'outline'}
+                        size="default"
+                        disabled={status === 'ended'}
+                        data-testid={`button-join-${session.id}`}
+                      >
+                        {status === 'ended' ? 'Ended' : 'Join'}
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })
+            )}
           </div>
 
           <Card className="mt-6 p-4 bg-white border border-gray-200">

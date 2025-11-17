@@ -28,6 +28,8 @@ import AIInsightsPage from "@/pages/AIInsightsPage";
 import CourseOverviewPage from "@/pages/CourseOverviewPage";
 import RewiringScreen from "@/pages/RewiringScreen";
 import VideoPlayerPage from "@/pages/VideoPlayerPage";
+import AdminLoginPage from "@/pages/AdminLoginPage";
+import AdminSessionsPage from "@/pages/AdminSessionsPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -63,6 +65,8 @@ function Router() {
       />
       <Route path="/video-player" component={VideoPlayerPage} />
       <Route path="/rewiring-belief" component={RewiringScreen} />
+      <Route path="/admin/login" component={AdminLoginPage} />
+      <Route path="/admin/sessions" component={AdminSessionsPage} />
       <Route component={NotFound} />
     </Switch>
   );
