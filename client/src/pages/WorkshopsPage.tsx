@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Search, Bell, Play, Calendar, Clock, X } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import type { Course as DBCourse, Masterclass as DBMasterclass, WorkshopVideo as DBWorkshopVideo } from "@shared/schema";
 import rightDecisionThumbnail from "@assets/right-decision-thumbnail.png";
 
 type Tab = "upcoming" | "latest" | "dyd" | "usm" | "usc" | "usb";
@@ -50,137 +52,59 @@ interface LastWatchedData {
   url?: string; // ✅ Add this
 }
 
-const upcomingMasterclasses: UpcomingMasterclass[] = [
-  {
-    id: "1",
-    title: "Inner Circle Call",
-    subtitle: "Transform your mindset and manifest success",
-    date: "14 Nov",
-    time: "06:00 pm - 08:00 pm",
-    startTime: new Date("2025-10-25T18:00:00"),
-    endTime: new Date("2025-10-25T20:00:00"),
-    zoomLink: "https://zoom.us/j/example1",
-    thumbnail: "/workshopsimg/InnerCircleCall.png",
-    isLive: true,
-  },
-  {
-    id: "2",
-    title: "Soul Connection Masterclass",
-    subtitle: "Deepen your connection with self, others, and the divine.",
-    date: "16 Nov",
-    time: "07:30 pm - 08:30 pm",
-    startTime: new Date("2025-10-28T18:00:00"),
-    endTime: new Date("2025-10-28T20:00:00"),
-    zoomLink: "https://zoom.us/j/example2",
-    thumbnail: "/workshopsimg/SoulConnectionMasterclass.png",
-    isLive: false,
-  },
-  {
-    id: "3",
-    title: "Manifestation Mastery",
-    subtitle: "Unlock your manifesting potential",
-    date: "28 Nov",
-    time: "06:00 pm - 10:00 pm",
-    startTime: new Date("2025-11-08T18:00:00"),
-    endTime: new Date("2025-11-08T20:00:00"),
-    zoomLink: "https://zoom.us/j/example3",
-    thumbnail: "/workshopsimg/ManifestationMastery.png",
-    isLive: false,
-  },
-];
+// Helper function to convert DB masterclass to UI format
+function convertMasterclass(mc: DBMasterclass): UpcomingMasterclass {
+  // Parse time strings to create Date objects
+  const today = new Date();
+  const [startHour, startMin] = mc.startTime.split(':').map(Number);
+  const [endHour, endMin] = mc.endTime.split(':').map(Number);
+  
+  const startDate = new Date(today);
+  startDate.setHours(startHour, startMin, 0, 0);
+  
+  const endDate = new Date(today);
+  endDate.setHours(endHour, endMin, 0, 0);
+  
+  return {
+    id: mc.id.toString(),
+    title: mc.title,
+    subtitle: mc.subtitle,
+    date: mc.date,
+    time: mc.time,
+    startTime: startDate,
+    endTime: endDate,
+    zoomLink: mc.zoomLink,
+    thumbnail: mc.thumbnail,
+    isLive: mc.isLive,
+  };
+}
 
-const latestVideos: Video[] = [
-  {
-    id: "1",
-    title: "Money Mastery",
-    thumbnail: "/workshopsimg/MoneyMastery.png",
-    uploadDate: "28 Oct 2025",
+// Helper function to convert DB workshop video to UI format
+function convertWorkshopVideo(video: DBWorkshopVideo): Video {
+  return {
+    id: video.id.toString(),
+    title: video.title,
+    thumbnail: video.thumbnail,
+    uploadDate: video.uploadDate,
     isCollection: false,
-    url: "/WealthCodeActivation2.mp4",
-    author: "Dr. Meghana Dikshit",
-    description:
-      "Master your money mindset and attract abundance into your life.",
-    videoId: "lions-gate-portal",
-  },
-  {
-    id: "2",
-    title: "Influence Mastery",
-    thumbnail: "/workshopsimg/InfluenceMastery.png",
-    uploadDate: "15 Oct 2025",
-    isCollection: false,
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    author: "Dr. Meghana Dikshit",
-    description: "Powerful Presence and Persuasive Communication",
-    videoId: "self-sabotage",
-  },
-  {
-    id: "3",
-    title: "Inner Circle Call — Turning Setbacks into Success",
-    thumbnail: "/workshopsimg/InnerCircleCall.png",
-    uploadDate: "18 Oct 2025",
-    isCollection: false,
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    author: "Dr. Meghana Dikshit",
-    description:
-      "Transform setbacks into stepping stones for success with powerful mindset shifts.",
-    videoId: "inner-circle-setbacks",
-  },
-  {
-    id: "4",
-    title: "Vibration Downloads",
-    thumbnail: "/workshopsimg/VibrationDownloads.png",
-    uploadDate: "12 Oct 2025",
-    isCollection: false,
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    author: "Dr. Meghana Dikshit",
-    description: "Tune Into Higher Frequencies of Awareness and Alignment",
-    videoId: "money-mastery",
-  },
-];
+    url: video.videoUrl,
+    author: video.author,
+    description: video.description,
+    videoId: `video-${video.id}`,
+  };
+}
 
-const dydCourses: Course[] = [
-  {
-    id: "dyd-14",
-    title: "DYD 14",
-    thumbnail: "/workshopsimg/DesignYourDestiny.png",
-    year: "July 2025",
-    type: "dyd",
+// Helper function to convert DB course to UI format
+function convertCourse(course: DBCourse): Course {
+  return {
+    id: course.id.toString(),
+    title: course.title,
+    thumbnail: course.thumbnail,
+    year: course.year,
+    type: course.type.toLowerCase() as "dyd" | "usm" | "usc" | "usb",
     isCollection: true,
-  },
-];
-
-const usmCourses: Course[] = [
-  {
-    id: "usm-march",
-    title: "USM",
-    thumbnail: "/workshopsimg/UltimateSuccessMastery.png",
-    year: "March 2025",
-    type: "usm",
-    isCollection: true,
-  },
-];
-
-const uscCourses: Course[] = [
-  {
-    id: "usc-march",
-    title: "USC",
-    thumbnail: "/workshopsimg/UltimateSuccessChampion.png",
-    year: "March 2025",
-    type: "usc",
-    isCollection: true,
-  },
-];
-
-const usbCourses: Course[] = [
-  {
-    id: "usb-feb",
-    title: "USB",
-    thumbnail: "/workshopsimg/UltimateSuccessBuilder.png",
-    year: "February 2025",
-    type: "usb",
-    isCollection: true,
-  },
-];
+  };
+}
 
 function CountdownTimer({ startTime }: { startTime: Date }) {
   const [timeLeft, setTimeLeft] = useState("");
@@ -221,6 +145,19 @@ export default function WorkshopsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("upcoming");
   const [lastWatched, setLastWatched] = useState<LastWatchedData | null>(null);
   const [showLastWatched, setShowLastWatched] = useState(true);
+
+  // Fetch data from database
+  const { data: dbMasterclasses = [] } = useQuery<DBMasterclass[]>({ queryKey: ["/api/masterclasses"] });
+  const { data: dbWorkshopVideos = [] } = useQuery<DBWorkshopVideo[]>({ queryKey: ["/api/workshop-videos"] });
+  const { data: dbCourses = [] } = useQuery<DBCourse[]>({ queryKey: ["/api/courses"] });
+
+  // Convert and filter data
+  const upcomingMasterclasses = dbMasterclasses.map(convertMasterclass);
+  const latestVideos = dbWorkshopVideos.map(convertWorkshopVideo);
+  const dydCourses = dbCourses.filter(c => c.type.toLowerCase() === "dyd").map(convertCourse);
+  const usmCourses = dbCourses.filter(c => c.type.toLowerCase() === "usm").map(convertCourse);
+  const uscCourses = dbCourses.filter(c => c.type.toLowerCase() === "usc").map(convertCourse);
+  const usbCourses = dbCourses.filter(c => c.type.toLowerCase() === "usb").map(convertCourse);
 
   const tabs = [
     { id: "upcoming" as Tab, label: "Upcoming" },
