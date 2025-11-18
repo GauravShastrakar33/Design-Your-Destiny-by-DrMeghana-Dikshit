@@ -139,3 +139,88 @@ export const insertSpiritualBreathSchema = createInsertSchema(spiritualBreaths).
 
 export type InsertSpiritualBreath = z.infer<typeof insertSpiritualBreathSchema>;
 export type SpiritualBreath = typeof spiritualBreaths.$inferSelect;
+
+export const courses = pgTable("courses", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  thumbnail: text("thumbnail").notNull(),
+  year: text("year").notNull(),
+  type: text("type").notNull(),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export const insertCourseSchema = createInsertSchema(courses).omit({
+  id: true,
+});
+
+export type InsertCourse = z.infer<typeof insertCourseSchema>;
+export type Course = typeof courses.$inferSelect;
+
+export const courseSections = pgTable("course_sections", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: 'cascade' }),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export const insertCourseSectionSchema = createInsertSchema(courseSections).omit({
+  id: true,
+});
+
+export type InsertCourseSection = z.infer<typeof insertCourseSectionSchema>;
+export type CourseSection = typeof courseSections.$inferSelect;
+
+export const sectionVideos = pgTable("section_videos", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  duration: text("duration").notNull(),
+  videoUrl: text("video_url").notNull(),
+  sectionId: integer("section_id").notNull().references(() => courseSections.id, { onDelete: 'cascade' }),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export const insertSectionVideoSchema = createInsertSchema(sectionVideos).omit({
+  id: true,
+});
+
+export type InsertSectionVideo = z.infer<typeof insertSectionVideoSchema>;
+export type SectionVideo = typeof sectionVideos.$inferSelect;
+
+export const masterclasses = pgTable("masterclasses", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle").notNull(),
+  date: text("date").notNull(),
+  time: text("time").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  zoomLink: text("zoom_link").notNull(),
+  thumbnail: text("thumbnail").notNull(),
+  isLive: boolean("is_live").notNull().default(false),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export const insertMasterclassSchema = createInsertSchema(masterclasses).omit({
+  id: true,
+});
+
+export type InsertMasterclass = z.infer<typeof insertMasterclassSchema>;
+export type Masterclass = typeof masterclasses.$inferSelect;
+
+export const workshopVideos = pgTable("workshop_videos", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  thumbnail: text("thumbnail").notNull(),
+  uploadDate: text("upload_date").notNull(),
+  videoUrl: text("video_url").notNull(),
+  author: text("author").notNull().default("Dr. Meghana Dikshit"),
+  description: text("description").notNull(),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export const insertWorkshopVideoSchema = createInsertSchema(workshopVideos).omit({
+  id: true,
+});
+
+export type InsertWorkshopVideo = z.infer<typeof insertWorkshopVideoSchema>;
+export type WorkshopVideo = typeof workshopVideos.$inferSelect;
