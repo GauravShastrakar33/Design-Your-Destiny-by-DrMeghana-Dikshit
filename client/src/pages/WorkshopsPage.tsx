@@ -54,25 +54,14 @@ interface LastWatchedData {
 
 // Helper function to convert DB masterclass to UI format
 function convertMasterclass(mc: DBMasterclass): UpcomingMasterclass {
-  // Parse time strings to create Date objects
-  const today = new Date();
-  const [startHour, startMin] = mc.startTime.split(':').map(Number);
-  const [endHour, endMin] = mc.endTime.split(':').map(Number);
-  
-  const startDate = new Date(today);
-  startDate.setHours(startHour, startMin, 0, 0);
-  
-  const endDate = new Date(today);
-  endDate.setHours(endHour, endMin, 0, 0);
-  
   return {
     id: mc.id.toString(),
     title: mc.title,
     subtitle: mc.subtitle,
     date: mc.date,
     time: mc.time,
-    startTime: startDate,
-    endTime: endDate,
+    startTime: new Date(mc.scheduledStart),
+    endTime: new Date(mc.scheduledEnd),
     zoomLink: mc.zoomLink,
     thumbnail: mc.thumbnail,
     isLive: mc.isLive,

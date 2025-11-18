@@ -77,6 +77,8 @@ const masterclassFormSchema = z.object({
   time: z.string().min(1, "Time is required"),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
+  scheduledStart: z.coerce.date(),
+  scheduledEnd: z.coerce.date(),
   zoomLink: z.string().min(1, "Zoom link is required"),
   thumbnail: z.string().min(1, "Thumbnail URL is required"),
   isLive: z.boolean().default(false),
@@ -1036,6 +1038,62 @@ function FormDialog({
                         <FormMessage />
                       </FormItem>
                     )}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="scheduledStart"
+                    render={({ field }) => {
+                      const formatDateTimeLocal = (val: any) => {
+                        if (!val) return '';
+                        const date = val instanceof Date ? val : new Date(val);
+                        if (isNaN(date.getTime())) return '';
+                        return date.toISOString().slice(0, 16);
+                      };
+                      
+                      return (
+                        <FormItem>
+                          <FormLabel>Scheduled Start</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="datetime-local"
+                              value={formatDateTimeLocal(field.value)}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              data-testid="input-scheduled-start"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="scheduledEnd"
+                    render={({ field }) => {
+                      const formatDateTimeLocal = (val: any) => {
+                        if (!val) return '';
+                        const date = val instanceof Date ? val : new Date(val);
+                        if (isNaN(date.getTime())) return '';
+                        return date.toISOString().slice(0, 16);
+                      };
+                      
+                      return (
+                        <FormItem>
+                          <FormLabel>Scheduled End</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="datetime-local"
+                              value={formatDateTimeLocal(field.value)}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              data-testid="input-scheduled-end"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </div>
                 <FormField

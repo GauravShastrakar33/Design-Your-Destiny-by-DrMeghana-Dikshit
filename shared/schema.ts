@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -190,10 +190,12 @@ export const masterclasses = pgTable("masterclasses", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   subtitle: text("subtitle").notNull(),
-  date: text("date").notNull(),
-  time: text("time").notNull(),
-  startTime: text("start_time").notNull(),
-  endTime: text("end_time").notNull(),
+  date: text("date").notNull(), // Display text like "14 Nov"
+  time: text("time").notNull(), // Display text like "06:00 pm - 08:00 pm"
+  startTime: text("start_time").notNull(), // Display time like "18:00" (kept for backward compatibility)
+  endTime: text("end_time").notNull(), // Display time like "20:00" (kept for backward compatibility)
+  scheduledStart: timestamp("scheduled_start", { mode: "date" }).notNull(), // Canonical start datetime
+  scheduledEnd: timestamp("scheduled_end", { mode: "date" }).notNull(), // Canonical end datetime
   zoomLink: text("zoom_link").notNull(),
   thumbnail: text("thumbnail").notNull(),
   isLive: boolean("is_live").notNull().default(false),
@@ -202,6 +204,9 @@ export const masterclasses = pgTable("masterclasses", {
 
 export const insertMasterclassSchema = createInsertSchema(masterclasses).omit({
   id: true,
+}).extend({
+  scheduledStart: z.coerce.date(),
+  scheduledEnd: z.coerce.date(),
 });
 
 export type InsertMasterclass = z.infer<typeof insertMasterclassSchema>;
