@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { 
   insertCommunitySessionSchema, insertCategorySchema, insertArticleSchema,
   insertProcessFolderSchema, insertProcessSubfolderSchema, insertProcessSchema,
-  insertSpiritualBreathSchema
+  insertSpiritualBreathSchema, insertCourseSchema, insertCourseSectionSchema,
+  insertSectionVideoSchema, insertMasterclassSchema, insertWorkshopVideoSchema
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -721,6 +722,393 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ url: result.url });
     } catch (error) {
       console.error("Error uploading spiritual breath media:", error);
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  // ==================== WORKSHOPS ROUTES ====================
+
+  // ===== COURSES =====
+  
+  // Public: Get all courses
+  app.get("/api/courses", async (req, res) => {
+    try {
+      const courses = await storage.getAllCourses();
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      res.status(500).json({ error: "Failed to fetch courses" });
+    }
+  });
+
+  // Admin: Create course
+  app.post("/api/admin/courses", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertCourseSchema.parse(req.body);
+      const course = await storage.createCourse(validatedData);
+      res.status(201).json(course);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation failed", details: error.errors });
+      } else {
+        console.error("Error creating course:", error);
+        res.status(500).json({ error: "Failed to create course" });
+      }
+    }
+  });
+
+  // Admin: Update course
+  app.put("/api/admin/courses/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertCourseSchema.partial().parse(req.body);
+      const course = await storage.updateCourse(id, validatedData);
+      
+      if (!course) {
+        res.status(404).json({ error: "Course not found" });
+        return;
+      }
+      
+      res.json(course);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation failed", details: error.errors });
+      } else {
+        console.error("Error updating course:", error);
+        res.status(500).json({ error: "Failed to update course" });
+      }
+    }
+  });
+
+  // Admin: Delete course
+  app.delete("/api/admin/courses/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCourse(id);
+      
+      if (!success) {
+        res.status(404).json({ error: "Course not found" });
+        return;
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting course:", error);
+      res.status(500).json({ error: "Failed to delete course" });
+    }
+  });
+
+  // ===== COURSE SECTIONS =====
+  
+  // Public: Get all course sections
+  app.get("/api/course-sections", async (req, res) => {
+    try {
+      const sections = await storage.getAllCourseSections();
+      res.json(sections);
+    } catch (error) {
+      console.error("Error fetching course sections:", error);
+      res.status(500).json({ error: "Failed to fetch course sections" });
+    }
+  });
+
+  // Admin: Create course section
+  app.post("/api/admin/course-sections", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertCourseSectionSchema.parse(req.body);
+      const section = await storage.createCourseSection(validatedData);
+      res.status(201).json(section);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation failed", details: error.errors });
+      } else {
+        console.error("Error creating course section:", error);
+        res.status(500).json({ error: "Failed to create course section" });
+      }
+    }
+  });
+
+  // Admin: Update course section
+  app.put("/api/admin/course-sections/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertCourseSectionSchema.partial().parse(req.body);
+      const section = await storage.updateCourseSection(id, validatedData);
+      
+      if (!section) {
+        res.status(404).json({ error: "Course section not found" });
+        return;
+      }
+      
+      res.json(section);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation failed", details: error.errors });
+      } else {
+        console.error("Error updating course section:", error);
+        res.status(500).json({ error: "Failed to update course section" });
+      }
+    }
+  });
+
+  // Admin: Delete course section
+  app.delete("/api/admin/course-sections/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCourseSection(id);
+      
+      if (!success) {
+        res.status(404).json({ error: "Course section not found" });
+        return;
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting course section:", error);
+      res.status(500).json({ error: "Failed to delete course section" });
+    }
+  });
+
+  // ===== SECTION VIDEOS =====
+  
+  // Public: Get all section videos
+  app.get("/api/section-videos", async (req, res) => {
+    try {
+      const videos = await storage.getAllSectionVideos();
+      res.json(videos);
+    } catch (error) {
+      console.error("Error fetching section videos:", error);
+      res.status(500).json({ error: "Failed to fetch section videos" });
+    }
+  });
+
+  // Admin: Create section video
+  app.post("/api/admin/section-videos", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertSectionVideoSchema.parse(req.body);
+      const video = await storage.createSectionVideo(validatedData);
+      res.status(201).json(video);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation failed", details: error.errors });
+      } else {
+        console.error("Error creating section video:", error);
+        res.status(500).json({ error: "Failed to create section video" });
+      }
+    }
+  });
+
+  // Admin: Update section video
+  app.put("/api/admin/section-videos/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertSectionVideoSchema.partial().parse(req.body);
+      const video = await storage.updateSectionVideo(id, validatedData);
+      
+      if (!video) {
+        res.status(404).json({ error: "Section video not found" });
+        return;
+      }
+      
+      res.json(video);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation failed", details: error.errors });
+      } else {
+        console.error("Error updating section video:", error);
+        res.status(500).json({ error: "Failed to update section video" });
+      }
+    }
+  });
+
+  // Admin: Delete section video
+  app.delete("/api/admin/section-videos/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteSectionVideo(id);
+      
+      if (!success) {
+        res.status(404).json({ error: "Section video not found" });
+        return;
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting section video:", error);
+      res.status(500).json({ error: "Failed to delete section video" });
+    }
+  });
+
+  // ===== MASTERCLASSES =====
+  
+  // Public: Get all masterclasses
+  app.get("/api/masterclasses", async (req, res) => {
+    try {
+      const masterclasses = await storage.getAllMasterclasses();
+      res.json(masterclasses);
+    } catch (error) {
+      console.error("Error fetching masterclasses:", error);
+      res.status(500).json({ error: "Failed to fetch masterclasses" });
+    }
+  });
+
+  // Admin: Create masterclass
+  app.post("/api/admin/masterclasses", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertMasterclassSchema.parse(req.body);
+      const masterclass = await storage.createMasterclass(validatedData);
+      res.status(201).json(masterclass);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation failed", details: error.errors });
+      } else {
+        console.error("Error creating masterclass:", error);
+        res.status(500).json({ error: "Failed to create masterclass" });
+      }
+    }
+  });
+
+  // Admin: Update masterclass
+  app.put("/api/admin/masterclasses/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertMasterclassSchema.partial().parse(req.body);
+      const masterclass = await storage.updateMasterclass(id, validatedData);
+      
+      if (!masterclass) {
+        res.status(404).json({ error: "Masterclass not found" });
+        return;
+      }
+      
+      res.json(masterclass);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation failed", details: error.errors });
+      } else {
+        console.error("Error updating masterclass:", error);
+        res.status(500).json({ error: "Failed to update masterclass" });
+      }
+    }
+  });
+
+  // Admin: Delete masterclass
+  app.delete("/api/admin/masterclasses/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteMasterclass(id);
+      
+      if (!success) {
+        res.status(404).json({ error: "Masterclass not found" });
+        return;
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting masterclass:", error);
+      res.status(500).json({ error: "Failed to delete masterclass" });
+    }
+  });
+
+  // ===== WORKSHOP VIDEOS =====
+  
+  // Public: Get all workshop videos
+  app.get("/api/workshop-videos", async (req, res) => {
+    try {
+      const videos = await storage.getAllWorkshopVideos();
+      res.json(videos);
+    } catch (error) {
+      console.error("Error fetching workshop videos:", error);
+      res.status(500).json({ error: "Failed to fetch workshop videos" });
+    }
+  });
+
+  // Admin: Create workshop video
+  app.post("/api/admin/workshop-videos", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertWorkshopVideoSchema.parse(req.body);
+      const video = await storage.createWorkshopVideo(validatedData);
+      res.status(201).json(video);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation failed", details: error.errors });
+      } else {
+        console.error("Error creating workshop video:", error);
+        res.status(500).json({ error: "Failed to create workshop video" });
+      }
+    }
+  });
+
+  // Admin: Update workshop video
+  app.put("/api/admin/workshop-videos/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertWorkshopVideoSchema.partial().parse(req.body);
+      const video = await storage.updateWorkshopVideo(id, validatedData);
+      
+      if (!video) {
+        res.status(404).json({ error: "Workshop video not found" });
+        return;
+      }
+      
+      res.json(video);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation failed", details: error.errors });
+      } else {
+        console.error("Error updating workshop video:", error);
+        res.status(500).json({ error: "Failed to update workshop video" });
+      }
+    }
+  });
+
+  // Admin: Delete workshop video
+  app.delete("/api/admin/workshop-videos/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteWorkshopVideo(id);
+      
+      if (!success) {
+        res.status(404).json({ error: "Workshop video not found" });
+        return;
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting workshop video:", error);
+      res.status(500).json({ error: "Failed to delete workshop video" });
+    }
+  });
+
+  // Admin: Upload workshop media (thumbnails, videos) to S3
+  app.post("/api/admin/upload/workshop-media", requireAdmin, uploadMedia.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ error: "No file uploaded" });
+        return;
+      }
+
+      const credCheck = checkS3Credentials();
+      if (!credCheck.valid) {
+        res.status(503).json({ 
+          error: "AWS S3 credentials not configured", 
+          details: credCheck.error,
+          message: "Please configure AWS credentials to upload files"
+        });
+        return;
+      }
+
+      const fileType = req.body.fileType || "other";
+      const folder = `workshops/${fileType}`;
+      
+      const result = await uploadToS3(req.file, folder);
+      
+      if (!result.success) {
+        res.status(500).json({ error: result.error });
+        return;
+      }
+      
+      res.json({ url: result.url });
+    } catch (error) {
+      console.error("Error uploading workshop media:", error);
       res.status(500).json({ error: "Failed to upload file" });
     }
   });
