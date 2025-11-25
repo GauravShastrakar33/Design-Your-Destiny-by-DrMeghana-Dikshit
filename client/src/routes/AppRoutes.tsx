@@ -24,6 +24,7 @@ import AIInsightsPage from "@/pages/AIInsightsPage";
 import CourseOverviewPage from "@/pages/CourseOverviewPage";
 import RewiringScreen from "@/pages/RewiringScreen";
 import VideoPlayerPage from "@/pages/VideoPlayerPage";
+import UserLoginPage from "@/pages/UserLoginPage";
 import NotFound from "@/pages/not-found";
 
 export default function AppRoutes() {
@@ -60,6 +61,7 @@ export default function AppRoutes() {
       />
       <Route path="/video-player" component={VideoPlayerPage} />
       <Route path="/rewiring-belief" component={RewiringScreen} />
+      <Route path="/login" component={UserLoginPage} />
       <Route component={NotFound} />
     </Switch>
   );

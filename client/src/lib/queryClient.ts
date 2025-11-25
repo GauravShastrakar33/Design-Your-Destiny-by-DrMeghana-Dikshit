@@ -7,14 +7,38 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+function getAuthHeaders(url: string): Record<string, string> {
+  const headers: Record<string, string> = {};
+  
+  if (url.startsWith("/admin") || url.startsWith("/api/admin")) {
+    const adminToken = localStorage.getItem("@app:admin_token");
+    if (adminToken) {
+      headers["Authorization"] = `Bearer ${adminToken}`;
+    }
+  } else if (url.startsWith("/api/v1")) {
+    const userToken = localStorage.getItem("@app:user_token");
+    if (userToken) {
+      headers["Authorization"] = `Bearer ${userToken}`;
+    }
+  }
+  
+  return headers;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const authHeaders = getAuthHeaders(url);
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    ...(data ? { "Content-Type": "application/json" } : {}),
+  };
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -29,8 +53,12 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    const url = queryKey.join("/") as string;
+    const authHeaders = getAuthHeaders(url);
+    
+    const res = await fetch(url, {
       credentials: "include",
+      headers: authHeaders,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

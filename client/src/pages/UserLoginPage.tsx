@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Lock, Mail } from "lucide-react";
+import { User, Mail, Lock } from "lucide-react";
 
-export default function AdminLoginPage() {
+export default function UserLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/admin/v1/auth/login", {
+      const response = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -38,13 +38,13 @@ export default function AdminLoginPage() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        localStorage.setItem("@app:admin_token", data.token);
-        localStorage.setItem("@app:admin_user", JSON.stringify(data.user));
+        localStorage.setItem("@app:user_token", data.token);
+        localStorage.setItem("@app:user", JSON.stringify(data.user));
         toast({
-          title: "Login successful",
-          description: `Welcome back, ${data.user.name}!`,
+          title: "Welcome back!",
+          description: `Hello, ${data.user.name}!`,
         });
-        setLocation("/admin");
+        setLocation("/");
       } else {
         toast({
           title: "Login failed",
@@ -64,14 +64,14 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-page-bg flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 bg-white border border-gray-200">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-8 bg-white border border-gray-200 shadow-lg">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-brand/10 rounded-full mb-4">
-            <Lock className="w-8 h-8 text-brand" />
+            <User className="w-8 h-8 text-brand" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Login</h1>
-          <p className="text-gray-600">Sign in to access the admin panel</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+          <p className="text-gray-600">Sign in to continue your wellness journey</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -87,7 +87,7 @@ export default function AdminLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
                 className="w-full pl-10"
-                data-testid="input-admin-email"
+                data-testid="input-user-email"
               />
             </div>
           </div>
@@ -104,7 +104,7 @@ export default function AdminLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
                 className="w-full pl-10"
-                data-testid="input-admin-password"
+                data-testid="input-user-password"
               />
             </div>
           </div>
@@ -114,15 +114,21 @@ export default function AdminLoginPage() {
             disabled={isLoading}
             className="w-full"
             style={{ backgroundColor: "#703DFA" }}
-            data-testid="button-admin-login"
+            data-testid="button-user-login"
           >
             {isLoading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
 
-        <p className="text-sm text-gray-500 text-center mt-6">
-          Admin access only for SUPER_ADMIN and COACH roles
-        </p>
+        <div className="mt-6 text-center space-y-2">
+          <p className="text-sm text-gray-500">
+            Don't have an account?{" "}
+            <span className="text-brand font-medium">Contact admin to register</span>
+          </p>
+          <Link href="/admin/login" className="text-sm text-gray-400 hover:text-gray-600">
+            Admin? Login here
+          </Link>
+        </div>
       </Card>
     </div>
   );
