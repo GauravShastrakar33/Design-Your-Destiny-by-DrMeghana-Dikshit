@@ -1,0 +1,164 @@
+FULL SESSION AUTHORIZATION + RBAC IMPLEMENTATION
+(Backend + Frontend)
+
+✅ PART 1 — BACKEND: Protect all API routes
+⭐ 1. Add global backend protection
+In server/index.ts, add:
+
+// Protect ALL admin routes (SUPER_ADMIN + COACH)
+app.use("/admin/v1", authenticate, (req, res, next) => {
+  // @ts-ignore
+  if (!["SUPER_ADMIN", "COACH"].includes(req.user.role)) {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  next();
+});
+
+// Protect ALL user routes (USER + COACH allowed)
+app.use("/api/v1", authenticate, (req, res, next) => {
+  // @ts-ignore
+  if (!["USER", "COACH"].includes(req.user.role)) {
+    return res.status(403).json({ message: "User access required" });
+  }
+  next();
+});
+✔ Admin API now requires SUPER_ADMIN or COACH
+✔ User API now requires USER or COACH
+✔ No unauthorized access
+
+⭐ 2. Add global "last_activity" middleware
+Create:
+server/middleware/activity.ts
+
+import { db } from "../db";
+import { users } from "../db/schema";
+import { eq } from "drizzle-orm";
+
+export async function updateLastActivity(req, res, next) {
+  try {
+    // @ts-ignore
+    const userId = req.user?.sub;
+    if (userId) {
+      await db.update(users)
+        .set({ lastActivity: new Date() })
+        .where(eq(users.id, userId));
+    }
+  } catch (e) {
+    console.log("lastActivity update failed:", e);
+  }
+  next();
+}
+Add to index.ts BELOW authenticate:
+
+import { updateLastActivity } from "./middleware/activity";
+
+app.use(updateLastActivity);
+✔ Every API call updates last activity ✔ Works for all roles
+
+✅ PART 2 — FRONTEND: Route Protection (React)
+⭐ 1. Create Admin Protected Route
+Create file:
+client/src/components/AdminRoute.tsx
+
+import { Navigate } from "react-router-dom";
+
+export default function AdminRoute({ children }) {
+  const token = localStorage.getItem("token");
+  const data = localStorage.getItem("admin_user");
+
+  if (!token || !data) return <Navigate to="/admin/login" replace />;
+
+  const user = JSON.parse(data);
+
+  if (!["SUPER_ADMIN", "COACH"].includes(user.role)) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return children;
+}
+
+⭐ 2. Create User Protected Route
+File:
+client/src/components/UserRoute.tsx
+
+import { Navigate } from "react-router-dom";
+
+export default function UserRoute({ children }) {
+  const token = localStorage.getItem("user_token");
+  const data = localStorage.getItem("user_info");
+
+  if (!token || !data) return <Navigate to="/login" replace />;
+
+  const user = JSON.parse(data);
+
+  if (user.role !== "USER" && user.role !== "COACH") {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+⭐ 3. Use them in App.tsx routing
+Example:
+
+import AdminRoute from "./components/AdminRoute";
+import UserRoute from "./components/UserRoute";
+
+<Route
+  path="/admin/dashboard"
+  element={
+    <AdminRoute>
+      <AdminDashboard />
+    </AdminRoute>
+  }
+/>
+
+<Route
+  path="/home"
+  element={
+    <UserRoute>
+      <UserHome />
+    </UserRoute>
+  }
+/>
+✔ Now admin dashboard requires admin role ✔ User dashboard requires user role
+
+✅ PART 3 — Role-Based Redirect After Login
+Update admin login page
+After successful login:
+
+if (data.user.role === "SUPER_ADMIN") {
+    window.location.href = "/admin/dashboard";
+} else if (data.user.role === "COACH") {
+    window.location.href = "/coach/dashboard";
+}
+Update user login page
+After user login:
+
+window.location.href = "/home";
+
+✅ PART 4 — Role-Based UI Hiding
+Wherever you show navigation:
+
+const admin = JSON.parse(localStorage.getItem("admin_user") || "null");
+
+{admin?.role === "SUPER_ADMIN" && (
+   <AdminOnlyMenuItems />
+)}
+
+{admin?.role === "COACH" && (
+   <CoachMenuItems />
+)}
+Similarly for user:
+
+const user = JSON.parse(localStorage.getItem("user_info") || "null");
+
+{user?.role === "USER" && <UserMenu />}
+✔ No wrong user sees admin panel ✔ Admin panel hidden from users ✔ Clear, clean UI separation
+
+⭐ After implementing EVERYTHING above:
+
+🔒 Backend
+✔ All APIs protected ✔ Role-based access implemented ✔ last_activity auto updated ✔ No unauthorized access to admin ✔ No wrong user accessing admin routes
+🔒 Frontend
+✔ Admin dashboard protected ✔ User dashboard protected ✔ Role-based redirects ✔ Role-based UI hiding ✔ Session persists ✔ Login always shows first
