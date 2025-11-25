@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Redirect } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Lock, Mail } from "lucide-react";
 
 export default function AdminLoginPage() {
@@ -13,6 +14,15 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { login, isAuthenticated, admin } = useAdminAuth();
+
+  if (isAuthenticated && admin) {
+    if (admin.role === "SUPER_ADMIN") {
+      return <Redirect to="/admin" />;
+    } else if (admin.role === "COACH") {
+      return <Redirect to="/admin" />;
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,13 +48,18 @@ export default function AdminLoginPage() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        localStorage.setItem("@app:admin_token", data.token);
-        localStorage.setItem("@app:admin_user", JSON.stringify(data.user));
+        login(data.token, data.user);
         toast({
           title: "Login successful",
           description: `Welcome back, ${data.user.name}!`,
         });
-        setLocation("/admin");
+        if (data.user.role === "SUPER_ADMIN") {
+          setLocation("/admin");
+        } else if (data.user.role === "COACH") {
+          setLocation("/admin");
+        } else {
+          setLocation("/admin");
+        }
       } else {
         toast({
           title: "Login failed",
