@@ -26,7 +26,10 @@ import { eq } from "drizzle-orm";
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserById(id: number): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserLastLogin(id: number): Promise<void>;
   
   getAllCommunitySessions(): Promise<CommunitySession[]>;
   getCommunitySession(id: number): Promise<CommunitySession | undefined>;
@@ -156,20 +159,47 @@ export class MemStorage implements IStorage {
   }
 
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    return Array.from(this.users.values()).find(u => u.id.toString() === id);
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.email === username,
     );
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.email === email,
+    );
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(u => u.id === id);
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const id = Array.from(this.users.values()).length + 1;
+    const user: User = { 
+      ...insertUser, 
+      id,
+      phone: insertUser.phone || null,
+      role: insertUser.role || "USER",
+      status: insertUser.status || "active",
+      lastLogin: null,
+      lastActivity: null,
+      createdAt: new Date()
+    };
+    this.users.set(id.toString(), user);
     return user;
+  }
+
+  async updateUserLastLogin(id: number): Promise<void> {
+    const user = await this.getUserById(id);
+    if (user) {
+      user.lastLogin = new Date();
+      this.users.set(id.toString(), user);
+    }
   }
 
   async getAllCommunitySessions(): Promise<CommunitySession[]> {
@@ -524,15 +554,29 @@ export class MemStorage implements IStorage {
 
 export class DbStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    const users = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.id, id),
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.id, parseInt(id)),
     });
-    return users;
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const user = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.username, username),
+      where: (users, { eq }) => eq(users.email, username),
+    });
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.email, email),
+    });
+    return user;
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.id, id),
     });
     return user;
   }
@@ -540,6 +584,10 @@ export class DbStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(usersTable).values(insertUser).returning();
     return user;
+  }
+
+  async updateUserLastLogin(id: number): Promise<void> {
+    await db.update(usersTable).set({ lastLogin: new Date() }).where(eq(usersTable.id, id));
   }
 
   async getAllCommunitySessions(): Promise<CommunitySession[]> {

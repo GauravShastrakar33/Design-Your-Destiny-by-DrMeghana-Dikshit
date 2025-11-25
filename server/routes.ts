@@ -12,8 +12,12 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { uploadToS3, checkS3Credentials } from "./s3Upload";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { authenticateJWT, type AuthPayload } from "./middleware/auth";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
 // Ensure public/articles directory exists
 const articlesDir = path.join(process.cwd(), "public", "articles");
@@ -47,14 +51,32 @@ const uploadArticleImage = multer({
   }
 });
 
-// Simple admin auth middleware
+// Admin auth middleware - supports both JWT and legacy password auth
 const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
+  
+  // Legacy password-based auth (backward compatible)
   if (authHeader === `Bearer ${ADMIN_PASSWORD}`) {
     next();
-  } else {
-    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
+  
+  // JWT-based auth
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.split(" ")[1];
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as unknown as AuthPayload;
+      if (["SUPER_ADMIN", "COACH"].includes(decoded.role)) {
+        req.user = decoded;
+        next();
+        return;
+      }
+    } catch (error) {
+      // Token invalid, continue to unauthorized response
+    }
+  }
+  
+  res.status(401).json({ error: "Unauthorized" });
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -70,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin login
+  // Legacy admin login (kept for backward compatibility)
   app.post("/api/admin/login", async (req, res) => {
     try {
       const { password } = req.body;
@@ -82,6 +104,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error during login:", error);
       res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  // Admin JWT login (SUPER_ADMIN and COACH)
+  app.post("/admin/v1/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      if (!["SUPER_ADMIN", "COACH"].includes(user.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      if (user.status !== "active") {
+        return res.status(403).json({ message: "Account is blocked" });
+      }
+
+      const validPassword = await bcrypt.compare(password, user.passwordHash);
+      if (!validPassword) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Update last login
+      await storage.updateUserLastLogin(user.id);
+
+      const token = jwt.sign(
+        { sub: user.id, email: user.email, role: user.role },
+        JWT_SECRET,
+        { expiresIn: "30d" }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      });
+    } catch (error) {
+      console.error("Error during admin login:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  // User JWT login
+  app.post("/api/v1/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      if (user.role !== "USER") {
+        return res.status(403).json({ message: "Admins must use admin login" });
+      }
+
+      if (user.status !== "active") {
+        return res.status(403).json({ message: "Account is blocked" });
+      }
+
+      const validPassword = await bcrypt.compare(password, user.passwordHash);
+      if (!validPassword) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Update last login
+      await storage.updateUserLastLogin(user.id);
+
+      const token = jwt.sign(
+        { sub: user.id, email: user.email, role: user.role },
+        JWT_SECRET,
+        { expiresIn: "30d" }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      });
+    } catch (error) {
+      console.error("Error during user login:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  // Get current authenticated user
+  app.get("/api/v1/me", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const user = await storage.getUserById(req.user.sub);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ error: "Failed to fetch user" });
     }
   });
 
