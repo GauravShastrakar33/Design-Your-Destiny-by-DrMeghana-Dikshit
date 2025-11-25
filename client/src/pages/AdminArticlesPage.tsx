@@ -39,13 +39,13 @@ export default function AdminArticlesPage() {
   });
 
   useEffect(() => {
-    const isAuth = localStorage.getItem("@app:admin_auth");
-    if (!isAuth) {
+    const token = localStorage.getItem("@app:admin_token");
+    if (!token) {
       setLocation("/admin/login");
     }
   }, [setLocation]);
 
-  const adminPassword = localStorage.getItem("@app:admin_auth") || "";
+  const adminToken = localStorage.getItem("@app:admin_token") || "";
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -56,7 +56,7 @@ export default function AdminArticlesPage() {
     queryFn: async () => {
       const response = await fetch("/api/admin/articles", {
         headers: {
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to fetch articles");
@@ -74,7 +74,7 @@ export default function AdminArticlesPage() {
         const uploadRes = await fetch("/api/admin/upload/article-image", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${adminPassword}`,
+            "Authorization": `Bearer ${adminToken}`,
           },
           body: uploadFormData,
         });
@@ -87,7 +87,7 @@ export default function AdminArticlesPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ ...data, imageUrl }),
       });
@@ -116,7 +116,7 @@ export default function AdminArticlesPage() {
         const uploadRes = await fetch("/api/admin/upload/article-image", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${adminPassword}`,
+            "Authorization": `Bearer ${adminToken}`,
           },
           body: uploadFormData,
         });
@@ -129,7 +129,7 @@ export default function AdminArticlesPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ ...data, imageUrl }),
       });
@@ -153,7 +153,7 @@ export default function AdminArticlesPage() {
       const response = await fetch(`/api/admin/articles/${id}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to delete article");
@@ -175,7 +175,7 @@ export default function AdminArticlesPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ name }),
       });

@@ -93,20 +93,20 @@ export default function AdminProcessLibraryPage() {
   });
 
   useEffect(() => {
-    const isAuth = localStorage.getItem("@app:admin_auth");
-    if (!isAuth) {
+    const token = localStorage.getItem("@app:admin_token");
+    if (!token) {
       setLocation("/admin/login");
     }
   }, [setLocation]);
 
-  const adminPassword = localStorage.getItem("@app:admin_auth") || "";
+  const adminToken = localStorage.getItem("@app:admin_token") || "";
 
   // Queries
   const { data: folders = [] } = useQuery<ProcessFolder[]>({
     queryKey: ["/api/admin/process-folders"],
     queryFn: async () => {
       const response = await fetch("/api/admin/process-folders", {
-        headers: { "Authorization": `Bearer ${adminPassword}` },
+        headers: { "Authorization": `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to fetch folders");
       return response.json();
@@ -117,7 +117,7 @@ export default function AdminProcessLibraryPage() {
     queryKey: ["/api/admin/process-subfolders"],
     queryFn: async () => {
       const response = await fetch("/api/admin/process-subfolders", {
-        headers: { "Authorization": `Bearer ${adminPassword}` },
+        headers: { "Authorization": `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to fetch subfolders");
       return response.json();
@@ -128,7 +128,7 @@ export default function AdminProcessLibraryPage() {
     queryKey: ["/api/admin/processes"],
     queryFn: async () => {
       const response = await fetch("/api/admin/processes", {
-        headers: { "Authorization": `Bearer ${adminPassword}` },
+        headers: { "Authorization": `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to fetch processes");
       return response.json();
@@ -139,7 +139,7 @@ export default function AdminProcessLibraryPage() {
     queryKey: ["/api/admin/spiritual-breaths"],
     queryFn: async () => {
       const response = await fetch("/api/admin/spiritual-breaths", {
-        headers: { "Authorization": `Bearer ${adminPassword}` },
+        headers: { "Authorization": `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to fetch spiritual breaths");
       return response.json();
@@ -154,7 +154,7 @@ export default function AdminProcessLibraryPage() {
     
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: { "Authorization": `Bearer ${adminPassword}` },
+      headers: { "Authorization": `Bearer ${adminToken}` },
       body: formData,
     });
     
@@ -174,7 +174,7 @@ export default function AdminProcessLibraryPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify(data),
       });
@@ -199,7 +199,7 @@ export default function AdminProcessLibraryPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify(data),
       });
@@ -222,7 +222,7 @@ export default function AdminProcessLibraryPage() {
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/admin/process-folders/${id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${adminPassword}` },
+        headers: { "Authorization": `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to delete folder");
       return response.json();
@@ -244,7 +244,7 @@ export default function AdminProcessLibraryPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify(data),
       });
@@ -269,7 +269,7 @@ export default function AdminProcessLibraryPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify(data),
       });
@@ -292,7 +292,7 @@ export default function AdminProcessLibraryPage() {
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/admin/process-subfolders/${id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${adminPassword}` },
+        headers: { "Authorization": `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to delete subfolder");
       return response.json();
@@ -340,7 +340,7 @@ export default function AdminProcessLibraryPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ ...data, videoUrl, audioUrl, scriptUrl }),
       });
@@ -395,7 +395,7 @@ export default function AdminProcessLibraryPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ ...data, videoUrl, audioUrl, scriptUrl }),
       });
@@ -422,7 +422,7 @@ export default function AdminProcessLibraryPage() {
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/admin/processes/${id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${adminPassword}` },
+        headers: { "Authorization": `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to delete process");
       return response.json();
@@ -467,7 +467,7 @@ export default function AdminProcessLibraryPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ ...data, videoUrl, audioUrl }),
       });
@@ -517,7 +517,7 @@ export default function AdminProcessLibraryPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ ...data, videoUrl, audioUrl }),
       });
@@ -543,7 +543,7 @@ export default function AdminProcessLibraryPage() {
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/admin/spiritual-breaths/${id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${adminPassword}` },
+        headers: { "Authorization": `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to delete spiritual breath");
       return response.json();

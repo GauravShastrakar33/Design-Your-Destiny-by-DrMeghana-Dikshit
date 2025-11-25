@@ -130,7 +130,7 @@ export default function AdminWorkshopsPage() {
   };
 
   const handleFileUpload = async (file: File, fileType: string): Promise<string> => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("@app:admin_token");
     const formData = new FormData();
     formData.append("file", file);
     formData.append("fileType", fileType);

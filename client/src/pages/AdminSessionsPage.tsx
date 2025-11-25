@@ -27,20 +27,20 @@ export default function AdminSessionsPage() {
   });
 
   useEffect(() => {
-    const isAuth = localStorage.getItem("@app:admin_auth");
-    if (!isAuth) {
+    const token = localStorage.getItem("@app:admin_token");
+    if (!token) {
       setLocation("/admin/login");
     }
   }, [setLocation]);
 
-  const adminPassword = localStorage.getItem("@app:admin_auth") || "";
+  const adminToken = localStorage.getItem("@app:admin_token") || "";
 
   const { data: sessions = [], isLoading } = useQuery<CommunitySession[]>({
     queryKey: ["/api/admin/sessions"],
     queryFn: async () => {
       const response = await fetch("/api/admin/sessions", {
         headers: {
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to fetch sessions");
@@ -54,7 +54,7 @@ export default function AdminSessionsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify(data),
       });
@@ -78,7 +78,7 @@ export default function AdminSessionsPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
         body: JSON.stringify(data),
       });
@@ -101,7 +101,7 @@ export default function AdminSessionsPage() {
       const response = await fetch(`/api/admin/sessions/${id}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${adminPassword}`,
+          "Authorization": `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to delete session");

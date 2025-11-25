@@ -10,12 +10,16 @@ async function throwIfResNotOk(res: Response) {
 function getAuthHeaders(url: string): Record<string, string> {
   const headers: Record<string, string> = {};
   
-  if (url.startsWith("/admin") || url.startsWith("/api/admin")) {
+  const normalizedUrl = url.replace(/^\/+/, "/");
+  
+  const isAdminRoute = normalizedUrl.startsWith("/admin") || normalizedUrl.startsWith("/api/admin");
+  
+  if (isAdminRoute) {
     const adminToken = localStorage.getItem("@app:admin_token");
     if (adminToken) {
       headers["Authorization"] = `Bearer ${adminToken}`;
     }
-  } else if (url.startsWith("/api/v1")) {
+  } else if (normalizedUrl.startsWith("/api/v1")) {
     const userToken = localStorage.getItem("@app:user_token");
     if (userToken) {
       headers["Authorization"] = `Bearer ${userToken}`;

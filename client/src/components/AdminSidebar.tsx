@@ -26,7 +26,8 @@ export default function AdminSidebar() {
   const [location, setLocation] = useLocation();
 
   const handleLogout = () => {
-    localStorage.removeItem("@app:admin_auth");
+    localStorage.removeItem("@app:admin_token");
+    localStorage.removeItem("@app:admin_user");
     setLocation("/admin/login");
   };
 
