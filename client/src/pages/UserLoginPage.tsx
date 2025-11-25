@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useLocation, Link } from "wouter";
+import { useLocation, Link, Redirect } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { User, Mail, Lock } from "lucide-react";
 
 export default function UserLoginPage() {
@@ -13,6 +14,11 @@ export default function UserLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { login, isAuthenticated } = useAuth();
+
+  if (isAuthenticated) {
+    return <Redirect to="/" />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +44,7 @@ export default function UserLoginPage() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        localStorage.setItem("@app:user_token", data.token);
-        localStorage.setItem("@app:user", JSON.stringify(data.user));
+        login(data.token, data.user);
         toast({
           title: "Welcome back!",
           description: `Hello, ${data.user.name}!`,
