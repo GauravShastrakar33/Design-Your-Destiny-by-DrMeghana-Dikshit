@@ -1,0 +1,218 @@
+Authentication —————————— 
+
+✅ STEP 1 — Install packages (Replit Shell)
+
+npm i express bcryptjs jsonwebtoken
+npm i drizzle-orm pg
+npm i -D @types/express @types/jsonwebtoken @types/bcryptjs
+
+✅ STEP 2 — Create users table (Paste into server/db/schema.ts)
+
+import { pgTable, serial, varchar, timestamp } from "drizzle-orm/pg-core";
+
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+
+  name: varchar("name", { length: 150 }).notNull(),
+  email: varchar("email", { length: 150 }).notNull().unique(),
+  phone: varchar("phone", { length: 20 }),
+
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+
+  role: varchar("role", { length: 20 }).notNull().default("USER"),
+  // USER | COACH | SUPER_ADMIN
+
+  status: varchar("status", { length: 20 }).notNull().default("active"),
+  // active | blocked
+
+  lastLogin: timestamp("last_login", { mode: "date" }),
+  lastActivity: timestamp("last_activity", { mode: "date" }),
+
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+Then push schema:
+npm run db:push
+
+✅ STEP 3 — Create authentication middleware
+Paste into server/middleware/auth.ts:
+
+import jwt from "jsonwebtoken";
+import type { Request, Response, NextFunction } from "express";
+
+export function authenticate(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  if (!header) return res.status(401).json({ error: "Authentication required" });
+
+  const token = header.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    // @ts-ignore
+    req.user = decoded;
+    next();
+  } catch {
+    return res.status(401).json({ error: "Invalid token" });
+  }
+}
+
+✅ STEP 4 — RBAC Middleware
+Paste into server/middleware/rbac.ts:
+
+import type { Request, Response, NextFunction } from "express";
+
+export function requireRole(required: "USER" | "COACH" | "SUPER_ADMIN") {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // @ts-ignore
+    const role = req.user?.role;
+
+    if (!role || role !== required) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    next();
+  };
+}
+
+✅ STEP 5 — Admin Login Route
+Paste into server/routes/admin/auth.ts:
+
+import { Router } from "express";
+import { db } from "../../db";
+import { users } from "../../db/schema";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { eq } from "drizzle-orm";
+
+const router = Router();
+
+// ADMIN = SUPER_ADMIN + COACH
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  const row = (await db.select().from(users).where(eq(users.email, email)).limit(1))[0];
+  if (!row) return res.status(401).json({ message: "Invalid email or password" });
+
+  if (!["SUPER_ADMIN", "COACH"].includes(row.role)) {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+
+  const ok = await bcrypt.compare(password, row.passwordHash);
+  if (!ok) return res.status(401).json({ message: "Invalid password" });
+
+  const token = jwt.sign(
+    { sub: row.id, email: row.email, role: row.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "30d" }
+  );
+
+  res.json({ token, user: row });
+});
+
+export default router;
+
+✅ STEP 6 — User Login Route
+Paste into server/routes/user/auth.ts:
+
+import { Router } from "express";
+import { db } from "../../db";
+import { users } from "../../db/schema";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { eq } from "drizzle-orm";
+
+const router = Router();
+
+// USER LOGIN
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  const row = (await db.select().from(users).where(eq(users.email, email)).limit(1))[0];
+  if (!row) return res.status(401).json({ message: "Invalid credentials" });
+
+  if (row.role !== "USER") {
+    return res.status(403).json({ message: "Admins must use admin login" });
+  }
+
+  const ok = await bcrypt.compare(password, row.passwordHash);
+  if (!ok) return res.status(401).json({ message: "Invalid credentials" });
+
+  const token = jwt.sign(
+    { sub: row.id, email: row.email, role: row.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "30d" }
+  );
+
+  res.json({ token, user: row });
+});
+
+export default router;
+
+✅ STEP 7 — Register all routes in server
+Paste into server/index.ts:
+
+import express from "express";
+import adminAuthRoutes from "./routes/admin/auth";
+import userAuthRoutes from "./routes/user/auth";
+import { authenticate } from "./middleware/auth";
+import { requireRole } from "./middleware/rbac";
+
+const app = express();
+app.use(express.json());
+
+// Admin APIs
+app.use("/admin/v1/auth", adminAuthRoutes);
+
+// User APIs
+app.use("/api/v1/auth", userAuthRoutes);
+
+// Example protected route
+app.get("/api/v1/me", authenticate, (req, res) => {
+  // @ts-ignore
+  res.json({ user: req.user });
+});
+
+// SUPER_ADMIN only test route
+app.get("/admin/v1/secret", authenticate, requireRole("SUPER_ADMIN"), (req, res) => {
+  res.json({ message: "Top secret admin route" });
+});
+
+export default app;
+
+✅ STEP 8 — Add JWT Secret in Replit
+Replit → Tools → Secrets → Add:
+
+JWT_SECRET = super_secret_change_this_later
+
+⭐ STEP 9 — INSERT SUPER_ADMIN + USER
+Generate hash
+Shell:
+
+node -e "require('bcryptjs').hash('Admin@123', 10).then(h=>console.log(h))" //for SUPER_ADMIN node -e "require('bcryptjs').hash(‘User@123', 10).then(h=>console.log(h))" //for USER
+Copy the hash.
+Open PostgreSQL
+
+psql $DATABASE_URL
+Paste into PSQL (create SUPER_ADMIN + USER)
+
+INSERT INTO users (name, email, phone, password_hash, role, status)
+VALUES ('Dr. Meghana Dikshit', ‘drmeghana@demantraa.com', '9876543210', '<HASH>', 'SUPER_ADMIN', 'active');
+
+INSERT INTO users (name, email, phone, password_hash, role, status)
+VALUES (‘Gaurav Shastrakar’, ‘33s.gaurav@gmail.com’, ‘8552088897, '<HASH>', 'USER', 'active');
+\q
+Use seperate <HASH> for both (one for SUPER_ADMIN, one for USER)
+
+⭐ STEP 10 — TEST
+Test Admin Login:
+
+curl -X POST http://localhost:5000/admin/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"drmeghana@demantraa.com","password":"Admin@123"}'
+Test User Login:
+
+curl -X POST http://localhost:5000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"rahul@example.com","password":"Admin@123"}'
+
+⭐ STEP 11 — User login page 1.Create a simple user login page in which user can enter email and password and get authenticated 2.Update Admin login page with email and password form field to get authenticated and logged in 
