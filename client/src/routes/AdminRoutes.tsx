@@ -8,6 +8,7 @@ import AdminArticlesPage from "@/pages/AdminArticlesPage";
 import AdminMusicJournalingPage from "@/pages/AdminMusicJournalingPage";
 import AdminWorkshopsPage from "@/pages/AdminWorkshopsPage";
 import AdminProjectHeartPage from "@/pages/AdminProjectHeartPage";
+import AdminStudentsPage from "@/pages/AdminStudentsPage";
 import NotFound from "@/pages/not-found";
 
 export default function AdminRoutes() {
@@ -22,6 +23,7 @@ export default function AdminRoutes() {
       <Route path="/admin/music-journaling" component={AdminMusicJournalingPage} />
       <Route path="/admin/workshops" component={AdminWorkshopsPage} />
       <Route path="/admin/project-heart" component={AdminProjectHeartPage} />
+      <Route path="/admin/users/students" component={AdminStudentsPage} />
       <Route component={NotFound} />
     </Switch>
   );
