@@ -79,6 +79,27 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   res.status(401).json({ error: "Unauthorized" });
 };
 
+// Super Admin only middleware - for admin management routes
+const requireSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.split(" ")[1];
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as unknown as AuthPayload;
+      if (decoded.role === "SUPER_ADMIN") {
+        req.user = decoded;
+        next();
+        return;
+      }
+    } catch (error) {
+      // Token invalid
+    }
+  }
+  
+  res.status(403).json({ error: "Super Admin access required" });
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Public route: Get all active community sessions
   app.get("/api/sessions", async (req, res) => {
@@ -440,6 +461,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching programs:", error);
       res.status(500).json({ error: "Failed to fetch programs" });
+    }
+  });
+
+  // ===== ADMIN MANAGEMENT ROUTES =====
+
+  // Get all admins with search and pagination (SUPER_ADMIN can see all, COACH can view only)
+  app.get("/admin/v1/admins", requireAdmin, async (req, res) => {
+    try {
+      const search = req.query.search as string | undefined;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      const result = await storage.getAdmins({ search, page, limit });
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching admins:", error);
+      res.status(500).json({ error: "Failed to fetch admins" });
+    }
+  });
+
+  // Get single admin (SUPER_ADMIN only)
+  app.get("/admin/v1/admins/:id", requireSuperAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const admin = await storage.getAdminById(id);
+      
+      if (!admin) {
+        res.status(404).json({ error: "Admin not found" });
+        return;
+      }
+      
+      res.json(admin);
+    } catch (error) {
+      console.error("Error fetching admin:", error);
+      res.status(500).json({ error: "Failed to fetch admin" });
+    }
+  });
+
+  // Create admin (SUPER_ADMIN only)
+  app.post("/admin/v1/admins", requireSuperAdmin, async (req, res) => {
+    try {
+      const { name, email, phone, password, role, status } = req.body;
+
+      if (!name || !email) {
+        return res.status(400).json({ error: "Name and email are required" });
+      }
+
+      if (!["SUPER_ADMIN", "COACH"].includes(role)) {
+        return res.status(400).json({ error: "Role must be SUPER_ADMIN or COACH" });
+      }
+
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+
+      const passwordHash = await bcrypt.hash(password || "Admin@123", 10);
+
+      const admin = await storage.createAdmin({
+        name,
+        email,
+        phone: phone || null,
+        passwordHash,
+        role,
+        status: status || "active"
+      });
+
+      res.status(201).json({ message: "Admin created", adminId: admin.id });
+    } catch (error) {
+      console.error("Error creating admin:", error);
+      res.status(500).json({ error: "Failed to create admin" });
+    }
+  });
+
+  // Update admin (SUPER_ADMIN only)
+  app.put("/admin/v1/admins/:id", requireSuperAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { name, email, role, status } = req.body;
+
+      if (role && !["SUPER_ADMIN", "COACH"].includes(role)) {
+        return res.status(400).json({ error: "Role must be SUPER_ADMIN or COACH" });
+      }
+
+      const admin = await storage.updateAdmin(id, { name, email, role, status });
+      
+      if (!admin) {
+        res.status(404).json({ error: "Admin not found" });
+        return;
+      }
+      
+      res.json({ message: "Admin updated" });
+    } catch (error) {
+      console.error("Error updating admin:", error);
+      res.status(500).json({ error: "Failed to update admin" });
+    }
+  });
+
+  // Update admin status (block/unblock) - SUPER_ADMIN only
+  app.patch("/admin/v1/admins/:id/status", requireSuperAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+
+      if (!["active", "blocked"].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+
+      // Prevent self-blocking
+      if (req.user && req.user.sub === id) {
+        return res.status(400).json({ error: "Cannot change your own status" });
+      }
+
+      const admin = await storage.updateAdminStatus(id, status);
+      
+      if (!admin) {
+        res.status(404).json({ error: "Admin not found" });
+        return;
+      }
+      
+      res.json({ message: "Status updated" });
+    } catch (error) {
+      console.error("Error updating admin status:", error);
+      res.status(500).json({ error: "Failed to update status" });
+    }
+  });
+
+  // Delete admin (SUPER_ADMIN only)
+  app.delete("/admin/v1/admins/:id", requireSuperAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+
+      // Prevent self-deletion
+      if (req.user && req.user.sub === id) {
+        return res.status(400).json({ error: "Cannot delete yourself" });
+      }
+
+      const success = await storage.deleteAdmin(id);
+      
+      if (!success) {
+        res.status(404).json({ error: "Admin not found" });
+        return;
+      }
+      
+      res.json({ message: "Admin deleted" });
+    } catch (error) {
+      console.error("Error deleting admin:", error);
+      res.status(500).json({ error: "Failed to delete admin" });
     }
   });
 
