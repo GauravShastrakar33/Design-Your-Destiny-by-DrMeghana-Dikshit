@@ -1,0 +1,127 @@
+### Admin panel ### User Management
+### Admins
+
+“Build complete Admin Management (backend + frontend) in my existing app. Follow these exact instructions:”
+
+📌 BACKEND (Node + Express + Drizzle)
+1️⃣ Add Admin Routes
+Create file: server/routes/adminRoutes/admin.admins.ts
+APIs required:
+➡ GET /admin/v1/admins
+List admins Supports:
+* search (name/email)
+* pagination (page, limit)
+➡ POST /admin/v1/admins
+Add admin Body:
+* name
+* email
+* password (optional → default = Admin@123)
+* role (SUPER_ADMIN | COACH)
+* status (default = active)
+➡ PUT /admin/v1/admins/:id
+Edit admin (name, email, role, status)
+➡ PATCH /admin/v1/admins/:id/status
+Block / Unblock admin
+➡ DELETE /admin/v1/admins/:id
+Remove admin
+All routes must require:
+* JWT authentication
+* SUPER_ADMIN role only can manage admins
+
+📌 BACKEND IMPLEMENTATION DETAILS
+Admin list query must return:
+
+{
+  id,
+  name,
+  email,
+  role,
+  status,
+  lastLogin,
+  createdAt
+}
+Search logic
+
+WHERE name ILIKE %search% OR email ILIKE %search%
+Pagination response
+
+{
+  data,
+  pagination: {
+    total,
+    page,
+    pages
+  }
+}
+
+📌 FRONTEND (React + Tailwind)
+2️⃣ Create Admin List Page
+File: client/src/pages/admin/Admins.tsx
+Page must include:
+Header
+* Title: Admins
+* “Add Admin” button (top-right, themed)
+Search + Search button
+1 line:
+* Search input (name/email)
+* Search button
+Admin Table Columns
+1. NAME (click → open Edit Admin modal)
+2. ROLE
+3. EMAIL
+4. STATUS (badge)
+5. LAST LOGIN
+6. CREATED AT
+7. ACTIONS (3-dot menu)
+Pagination
+Bottom of table:
+* Left: “Showing X–Y of Z”
+* Right: “Page X of Y”
+
+3️⃣ Add Admin Modal
+Create component: client/src/components/admin/AddAdminModal.tsx
+Fields:
+* Name (input)
+* Email (input)
+* Password (optional — default = Admin@123)
+* Role (radio buttons: SUPER_ADMIN, COACH)
+* Status (dropdown: active, blocked)
+Submit → POST /admin/v1/admins
+On success:
+* Close modal
+* Refresh admin list
+
+4️⃣ Edit Admin Modal
+Create component: client/src/components/admin/EditAdminModal.tsx
+Fields identical to Add Admin, but pre-filled.
+Submit → PUT /admin/v1/admins/:id
+
+5️⃣ 3-Dot Actions Menu
+Create component: client/src/components/common/ThreeDotsMenu.tsx
+Menu options:
+1. Edit Admin → open Edit modal
+2. Block / Unblock  → PATCH /admin/v1/admins/:id/status
+3. Delete Admin  → DELETE /admin/v1/admins/:id
+
+6️⃣ UI RULES
+✔ Use app theme colors (DO NOT add new colors). ✔ Table hover = subtle (use existing theme style). ✔ Name should look clickable but no underline. ✔ Modal = center screen, rounded panel, input spacing same as login page.
+
+7️⃣ ROLE PERMISSIONS
+Only SUPER_ADMIN can:
+* Add admin
+* Edit admin
+* Block/unblock
+* Delete admin
+COACH can view only, no actions.
+Frontend must hide action buttons for COACH.
+
+8️⃣ FRONTEND API CALLS
+All admin API calls must send:
+
+Authorization: Bearer <admin_token>
+If token missing or invalid → redirect to /admin/login.
+
+9️⃣ RESULT
+After completing this prompt, the Admin Management section must have:
+✔ Beautiful Admin List Page ✔ Add Admin Modal ✔ Edit Admin Modal ✔ Working 3-dot menu actions ✔ Search + Pagination ✔ Full backend CRUD ✔ Follows Teachable pattern ✔ Uses existing app theme
+
