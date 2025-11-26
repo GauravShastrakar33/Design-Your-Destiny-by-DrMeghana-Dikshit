@@ -1,5 +1,5 @@
 import { 
-  type User, type InsertUser, 
+  type User, type InsertUser, type UserWithPrograms,
   type CommunitySession, type InsertCommunitySession, 
   type Category, type InsertCategory,
   type Article, type InsertArticle,
@@ -12,16 +12,19 @@ import {
   type SectionVideo, type InsertSectionVideo,
   type Masterclass, type InsertMasterclass,
   type WorkshopVideo, type InsertWorkshopVideo,
+  type Program, type InsertProgram,
+  type UserProgram, type InsertUserProgram,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   processFolders as processFoldersTable, processSubfolders as processSubfoldersTable,
   processes as processesTable, spiritualBreaths as spiritualBreathsTable,
   courses as coursesTable, courseSections as courseSectionsTable,
   sectionVideos as sectionVideosTable, masterclasses as masterclassesTable,
-  workshopVideos as workshopVideosTable
+  workshopVideos as workshopVideosTable,
+  programs as programsTable, userPrograms as userProgramsTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, ilike, and, or, inArray, sql, count } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -101,6 +104,20 @@ export interface IStorage {
   createWorkshopVideo(video: InsertWorkshopVideo): Promise<WorkshopVideo>;
   updateWorkshopVideo(id: number, video: Partial<InsertWorkshopVideo>): Promise<WorkshopVideo | undefined>;
   deleteWorkshopVideo(id: number): Promise<boolean>;
+
+  getAllPrograms(): Promise<Program[]>;
+  getProgramByCode(code: string): Promise<Program | undefined>;
+  createProgram(program: InsertProgram): Promise<Program>;
+
+  getStudents(params: { search?: string; programCode?: string; page?: number; limit?: number }): Promise<{ data: UserWithPrograms[]; pagination: { total: number; page: number; pages: number } }>;
+  getStudentById(id: number): Promise<UserWithPrograms | undefined>;
+  createStudent(student: InsertUser, programCode?: string): Promise<User>;
+  updateStudent(id: number, student: Partial<InsertUser>, programCode?: string): Promise<User | undefined>;
+  updateStudentStatus(id: number, status: string): Promise<User | undefined>;
+  deleteStudent(id: number): Promise<boolean>;
+  getUserPrograms(userId: number): Promise<string[]>;
+  assignUserProgram(userId: number, programId: number): Promise<void>;
+  clearUserPrograms(userId: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -361,6 +378,7 @@ export class MemStorage implements IStorage {
       scriptUrl: process.scriptUrl ?? null,
       subfolderId: process.subfolderId ?? null,
       folderId: process.folderId ?? null,
+      description: process.description ?? null,
     };
     this.processes.set(id, newProcess);
     return newProcess;
@@ -549,6 +567,60 @@ export class MemStorage implements IStorage {
 
   async deleteWorkshopVideo(id: number): Promise<boolean> {
     return this.workshopVideos.delete(id);
+  }
+
+  async getAllPrograms(): Promise<Program[]> {
+    return [];
+  }
+
+  async getProgramByCode(code: string): Promise<Program | undefined> {
+    return undefined;
+  }
+
+  async createProgram(program: InsertProgram): Promise<Program> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async getStudents(params: { search?: string; programCode?: string; page?: number; limit?: number }): Promise<{ data: UserWithPrograms[]; pagination: { total: number; page: number; pages: number } }> {
+    return { data: [], pagination: { total: 0, page: 1, pages: 1 } };
+  }
+
+  async getStudentById(id: number): Promise<UserWithPrograms | undefined> {
+    return undefined;
+  }
+
+  async createStudent(student: InsertUser, programCode?: string): Promise<User> {
+    return this.createUser(student);
+  }
+
+  async updateStudent(id: number, student: Partial<InsertUser>, programCode?: string): Promise<User | undefined> {
+    const existing = await this.getUserById(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...student } as User;
+    this.users.set(id.toString(), updated);
+    return updated;
+  }
+
+  async updateStudentStatus(id: number, status: string): Promise<User | undefined> {
+    const existing = await this.getUserById(id);
+    if (!existing) return undefined;
+    existing.status = status;
+    this.users.set(id.toString(), existing);
+    return existing;
+  }
+
+  async deleteStudent(id: number): Promise<boolean> {
+    return this.users.delete(id.toString());
+  }
+
+  async getUserPrograms(userId: number): Promise<string[]> {
+    return [];
+  }
+
+  async assignUserProgram(userId: number, programId: number): Promise<void> {
+  }
+
+  async clearUserPrograms(userId: number): Promise<void> {
   }
 }
 
@@ -984,6 +1056,166 @@ export class DbStorage implements IStorage {
     const result = await db
       .delete(workshopVideosTable)
       .where(eq(workshopVideosTable.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getAllPrograms(): Promise<Program[]> {
+    return await db.query.programs.findMany({
+      orderBy: (programs, { asc }) => [asc(programs.code)],
+    });
+  }
+
+  async getProgramByCode(code: string): Promise<Program | undefined> {
+    return await db.query.programs.findFirst({
+      where: (programs, { eq }) => eq(programs.code, code),
+    });
+  }
+
+  async createProgram(program: InsertProgram): Promise<Program> {
+    const [newProgram] = await db.insert(programsTable).values(program).returning();
+    return newProgram;
+  }
+
+  async getUserPrograms(userId: number): Promise<string[]> {
+    const userProgramLinks = await db.select().from(userProgramsTable).where(eq(userProgramsTable.userId, userId));
+    if (userProgramLinks.length === 0) return [];
+    
+    const programIds = userProgramLinks.map(up => up.programId);
+    const programs = await db.select().from(programsTable).where(inArray(programsTable.id, programIds));
+    return programs.map(p => p.code);
+  }
+
+  async assignUserProgram(userId: number, programId: number): Promise<void> {
+    await db.insert(userProgramsTable).values({ userId, programId });
+  }
+
+  async clearUserPrograms(userId: number): Promise<void> {
+    await db.delete(userProgramsTable).where(eq(userProgramsTable.userId, userId));
+  }
+
+  async getStudents(params: { search?: string; programCode?: string; page?: number; limit?: number }): Promise<{ data: UserWithPrograms[]; pagination: { total: number; page: number; pages: number } }> {
+    const { search = "", programCode = "ALL", page = 1, limit = 20 } = params;
+    const offset = (page - 1) * limit;
+
+    let userIdsFilter: number[] | null = null;
+
+    if (programCode && programCode !== "ALL") {
+      const program = await this.getProgramByCode(programCode);
+      if (program) {
+        const userProgramLinks = await db.select().from(userProgramsTable).where(eq(userProgramsTable.programId, program.id));
+        userIdsFilter = userProgramLinks.map(up => up.userId);
+        if (userIdsFilter.length === 0) {
+          return { data: [], pagination: { total: 0, page: 1, pages: 1 } };
+        }
+      }
+    }
+
+    const conditions = [eq(usersTable.role, "USER")];
+    
+    if (search) {
+      conditions.push(
+        or(
+          ilike(usersTable.name, `%${search}%`),
+          ilike(usersTable.email, `%${search}%`)
+        )!
+      );
+    }
+
+    if (userIdsFilter) {
+      conditions.push(inArray(usersTable.id, userIdsFilter));
+    }
+
+    const totalResult = await db
+      .select({ count: count() })
+      .from(usersTable)
+      .where(and(...conditions));
+    const total = totalResult[0]?.count || 0;
+
+    const students = await db
+      .select()
+      .from(usersTable)
+      .where(and(...conditions))
+      .orderBy(usersTable.createdAt)
+      .limit(limit)
+      .offset(offset);
+
+    const studentsWithPrograms: UserWithPrograms[] = await Promise.all(
+      students.map(async (student) => {
+        const programs = await this.getUserPrograms(student.id);
+        return { ...student, programs };
+      })
+    );
+
+    return {
+      data: studentsWithPrograms,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit) || 1
+      }
+    };
+  }
+
+  async getStudentById(id: number): Promise<UserWithPrograms | undefined> {
+    const student = await db.query.users.findFirst({
+      where: (users, { eq, and }) => and(eq(users.id, id), eq(users.role, "USER")),
+    });
+    if (!student) return undefined;
+    
+    const programs = await this.getUserPrograms(id);
+    return { ...student, programs };
+  }
+
+  async createStudent(student: InsertUser, programCode?: string): Promise<User> {
+    const [newStudent] = await db.insert(usersTable).values({
+      ...student,
+      role: "USER",
+      status: student.status || "active"
+    }).returning();
+
+    if (programCode) {
+      const program = await this.getProgramByCode(programCode);
+      if (program) {
+        await this.assignUserProgram(newStudent.id, program.id);
+      }
+    }
+
+    return newStudent;
+  }
+
+  async updateStudent(id: number, student: Partial<InsertUser>, programCode?: string): Promise<User | undefined> {
+    const [updated] = await db
+      .update(usersTable)
+      .set(student)
+      .where(eq(usersTable.id, id))
+      .returning();
+
+    if (programCode) {
+      await this.clearUserPrograms(id);
+      const program = await this.getProgramByCode(programCode);
+      if (program) {
+        await this.assignUserProgram(id, program.id);
+      }
+    }
+
+    return updated;
+  }
+
+  async updateStudentStatus(id: number, status: string): Promise<User | undefined> {
+    const [updated] = await db
+      .update(usersTable)
+      .set({ status })
+      .where(eq(usersTable.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteStudent(id: number): Promise<boolean> {
+    await this.clearUserPrograms(id);
+    const result = await db
+      .delete(usersTable)
+      .where(eq(usersTable.id, id))
       .returning();
     return result.length > 0;
   }
