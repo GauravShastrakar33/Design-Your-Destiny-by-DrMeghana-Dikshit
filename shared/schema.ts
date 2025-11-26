@@ -238,3 +238,31 @@ export const insertWorkshopVideoSchema = createInsertSchema(workshopVideos).omit
 
 export type InsertWorkshopVideo = z.infer<typeof insertWorkshopVideoSchema>;
 export type WorkshopVideo = typeof workshopVideos.$inferSelect;
+
+export const programs = pgTable("programs", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 10 }).notNull().unique(),
+  name: varchar("name", { length: 150 }).notNull(),
+});
+
+export const insertProgramSchema = createInsertSchema(programs).omit({
+  id: true,
+});
+
+export type InsertProgram = z.infer<typeof insertProgramSchema>;
+export type Program = typeof programs.$inferSelect;
+
+export const userPrograms = pgTable("user_programs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  programId: integer("program_id").notNull().references(() => programs.id, { onDelete: 'cascade' }),
+});
+
+export const insertUserProgramSchema = createInsertSchema(userPrograms).omit({
+  id: true,
+});
+
+export type InsertUserProgram = z.infer<typeof insertUserProgramSchema>;
+export type UserProgram = typeof userPrograms.$inferSelect;
+
+export type UserWithPrograms = User & { programs: string[] };
