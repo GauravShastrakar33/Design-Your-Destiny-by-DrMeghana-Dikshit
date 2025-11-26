@@ -193,8 +193,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      if (user.role !== "USER") {
-        return res.status(403).json({ message: "Admins must use admin login" });
+      // Allow USER and COACH roles to login to user app
+      // SUPER_ADMIN should use admin login only
+      if (user.role === "SUPER_ADMIN") {
+        return res.status(403).json({ message: "Super Admin must use admin login" });
       }
 
       if (user.status !== "active") {
