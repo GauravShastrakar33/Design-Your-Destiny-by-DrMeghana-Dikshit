@@ -66,21 +66,19 @@ interface SubmenuItemProps {
 
 export function SubmenuItem({ href, label, isActive, onClick }: SubmenuItemProps) {
   return (
-    <a
-      href={href}
+    <button
       onClick={(e) => {
         e.preventDefault();
         onClick?.();
-        window.location.href = href;
       }}
       data-testid={`submenu-item-${label.toLowerCase().replace(/\s+/g, '-')}`}
-      className={`block px-4 py-2 text-sm transition-colors ${
+      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
         isActive 
           ? "bg-amber-50 text-amber-800 font-medium" 
           : "text-gray-700 hover:bg-gray-50"
       }`}
     >
       {label}
-    </a>
+    </button>
   );
 }

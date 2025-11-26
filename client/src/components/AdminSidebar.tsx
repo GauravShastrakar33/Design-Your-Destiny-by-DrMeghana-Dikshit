@@ -42,7 +42,7 @@ const menuItems: MenuItem[] = [
   },
   { 
     id: "banner",
-    path: "/admin/session-banner", 
+    path: "/admin/interventions", 
     label: "Session Banner", 
     icon: Image 
   },
