@@ -1,6 +1,8 @@
 import { type ReactNode } from "react";
 import { useLocation } from "wouter";
 import AdminSidebar from "@/components/AdminSidebar";
+import SecondarySidebar from "@/components/SecondarySidebar";
+import { AdminSidebarProvider } from "@/contexts/AdminSidebarContext";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -10,7 +12,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [location] = useLocation();
   const isLoginPage = location === "/admin/login";
 
-  // Don't show sidebar on login page
   if (isLoginPage) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -19,13 +20,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
-  // Show sidebar for all other admin pages
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <AdminSidebar />
-      <div className="flex-1 overflow-auto">
-        {children}
+    <AdminSidebarProvider>
+      <div className="min-h-screen bg-gray-50 flex">
+        <AdminSidebar />
+        <SecondarySidebar />
+        <div className="flex-1 overflow-auto">
+          {children}
+        </div>
       </div>
-    </div>
+    </AdminSidebarProvider>
   );
 }
