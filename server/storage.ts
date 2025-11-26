@@ -1219,6 +1219,95 @@ export class DbStorage implements IStorage {
       .returning();
     return result.length > 0;
   }
+
+  // ===== ADMIN MANAGEMENT =====
+
+  async getAdmins(params: { search?: string; page?: number; limit?: number }): Promise<{ data: User[]; pagination: { total: number; page: number; pages: number } }> {
+    const { search = "", page = 1, limit = 20 } = params;
+    const offset = (page - 1) * limit;
+
+    const conditions = [
+      or(
+        eq(usersTable.role, "SUPER_ADMIN"),
+        eq(usersTable.role, "COACH")
+      )!
+    ];
+    
+    if (search) {
+      conditions.push(
+        or(
+          ilike(usersTable.name, `%${search}%`),
+          ilike(usersTable.email, `%${search}%`)
+        )!
+      );
+    }
+
+    const totalResult = await db
+      .select({ count: count() })
+      .from(usersTable)
+      .where(and(...conditions));
+    const total = totalResult[0]?.count || 0;
+
+    const admins = await db
+      .select()
+      .from(usersTable)
+      .where(and(...conditions))
+      .orderBy(usersTable.createdAt)
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      data: admins,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit) || 1
+      }
+    };
+  }
+
+  async getAdminById(id: number): Promise<User | undefined> {
+    return await db.query.users.findFirst({
+      where: (users, { eq, and, or }) => and(
+        eq(users.id, id),
+        or(eq(users.role, "SUPER_ADMIN"), eq(users.role, "COACH"))
+      ),
+    });
+  }
+
+  async createAdmin(admin: InsertUser): Promise<User> {
+    const [newAdmin] = await db.insert(usersTable).values({
+      ...admin,
+      status: admin.status || "active"
+    }).returning();
+    return newAdmin;
+  }
+
+  async updateAdmin(id: number, admin: Partial<InsertUser>): Promise<User | undefined> {
+    const [updated] = await db
+      .update(usersTable)
+      .set(admin)
+      .where(eq(usersTable.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateAdminStatus(id: number, status: string): Promise<User | undefined> {
+    const [updated] = await db
+      .update(usersTable)
+      .set({ status })
+      .where(eq(usersTable.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteAdmin(id: number): Promise<boolean> {
+    const result = await db
+      .delete(usersTable)
+      .where(eq(usersTable.id, id))
+      .returning();
+    return result.length > 0;
+  }
 }
 
 export const storage = new DbStorage();
