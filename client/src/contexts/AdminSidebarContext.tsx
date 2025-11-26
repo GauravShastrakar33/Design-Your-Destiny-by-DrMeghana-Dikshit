@@ -68,9 +68,14 @@ export function AdminSidebarProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const matchedItem = menuItems.find(item => {
-      if (item.path && location === item.path) return true;
+      if (item.path) {
+        if (item.path === "/admin") {
+          return location === "/admin";
+        }
+        return location.startsWith(item.path);
+      }
       if (item.submenu) {
-        return item.submenu.some(sub => location === sub.path);
+        return item.submenu.some(sub => location.startsWith(sub.path));
       }
       return false;
     });

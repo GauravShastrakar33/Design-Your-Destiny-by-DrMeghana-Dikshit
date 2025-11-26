@@ -115,7 +115,7 @@ export default function SecondarySidebar() {
         <div className="space-y-1">
           {content.items.map((item, index) => {
             const ItemIcon = item.icon || List;
-            const isActive = location === item.path && index === 0;
+            const isActive = location === item.path || location.startsWith(item.path + "/");
             
             return (
               <Link key={`${item.path}-${index}`} href={item.path}>
