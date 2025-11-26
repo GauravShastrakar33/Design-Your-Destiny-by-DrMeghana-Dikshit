@@ -302,6 +302,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== STUDENT MANAGEMENT ROUTES =====
+
+  // Admin routes: Get all students with search, filter, pagination
+  app.get("/admin/v1/students", requireAdmin, async (req, res) => {
+    try {
+      const search = req.query.search as string | undefined;
+      const program = req.query.program as string | undefined;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      const result = await storage.getStudents({ search, programCode: program, page, limit });
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      res.status(500).json({ error: "Failed to fetch students" });
+    }
+  });
+
+  // Admin routes: Get single student
+  app.get("/admin/v1/students/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const student = await storage.getStudentById(id);
+      
+      if (!student) {
+        res.status(404).json({ error: "Student not found" });
+        return;
+      }
+      
+      res.json(student);
+    } catch (error) {
+      console.error("Error fetching student:", error);
+      res.status(500).json({ error: "Failed to fetch student" });
+    }
+  });
+
+  // Admin routes: Create student
+  app.post("/admin/v1/students", requireAdmin, async (req, res) => {
+    try {
+      const { name, email, phone, password, programCode } = req.body;
+
+      if (!name || !email) {
+        return res.status(400).json({ error: "Name and email are required" });
+      }
+
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+
+      const passwordHash = await bcrypt.hash(password || "User@123", 10);
+
+      const student = await storage.createStudent({
+        name,
+        email,
+        phone: phone || null,
+        passwordHash,
+        role: "USER",
+        status: "active"
+      }, programCode);
+
+      res.status(201).json({ message: "Student added", userId: student.id });
+    } catch (error) {
+      console.error("Error creating student:", error);
+      res.status(500).json({ error: "Failed to create student" });
+    }
+  });
+
+  // Admin routes: Update student
+  app.put("/admin/v1/students/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { name, email, phone, status, programCode } = req.body;
+
+      const student = await storage.updateStudent(id, { name, email, phone, status }, programCode);
+      
+      if (!student) {
+        res.status(404).json({ error: "Student not found" });
+        return;
+      }
+      
+      res.json({ message: "Student updated" });
+    } catch (error) {
+      console.error("Error updating student:", error);
+      res.status(500).json({ error: "Failed to update student" });
+    }
+  });
+
+  // Admin routes: Update student status (block/unblock)
+  app.patch("/admin/v1/students/:id/status", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+
+      if (!["active", "blocked"].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+
+      const student = await storage.updateStudentStatus(id, status);
+      
+      if (!student) {
+        res.status(404).json({ error: "Student not found" });
+        return;
+      }
+      
+      res.json({ message: "Status updated" });
+    } catch (error) {
+      console.error("Error updating student status:", error);
+      res.status(500).json({ error: "Failed to update status" });
+    }
+  });
+
+  // Admin routes: Delete student
+  app.delete("/admin/v1/students/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteStudent(id);
+      
+      if (!success) {
+        res.status(404).json({ error: "Student not found" });
+        return;
+      }
+      
+      res.json({ message: "Student deleted" });
+    } catch (error) {
+      console.error("Error deleting student:", error);
+      res.status(500).json({ error: "Failed to delete student" });
+    }
+  });
+
+  // Admin routes: Get all programs
+  app.get("/admin/v1/programs", requireAdmin, async (req, res) => {
+    try {
+      const programs = await storage.getAllPrograms();
+      res.json(programs);
+    } catch (error) {
+      console.error("Error fetching programs:", error);
+      res.status(500).json({ error: "Failed to fetch programs" });
+    }
+  });
+
   // ===== CATEGORY ROUTES =====
 
   // Public route: Get all categories
