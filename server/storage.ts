@@ -7,19 +7,11 @@ import {
   type ProcessSubfolder, type InsertProcessSubfolder,
   type Process, type InsertProcess,
   type SpiritualBreath, type InsertSpiritualBreath,
-  type Course, type InsertCourse,
-  type CourseSection, type InsertCourseSection,
-  type SectionVideo, type InsertSectionVideo,
-  type Masterclass, type InsertMasterclass,
-  type WorkshopVideo, type InsertWorkshopVideo,
   type Program, type InsertProgram,
   type UserProgram, type InsertUserProgram,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   processFolders as processFoldersTable, processSubfolders as processSubfoldersTable,
   processes as processesTable, spiritualBreaths as spiritualBreathsTable,
-  courses as coursesTable, courseSections as courseSectionsTable,
-  sectionVideos as sectionVideosTable, masterclasses as masterclassesTable,
-  workshopVideos as workshopVideosTable,
   programs as programsTable, userPrograms as userProgramsTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -74,36 +66,6 @@ export interface IStorage {
   createSpiritualBreath(breath: InsertSpiritualBreath): Promise<SpiritualBreath>;
   updateSpiritualBreath(id: number, breath: Partial<InsertSpiritualBreath>): Promise<SpiritualBreath | undefined>;
   deleteSpiritualBreath(id: number): Promise<boolean>;
-
-  getAllCourses(): Promise<Course[]>;
-  getCourse(id: number): Promise<Course | undefined>;
-  createCourse(course: InsertCourse): Promise<Course>;
-  updateCourse(id: number, course: Partial<InsertCourse>): Promise<Course | undefined>;
-  deleteCourse(id: number): Promise<boolean>;
-
-  getAllCourseSections(): Promise<CourseSection[]>;
-  getCourseSection(id: number): Promise<CourseSection | undefined>;
-  createCourseSection(section: InsertCourseSection): Promise<CourseSection>;
-  updateCourseSection(id: number, section: Partial<InsertCourseSection>): Promise<CourseSection | undefined>;
-  deleteCourseSection(id: number): Promise<boolean>;
-
-  getAllSectionVideos(): Promise<SectionVideo[]>;
-  getSectionVideo(id: number): Promise<SectionVideo | undefined>;
-  createSectionVideo(video: InsertSectionVideo): Promise<SectionVideo>;
-  updateSectionVideo(id: number, video: Partial<InsertSectionVideo>): Promise<SectionVideo | undefined>;
-  deleteSectionVideo(id: number): Promise<boolean>;
-
-  getAllMasterclasses(): Promise<Masterclass[]>;
-  getMasterclass(id: number): Promise<Masterclass | undefined>;
-  createMasterclass(masterclass: InsertMasterclass): Promise<Masterclass>;
-  updateMasterclass(id: number, masterclass: Partial<InsertMasterclass>): Promise<Masterclass | undefined>;
-  deleteMasterclass(id: number): Promise<boolean>;
-
-  getAllWorkshopVideos(): Promise<WorkshopVideo[]>;
-  getWorkshopVideo(id: number): Promise<WorkshopVideo | undefined>;
-  createWorkshopVideo(video: InsertWorkshopVideo): Promise<WorkshopVideo>;
-  updateWorkshopVideo(id: number, video: Partial<InsertWorkshopVideo>): Promise<WorkshopVideo | undefined>;
-  deleteWorkshopVideo(id: number): Promise<boolean>;
 
   getAllPrograms(): Promise<Program[]>;
   getProgramByCode(code: string): Promise<Program | undefined>;
@@ -886,176 +848,6 @@ export class DbStorage implements IStorage {
     const result = await db
       .delete(spiritualBreathsTable)
       .where(eq(spiritualBreathsTable.id, id))
-      .returning();
-    return result.length > 0;
-  }
-
-  async getAllCourses(): Promise<Course[]> {
-    return await db.query.courses.findMany({
-      orderBy: (courses, { asc }) => [asc(courses.displayOrder)],
-    });
-  }
-
-  async getCourse(id: number): Promise<Course | undefined> {
-    return await db.query.courses.findFirst({
-      where: (courses, { eq }) => eq(courses.id, id),
-    });
-  }
-
-  async createCourse(course: InsertCourse): Promise<Course> {
-    const [newCourse] = await db.insert(coursesTable).values(course).returning();
-    return newCourse;
-  }
-
-  async updateCourse(id: number, course: Partial<InsertCourse>): Promise<Course | undefined> {
-    const [updated] = await db
-      .update(coursesTable)
-      .set(course)
-      .where(eq(coursesTable.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deleteCourse(id: number): Promise<boolean> {
-    const result = await db
-      .delete(coursesTable)
-      .where(eq(coursesTable.id, id))
-      .returning();
-    return result.length > 0;
-  }
-
-  async getAllCourseSections(): Promise<CourseSection[]> {
-    return await db.query.courseSections.findMany({
-      orderBy: (sections, { asc }) => [asc(sections.displayOrder)],
-    });
-  }
-
-  async getCourseSection(id: number): Promise<CourseSection | undefined> {
-    return await db.query.courseSections.findFirst({
-      where: (sections, { eq }) => eq(sections.id, id),
-    });
-  }
-
-  async createCourseSection(section: InsertCourseSection): Promise<CourseSection> {
-    const [newSection] = await db.insert(courseSectionsTable).values(section).returning();
-    return newSection;
-  }
-
-  async updateCourseSection(id: number, section: Partial<InsertCourseSection>): Promise<CourseSection | undefined> {
-    const [updated] = await db
-      .update(courseSectionsTable)
-      .set(section)
-      .where(eq(courseSectionsTable.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deleteCourseSection(id: number): Promise<boolean> {
-    const result = await db
-      .delete(courseSectionsTable)
-      .where(eq(courseSectionsTable.id, id))
-      .returning();
-    return result.length > 0;
-  }
-
-  async getAllSectionVideos(): Promise<SectionVideo[]> {
-    return await db.query.sectionVideos.findMany({
-      orderBy: (videos, { asc }) => [asc(videos.displayOrder)],
-    });
-  }
-
-  async getSectionVideo(id: number): Promise<SectionVideo | undefined> {
-    return await db.query.sectionVideos.findFirst({
-      where: (videos, { eq }) => eq(videos.id, id),
-    });
-  }
-
-  async createSectionVideo(video: InsertSectionVideo): Promise<SectionVideo> {
-    const [newVideo] = await db.insert(sectionVideosTable).values(video).returning();
-    return newVideo;
-  }
-
-  async updateSectionVideo(id: number, video: Partial<InsertSectionVideo>): Promise<SectionVideo | undefined> {
-    const [updated] = await db
-      .update(sectionVideosTable)
-      .set(video)
-      .where(eq(sectionVideosTable.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deleteSectionVideo(id: number): Promise<boolean> {
-    const result = await db
-      .delete(sectionVideosTable)
-      .where(eq(sectionVideosTable.id, id))
-      .returning();
-    return result.length > 0;
-  }
-
-  async getAllMasterclasses(): Promise<Masterclass[]> {
-    return await db.query.masterclasses.findMany({
-      orderBy: (masterclasses, { asc }) => [asc(masterclasses.displayOrder)],
-    });
-  }
-
-  async getMasterclass(id: number): Promise<Masterclass | undefined> {
-    return await db.query.masterclasses.findFirst({
-      where: (masterclasses, { eq }) => eq(masterclasses.id, id),
-    });
-  }
-
-  async createMasterclass(masterclass: InsertMasterclass): Promise<Masterclass> {
-    const [newMasterclass] = await db.insert(masterclassesTable).values(masterclass).returning();
-    return newMasterclass;
-  }
-
-  async updateMasterclass(id: number, masterclass: Partial<InsertMasterclass>): Promise<Masterclass | undefined> {
-    const [updated] = await db
-      .update(masterclassesTable)
-      .set(masterclass)
-      .where(eq(masterclassesTable.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deleteMasterclass(id: number): Promise<boolean> {
-    const result = await db
-      .delete(masterclassesTable)
-      .where(eq(masterclassesTable.id, id))
-      .returning();
-    return result.length > 0;
-  }
-
-  async getAllWorkshopVideos(): Promise<WorkshopVideo[]> {
-    return await db.query.workshopVideos.findMany({
-      orderBy: (videos, { asc }) => [asc(videos.displayOrder)],
-    });
-  }
-
-  async getWorkshopVideo(id: number): Promise<WorkshopVideo | undefined> {
-    return await db.query.workshopVideos.findFirst({
-      where: (videos, { eq }) => eq(videos.id, id),
-    });
-  }
-
-  async createWorkshopVideo(video: InsertWorkshopVideo): Promise<WorkshopVideo> {
-    const [newVideo] = await db.insert(workshopVideosTable).values(video).returning();
-    return newVideo;
-  }
-
-  async updateWorkshopVideo(id: number, video: Partial<InsertWorkshopVideo>): Promise<WorkshopVideo | undefined> {
-    const [updated] = await db
-      .update(workshopVideosTable)
-      .set(video)
-      .where(eq(workshopVideosTable.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deleteWorkshopVideo(id: number): Promise<boolean> {
-    const result = await db
-      .delete(workshopVideosTable)
-      .where(eq(workshopVideosTable.id, id))
       .returning();
     return result.length > 0;
   }
