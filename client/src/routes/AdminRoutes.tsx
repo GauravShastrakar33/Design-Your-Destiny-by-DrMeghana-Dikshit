@@ -6,7 +6,6 @@ import AdminInterventionsPage from "@/pages/AdminInterventionsPage";
 import AdminProcessLibraryPage from "@/pages/AdminProcessLibraryPage";
 import AdminArticlesPage from "@/pages/AdminArticlesPage";
 import AdminMusicJournalingPage from "@/pages/AdminMusicJournalingPage";
-import AdminWorkshopsPage from "@/pages/AdminWorkshopsPage";
 import AdminProjectHeartPage from "@/pages/AdminProjectHeartPage";
 import AdminStudentsPage from "@/pages/AdminStudentsPage";
 import AdminsPage from "@/pages/AdminsPage";
@@ -22,7 +21,6 @@ export default function AdminRoutes() {
       <Route path="/admin/sessions" component={AdminSessionsPage} />
       <Route path="/admin/articles" component={AdminArticlesPage} />
       <Route path="/admin/music-journaling" component={AdminMusicJournalingPage} />
-      <Route path="/admin/workshops" component={AdminWorkshopsPage} />
       <Route path="/admin/project-heart" component={AdminProjectHeartPage} />
       <Route path="/admin/users/students" component={AdminStudentsPage} />
       <Route path="/admin/users/admins" component={AdminsPage} />

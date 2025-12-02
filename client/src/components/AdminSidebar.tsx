@@ -27,7 +27,7 @@ const menuItemsConfig: MenuItemConfig[] = [
   { id: "process", path: "/admin/process-library", label: "Process Library", icon: BookOpen },
   { id: "sessions", path: "/admin/sessions", label: "Community Practices", icon: UsersRound },
   { id: "articles", path: "/admin/articles", label: "Articles", icon: FileText },
-  { id: "workshops", path: "/admin/workshops", label: "Masterclasses", icon: GraduationCap },
+  { id: "masterclasses", label: "Masterclasses", icon: GraduationCap },
   { id: "project", path: "/admin/project-heart", label: "Project of Heart", icon: Heart },
 ];
 
