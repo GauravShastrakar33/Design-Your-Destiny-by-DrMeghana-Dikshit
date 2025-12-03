@@ -71,6 +71,22 @@ export function generateCourseThumnailKey(courseId: number, filename: string): s
   return `courses/${courseId}/thumbnail/${timestamp}-${safeName}`;
 }
 
+// Generate public URL from a key - useful for fixing legacy URLs stored in the database
+export function getPublicUrlFromKey(key: string | null | undefined): string | null {
+  if (!key) return null;
+  
+  if (r2Config.publicBaseUrl) {
+    return `${r2Config.publicBaseUrl}/${key}`;
+  }
+  
+  // Fallback to direct R2 URL (requires authentication)
+  if (r2Config.accountId && r2Config.bucketName) {
+    return `https://${r2Config.accountId}.r2.cloudflarestorage.com/${r2Config.bucketName}/${key}`;
+  }
+  
+  return null;
+}
+
 export function generateLessonFileKey(lessonId: number, fileType: string, filename: string): string {
   const timestamp = Date.now();
   const safeName = sanitizeFileName(filename);

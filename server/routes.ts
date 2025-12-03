@@ -16,7 +16,7 @@ import fs from "fs";
 import { uploadToS3, checkS3Credentials } from "./s3Upload";
 import { 
   checkR2Credentials, getSignedPutUrl, getSignedGetUrl, deleteR2Object,
-  generateCourseThumnailKey, generateLessonFileKey 
+  generateCourseThumnailKey, generateLessonFileKey, getPublicUrlFromKey 
 } from "./r2Upload";
 import { db } from "./db";
 import { eq, asc, and, ilike, or, sql } from "drizzle-orm";
@@ -1227,7 +1227,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
       
-      res.json(filteredCourses);
+      // Fix thumbnail URLs - regenerate from key if key exists
+      const coursesWithFixedUrls = filteredCourses.map(course => ({
+        ...course,
+        thumbnailUrl: course.thumbnailKey 
+          ? getPublicUrlFromKey(course.thumbnailKey) 
+          : course.thumbnailUrl
+      }));
+      
+      res.json(coursesWithFixedUrls);
     } catch (error) {
       console.error("Error fetching courses:", error);
       res.status(500).json({ error: "Failed to fetch courses" });
@@ -1245,6 +1253,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(404).json({ error: "Course not found" });
         return;
       }
+      
+      // Fix thumbnail URL - regenerate from key if key exists
+      const fixedCourse = {
+        ...course,
+        thumbnailUrl: course.thumbnailKey 
+          ? getPublicUrlFromKey(course.thumbnailKey) 
+          : course.thumbnailUrl
+      };
       
       // Get modules with their folders and lessons
       const modules = await db.select().from(cmsModules)
@@ -1270,7 +1286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return { ...module, folders, lessons: lessonsWithFiles };
       }));
       
-      res.json({ ...course, modules: modulesWithContent });
+      res.json({ ...fixedCourse, modules: modulesWithContent });
     } catch (error) {
       console.error("Error fetching course:", error);
       res.status(500).json({ error: "Failed to fetch course" });
