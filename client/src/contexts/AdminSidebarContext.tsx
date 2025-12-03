@@ -54,6 +54,11 @@ const menuItems: MenuItem[] = [
     label: "Masterclasses"
   },
   { 
+    id: "courses",
+    path: "/admin/courses", 
+    label: "Courses"
+  },
+  { 
     id: "project",
     path: "/admin/project-heart", 
     label: "Project of Heart"

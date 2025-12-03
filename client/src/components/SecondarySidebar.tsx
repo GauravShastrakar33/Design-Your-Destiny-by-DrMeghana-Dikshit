@@ -25,6 +25,7 @@ const menuIcons: Record<string, React.ElementType> = {
   sessions: UsersRound,
   articles: FileText,
   workshops: GraduationCap,
+  courses: GraduationCap,
   project: Heart,
 };
 
@@ -81,6 +82,13 @@ const menuContent: Record<string, { title: string; items: { path: string; label:
       { path: "/admin/workshops", label: "All Masterclasses", icon: List },
       { path: "/admin/workshops", label: "Schedule", icon: Clock },
       { path: "/admin/workshops", label: "Add New", icon: Plus },
+    ]
+  },
+  courses: {
+    title: "Courses",
+    items: [
+      { path: "/admin/courses", label: "All Courses", icon: List },
+      { path: "/admin/courses/create/step1", label: "Create Course", icon: Plus },
     ]
   },
   project: {
