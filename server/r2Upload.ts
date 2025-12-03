@@ -87,6 +87,44 @@ export function getPublicUrlFromKey(key: string | null | undefined): string | nu
   return null;
 }
 
+// Extract key from a private R2 URL - useful for fixing legacy data
+export function extractKeyFromPrivateUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  
+  // Match pattern: https://{accountId}.r2.cloudflarestorage.com/{bucketName}/{key}
+  const privateUrlPattern = /https:\/\/[a-f0-9]+\.r2\.cloudflarestorage\.com\/[^\/]+\/(.+)/;
+  const match = url.match(privateUrlPattern);
+  
+  if (match && match[1]) {
+    return match[1];
+  }
+  
+  return null;
+}
+
+// Fix a thumbnail URL - uses key if available, otherwise tries to extract from private URL
+export function fixThumbnailUrl(
+  thumbnailKey: string | null | undefined, 
+  thumbnailUrl: string | null | undefined
+): string | null {
+  // If we have a key, generate the correct public URL
+  if (thumbnailKey) {
+    return getPublicUrlFromKey(thumbnailKey);
+  }
+  
+  // If no key but URL exists, try to extract key from private URL and regenerate
+  if (thumbnailUrl) {
+    const extractedKey = extractKeyFromPrivateUrl(thumbnailUrl);
+    if (extractedKey) {
+      return getPublicUrlFromKey(extractedKey);
+    }
+    // If it's not a private R2 URL, return the original URL
+    return thumbnailUrl;
+  }
+  
+  return null;
+}
+
 export function generateLessonFileKey(lessonId: number, fileType: string, filename: string): string {
   const timestamp = Date.now();
   const safeName = sanitizeFileName(filename);

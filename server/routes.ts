@@ -16,7 +16,7 @@ import fs from "fs";
 import { uploadToS3, checkS3Credentials } from "./s3Upload";
 import { 
   checkR2Credentials, getSignedPutUrl, getSignedGetUrl, deleteR2Object,
-  generateCourseThumnailKey, generateLessonFileKey, getPublicUrlFromKey 
+  generateCourseThumnailKey, generateLessonFileKey, fixThumbnailUrl 
 } from "./r2Upload";
 import { db } from "./db";
 import { eq, asc, and, ilike, or, sql } from "drizzle-orm";
@@ -1206,8 +1206,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { search, programCode, sortOrder = "asc" } = req.query;
       
-      let query = db.select().from(cmsCourses);
-      
       const courses = await db.select().from(cmsCourses).orderBy(
         sortOrder === "desc" ? sql`position DESC` : asc(cmsCourses.position)
       );
@@ -1227,12 +1225,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
       
-      // Fix thumbnail URLs - regenerate from key if key exists
+      // Fix thumbnail URLs - regenerate from key or extract from private URL
       const coursesWithFixedUrls = filteredCourses.map(course => ({
         ...course,
-        thumbnailUrl: course.thumbnailKey 
-          ? getPublicUrlFromKey(course.thumbnailKey) 
-          : course.thumbnailUrl
+        thumbnailUrl: fixThumbnailUrl(course.thumbnailKey, course.thumbnailUrl)
       }));
       
       res.json(coursesWithFixedUrls);
@@ -1254,12 +1250,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
       
-      // Fix thumbnail URL - regenerate from key if key exists
+      // Fix thumbnail URL - regenerate from key or extract from private URL
       const fixedCourse = {
         ...course,
-        thumbnailUrl: course.thumbnailKey 
-          ? getPublicUrlFromKey(course.thumbnailKey) 
-          : course.thumbnailUrl
+        thumbnailUrl: fixThumbnailUrl(course.thumbnailKey, course.thumbnailUrl)
       };
       
       // Get modules with their folders and lessons
