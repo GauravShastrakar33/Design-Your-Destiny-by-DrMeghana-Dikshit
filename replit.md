@@ -25,11 +25,24 @@ Preferred communication style: Simple, everyday language.
 - **AI Video Integration**: Custom chat interface connecting to an external Gradio-hosted AI video generation service (`/process_query`) for personalized video responses. Stores conversation history and video URLs in localStorage.
 
 ### Feature Specifications
-- **Core Pages**: Home, Workshops, Profile, AI Insights, Project of Heart, Processes, Community Practices, Articles, Spiritual Breaths, and Admin Panel.
+- **Core Pages**: Home, Courses, Profile, AI Insights, Project of Heart, Processes, Community Practices, Articles, Spiritual Breaths, and Admin Panel.
 - **Content Management**: Full CRUD for Articles, Categories, Process Folders, Subfolders, Processes, and Spiritual Breaths via the Admin Panel.
 - **Practice Library**: Supports nested categories (Folders, Subfolders) for processes, and includes Spiritual Breaths. Media (video, audio) can be associated with practices.
 - **Article System**: Allows rich text editing, image uploads, category assignment, and publish/draft toggling.
 - **User Progression**: Tracks streaks, allows creation of custom playlists, and offers insights based on practice tracking.
+
+### CMS System (Course Management)
+- **Course Structure**: Hierarchical structure with courses → modules → folders → lessons → files
+- **Admin Pages**: 
+  - `/admin/courses` - Course list with search, filter, reordering, publish/unpublish
+  - `/admin/courses/create/step1` - Basic Info step (title, program code, description)
+  - `/admin/courses/create/step2/:id` - Thumbnail upload step
+  - `/admin/courses/create/step3/:id` - Curriculum builder (modules, folders, lessons)
+  - `/admin/courses/:id` - Course builder for editing existing courses
+  - `/admin/courses/:courseId/lessons/:lessonId` - Lesson detail with file uploads
+- **Database Tables**: cms_courses, cms_modules, cms_module_folders, cms_lessons, cms_lesson_files
+- **Media Storage**: Cloudflare R2 for video, audio, and PDF files with signed URLs
+- **API Prefix**: All CMS routes use `/api/admin/v1/cms/` prefix
 
 ### System Design Choices
 - **API Design**: RESTful APIs for data interaction, with distinct public and admin endpoints.
@@ -87,3 +100,4 @@ Preferred communication style: Simple, everyday language.
 
 ### Cloud Storage
 - **AWS S3**: For media file uploads (e.g., process media, spiritual breath media).
+- **Cloudflare R2**: For CMS course content storage (video, audio, PDF files). Uses signed URLs for secure upload/download.

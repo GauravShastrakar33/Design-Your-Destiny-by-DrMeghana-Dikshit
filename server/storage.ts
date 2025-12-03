@@ -91,11 +91,6 @@ export class MemStorage implements IStorage {
   private processSubfolders: Map<number, ProcessSubfolder>;
   private processes: Map<number, Process>;
   private spiritualBreaths: Map<number, SpiritualBreath>;
-  private courses: Map<number, Course>;
-  private courseSections: Map<number, CourseSection>;
-  private sectionVideos: Map<number, SectionVideo>;
-  private masterclasses: Map<number, Masterclass>;
-  private workshopVideos: Map<number, WorkshopVideo>;
   private nextSessionId: number;
   private nextCategoryId: number;
   private nextArticleId: number;
@@ -103,11 +98,6 @@ export class MemStorage implements IStorage {
   private nextProcessSubfolderId: number;
   private nextProcessId: number;
   private nextSpiritualBreathId: number;
-  private nextCourseId: number;
-  private nextCourseSectionId: number;
-  private nextSectionVideoId: number;
-  private nextMasterclassId: number;
-  private nextWorkshopVideoId: number;
 
   constructor() {
     this.users = new Map();
@@ -118,11 +108,6 @@ export class MemStorage implements IStorage {
     this.processSubfolders = new Map();
     this.processes = new Map();
     this.spiritualBreaths = new Map();
-    this.courses = new Map();
-    this.courseSections = new Map();
-    this.sectionVideos = new Map();
-    this.masterclasses = new Map();
-    this.workshopVideos = new Map();
     this.nextSessionId = 1;
     this.nextCategoryId = 1;
     this.nextArticleId = 1;
@@ -130,11 +115,6 @@ export class MemStorage implements IStorage {
     this.nextProcessSubfolderId = 1;
     this.nextProcessId = 1;
     this.nextSpiritualBreathId = 1;
-    this.nextCourseId = 1;
-    this.nextCourseSectionId = 1;
-    this.nextSectionVideoId = 1;
-    this.nextMasterclassId = 1;
-    this.nextWorkshopVideoId = 1;
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -389,146 +369,6 @@ export class MemStorage implements IStorage {
 
   async deleteSpiritualBreath(id: number): Promise<boolean> {
     return this.spiritualBreaths.delete(id);
-  }
-
-  async getAllCourses(): Promise<Course[]> {
-    return Array.from(this.courses.values());
-  }
-
-  async getCourse(id: number): Promise<Course | undefined> {
-    return this.courses.get(id);
-  }
-
-  async createCourse(course: InsertCourse): Promise<Course> {
-    const id = this.nextCourseId++;
-    const newCourse: Course = { ...course, id, displayOrder: course.displayOrder ?? 0 };
-    this.courses.set(id, newCourse);
-    return newCourse;
-  }
-
-  async updateCourse(id: number, course: Partial<InsertCourse>): Promise<Course | undefined> {
-    const existing = this.courses.get(id);
-    if (!existing) return undefined;
-    const updated: Course = { ...existing, ...course };
-    this.courses.set(id, updated);
-    return updated;
-  }
-
-  async deleteCourse(id: number): Promise<boolean> {
-    return this.courses.delete(id);
-  }
-
-  async getAllCourseSections(): Promise<CourseSection[]> {
-    return Array.from(this.courseSections.values());
-  }
-
-  async getCourseSection(id: number): Promise<CourseSection | undefined> {
-    return this.courseSections.get(id);
-  }
-
-  async createCourseSection(section: InsertCourseSection): Promise<CourseSection> {
-    const id = this.nextCourseSectionId++;
-    const newSection: CourseSection = { ...section, id, displayOrder: section.displayOrder ?? 0 };
-    this.courseSections.set(id, newSection);
-    return newSection;
-  }
-
-  async updateCourseSection(id: number, section: Partial<InsertCourseSection>): Promise<CourseSection | undefined> {
-    const existing = this.courseSections.get(id);
-    if (!existing) return undefined;
-    const updated: CourseSection = { ...existing, ...section };
-    this.courseSections.set(id, updated);
-    return updated;
-  }
-
-  async deleteCourseSection(id: number): Promise<boolean> {
-    return this.courseSections.delete(id);
-  }
-
-  async getAllSectionVideos(): Promise<SectionVideo[]> {
-    return Array.from(this.sectionVideos.values());
-  }
-
-  async getSectionVideo(id: number): Promise<SectionVideo | undefined> {
-    return this.sectionVideos.get(id);
-  }
-
-  async createSectionVideo(video: InsertSectionVideo): Promise<SectionVideo> {
-    const id = this.nextSectionVideoId++;
-    const newVideo: SectionVideo = { ...video, id, displayOrder: video.displayOrder ?? 0 };
-    this.sectionVideos.set(id, newVideo);
-    return newVideo;
-  }
-
-  async updateSectionVideo(id: number, video: Partial<InsertSectionVideo>): Promise<SectionVideo | undefined> {
-    const existing = this.sectionVideos.get(id);
-    if (!existing) return undefined;
-    const updated: SectionVideo = { ...existing, ...video };
-    this.sectionVideos.set(id, updated);
-    return updated;
-  }
-
-  async deleteSectionVideo(id: number): Promise<boolean> {
-    return this.sectionVideos.delete(id);
-  }
-
-  async getAllMasterclasses(): Promise<Masterclass[]> {
-    return Array.from(this.masterclasses.values());
-  }
-
-  async getMasterclass(id: number): Promise<Masterclass | undefined> {
-    return this.masterclasses.get(id);
-  }
-
-  async createMasterclass(masterclass: InsertMasterclass): Promise<Masterclass> {
-    const id = this.nextMasterclassId++;
-    const newMasterclass: Masterclass = { ...masterclass, id, isLive: masterclass.isLive ?? false, displayOrder: masterclass.displayOrder ?? 0 };
-    this.masterclasses.set(id, newMasterclass);
-    return newMasterclass;
-  }
-
-  async updateMasterclass(id: number, masterclass: Partial<InsertMasterclass>): Promise<Masterclass | undefined> {
-    const existing = this.masterclasses.get(id);
-    if (!existing) return undefined;
-    const updated: Masterclass = { ...existing, ...masterclass };
-    this.masterclasses.set(id, updated);
-    return updated;
-  }
-
-  async deleteMasterclass(id: number): Promise<boolean> {
-    return this.masterclasses.delete(id);
-  }
-
-  async getAllWorkshopVideos(): Promise<WorkshopVideo[]> {
-    return Array.from(this.workshopVideos.values());
-  }
-
-  async getWorkshopVideo(id: number): Promise<WorkshopVideo | undefined> {
-    return this.workshopVideos.get(id);
-  }
-
-  async createWorkshopVideo(video: InsertWorkshopVideo): Promise<WorkshopVideo> {
-    const id = this.nextWorkshopVideoId++;
-    const newVideo: WorkshopVideo = { 
-      ...video, 
-      id, 
-      author: video.author ?? "Dr. Meghana Dikshit",
-      displayOrder: video.displayOrder ?? 0 
-    };
-    this.workshopVideos.set(id, newVideo);
-    return newVideo;
-  }
-
-  async updateWorkshopVideo(id: number, video: Partial<InsertWorkshopVideo>): Promise<WorkshopVideo | undefined> {
-    const existing = this.workshopVideos.get(id);
-    if (!existing) return undefined;
-    const updated: WorkshopVideo = { ...existing, ...video };
-    this.workshopVideos.set(id, updated);
-    return updated;
-  }
-
-  async deleteWorkshopVideo(id: number): Promise<boolean> {
-    return this.workshopVideos.delete(id);
   }
 
   async getAllPrograms(): Promise<Program[]> {

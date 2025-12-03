@@ -9,6 +9,12 @@ import AdminMusicJournalingPage from "@/pages/AdminMusicJournalingPage";
 import AdminProjectHeartPage from "@/pages/AdminProjectHeartPage";
 import AdminStudentsPage from "@/pages/AdminStudentsPage";
 import AdminsPage from "@/pages/AdminsPage";
+import AdminCoursesPage from "@/pages/AdminCoursesPage";
+import CourseCreateStep1 from "@/pages/CourseCreateStep1";
+import CourseCreateStep2 from "@/pages/CourseCreateStep2";
+import CourseCreateStep3 from "@/pages/CourseCreateStep3";
+import CourseBuilderPage from "@/pages/CourseBuilderPage";
+import LessonDetailPage from "@/pages/LessonDetailPage";
 import NotFound from "@/pages/not-found";
 
 export default function AdminRoutes() {
@@ -24,6 +30,12 @@ export default function AdminRoutes() {
       <Route path="/admin/project-heart" component={AdminProjectHeartPage} />
       <Route path="/admin/users/students" component={AdminStudentsPage} />
       <Route path="/admin/users/admins" component={AdminsPage} />
+      <Route path="/admin/courses" component={AdminCoursesPage} />
+      <Route path="/admin/courses/create/step1" component={CourseCreateStep1} />
+      <Route path="/admin/courses/create/step2/:id" component={CourseCreateStep2} />
+      <Route path="/admin/courses/create/step3/:id" component={CourseCreateStep3} />
+      <Route path="/admin/courses/:id" component={CourseBuilderPage} />
+      <Route path="/admin/courses/:courseId/lessons/:lessonId" component={LessonDetailPage} />
       <Route component={NotFound} />
     </Switch>
   );

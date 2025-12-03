@@ -4,13 +4,22 @@ import { storage } from "./storage";
 import { 
   insertCommunitySessionSchema, insertCategorySchema, insertArticleSchema,
   insertProcessFolderSchema, insertProcessSubfolderSchema, insertProcessSchema,
-  insertSpiritualBreathSchema
+  insertSpiritualBreathSchema,
+  insertCmsCourseSchema, insertCmsModuleSchema, insertCmsModuleFolderSchema,
+  insertCmsLessonSchema, insertCmsLessonFileSchema,
+  cmsCourses, cmsModules, cmsModuleFolders, cmsLessons, cmsLessonFiles
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { uploadToS3, checkS3Credentials } from "./s3Upload";
+import { 
+  checkR2Credentials, getSignedPutUrl, getSignedGetUrl, deleteR2Object,
+  generateCourseThumnailKey, generateLessonFileKey 
+} from "./r2Upload";
+import { db } from "./db";
+import { eq, asc, and, ilike, or, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { authenticateJWT, type AuthPayload } from "./middleware/auth";
@@ -1183,6 +1192,696 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading spiritual breath media:", error);
       res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  // ============================================
+  // CMS ROUTES - Courses, Modules, Folders, Lessons, Files
+  // ============================================
+
+  // --- CMS COURSES ---
+  
+  // Get all courses
+  app.get("/api/admin/v1/cms/courses", requireAdmin, async (req, res) => {
+    try {
+      const { search, programCode, sortOrder = "asc" } = req.query;
+      
+      let query = db.select().from(cmsCourses);
+      
+      const courses = await db.select().from(cmsCourses).orderBy(
+        sortOrder === "desc" ? sql`position DESC` : asc(cmsCourses.position)
+      );
+      
+      let filteredCourses = courses;
+      
+      if (search) {
+        const searchLower = String(search).toLowerCase();
+        filteredCourses = filteredCourses.filter(c => 
+          c.title.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      if (programCode) {
+        filteredCourses = filteredCourses.filter(c => 
+          c.programCode === String(programCode)
+        );
+      }
+      
+      res.json(filteredCourses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      res.status(500).json({ error: "Failed to fetch courses" });
+    }
+  });
+
+  // Get single course with full details
+  app.get("/api/admin/v1/cms/courses/:id", requireAdmin, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      
+      const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
+      
+      if (!course) {
+        res.status(404).json({ error: "Course not found" });
+        return;
+      }
+      
+      // Get modules with their folders and lessons
+      const modules = await db.select().from(cmsModules)
+        .where(eq(cmsModules.courseId, courseId))
+        .orderBy(asc(cmsModules.position));
+      
+      const modulesWithContent = await Promise.all(modules.map(async (module) => {
+        const folders = await db.select().from(cmsModuleFolders)
+          .where(eq(cmsModuleFolders.moduleId, module.id))
+          .orderBy(asc(cmsModuleFolders.position));
+        
+        const lessons = await db.select().from(cmsLessons)
+          .where(eq(cmsLessons.moduleId, module.id))
+          .orderBy(asc(cmsLessons.position));
+        
+        const lessonsWithFiles = await Promise.all(lessons.map(async (lesson) => {
+          const files = await db.select().from(cmsLessonFiles)
+            .where(eq(cmsLessonFiles.lessonId, lesson.id))
+            .orderBy(asc(cmsLessonFiles.position));
+          return { ...lesson, files };
+        }));
+        
+        return { ...module, folders, lessons: lessonsWithFiles };
+      }));
+      
+      res.json({ ...course, modules: modulesWithContent });
+    } catch (error) {
+      console.error("Error fetching course:", error);
+      res.status(500).json({ error: "Failed to fetch course" });
+    }
+  });
+
+  // Create course
+  app.post("/api/admin/v1/cms/courses", requireAdmin, async (req, res) => {
+    try {
+      const parsed = insertCmsCourseSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid course data", details: parsed.error.errors });
+        return;
+      }
+      
+      // Get max position
+      const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(position), 0)` }).from(cmsCourses);
+      const position = (maxPos?.max || 0) + 1;
+      
+      const adminId = req.user?.sub || null;
+      
+      const [course] = await db.insert(cmsCourses).values({
+        ...parsed.data,
+        position,
+        createdByAdminId: adminId,
+      }).returning();
+      
+      res.status(201).json(course);
+    } catch (error) {
+      console.error("Error creating course:", error);
+      res.status(500).json({ error: "Failed to create course" });
+    }
+  });
+
+  // Update course
+  app.put("/api/admin/v1/cms/courses/:id", requireAdmin, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      
+      const [existing] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
+      if (!existing) {
+        res.status(404).json({ error: "Course not found" });
+        return;
+      }
+      
+      const [updated] = await db.update(cmsCourses)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(eq(cmsCourses.id, courseId))
+        .returning();
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating course:", error);
+      res.status(500).json({ error: "Failed to update course" });
+    }
+  });
+
+  // Delete course
+  app.delete("/api/admin/v1/cms/courses/:id", requireAdmin, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      
+      await db.delete(cmsCourses).where(eq(cmsCourses.id, courseId));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting course:", error);
+      res.status(500).json({ error: "Failed to delete course" });
+    }
+  });
+
+  // Toggle course publish status
+  app.patch("/api/admin/v1/cms/courses/:id/publish", requireAdmin, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      const { isPublished } = req.body;
+      
+      if (typeof isPublished !== "boolean") {
+        res.status(400).json({ error: "isPublished must be a boolean" });
+        return;
+      }
+      
+      const [updated] = await db.update(cmsCourses)
+        .set({ isPublished, updatedAt: new Date() })
+        .where(eq(cmsCourses.id, courseId))
+        .returning();
+      
+      if (!updated) {
+        res.status(404).json({ error: "Course not found" });
+        return;
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error toggling course publish:", error);
+      res.status(500).json({ error: "Failed to toggle course publish" });
+    }
+  });
+
+  // Reorder courses
+  app.patch("/api/admin/v1/cms/courses/reorder", requireAdmin, async (req, res) => {
+    try {
+      const { items } = req.body as { items: { id: number; position: number }[] };
+      
+      if (!Array.isArray(items)) {
+        res.status(400).json({ error: "Invalid reorder data" });
+        return;
+      }
+      
+      await Promise.all(items.map(item => 
+        db.update(cmsCourses)
+          .set({ position: item.position, updatedAt: new Date() })
+          .where(eq(cmsCourses.id, item.id))
+      ));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reordering courses:", error);
+      res.status(500).json({ error: "Failed to reorder courses" });
+    }
+  });
+
+  // --- CMS MODULES ---
+  
+  // Get modules for a course
+  app.get("/api/admin/v1/cms/modules", requireAdmin, async (req, res) => {
+    try {
+      const courseId = parseInt(req.query.courseId as string);
+      
+      if (!courseId) {
+        res.status(400).json({ error: "courseId is required" });
+        return;
+      }
+      
+      const modules = await db.select().from(cmsModules)
+        .where(eq(cmsModules.courseId, courseId))
+        .orderBy(asc(cmsModules.position));
+      
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching modules:", error);
+      res.status(500).json({ error: "Failed to fetch modules" });
+    }
+  });
+
+  // Create module
+  app.post("/api/admin/v1/cms/modules", requireAdmin, async (req, res) => {
+    try {
+      const parsed = insertCmsModuleSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid module data", details: parsed.error.errors });
+        return;
+      }
+      
+      // Get max position for this course
+      const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(position), 0)` })
+        .from(cmsModules)
+        .where(eq(cmsModules.courseId, parsed.data.courseId));
+      
+      const position = (maxPos?.max || 0) + 1;
+      
+      const [module] = await db.insert(cmsModules).values({
+        ...parsed.data,
+        position,
+      }).returning();
+      
+      res.status(201).json(module);
+    } catch (error) {
+      console.error("Error creating module:", error);
+      res.status(500).json({ error: "Failed to create module" });
+    }
+  });
+
+  // Update module
+  app.put("/api/admin/v1/cms/modules/:id", requireAdmin, async (req, res) => {
+    try {
+      const moduleId = parseInt(req.params.id);
+      
+      const [updated] = await db.update(cmsModules)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(eq(cmsModules.id, moduleId))
+        .returning();
+      
+      if (!updated) {
+        res.status(404).json({ error: "Module not found" });
+        return;
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating module:", error);
+      res.status(500).json({ error: "Failed to update module" });
+    }
+  });
+
+  // Delete module
+  app.delete("/api/admin/v1/cms/modules/:id", requireAdmin, async (req, res) => {
+    try {
+      const moduleId = parseInt(req.params.id);
+      
+      await db.delete(cmsModules).where(eq(cmsModules.id, moduleId));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting module:", error);
+      res.status(500).json({ error: "Failed to delete module" });
+    }
+  });
+
+  // Reorder modules
+  app.patch("/api/admin/v1/cms/modules/reorder", requireAdmin, async (req, res) => {
+    try {
+      const { items } = req.body as { items: { id: number; position: number }[] };
+      
+      await Promise.all(items.map(item => 
+        db.update(cmsModules)
+          .set({ position: item.position, updatedAt: new Date() })
+          .where(eq(cmsModules.id, item.id))
+      ));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reordering modules:", error);
+      res.status(500).json({ error: "Failed to reorder modules" });
+    }
+  });
+
+  // --- CMS MODULE FOLDERS ---
+  
+  // Get folders for a module
+  app.get("/api/admin/v1/cms/folders", requireAdmin, async (req, res) => {
+    try {
+      const moduleId = parseInt(req.query.moduleId as string);
+      
+      if (!moduleId) {
+        res.status(400).json({ error: "moduleId is required" });
+        return;
+      }
+      
+      const folders = await db.select().from(cmsModuleFolders)
+        .where(eq(cmsModuleFolders.moduleId, moduleId))
+        .orderBy(asc(cmsModuleFolders.position));
+      
+      res.json(folders);
+    } catch (error) {
+      console.error("Error fetching folders:", error);
+      res.status(500).json({ error: "Failed to fetch folders" });
+    }
+  });
+
+  // Create folder
+  app.post("/api/admin/v1/cms/folders", requireAdmin, async (req, res) => {
+    try {
+      const parsed = insertCmsModuleFolderSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid folder data", details: parsed.error.errors });
+        return;
+      }
+      
+      const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(position), 0)` })
+        .from(cmsModuleFolders)
+        .where(eq(cmsModuleFolders.moduleId, parsed.data.moduleId));
+      
+      const position = (maxPos?.max || 0) + 1;
+      
+      const [folder] = await db.insert(cmsModuleFolders).values({
+        ...parsed.data,
+        position,
+      }).returning();
+      
+      res.status(201).json(folder);
+    } catch (error) {
+      console.error("Error creating folder:", error);
+      res.status(500).json({ error: "Failed to create folder" });
+    }
+  });
+
+  // Update folder
+  app.put("/api/admin/v1/cms/folders/:id", requireAdmin, async (req, res) => {
+    try {
+      const folderId = parseInt(req.params.id);
+      
+      const [updated] = await db.update(cmsModuleFolders)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(eq(cmsModuleFolders.id, folderId))
+        .returning();
+      
+      if (!updated) {
+        res.status(404).json({ error: "Folder not found" });
+        return;
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating folder:", error);
+      res.status(500).json({ error: "Failed to update folder" });
+    }
+  });
+
+  // Delete folder
+  app.delete("/api/admin/v1/cms/folders/:id", requireAdmin, async (req, res) => {
+    try {
+      const folderId = parseInt(req.params.id);
+      
+      await db.delete(cmsModuleFolders).where(eq(cmsModuleFolders.id, folderId));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting folder:", error);
+      res.status(500).json({ error: "Failed to delete folder" });
+    }
+  });
+
+  // Reorder folders
+  app.patch("/api/admin/v1/cms/folders/reorder", requireAdmin, async (req, res) => {
+    try {
+      const { items } = req.body as { items: { id: number; position: number }[] };
+      
+      await Promise.all(items.map(item => 
+        db.update(cmsModuleFolders)
+          .set({ position: item.position, updatedAt: new Date() })
+          .where(eq(cmsModuleFolders.id, item.id))
+      ));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reordering folders:", error);
+      res.status(500).json({ error: "Failed to reorder folders" });
+    }
+  });
+
+  // --- CMS LESSONS ---
+  
+  // Get lessons for a module (optionally filtered by folder)
+  app.get("/api/admin/v1/cms/lessons", requireAdmin, async (req, res) => {
+    try {
+      const moduleId = parseInt(req.query.moduleId as string);
+      const folderId = req.query.folderId ? parseInt(req.query.folderId as string) : null;
+      
+      if (!moduleId) {
+        res.status(400).json({ error: "moduleId is required" });
+        return;
+      }
+      
+      let query = db.select().from(cmsLessons).where(eq(cmsLessons.moduleId, moduleId));
+      
+      const lessons = await query.orderBy(asc(cmsLessons.position));
+      
+      const filteredLessons = folderId !== null 
+        ? lessons.filter(l => l.folderId === folderId)
+        : lessons;
+      
+      res.json(filteredLessons);
+    } catch (error) {
+      console.error("Error fetching lessons:", error);
+      res.status(500).json({ error: "Failed to fetch lessons" });
+    }
+  });
+
+  // Get single lesson by ID with files
+  app.get("/api/admin/v1/cms/lessons/:id", requireAdmin, async (req, res) => {
+    try {
+      const lessonId = parseInt(req.params.id);
+      
+      const [lesson] = await db.select().from(cmsLessons).where(eq(cmsLessons.id, lessonId));
+      
+      if (!lesson) {
+        res.status(404).json({ error: "Lesson not found" });
+        return;
+      }
+      
+      const files = await db.select().from(cmsLessonFiles)
+        .where(eq(cmsLessonFiles.lessonId, lessonId))
+        .orderBy(asc(cmsLessonFiles.position));
+      
+      res.json({ ...lesson, files });
+    } catch (error) {
+      console.error("Error fetching lesson:", error);
+      res.status(500).json({ error: "Failed to fetch lesson" });
+    }
+  });
+
+  // Create lesson
+  app.post("/api/admin/v1/cms/lessons", requireAdmin, async (req, res) => {
+    try {
+      const parsed = insertCmsLessonSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid lesson data", details: parsed.error.errors });
+        return;
+      }
+      
+      const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(position), 0)` })
+        .from(cmsLessons)
+        .where(eq(cmsLessons.moduleId, parsed.data.moduleId));
+      
+      const position = (maxPos?.max || 0) + 1;
+      
+      const [lesson] = await db.insert(cmsLessons).values({
+        ...parsed.data,
+        position,
+      }).returning();
+      
+      res.status(201).json(lesson);
+    } catch (error) {
+      console.error("Error creating lesson:", error);
+      res.status(500).json({ error: "Failed to create lesson" });
+    }
+  });
+
+  // Update lesson
+  app.put("/api/admin/v1/cms/lessons/:id", requireAdmin, async (req, res) => {
+    try {
+      const lessonId = parseInt(req.params.id);
+      
+      const [updated] = await db.update(cmsLessons)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(eq(cmsLessons.id, lessonId))
+        .returning();
+      
+      if (!updated) {
+        res.status(404).json({ error: "Lesson not found" });
+        return;
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating lesson:", error);
+      res.status(500).json({ error: "Failed to update lesson" });
+    }
+  });
+
+  // Delete lesson
+  app.delete("/api/admin/v1/cms/lessons/:id", requireAdmin, async (req, res) => {
+    try {
+      const lessonId = parseInt(req.params.id);
+      
+      // First delete associated files from R2
+      const files = await db.select().from(cmsLessonFiles).where(eq(cmsLessonFiles.lessonId, lessonId));
+      for (const file of files) {
+        await deleteR2Object(file.r2Key);
+      }
+      
+      await db.delete(cmsLessons).where(eq(cmsLessons.id, lessonId));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting lesson:", error);
+      res.status(500).json({ error: "Failed to delete lesson" });
+    }
+  });
+
+  // Reorder lessons
+  app.patch("/api/admin/v1/cms/lessons/reorder", requireAdmin, async (req, res) => {
+    try {
+      const { items } = req.body as { items: { id: number; position: number }[] };
+      
+      await Promise.all(items.map(item => 
+        db.update(cmsLessons)
+          .set({ position: item.position, updatedAt: new Date() })
+          .where(eq(cmsLessons.id, item.id))
+      ));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reordering lessons:", error);
+      res.status(500).json({ error: "Failed to reorder lessons" });
+    }
+  });
+
+  // --- CMS FILES ---
+  
+  // Get files for a lesson
+  app.get("/api/admin/v1/cms/files", requireAdmin, async (req, res) => {
+    try {
+      const lessonId = parseInt(req.query.lessonId as string);
+      
+      if (!lessonId) {
+        res.status(400).json({ error: "lessonId is required" });
+        return;
+      }
+      
+      const files = await db.select().from(cmsLessonFiles)
+        .where(eq(cmsLessonFiles.lessonId, lessonId))
+        .orderBy(asc(cmsLessonFiles.position));
+      
+      res.json(files);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+      res.status(500).json({ error: "Failed to fetch files" });
+    }
+  });
+
+  // Get signed PUT URL for file upload
+  app.post("/api/admin/v1/cms/files/get-upload-url", requireAdmin, async (req, res) => {
+    try {
+      const { filename, contentType, lessonId, fileType, courseId, uploadType } = req.body;
+      
+      if (!filename || !contentType) {
+        res.status(400).json({ error: "filename and contentType are required" });
+        return;
+      }
+      
+      const credCheck = checkR2Credentials();
+      if (!credCheck.valid) {
+        res.status(503).json({ 
+          error: "R2 credentials not configured", 
+          details: credCheck.error,
+          message: "Please configure R2 credentials to upload files"
+        });
+        return;
+      }
+      
+      let key: string;
+      
+      if (uploadType === "thumbnail" && courseId) {
+        key = generateCourseThumnailKey(courseId, filename);
+      } else if (lessonId && fileType) {
+        key = generateLessonFileKey(lessonId, fileType, filename);
+      } else {
+        res.status(400).json({ error: "Invalid upload parameters" });
+        return;
+      }
+      
+      const result = await getSignedPutUrl(key, contentType);
+      
+      if (!result.success) {
+        res.status(500).json({ error: result.error });
+        return;
+      }
+      
+      res.json({
+        uploadUrl: result.uploadUrl,
+        key: result.key,
+        publicUrl: result.publicUrl,
+      });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ error: "Failed to get upload URL" });
+    }
+  });
+
+  // Confirm file upload and save metadata
+  app.post("/api/admin/v1/cms/files/confirm", requireAdmin, async (req, res) => {
+    try {
+      const parsed = insertCmsLessonFileSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid file data", details: parsed.error.errors });
+        return;
+      }
+      
+      const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(position), 0)` })
+        .from(cmsLessonFiles)
+        .where(eq(cmsLessonFiles.lessonId, parsed.data.lessonId));
+      
+      const position = (maxPos?.max || 0) + 1;
+      
+      const [file] = await db.insert(cmsLessonFiles).values({
+        ...parsed.data,
+        position,
+      }).returning();
+      
+      res.status(201).json(file);
+    } catch (error) {
+      console.error("Error confirming file upload:", error);
+      res.status(500).json({ error: "Failed to confirm file upload" });
+    }
+  });
+
+  // Delete file
+  app.delete("/api/admin/v1/cms/files/:id", requireAdmin, async (req, res) => {
+    try {
+      const fileId = parseInt(req.params.id);
+      
+      const [file] = await db.select().from(cmsLessonFiles).where(eq(cmsLessonFiles.id, fileId));
+      
+      if (file) {
+        await deleteR2Object(file.r2Key);
+      }
+      
+      await db.delete(cmsLessonFiles).where(eq(cmsLessonFiles.id, fileId));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      res.status(500).json({ error: "Failed to delete file" });
+    }
+  });
+
+  // Get signed GET URL for protected file access
+  app.get("/api/admin/v1/cms/files/:id/signed-url", requireAdmin, async (req, res) => {
+    try {
+      const fileId = parseInt(req.params.id);
+      
+      const [file] = await db.select().from(cmsLessonFiles).where(eq(cmsLessonFiles.id, fileId));
+      
+      if (!file) {
+        res.status(404).json({ error: "File not found" });
+        return;
+      }
+      
+      const result = await getSignedGetUrl(file.r2Key);
+      
+      if (!result.success) {
+        res.status(500).json({ error: result.error });
+        return;
+      }
+      
+      res.json({ url: result.url });
+    } catch (error) {
+      console.error("Error getting signed URL:", error);
+      res.status(500).json({ error: "Failed to get signed URL" });
     }
   });
 

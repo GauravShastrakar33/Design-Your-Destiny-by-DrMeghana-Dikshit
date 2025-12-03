@@ -176,3 +176,106 @@ export type InsertUserProgram = z.infer<typeof insertUserProgramSchema>;
 export type UserProgram = typeof userPrograms.$inferSelect;
 
 export type UserWithPrograms = User & { programs: string[] };
+
+// CMS Tables
+export const cmsCourses = pgTable("cms_courses", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  programCode: text("program_code").notNull(),
+  description: text("description"),
+  thumbnailKey: text("thumbnail_key"),
+  thumbnailUrl: text("thumbnail_url"),
+  isPublished: boolean("is_published").notNull().default(false),
+  createdByAdminId: integer("created_by_admin_id").references(() => users.id),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertCmsCourseSchema = createInsertSchema(cmsCourses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCmsCourse = z.infer<typeof insertCmsCourseSchema>;
+export type CmsCourse = typeof cmsCourses.$inferSelect;
+
+export const cmsModules = pgTable("cms_modules", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").notNull().references(() => cmsCourses.id, { onDelete: 'cascade' }),
+  title: text("title").notNull(),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertCmsModuleSchema = createInsertSchema(cmsModules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCmsModule = z.infer<typeof insertCmsModuleSchema>;
+export type CmsModule = typeof cmsModules.$inferSelect;
+
+export const cmsModuleFolders = pgTable("cms_module_folders", {
+  id: serial("id").primaryKey(),
+  moduleId: integer("module_id").notNull().references(() => cmsModules.id, { onDelete: 'cascade' }),
+  title: text("title").notNull(),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertCmsModuleFolderSchema = createInsertSchema(cmsModuleFolders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCmsModuleFolder = z.infer<typeof insertCmsModuleFolderSchema>;
+export type CmsModuleFolder = typeof cmsModuleFolders.$inferSelect;
+
+export const cmsLessons = pgTable("cms_lessons", {
+  id: serial("id").primaryKey(),
+  moduleId: integer("module_id").notNull().references(() => cmsModules.id, { onDelete: 'cascade' }),
+  folderId: integer("folder_id").references(() => cmsModuleFolders.id, { onDelete: 'set null' }),
+  title: text("title").notNull(),
+  description: text("description"),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertCmsLessonSchema = createInsertSchema(cmsLessons).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCmsLesson = z.infer<typeof insertCmsLessonSchema>;
+export type CmsLesson = typeof cmsLessons.$inferSelect;
+
+export const lessonFileTypeEnum = ["video", "audio", "script"] as const;
+export type LessonFileType = typeof lessonFileTypeEnum[number];
+
+export const cmsLessonFiles = pgTable("cms_lesson_files", {
+  id: serial("id").primaryKey(),
+  lessonId: integer("lesson_id").notNull().references(() => cmsLessons.id, { onDelete: 'cascade' }),
+  fileType: text("file_type").notNull(), // 'video', 'audio', 'script'
+  r2Key: text("r2_key").notNull(),
+  publicUrl: text("public_url"),
+  sizeMb: integer("size_mb"),
+  durationSec: integer("duration_sec"),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertCmsLessonFileSchema = createInsertSchema(cmsLessonFiles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCmsLessonFile = z.infer<typeof insertCmsLessonFileSchema>;
+export type CmsLessonFile = typeof cmsLessonFiles.$inferSelect;
