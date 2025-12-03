@@ -28,6 +28,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CmsCourse } from "@shared/schema";
 import { format } from "date-fns";
 
+type CourseWithSignedUrl = CmsCourse & { thumbnailSignedUrl?: string | null };
+
 export default function AdminCoursesPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -35,11 +37,11 @@ export default function AdminCoursesPage() {
   const [programFilter, setProgramFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [courseToDelete, setCourseToDelete] = useState<CmsCourse | null>(null);
+  const [courseToDelete, setCourseToDelete] = useState<CourseWithSignedUrl | null>(null);
 
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
-  const { data: courses = [], isLoading } = useQuery<CmsCourse[]>({
+  const { data: courses = [], isLoading } = useQuery<CourseWithSignedUrl[]>({
     queryKey: ["/api/admin/v1/cms/courses"],
     queryFn: async () => {
       const response = await fetch("/api/admin/v1/cms/courses", {
@@ -101,7 +103,7 @@ export default function AdminCoursesPage() {
 
   const uniqueProgramCodes = Array.from(new Set(courses.map((c) => c.programCode)));
 
-  const handleDelete = (course: CmsCourse) => {
+  const handleDelete = (course: CourseWithSignedUrl) => {
     setCourseToDelete(course);
     setDeleteDialogOpen(true);
   };
@@ -233,9 +235,9 @@ export default function AdminCoursesPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      {course.thumbnailUrl ? (
+                      {course.thumbnailSignedUrl ? (
                         <img
-                          src={course.thumbnailUrl}
+                          src={course.thumbnailSignedUrl}
                           alt={course.title}
                           className="w-16 h-9 object-cover rounded"
                         />

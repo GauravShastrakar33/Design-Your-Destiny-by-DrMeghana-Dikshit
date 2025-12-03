@@ -26,6 +26,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CmsCourse, CmsModule, CmsModuleFolder, CmsLesson, CmsLessonFile } from "@shared/schema";
 
 type CourseWithModules = CmsCourse & {
+  thumbnailSignedUrl?: string | null;
   modules: (CmsModule & {
     folders: CmsModuleFolder[];
     lessons: (CmsLesson & { files: CmsLessonFile[] })[];
@@ -204,7 +205,7 @@ export default function CourseBuilderPage() {
         courseId,
         uploadType: "thumbnail",
       });
-      const { uploadUrl, key, publicUrl } = await uploadUrlResponse.json();
+      const { uploadUrl, key } = await uploadUrlResponse.json();
 
       await fetch(uploadUrl, {
         method: "PUT",
@@ -216,7 +217,6 @@ export default function CourseBuilderPage() {
 
       await updateCourseMutation.mutateAsync({
         thumbnailKey: key,
-        thumbnailUrl: publicUrl,
       });
 
       toast({ title: "Thumbnail uploaded" });
@@ -419,9 +419,9 @@ export default function CourseBuilderPage() {
                 <div>
                   <Label>Thumbnail</Label>
                   <div className="mt-2 flex items-center gap-4">
-                    {course?.thumbnailUrl ? (
+                    {course?.thumbnailSignedUrl ? (
                       <img
-                        src={course.thumbnailUrl}
+                        src={course.thumbnailSignedUrl}
                         alt="Course thumbnail"
                         className="w-32 h-18 object-cover rounded"
                       />

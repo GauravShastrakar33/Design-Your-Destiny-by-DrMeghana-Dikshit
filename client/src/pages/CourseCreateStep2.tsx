@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CmsCourse } from "@shared/schema";
 
+type CourseWithSignedUrl = CmsCourse & { thumbnailSignedUrl?: string | null };
+
 export default function CourseCreateStep2() {
   const params = useParams();
   const courseId = parseInt(params.id || "0");
@@ -19,7 +21,7 @@ export default function CourseCreateStep2() {
 
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
-  const { data: course, isLoading } = useQuery<CmsCourse>({
+  const { data: course, isLoading } = useQuery<CourseWithSignedUrl>({
     queryKey: ["/api/admin/v1/cms/courses", courseId],
     queryFn: async () => {
       const response = await fetch(`/api/admin/v1/cms/courses/${courseId}`, {
@@ -34,7 +36,7 @@ export default function CourseCreateStep2() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: { thumbnailKey?: string; thumbnailUrl?: string }) => {
+    mutationFn: async (data: { thumbnailKey?: string }) => {
       await apiRequest("PUT", `/api/admin/v1/cms/courses/${courseId}`, data);
     },
     onSuccess: () => {
@@ -62,7 +64,7 @@ export default function CourseCreateStep2() {
         courseId,
         uploadType: "thumbnail",
       });
-      const { uploadUrl, key, publicUrl } = await uploadUrlResponse.json();
+      const { uploadUrl, key, signedUrl } = await uploadUrlResponse.json();
 
       await fetch(uploadUrl, {
         method: "PUT",
@@ -74,10 +76,9 @@ export default function CourseCreateStep2() {
 
       await updateMutation.mutateAsync({
         thumbnailKey: key,
-        thumbnailUrl: publicUrl,
       });
 
-      setPreviewUrl(publicUrl);
+      setPreviewUrl(signedUrl);
       toast({ title: "Thumbnail uploaded successfully" });
     } catch (error) {
       console.error("Upload error:", error);
@@ -120,7 +121,7 @@ export default function CourseCreateStep2() {
     setLocation(`/admin/courses/create/step3/${courseId}`);
   };
 
-  const displayUrl = previewUrl || course?.thumbnailUrl;
+  const displayUrl = previewUrl || course?.thumbnailSignedUrl;
 
   if (isLoading) {
     return (
@@ -178,7 +179,7 @@ export default function CourseCreateStep2() {
                   <button
                     onClick={() => {
                       setPreviewUrl(null);
-                      updateMutation.mutate({ thumbnailKey: undefined, thumbnailUrl: undefined });
+                      updateMutation.mutate({ thumbnailKey: undefined });
                     }}
                     className="absolute top-2 right-2 p-1 bg-red-600 rounded-full hover:bg-red-700"
                     data-testid="button-remove-thumbnail"

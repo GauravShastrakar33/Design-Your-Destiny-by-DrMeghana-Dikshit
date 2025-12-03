@@ -184,7 +184,6 @@ export const cmsCourses = pgTable("cms_courses", {
   programCode: text("program_code").notNull(),
   description: text("description"),
   thumbnailKey: text("thumbnail_key"),
-  thumbnailUrl: text("thumbnail_url"),
   isPublished: boolean("is_published").notNull().default(false),
   createdByAdminId: integer("created_by_admin_id").references(() => users.id),
   position: integer("position").notNull().default(0),

@@ -16,7 +16,7 @@ import fs from "fs";
 import { uploadToS3, checkS3Credentials } from "./s3Upload";
 import { 
   checkR2Credentials, getSignedPutUrl, getSignedGetUrl, deleteR2Object,
-  generateCourseThumnailKey, generateLessonFileKey, fixThumbnailUrl 
+  generateCourseThumnailKey, generateLessonFileKey 
 } from "./r2Upload";
 import { db } from "./db";
 import { eq, asc, and, ilike, or, sql } from "drizzle-orm";
@@ -1225,13 +1225,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
       
-      // Fix thumbnail URLs - regenerate from key or extract from private URL
-      const coursesWithFixedUrls = filteredCourses.map(course => ({
-        ...course,
-        thumbnailUrl: fixThumbnailUrl(course.thumbnailKey, course.thumbnailUrl)
-      }));
+      // Generate signed thumbnail URLs from keys
+      const coursesWithSignedUrls = await Promise.all(
+        filteredCourses.map(async (course) => {
+          let thumbnailSignedUrl: string | null = null;
+          if (course.thumbnailKey) {
+            const signedResult = await getSignedGetUrl(course.thumbnailKey);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          return { ...course, thumbnailSignedUrl };
+        })
+      );
       
-      res.json(coursesWithFixedUrls);
+      res.json(coursesWithSignedUrls);
     } catch (error) {
       console.error("Error fetching courses:", error);
       res.status(500).json({ error: "Failed to fetch courses" });
@@ -1250,11 +1258,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
       
-      // Fix thumbnail URL - regenerate from key or extract from private URL
-      const fixedCourse = {
-        ...course,
-        thumbnailUrl: fixThumbnailUrl(course.thumbnailKey, course.thumbnailUrl)
-      };
+      // Generate signed thumbnail URL from key
+      let thumbnailSignedUrl: string | null = null;
+      if (course.thumbnailKey) {
+        const signedResult = await getSignedGetUrl(course.thumbnailKey);
+        if (signedResult.success && signedResult.url) {
+          thumbnailSignedUrl = signedResult.url;
+        }
+      }
       
       // Get modules with their folders and lessons
       const modules = await db.select().from(cmsModules)
@@ -1280,7 +1291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return { ...module, folders, lessons: lessonsWithFiles };
       }));
       
-      res.json({ ...fixedCourse, modules: modulesWithContent });
+      res.json({ ...course, thumbnailSignedUrl, modules: modulesWithContent });
     } catch (error) {
       console.error("Error fetching course:", error);
       res.status(500).json({ error: "Failed to fetch course" });
@@ -1811,10 +1822,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
       
+      // Generate a signed GET URL for immediate preview after upload
+      const getResult = await getSignedGetUrl(key);
+      const signedUrl = getResult.success ? getResult.url : null;
+      
       res.json({
         uploadUrl: result.uploadUrl,
         key: result.key,
-        publicUrl: result.publicUrl,
+        signedUrl, // Use signed URL instead of public URL
       });
     } catch (error) {
       console.error("Error getting upload URL:", error);
