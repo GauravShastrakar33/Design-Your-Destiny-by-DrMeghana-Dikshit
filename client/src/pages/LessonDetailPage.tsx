@@ -5,15 +5,12 @@ import { ArrowLeft, Upload, Trash2, Video, Music, FileType, Save, X } from "luci
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CmsLesson, CmsLessonFile } from "@shared/schema";
-import AdminSidebar from "@/components/AdminSidebar";
-import AdminHeader from "@/components/AdminHeader";
-import AdminContentPanel from "@/components/AdminContentPanel";
 
 type LessonWithFiles = CmsLesson & { files: CmsLessonFile[] };
 
@@ -224,248 +221,235 @@ export default function LessonDetailPage() {
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
       case "video":
-        return <Video className="w-5 h-5 text-blue-400" />;
+        return <Video className="w-5 h-5 text-blue-500" />;
       case "audio":
-        return <Music className="w-5 h-5 text-green-400" />;
+        return <Music className="w-5 h-5 text-green-500" />;
       case "script":
-        return <FileType className="w-5 h-5 text-orange-400" />;
+        return <FileType className="w-5 h-5 text-orange-500" />;
       default:
-        return <FileType className="w-5 h-5 text-gray-400" />;
+        return <FileType className="w-5 h-5 text-gray-500" />;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-[#1a1a1a]">
-        <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center text-gray-400">
-          Loading...
+      <div className="p-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-[#1a1a1a]">
-      <AdminSidebar />
-      <div className="flex-1 flex flex-col">
-        <AdminHeader title="Edit Lesson" />
-        <AdminContentPanel>
-          <div className="max-w-3xl mx-auto">
+    <div className="p-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Edit Lesson</h1>
+        <p className="text-gray-600 mt-1">{lesson?.title}</p>
+      </div>
+
+      <div className="max-w-3xl">
+        <Button
+          variant="outline"
+          onClick={() => setLocation(`/admin/courses/${courseId}`)}
+          className="mb-6"
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Course
+        </Button>
+
+        <Card className="p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Lesson Details</h2>
+          <div className="space-y-4">
+            <div>
+              <Label>Title</Label>
+              <Input
+                value={title || lesson?.title || ""}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter lesson title"
+                className="mt-2"
+                data-testid="input-title"
+              />
+            </div>
+            <div>
+              <Label>Description (Optional)</Label>
+              <Textarea
+                value={description || lesson?.description || ""}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter lesson description"
+                className="mt-2 min-h-[80px]"
+                data-testid="input-description"
+              />
+            </div>
             <Button
-              variant="outline"
-              onClick={() => setLocation(`/admin/courses/${courseId}`)}
-              className="border-gray-700 text-gray-300 mb-6"
-              data-testid="button-back"
+              onClick={handleSave}
+              disabled={updateLessonMutation.isPending}
+              className="bg-brand hover:bg-brand/90"
+              data-testid="button-save"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Course
+              <Save className="w-4 h-4 mr-2" />
+              Save Changes
             </Button>
-
-            <Card className="bg-gray-900 border-gray-800 mb-6">
-              <CardHeader>
-                <CardTitle className="text-white">Lesson Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-gray-300">Title</Label>
-                  <Input
-                    value={title || lesson?.title || ""}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Enter lesson title"
-                    className="bg-gray-800 border-gray-700 text-white mt-2"
-                    data-testid="input-title"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-300">Description (Optional)</Label>
-                  <Textarea
-                    value={description || lesson?.description || ""}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter lesson description"
-                    className="bg-gray-800 border-gray-700 text-white mt-2 min-h-[80px]"
-                    data-testid="input-description"
-                  />
-                </div>
-                <Button
-                  onClick={handleSave}
-                  disabled={updateLessonMutation.isPending}
-                  className="bg-brand hover:bg-brand/90"
-                  data-testid="button-save"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-white">Lesson Files</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Upload video, audio, or PDF script files for this lesson.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="border border-dashed border-gray-700 rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
-                    <Video className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-300 mb-3">Video</p>
-                    <label>
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={(e) => handleFileSelect(e, "video")}
-                        className="hidden"
-                        data-testid="input-video"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-gray-700 text-gray-300"
-                        asChild
-                      >
-                        <span>
-                          <Upload className="w-3 h-3 mr-2" />
-                          Upload
-                        </span>
-                      </Button>
-                    </label>
-                  </div>
-
-                  <div className="border border-dashed border-gray-700 rounded-lg p-4 text-center hover:border-green-500 transition-colors">
-                    <Music className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-300 mb-3">Audio</p>
-                    <label>
-                      <input
-                        type="file"
-                        accept="audio/*"
-                        onChange={(e) => handleFileSelect(e, "audio")}
-                        className="hidden"
-                        data-testid="input-audio"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-gray-700 text-gray-300"
-                        asChild
-                      >
-                        <span>
-                          <Upload className="w-3 h-3 mr-2" />
-                          Upload
-                        </span>
-                      </Button>
-                    </label>
-                  </div>
-
-                  <div className="border border-dashed border-gray-700 rounded-lg p-4 text-center hover:border-orange-500 transition-colors">
-                    <FileType className="w-8 h-8 text-orange-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-300 mb-3">Script (PDF)</p>
-                    <label>
-                      <input
-                        type="file"
-                        accept="application/pdf"
-                        onChange={(e) => handleFileSelect(e, "script")}
-                        className="hidden"
-                        data-testid="input-script"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-gray-700 text-gray-300"
-                        asChild
-                      >
-                        <span>
-                          <Upload className="w-3 h-3 mr-2" />
-                          Upload
-                        </span>
-                      </Button>
-                    </label>
-                  </div>
-                </div>
-
-                {uploadQueue.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-gray-300">Uploading...</h4>
-                    {uploadQueue.map((upload, index) => (
-                      <div key={index} className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
-                        {getFileIcon(upload.fileType)}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white truncate">{upload.file.name}</p>
-                          <Progress value={upload.progress} className="h-1 mt-1" />
-                        </div>
-                        {upload.status === "error" && (
-                          <span className="text-xs text-red-400">Failed</span>
-                        )}
-                        {upload.status === "done" && (
-                          <span className="text-xs text-green-400">Done</span>
-                        )}
-                        {upload.status !== "done" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => cancelUpload(upload)}
-                            className="text-gray-400 hover:text-red-500 h-8 w-8"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {filesLoading ? (
-                  <div className="text-center py-4 text-gray-400">Loading files...</div>
-                ) : files.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400">
-                    <p>No files uploaded yet.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-300">Uploaded Files</h4>
-                    {files.map((file) => (
-                      <div key={file.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          {getFileIcon(file.fileType)}
-                          <div>
-                            <p className="text-sm text-white">
-                              {file.fileType.charAt(0).toUpperCase() + file.fileType.slice(1)} File
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {file.sizeMb ? `${file.sizeMb} MB` : "Size unknown"}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {file.publicUrl && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(file.publicUrl!, "_blank")}
-                              className="border-gray-700 text-gray-300"
-                            >
-                              View
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteFileMutation.mutate(file.id)}
-                            className="text-gray-400 hover:text-red-500"
-                            data-testid={`button-delete-file-${file.id}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
-        </AdminContentPanel>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Lesson Files</h2>
+          <p className="text-gray-600 text-sm mb-6">Upload video, audio, or PDF script files for this lesson.</p>
+
+          <div className="grid gap-4 md:grid-cols-3 mb-6">
+            <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+              <Video className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+              <p className="text-sm text-gray-700 mb-3">Video</p>
+              <label>
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={(e) => handleFileSelect(e, "video")}
+                  className="hidden"
+                  data-testid="input-video"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <span>
+                    <Upload className="w-3 h-3 mr-2" />
+                    Upload
+                  </span>
+                </Button>
+              </label>
+            </div>
+
+            <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-400 transition-colors">
+              <Music className="w-8 h-8 text-green-500 mx-auto mb-2" />
+              <p className="text-sm text-gray-700 mb-3">Audio</p>
+              <label>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={(e) => handleFileSelect(e, "audio")}
+                  className="hidden"
+                  data-testid="input-audio"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <span>
+                    <Upload className="w-3 h-3 mr-2" />
+                    Upload
+                  </span>
+                </Button>
+              </label>
+            </div>
+
+            <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-orange-400 transition-colors">
+              <FileType className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+              <p className="text-sm text-gray-700 mb-3">Script (PDF)</p>
+              <label>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => handleFileSelect(e, "script")}
+                  className="hidden"
+                  data-testid="input-script"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <span>
+                    <Upload className="w-3 h-3 mr-2" />
+                    Upload
+                  </span>
+                </Button>
+              </label>
+            </div>
+          </div>
+
+          {uploadQueue.length > 0 && (
+            <div className="space-y-3 mb-6">
+              <h4 className="text-sm font-medium text-gray-700">Uploading...</h4>
+              {uploadQueue.map((upload, index) => (
+                <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  {getFileIcon(upload.fileType)}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 truncate">{upload.file.name}</p>
+                    <Progress value={upload.progress} className="h-1 mt-1" />
+                  </div>
+                  {upload.status === "error" && (
+                    <span className="text-xs text-red-500">Failed</span>
+                  )}
+                  {upload.status === "done" && (
+                    <span className="text-xs text-green-500">Done</span>
+                  )}
+                  {upload.status !== "done" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => cancelUpload(upload)}
+                      className="h-8 w-8 hover:text-red-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {filesLoading ? (
+            <div className="text-center py-4 text-gray-500">Loading files...</div>
+          ) : files.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>No files uploaded yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-700">Uploaded Files</h4>
+              {files.map((file) => (
+                <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {getFileIcon(file.fileType)}
+                    <div>
+                      <p className="text-sm text-gray-900">
+                        {file.fileType.charAt(0).toUpperCase() + file.fileType.slice(1)} File
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {file.sizeMb ? `${file.sizeMb} MB` : "Size unknown"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {file.publicUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(file.publicUrl!, "_blank")}
+                      >
+                        View
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteFileMutation.mutate(file.id)}
+                      className="hover:text-red-500"
+                      data-testid={`button-delete-file-${file.id}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Edit, Trash2, ChevronDown, ChevronRight, Folder, FileT
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -22,9 +22,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CmsCourse, CmsModule, CmsModuleFolder, CmsLesson, CmsLessonFile } from "@shared/schema";
-import AdminSidebar from "@/components/AdminSidebar";
-import AdminHeader from "@/components/AdminHeader";
-import AdminContentPanel from "@/components/AdminContentPanel";
 
 type CourseWithModules = CmsCourse & {
   modules: (CmsModule & {
@@ -290,10 +287,9 @@ export default function CourseCreateStep3() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-[#1a1a1a]">
-        <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center text-gray-400">
-          Loading...
+      <div className="p-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full" />
         </div>
       </div>
     );
@@ -310,364 +306,370 @@ export default function CourseCreateStep3() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#1a1a1a]">
-      <AdminSidebar />
-      <div className="flex-1 flex flex-col">
-        <AdminHeader title="Create Course - Step 3" />
-        <AdminContentPanel>
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-6">
-              <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-                <span className="bg-gray-700 text-gray-400 px-3 py-1 rounded-full">1</span>
-                <span>Basic Info</span>
-                <span className="mx-2">-</span>
-                <span className="bg-gray-700 text-gray-400 px-3 py-1 rounded-full">2</span>
-                <span>Thumbnail</span>
-                <span className="mx-2">-</span>
-                <span className="bg-brand text-white px-3 py-1 rounded-full">3</span>
-                <span className="text-white">Curriculum</span>
-              </div>
-            </div>
+    <div className="p-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Create Course</h1>
+        <p className="text-gray-600 mt-1">Step 3: Build Curriculum</p>
+      </div>
 
-            <Card className="bg-gray-900 border-gray-800 mb-6">
-              <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <CardTitle className="text-white">{course?.title}</CardTitle>
-                  <CardDescription className="text-gray-400">
-                    Build your course curriculum by adding modules, folders, and lessons.
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="publish-toggle" className="text-gray-300">Publish</Label>
-                    <Switch
-                      id="publish-toggle"
-                      checked={course?.isPublished || false}
-                      onCheckedChange={(checked) => publishMutation.mutate(checked)}
-                      data-testid="switch-publish"
-                    />
-                  </div>
-                  <Button onClick={openAddModule} className="bg-brand hover:bg-brand/90" data-testid="button-add-module">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Module
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {course?.modules.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400">
-                    <p>No modules yet. Add your first module to get started.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {course?.modules.map((module) => (
-                      <Collapsible
-                        key={module.id}
-                        open={expandedModules.has(module.id)}
-                        onOpenChange={() => toggleModule(module.id)}
-                      >
-                        <div className="border border-gray-700 rounded-lg overflow-hidden">
-                          <CollapsibleTrigger className="w-full px-4 py-3 bg-gray-800/50 flex items-center justify-between hover:bg-gray-800">
-                            <div className="flex items-center gap-3">
-                              <GripVertical className="w-4 h-4 text-gray-500" />
-                              {expandedModules.has(module.id) ? (
-                                <ChevronDown className="w-4 h-4 text-gray-400" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4 text-gray-400" />
-                              )}
-                              <span className="text-white font-medium">{module.title}</span>
-                              <span className="text-gray-500 text-sm">
-                                ({module.lessons.length} lessons)
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openAddFolder(module.id)}
-                                className="text-gray-400 hover:text-white"
-                                data-testid={`button-add-folder-${module.id}`}
-                              >
-                                <Folder className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openAddLesson(module.id)}
-                                className="text-gray-400 hover:text-white"
-                                data-testid={`button-add-lesson-${module.id}`}
-                              >
-                                <Plus className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openEditModule(module)}
-                                className="text-gray-400 hover:text-white"
-                                data-testid={`button-edit-module-${module.id}`}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => deleteModuleMutation.mutate(module.id)}
-                                className="text-gray-400 hover:text-red-500"
-                                data-testid={`button-delete-module-${module.id}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent>
-                            <div className="p-4 space-y-3">
-                              {module.folders.map((folder) => (
-                                <Collapsible
-                                  key={folder.id}
-                                  open={expandedFolders.has(folder.id)}
-                                  onOpenChange={() => toggleFolder(folder.id)}
-                                >
-                                  <div className="border border-gray-700 rounded-lg overflow-hidden ml-6">
-                                    <CollapsibleTrigger className="w-full px-3 py-2 bg-gray-800/30 flex items-center justify-between hover:bg-gray-800/50">
+      <div className="max-w-4xl">
+        <div className="mb-6">
+          <div className="flex items-center gap-2 text-sm mb-4">
+            <span className="bg-gray-200 text-gray-500 px-3 py-1 rounded-full">1</span>
+            <span className="text-gray-500">Basic Info</span>
+            <span className="mx-2 text-gray-400">-</span>
+            <span className="bg-gray-200 text-gray-500 px-3 py-1 rounded-full">2</span>
+            <span className="text-gray-500">Thumbnail</span>
+            <span className="mx-2 text-gray-400">-</span>
+            <span className="bg-brand text-white px-3 py-1 rounded-full font-medium">3</span>
+            <span className="text-gray-900 font-medium">Curriculum</span>
+          </div>
+        </div>
+
+        <Card className="p-6 mb-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{course?.title}</h2>
+              <p className="text-gray-600 text-sm">Build your course curriculum by adding modules, folders, and lessons.</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="publish-toggle" className="text-gray-700">Publish</Label>
+                <Switch
+                  id="publish-toggle"
+                  checked={course?.isPublished || false}
+                  onCheckedChange={(checked) => publishMutation.mutate(checked)}
+                  data-testid="switch-publish"
+                />
+              </div>
+              <Button onClick={openAddModule} className="bg-brand hover:bg-brand/90" data-testid="button-add-module">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Module
+              </Button>
+            </div>
+          </div>
+
+          {course?.modules.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <p>No modules yet. Add your first module to get started.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {course?.modules.map((module) => (
+                <Collapsible
+                  key={module.id}
+                  open={expandedModules.has(module.id)}
+                  onOpenChange={() => toggleModule(module.id)}
+                >
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <CollapsibleTrigger className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100">
+                      <div className="flex items-center gap-3">
+                        <GripVertical className="w-4 h-4 text-gray-400" />
+                        {expandedModules.has(module.id) ? (
+                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-gray-500" />
+                        )}
+                        <span className="font-medium text-gray-900">{module.title}</span>
+                        <span className="text-gray-500 text-sm">
+                          ({module.lessons.length} lessons)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openAddFolder(module.id)}
+                          title="Add Folder"
+                          data-testid={`button-add-folder-${module.id}`}
+                        >
+                          <Folder className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openAddLesson(module.id)}
+                          title="Add Lesson"
+                          data-testid={`button-add-lesson-${module.id}`}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditModule(module)}
+                          data-testid={`button-edit-module-${module.id}`}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteModuleMutation.mutate(module.id)}
+                          className="hover:text-red-500"
+                          data-testid={`button-delete-module-${module.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="p-4 space-y-3">
+                        {module.folders.map((folder) => (
+                          <Collapsible
+                            key={folder.id}
+                            open={expandedFolders.has(folder.id)}
+                            onOpenChange={() => toggleFolder(folder.id)}
+                          >
+                            <div className="border border-gray-200 rounded-lg overflow-hidden ml-6">
+                              <CollapsibleTrigger className="w-full px-3 py-2 bg-gray-50 flex items-center justify-between hover:bg-gray-100">
+                                <div className="flex items-center gap-2">
+                                  <Folder className="w-4 h-4 text-yellow-600" />
+                                  <span className="text-gray-800">{folder.title}</span>
+                                </div>
+                                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openAddLesson(module.id, folder.id)}
+                                    className="h-8 w-8"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openEditFolder(folder)}
+                                    className="h-8 w-8"
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => deleteFolderMutation.mutate(folder.id)}
+                                    className="h-8 w-8 hover:text-red-500"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <div className="p-2 space-y-1">
+                                  {getLessonsInFolder(module.id, folder.id).map((lesson) => (
+                                    <div
+                                      key={lesson.id}
+                                      className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-50"
+                                    >
                                       <div className="flex items-center gap-2">
-                                        <Folder className="w-4 h-4 text-yellow-500" />
-                                        <span className="text-gray-200">{folder.title}</span>
+                                        <FileText className="w-4 h-4 text-gray-500" />
+                                        <span className="text-gray-700">{lesson.title}</span>
+                                        <div className="flex gap-1">
+                                          {lesson.files.map((file) => (
+                                            <span key={file.id} className="text-xs px-1.5 py-0.5 bg-gray-100 rounded text-gray-600">
+                                              {file.fileType === "video" && <Video className="w-3 h-3 inline" />}
+                                              {file.fileType === "audio" && <Music className="w-3 h-3 inline" />}
+                                              {file.fileType === "script" && <FileType className="w-3 h-3 inline" />}
+                                            </span>
+                                          ))}
+                                        </div>
                                       </div>
-                                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                      <div className="flex items-center gap-1">
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          onClick={() => openAddLesson(module.id, folder.id)}
-                                          className="text-gray-400 hover:text-white h-8 w-8"
-                                        >
-                                          <Plus className="w-3 h-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => openEditFolder(folder)}
-                                          className="text-gray-400 hover:text-white h-8 w-8"
+                                          onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
+                                          className="h-8 w-8"
                                         >
                                           <Edit className="w-3 h-3" />
                                         </Button>
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          onClick={() => deleteFolderMutation.mutate(folder.id)}
-                                          className="text-gray-400 hover:text-red-500 h-8 w-8"
+                                          onClick={() => deleteLessonMutation.mutate(lesson.id)}
+                                          className="h-8 w-8 hover:text-red-500"
                                         >
                                           <Trash2 className="w-3 h-3" />
                                         </Button>
                                       </div>
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent>
-                                      <div className="p-2 space-y-1">
-                                        {getLessonsInFolder(module.id, folder.id).map((lesson) => (
-                                          <div
-                                            key={lesson.id}
-                                            className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-800/50"
-                                          >
-                                            <div className="flex items-center gap-2">
-                                              <FileText className="w-4 h-4 text-gray-400" />
-                                              <span className="text-gray-300">{lesson.title}</span>
-                                              <div className="flex gap-1">
-                                                {lesson.files.map((file) => (
-                                                  <span key={file.id} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded">
-                                                    {file.fileType === "video" && <Video className="w-3 h-3 inline" />}
-                                                    {file.fileType === "audio" && <Music className="w-3 h-3 inline" />}
-                                                    {file.fileType === "script" && <FileType className="w-3 h-3 inline" />}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                              <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
-                                                className="text-gray-400 hover:text-white h-8 w-8"
-                                              >
-                                                <Edit className="w-3 h-3" />
-                                              </Button>
-                                              <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => deleteLessonMutation.mutate(lesson.id)}
-                                                className="text-gray-400 hover:text-red-500 h-8 w-8"
-                                              >
-                                                <Trash2 className="w-3 h-3" />
-                                              </Button>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </CollapsibleContent>
-                                  </div>
-                                </Collapsible>
-                              ))}
-                              
-                              {getLessonsWithoutFolder(module.id).map((lesson) => (
-                                <div
-                                  key={lesson.id}
-                                  className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-800/50 ml-6"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <FileText className="w-4 h-4 text-gray-400" />
-                                    <span className="text-gray-300">{lesson.title}</span>
-                                    <div className="flex gap-1">
-                                      {lesson.files.map((file) => (
-                                        <span key={file.id} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded">
-                                          {file.fileType === "video" && <Video className="w-3 h-3 inline" />}
-                                          {file.fileType === "audio" && <Music className="w-3 h-3 inline" />}
-                                          {file.fileType === "script" && <FileType className="w-3 h-3 inline" />}
-                                        </span>
-                                      ))}
                                     </div>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
-                                      className="text-gray-400 hover:text-white h-8 w-8"
-                                    >
-                                      <Edit className="w-3 h-3" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => deleteLessonMutation.mutate(lesson.id)}
-                                      className="text-gray-400 hover:text-red-500 h-8 w-8"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  </div>
+                                  ))}
                                 </div>
-                              ))}
+                              </CollapsibleContent>
                             </div>
-                          </CollapsibleContent>
-                        </div>
-                      </Collapsible>
-                    ))}
+                          </Collapsible>
+                        ))}
+                        
+                        {getLessonsWithoutFolder(module.id).map((lesson) => (
+                          <div
+                            key={lesson.id}
+                            className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-50 ml-6"
+                          >
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-gray-500" />
+                              <span className="text-gray-700">{lesson.title}</span>
+                              <div className="flex gap-1">
+                                {lesson.files.map((file) => (
+                                  <span key={file.id} className="text-xs px-1.5 py-0.5 bg-gray-100 rounded text-gray-600">
+                                    {file.fileType === "video" && <Video className="w-3 h-3 inline" />}
+                                    {file.fileType === "audio" && <Music className="w-3 h-3 inline" />}
+                                    {file.fileType === "script" && <FileType className="w-3 h-3 inline" />}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
+                                className="h-8 w-8"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteLessonMutation.mutate(lesson.id)}
+                                className="h-8 w-8 hover:text-red-500"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setLocation(`/admin/courses/create/step2/${courseId}`)}
-                className="border-gray-700 text-gray-300"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-              <Button
-                onClick={handleFinish}
-                className="bg-brand hover:bg-brand/90"
-                data-testid="button-create"
-              >
-                {course?.modules.length ? "Finish" : "Create"}
-              </Button>
+                </Collapsible>
+              ))}
             </div>
-          </div>
-        </AdminContentPanel>
+          )}
+        </Card>
+
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={() => setLocation(`/admin/courses/create/step2/${courseId}`)}
+            data-testid="button-back"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <Button
+            onClick={handleFinish}
+            className="bg-brand hover:bg-brand/90"
+            data-testid="button-finish"
+          >
+            Finish
+          </Button>
+        </div>
       </div>
 
       <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {editingModule ? "Edit Module" : "Add Module"}
-            </DialogTitle>
+            <DialogTitle>{editingModule ? "Edit Module" : "Add Module"}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <Label className="text-gray-300">Module Title</Label>
+            <Label htmlFor="module-title">Module Title</Label>
             <Input
+              id="module-title"
               value={moduleTitle}
               onChange={(e) => setModuleTitle(e.target.value)}
               placeholder="Enter module title"
-              className="bg-gray-800 border-gray-700 text-white mt-2"
+              className="mt-2"
               data-testid="input-module-title"
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModuleDialogOpen(false)} className="border-gray-700 text-gray-300">
+            <Button variant="outline" onClick={() => setModuleDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveModule} className="bg-brand hover:bg-brand/90" data-testid="button-save-module">
-              Save
+            <Button
+              onClick={handleSaveModule}
+              disabled={!moduleTitle.trim()}
+              className="bg-brand hover:bg-brand/90"
+              data-testid="button-save-module"
+            >
+              {editingModule ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {editingFolder ? "Edit Folder" : "Add Folder"}
-            </DialogTitle>
+            <DialogTitle>{editingFolder ? "Edit Folder" : "Add Folder"}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <Label className="text-gray-300">Folder Title</Label>
+            <Label htmlFor="folder-title">Folder Title</Label>
             <Input
+              id="folder-title"
               value={folderTitle}
               onChange={(e) => setFolderTitle(e.target.value)}
               placeholder="Enter folder title"
-              className="bg-gray-800 border-gray-700 text-white mt-2"
+              className="mt-2"
               data-testid="input-folder-title"
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFolderDialogOpen(false)} className="border-gray-700 text-gray-300">
+            <Button variant="outline" onClick={() => setFolderDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveFolder} className="bg-brand hover:bg-brand/90" data-testid="button-save-folder">
-              Save
+            <Button
+              onClick={handleSaveFolder}
+              disabled={!folderTitle.trim()}
+              className="bg-brand hover:bg-brand/90"
+              data-testid="button-save-folder"
+            >
+              {editingFolder ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {editingLesson ? "Edit Lesson" : "Add Lesson"}
-            </DialogTitle>
+            <DialogTitle>{editingLesson ? "Edit Lesson" : "Add Lesson"}</DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div>
-              <Label className="text-gray-300">Lesson Title</Label>
+              <Label htmlFor="lesson-title">Lesson Title</Label>
               <Input
+                id="lesson-title"
                 value={lessonTitle}
                 onChange={(e) => setLessonTitle(e.target.value)}
                 placeholder="Enter lesson title"
-                className="bg-gray-800 border-gray-700 text-white mt-2"
+                className="mt-2"
                 data-testid="input-lesson-title"
               />
             </div>
             <div>
-              <Label className="text-gray-300">Description (Optional)</Label>
+              <Label htmlFor="lesson-description">Description (Optional)</Label>
               <Input
+                id="lesson-description"
                 value={lessonDescription}
                 onChange={(e) => setLessonDescription(e.target.value)}
                 placeholder="Enter lesson description"
-                className="bg-gray-800 border-gray-700 text-white mt-2"
+                className="mt-2"
                 data-testid="input-lesson-description"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLessonDialogOpen(false)} className="border-gray-700 text-gray-300">
+            <Button variant="outline" onClick={() => setLessonDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveLesson} className="bg-brand hover:bg-brand/90" data-testid="button-save-lesson">
-              Save
+            <Button
+              onClick={handleSaveLesson}
+              disabled={!lessonTitle.trim()}
+              className="bg-brand hover:bg-brand/90"
+              data-testid="button-save-lesson"
+            >
+              {editingLesson ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>

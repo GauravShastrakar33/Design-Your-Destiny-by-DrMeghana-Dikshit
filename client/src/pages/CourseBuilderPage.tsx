@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -24,9 +24,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CmsCourse, CmsModule, CmsModuleFolder, CmsLesson, CmsLessonFile } from "@shared/schema";
-import AdminSidebar from "@/components/AdminSidebar";
-import AdminHeader from "@/components/AdminHeader";
-import AdminContentPanel from "@/components/AdminContentPanel";
 
 type CourseWithModules = CmsCourse & {
   modules: (CmsModule & {
@@ -321,10 +318,9 @@ export default function CourseBuilderPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-[#1a1a1a]">
-        <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center text-gray-400">
-          Loading...
+      <div className="p-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full" />
         </div>
       </div>
     );
@@ -341,420 +337,431 @@ export default function CourseBuilderPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#1a1a1a]">
-      <AdminSidebar />
-      <div className="flex-1 flex flex-col">
-        <AdminHeader title={`Edit Course: ${course?.title || ""}`} />
-        <AdminContentPanel>
-          <div className="max-w-5xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/admin/courses")}
-                className="border-gray-700 text-gray-300"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Courses
-              </Button>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="publish-toggle" className="text-gray-300">Published</Label>
-                  <Switch
-                    id="publish-toggle"
-                    checked={course?.isPublished || false}
-                    onCheckedChange={(checked) => updateCourseMutation.mutate({ isPublished: checked })}
-                    data-testid="switch-publish"
+    <div className="p-8">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Edit Course</h1>
+          <p className="text-gray-600 mt-1">{course?.title}</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="publish-toggle" className="text-gray-700">Published</Label>
+            <Switch
+              id="publish-toggle"
+              checked={course?.isPublished || false}
+              onCheckedChange={(checked) => updateCourseMutation.mutate({ isPublished: checked })}
+              data-testid="switch-publish"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-5xl">
+        <Button
+          variant="outline"
+          onClick={() => setLocation("/admin/courses")}
+          className="mb-6"
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Courses
+        </Button>
+
+        <Tabs defaultValue="curriculum" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="info">Course Info</TabsTrigger>
+            <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="info">
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Course Information</h2>
+              <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>Title</Label>
+                    <Input
+                      value={title || course?.title || ""}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="mt-2"
+                      data-testid="input-title"
+                    />
+                  </div>
+                  <div>
+                    <Label>Program Code</Label>
+                    <Input
+                      value={programCode || course?.programCode || ""}
+                      onChange={(e) => setProgramCode(e.target.value)}
+                      className="mt-2"
+                      data-testid="input-program-code"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <Textarea
+                    value={description || course?.description || ""}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="mt-2 min-h-[100px]"
+                    data-testid="input-description"
                   />
                 </div>
-              </div>
-            </div>
-
-            <Tabs defaultValue="curriculum" className="space-y-6">
-              <TabsList className="bg-gray-800 border-gray-700">
-                <TabsTrigger value="info" className="data-[state=active]:bg-gray-700">Course Info</TabsTrigger>
-                <TabsTrigger value="curriculum" className="data-[state=active]:bg-gray-700">Curriculum</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="info">
-                <Card className="bg-gray-900 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-white">Course Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <Label className="text-gray-300">Title</Label>
-                        <Input
-                          value={title || course?.title || ""}
-                          onChange={(e) => setTitle(e.target.value)}
-                          className="bg-gray-800 border-gray-700 text-white mt-2"
-                          data-testid="input-title"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-gray-300">Program Code</Label>
-                        <Input
-                          value={programCode || course?.programCode || ""}
-                          onChange={(e) => setProgramCode(e.target.value)}
-                          className="bg-gray-800 border-gray-700 text-white mt-2"
-                          data-testid="input-program-code"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-gray-300">Description</Label>
-                      <Textarea
-                        value={description || course?.description || ""}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="bg-gray-800 border-gray-700 text-white mt-2 min-h-[100px]"
-                        data-testid="input-description"
+                <div>
+                  <Label>Thumbnail</Label>
+                  <div className="mt-2 flex items-center gap-4">
+                    {course?.thumbnailUrl ? (
+                      <img
+                        src={course.thumbnailUrl}
+                        alt="Course thumbnail"
+                        className="w-32 h-18 object-cover rounded"
                       />
-                    </div>
-                    <div>
-                      <Label className="text-gray-300">Thumbnail</Label>
-                      <div className="mt-2 flex items-center gap-4">
-                        {course?.thumbnailUrl ? (
-                          <img
-                            src={course.thumbnailUrl}
-                            alt="Course thumbnail"
-                            className="w-32 h-18 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-32 h-18 bg-gray-700 rounded flex items-center justify-center">
-                            <Image className="w-8 h-8 text-gray-500" />
-                          </div>
-                        )}
-                        <label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => e.target.files?.[0] && handleThumbnailUpload(e.target.files[0])}
-                            className="hidden"
-                            disabled={uploading}
-                          />
-                          <Button
-                            variant="outline"
-                            disabled={uploading}
-                            className="border-gray-700 text-gray-300"
-                            asChild
-                          >
-                            <span>{uploading ? "Uploading..." : "Change Thumbnail"}</span>
-                          </Button>
-                        </label>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={handleSaveCourseInfo}
-                      disabled={updateCourseMutation.isPending}
-                      className="bg-brand hover:bg-brand/90"
-                      data-testid="button-save-info"
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="curriculum">
-                <Card className="bg-gray-900 border-gray-800">
-                  <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-                    <CardTitle className="text-white">Course Curriculum</CardTitle>
-                    <Button onClick={openAddModule} className="bg-brand hover:bg-brand/90" data-testid="button-add-module">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Module
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    {course?.modules.length === 0 ? (
-                      <div className="text-center py-12 text-gray-400">
-                        <p>No modules yet. Add your first module to get started.</p>
-                      </div>
                     ) : (
-                      <div className="space-y-4">
-                        {course?.modules.map((module) => (
-                          <Collapsible
-                            key={module.id}
-                            open={expandedModules.has(module.id)}
-                            onOpenChange={() => toggleModule(module.id)}
-                          >
-                            <div className="border border-gray-700 rounded-lg overflow-hidden">
-                              <CollapsibleTrigger className="w-full px-4 py-3 bg-gray-800/50 flex items-center justify-between hover:bg-gray-800">
-                                <div className="flex items-center gap-3">
-                                  <GripVertical className="w-4 h-4 text-gray-500" />
-                                  {expandedModules.has(module.id) ? (
-                                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                                  ) : (
-                                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                                  )}
-                                  <span className="text-white font-medium">{module.title}</span>
-                                  <span className="text-gray-500 text-sm">
-                                    ({module.lessons.length} lessons)
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => openAddFolder(module.id)}
-                                    className="text-gray-400 hover:text-white"
-                                    title="Add Folder"
-                                  >
-                                    <Folder className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => openAddLesson(module.id)}
-                                    className="text-gray-400 hover:text-white"
-                                    title="Add Lesson"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => openEditModule(module)}
-                                    className="text-gray-400 hover:text-white"
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => deleteModuleMutation.mutate(module.id)}
-                                    className="text-gray-400 hover:text-red-500"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </CollapsibleTrigger>
-                              <CollapsibleContent>
-                                <div className="p-4 space-y-3">
-                                  {module.folders.map((folder) => (
-                                    <Collapsible
-                                      key={folder.id}
-                                      open={expandedFolders.has(folder.id)}
-                                      onOpenChange={() => toggleFolder(folder.id)}
-                                    >
-                                      <div className="border border-gray-700 rounded-lg overflow-hidden ml-6">
-                                        <CollapsibleTrigger className="w-full px-3 py-2 bg-gray-800/30 flex items-center justify-between hover:bg-gray-800/50">
+                      <div className="w-32 h-18 bg-gray-100 rounded flex items-center justify-center">
+                        <Image className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+                    <label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => e.target.files?.[0] && handleThumbnailUpload(e.target.files[0])}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                      <Button
+                        variant="outline"
+                        disabled={uploading}
+                        asChild
+                      >
+                        <span>{uploading ? "Uploading..." : "Change Thumbnail"}</span>
+                      </Button>
+                    </label>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleSaveCourseInfo}
+                  disabled={updateCourseMutation.isPending}
+                  className="bg-brand hover:bg-brand/90"
+                  data-testid="button-save-info"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Changes
+                </Button>
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="curriculum">
+            <Card className="p-6">
+              <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">Course Curriculum</h2>
+                <Button onClick={openAddModule} className="bg-brand hover:bg-brand/90" data-testid="button-add-module">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Module
+                </Button>
+              </div>
+
+              {course?.modules.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <p>No modules yet. Add your first module to get started.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {course?.modules.map((module) => (
+                    <Collapsible
+                      key={module.id}
+                      open={expandedModules.has(module.id)}
+                      onOpenChange={() => toggleModule(module.id)}
+                    >
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <CollapsibleTrigger className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100">
+                          <div className="flex items-center gap-3">
+                            <GripVertical className="w-4 h-4 text-gray-400" />
+                            {expandedModules.has(module.id) ? (
+                              <ChevronDown className="w-4 h-4 text-gray-500" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-gray-500" />
+                            )}
+                            <span className="font-medium text-gray-900">{module.title}</span>
+                            <span className="text-gray-500 text-sm">
+                              ({module.lessons.length} lessons)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openAddFolder(module.id)}
+                              title="Add Folder"
+                            >
+                              <Folder className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openAddLesson(module.id)}
+                              title="Add Lesson"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditModule(module)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteModuleMutation.mutate(module.id)}
+                              className="hover:text-red-500"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="p-4 space-y-3">
+                            {module.folders.map((folder) => (
+                              <Collapsible
+                                key={folder.id}
+                                open={expandedFolders.has(folder.id)}
+                                onOpenChange={() => toggleFolder(folder.id)}
+                              >
+                                <div className="border border-gray-200 rounded-lg overflow-hidden ml-6">
+                                  <CollapsibleTrigger className="w-full px-3 py-2 bg-gray-50 flex items-center justify-between hover:bg-gray-100">
+                                    <div className="flex items-center gap-2">
+                                      <Folder className="w-4 h-4 text-yellow-600" />
+                                      <span className="text-gray-800">{folder.title}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => openAddLesson(module.id, folder.id)}
+                                        className="h-8 w-8"
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => openEditFolder(folder)}
+                                        className="h-8 w-8"
+                                      >
+                                        <Edit className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => deleteFolderMutation.mutate(folder.id)}
+                                        className="h-8 w-8 hover:text-red-500"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent>
+                                    <div className="p-2 space-y-1">
+                                      {getLessonsInFolder(module.id, folder.id).map((lesson) => (
+                                        <div
+                                          key={lesson.id}
+                                          className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-50"
+                                        >
                                           <div className="flex items-center gap-2">
-                                            <Folder className="w-4 h-4 text-yellow-500" />
-                                            <span className="text-gray-200">{folder.title}</span>
+                                            <FileText className="w-4 h-4 text-gray-500" />
+                                            <span className="text-gray-700">{lesson.title}</span>
+                                            <div className="flex gap-1">
+                                              {lesson.files.map((file) => (
+                                                <span key={file.id} className="text-xs px-1.5 py-0.5 bg-gray-100 rounded text-gray-600">
+                                                  {file.fileType === "video" && <Video className="w-3 h-3 inline" />}
+                                                  {file.fileType === "audio" && <Music className="w-3 h-3 inline" />}
+                                                  {file.fileType === "script" && <FileType className="w-3 h-3 inline" />}
+                                                </span>
+                                              ))}
+                                            </div>
                                           </div>
-                                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                          <div className="flex items-center gap-1">
                                             <Button
                                               variant="ghost"
                                               size="icon"
-                                              onClick={() => openAddLesson(module.id, folder.id)}
-                                              className="text-gray-400 hover:text-white h-8 w-8"
-                                            >
-                                              <Plus className="w-3 h-3" />
-                                            </Button>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              onClick={() => openEditFolder(folder)}
-                                              className="text-gray-400 hover:text-white h-8 w-8"
+                                              onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
+                                              className="h-8 w-8"
                                             >
                                               <Edit className="w-3 h-3" />
                                             </Button>
                                             <Button
                                               variant="ghost"
                                               size="icon"
-                                              onClick={() => deleteFolderMutation.mutate(folder.id)}
-                                              className="text-gray-400 hover:text-red-500 h-8 w-8"
+                                              onClick={() => deleteLessonMutation.mutate(lesson.id)}
+                                              className="h-8 w-8 hover:text-red-500"
                                             >
                                               <Trash2 className="w-3 h-3" />
                                             </Button>
                                           </div>
-                                        </CollapsibleTrigger>
-                                        <CollapsibleContent>
-                                          <div className="p-2 space-y-1">
-                                            {getLessonsInFolder(module.id, folder.id).map((lesson) => (
-                                              <div
-                                                key={lesson.id}
-                                                className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-800/50"
-                                              >
-                                                <div className="flex items-center gap-2">
-                                                  <FileText className="w-4 h-4 text-gray-400" />
-                                                  <span className="text-gray-300">{lesson.title}</span>
-                                                  <div className="flex gap-1">
-                                                    {lesson.files.map((file) => (
-                                                      <span key={file.id} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded">
-                                                        {file.fileType === "video" && <Video className="w-3 h-3 inline" />}
-                                                        {file.fileType === "audio" && <Music className="w-3 h-3 inline" />}
-                                                        {file.fileType === "script" && <FileType className="w-3 h-3 inline" />}
-                                                      </span>
-                                                    ))}
-                                                  </div>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                  <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
-                                                    className="text-gray-400 hover:text-white h-8 w-8"
-                                                  >
-                                                    <Edit className="w-3 h-3" />
-                                                  </Button>
-                                                  <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => deleteLessonMutation.mutate(lesson.id)}
-                                                    className="text-gray-400 hover:text-red-500 h-8 w-8"
-                                                  >
-                                                    <Trash2 className="w-3 h-3" />
-                                                  </Button>
-                                                </div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </CollapsibleContent>
-                                      </div>
-                                    </Collapsible>
-                                  ))}
-                                  
-                                  {getLessonsWithoutFolder(module.id).map((lesson) => (
-                                    <div
-                                      key={lesson.id}
-                                      className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-800/50 ml-6"
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <FileText className="w-4 h-4 text-gray-400" />
-                                        <span className="text-gray-300">{lesson.title}</span>
-                                        <div className="flex gap-1">
-                                          {lesson.files.map((file) => (
-                                            <span key={file.id} className="text-xs px-1.5 py-0.5 bg-gray-700 rounded">
-                                              {file.fileType === "video" && <Video className="w-3 h-3 inline" />}
-                                              {file.fileType === "audio" && <Music className="w-3 h-3 inline" />}
-                                              {file.fileType === "script" && <FileType className="w-3 h-3 inline" />}
-                                            </span>
-                                          ))}
                                         </div>
-                                      </div>
-                                      <div className="flex items-center gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
-                                          className="text-gray-400 hover:text-white h-8 w-8"
-                                        >
-                                          <Edit className="w-3 h-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => deleteLessonMutation.mutate(lesson.id)}
-                                          className="text-gray-400 hover:text-red-500 h-8 w-8"
-                                        >
-                                          <Trash2 className="w-3 h-3" />
-                                        </Button>
-                                      </div>
+                                      ))}
                                     </div>
-                                  ))}
+                                  </CollapsibleContent>
                                 </div>
-                              </CollapsibleContent>
-                            </div>
-                          </Collapsible>
-                        ))}
+                              </Collapsible>
+                            ))}
+                            
+                            {getLessonsWithoutFolder(module.id).map((lesson) => (
+                              <div
+                                key={lesson.id}
+                                className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-50 ml-6"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <FileText className="w-4 h-4 text-gray-500" />
+                                  <span className="text-gray-700">{lesson.title}</span>
+                                  <div className="flex gap-1">
+                                    {lesson.files.map((file) => (
+                                      <span key={file.id} className="text-xs px-1.5 py-0.5 bg-gray-100 rounded text-gray-600">
+                                        {file.fileType === "video" && <Video className="w-3 h-3 inline" />}
+                                        {file.fileType === "audio" && <Music className="w-3 h-3 inline" />}
+                                        {file.fileType === "script" && <FileType className="w-3 h-3 inline" />}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
+                                    className="h-8 w-8"
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => deleteLessonMutation.mutate(lesson.id)}
+                                    className="h-8 w-8 hover:text-red-500"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CollapsibleContent>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </AdminContentPanel>
+                    </Collapsible>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {editingModule ? "Edit Module" : "Add Module"}
-            </DialogTitle>
+            <DialogTitle>{editingModule ? "Edit Module" : "Add Module"}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <Label className="text-gray-300">Module Title</Label>
+            <Label htmlFor="module-title">Module Title</Label>
             <Input
+              id="module-title"
               value={moduleTitle}
               onChange={(e) => setModuleTitle(e.target.value)}
               placeholder="Enter module title"
-              className="bg-gray-800 border-gray-700 text-white mt-2"
+              className="mt-2"
+              data-testid="input-module-title"
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModuleDialogOpen(false)} className="border-gray-700 text-gray-300">
+            <Button variant="outline" onClick={() => setModuleDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveModule} className="bg-brand hover:bg-brand/90">
-              Save
+            <Button
+              onClick={handleSaveModule}
+              disabled={!moduleTitle.trim()}
+              className="bg-brand hover:bg-brand/90"
+              data-testid="button-save-module"
+            >
+              {editingModule ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {editingFolder ? "Edit Folder" : "Add Folder"}
-            </DialogTitle>
+            <DialogTitle>{editingFolder ? "Edit Folder" : "Add Folder"}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <Label className="text-gray-300">Folder Title</Label>
+            <Label htmlFor="folder-title">Folder Title</Label>
             <Input
+              id="folder-title"
               value={folderTitle}
               onChange={(e) => setFolderTitle(e.target.value)}
               placeholder="Enter folder title"
-              className="bg-gray-800 border-gray-700 text-white mt-2"
+              className="mt-2"
+              data-testid="input-folder-title"
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFolderDialogOpen(false)} className="border-gray-700 text-gray-300">
+            <Button variant="outline" onClick={() => setFolderDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveFolder} className="bg-brand hover:bg-brand/90">
-              Save
+            <Button
+              onClick={handleSaveFolder}
+              disabled={!folderTitle.trim()}
+              className="bg-brand hover:bg-brand/90"
+              data-testid="button-save-folder"
+            >
+              {editingFolder ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">Add Lesson</DialogTitle>
+            <DialogTitle>{editingLesson ? "Edit Lesson" : "Add Lesson"}</DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div>
-              <Label className="text-gray-300">Lesson Title</Label>
+              <Label htmlFor="lesson-title">Lesson Title</Label>
               <Input
+                id="lesson-title"
                 value={lessonTitle}
                 onChange={(e) => setLessonTitle(e.target.value)}
                 placeholder="Enter lesson title"
-                className="bg-gray-800 border-gray-700 text-white mt-2"
+                className="mt-2"
+                data-testid="input-lesson-title"
               />
             </div>
             <div>
-              <Label className="text-gray-300">Description (Optional)</Label>
+              <Label htmlFor="lesson-description">Description (Optional)</Label>
               <Input
+                id="lesson-description"
                 value={lessonDescription}
                 onChange={(e) => setLessonDescription(e.target.value)}
                 placeholder="Enter lesson description"
-                className="bg-gray-800 border-gray-700 text-white mt-2"
+                className="mt-2"
+                data-testid="input-lesson-description"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLessonDialogOpen(false)} className="border-gray-700 text-gray-300">
+            <Button variant="outline" onClick={() => setLessonDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveLesson} className="bg-brand hover:bg-brand/90">
-              Save
+            <Button
+              onClick={handleSaveLesson}
+              disabled={!lessonTitle.trim()}
+              className="bg-brand hover:bg-brand/90"
+              data-testid="button-save-lesson"
+            >
+              {editingLesson ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
