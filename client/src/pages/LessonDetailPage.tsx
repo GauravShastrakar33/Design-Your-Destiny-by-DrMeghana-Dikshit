@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation, useParams } from "wouter";
+import { useLocation, useParams, useSearch } from "wouter";
 import { ArrowLeft, Upload, Trash2, Video, Music, FileType, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,22 @@ export default function LessonDetailPage() {
   const courseId = parseInt(params.courseId || "0");
   const lessonId = parseInt(params.lessonId || "0");
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const { toast } = useToast();
+
+  // Parse the 'from' query parameter to determine back navigation
+  const fromCreate = useMemo(() => {
+    const searchParams = new URLSearchParams(searchString);
+    return searchParams.get("from") === "create";
+  }, [searchString]);
+
+  const handleBack = () => {
+    if (fromCreate) {
+      setLocation(`/admin/courses/create/step3/${courseId}`);
+    } else {
+      setLocation(`/admin/courses/${courseId}`);
+    }
+  };
   
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -251,7 +266,7 @@ export default function LessonDetailPage() {
       <div className="max-w-3xl">
         <Button
           variant="outline"
-          onClick={() => setLocation(`/admin/courses/${courseId}`)}
+          onClick={handleBack}
           className="mb-6"
           data-testid="button-back"
         >

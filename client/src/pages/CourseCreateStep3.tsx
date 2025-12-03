@@ -478,7 +478,7 @@ export default function CourseCreateStep3() {
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
+                                          onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}?from=create`)}
                                           className="h-8 w-8"
                                         >
                                           <Edit className="w-3 h-3" />
@@ -522,7 +522,7 @@ export default function CourseCreateStep3() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
+                                onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}?from=create`)}
                                 className="h-8 w-8"
                               >
                                 <Edit className="w-3 h-3" />

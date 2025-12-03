@@ -357,15 +357,25 @@ export default function CourseBuilderPage() {
       </div>
 
       <div className="max-w-5xl">
-        <Button
-          variant="outline"
-          onClick={() => setLocation("/admin/courses")}
-          className="mb-6"
-          data-testid="button-back"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Courses
-        </Button>
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="outline"
+            onClick={() => setLocation("/admin/courses")}
+            data-testid="button-back"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Courses
+          </Button>
+          <Button
+            onClick={handleSaveCourseInfo}
+            disabled={updateCourseMutation.isPending}
+            className="bg-brand hover:bg-brand/90"
+            data-testid="button-save-course"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save Changes
+          </Button>
+        </div>
 
         <Tabs defaultValue="curriculum" className="space-y-6">
           <TabsList>
@@ -586,7 +596,7 @@ export default function CourseBuilderPage() {
                                             <Button
                                               variant="ghost"
                                               size="icon"
-                                              onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
+                                              onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}?from=edit`)}
                                               className="h-8 w-8"
                                             >
                                               <Edit className="w-3 h-3" />
@@ -630,7 +640,7 @@ export default function CourseBuilderPage() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}`)}
+                                    onClick={() => setLocation(`/admin/courses/${courseId}/lessons/${lesson.id}?from=edit`)}
                                     className="h-8 w-8"
                                   >
                                     <Edit className="w-3 h-3" />
