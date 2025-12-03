@@ -1,0 +1,315 @@
+🚀 Build My CMS (Backend + Frontend UI) — Full Specification
+You are building a CMS admin system for my Admin Portal. Admins can create courses that include modules, folders(optional), lessons, and lesson files (video/audio/script). All files must be uploaded directly to Cloudflare R2 via signed URLs, and metadata must be saved into Postgres via Drizzle ORM.
+This CMS will appear in the Admin Sidebar under the menu item: Courses.
+
+❗ RIGHT NOW we ONLY build the CMS. Not pricing, not checkout, not access control.
+We ONLY build:
+✔ CRUD for all CMS content ✔ Direct-to-R2 file upload ✔ Save metadata in DB ✔ Clean Admin UI ✔ Full course builder
+
+⭐ STEP 1 — CMS STRUCTURE
+The content hierarchy is:
+Courses → Modules → Folders (optional) → Lessons → Lesson Files (video / audio / script)
+
+⭐ STEP 2 — DATABASE SCHEMA (USE EXACTLY THIS)
+
+-- ===========================
+-- 1. COURSES
+-- ===========================
+CREATE TABLE courses (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    program_code TEXT NOT NULL,
+    description TEXT,
+    thumbnail_key TEXT,
+    thumbnail_url TEXT,
+    is_published BOOLEAN DEFAULT false,
+    created_by_admin_id INT REFERENCES admins(id),
+    position INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ===========================
+-- 2. MODULES
+-- ===========================
+CREATE TABLE modules (
+    id SERIAL PRIMARY KEY,
+    course_id INT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    position INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ===========================
+-- 3. MODULE FOLDERS
+-- ===========================
+CREATE TABLE module_folders (
+    id SERIAL PRIMARY KEY,
+    module_id INT NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    position INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT uq_module_folders_id_module UNIQUE (id, module_id)
+);
+
+-- ===========================
+-- 4. LESSONS
+-- ===========================
+CREATE TABLE lessons (
+    id SERIAL PRIMARY KEY,
+    module_id INT NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+    folder_id INT REFERENCES module_folders(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    position INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT fk_lesson_folder_belongs_to_module
+        FOREIGN KEY (folder_id, module_id)
+        REFERENCES module_folders(id, module_id)
+);
+
+-- ===========================
+-- 5. LESSON FILES
+-- ===========================
+CREATE TYPE lesson_file_type AS ENUM ('video', 'audio', 'script');
+
+CREATE TABLE lesson_files (
+    id SERIAL PRIMARY KEY,
+    lesson_id INT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+    file_type lesson_file_type NOT NULL,
+    r2_key TEXT NOT NULL,
+    public_url TEXT,   -- nullable for signed GET later
+    size_mb FLOAT,
+    duration_sec INT,
+    position INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+👉 Reorder indexes
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_modules_position_per_course
+ON modules (course_id, position);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_folders_position_per_module
+ON module_folders (module_id, position);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_lessons_position_per_module_folder
+ON lessons (module_id, COALESCE(folder_id, 0), position);
+
+⭐ STEP 3 — BACKEND REQUIREMENTS (Node.js + Express + Drizzle)
+Backend must include:
+
+✔ CRUD routes for all tables:
+/admin/v1/cms/courses
+/admin/v1/cms/modules
+/admin/v1/cms/folders
+/admin/v1/cms/lessons
+/admin/v1/cms/files
+
+ ✔ Signed PUT URL for upload to R2
+
+✔ Signed GET URL for protected file access
+For securely viewing videos, audios, PDFs, images. (Used later once the content delivery/mapping layer is added. For now, keep it ready.)
+
+
+✔ File key helpers:
+Thumbnails → courses/{courseId}/thumbnail/{timestamp}-{safeName}
+Lesson files → lessons/{lessonId}/{fileType}/{timestamp}-{safeName}
+
+✔ Reorder routes:
+PATCH /admin/v1/cms/courses/reorder
+PATCH /admin/v1/cms/modules/reorder
+PATCH /admin/v1/cms/folders/reorder
+PATCH /admin/v1/cms/lessons/reorder
+✔ Express folder structure:
+
+/server
+   /routes/admin/cms
+      courses.ts
+      modules.ts
+      folders.ts
+      lessons.ts
+      files.ts
+   /utils/r2.ts
+   /utils/signed-put.ts
+   /utils/signed-get.ts
+   /utils/key.ts
+   index.ts
+
+✔ Required environment variables (stored in Replit Secrets)
+
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=
+R2_REGION=auto
+R2_PUBLIC_BASE_URL= https://30bf7f1c147c633787e922a59e8ac9da.r2.cloudflarestorage.com
+SIGNED_URL_TTL_SEC=1800
+
+✔ R2 endpoint: https://30bf7f1c147c633787e922a59e8ac9da.r2.cloudflarestorage.com
+
+✔ R2 Bucket CORS (already SET in Cloudfare)
+[
+  {
+    "AllowedOrigins": [
+      "*"
+    ],
+    "AllowedMethods": [
+      "PUT",
+      "GET",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "*"
+    ],
+    "ExposeHeaders": [
+      "ETag"
+    ],
+    "MaxAgeSeconds": 3000
+  }
+]
+
+✔ Authentication stub Backend auto-sets created_by_admin_id.
+
+
+⭐ STEP 4 — FRONTEND ADMIN UI (React + TypeScript + Tailwind + shadcn/ui)
+Frontend lives inside admin panel → menu item Courses.
+Folder structure:
+
+/src
+   /pages/Courses
+   /pages/Courses/[id]        <-- Course Builder page
+   /pages/Courses/create
+   /lib/r2Upload.ts
+   /components
+
+Use:
+* React (Vite)
+* TypeScript
+* TailwindCSS
+* shadcn/ui
+* React Query (preferred)
+* Axios
+
+📌 FRONTEND PAGES
+
+1. Courses List Page
+Component:/pages/courses/CoursesList.tsx
+Route: /courses
+
+Based on the screenshot I provided (Teachable courses list), BUT using my fields:
+Columns:
+* Thumbnail
+* Name
+* Program Code
+* Created At
+* Status (Published / Unpublished)
+* Actions (Edit, Delete, Publish/Unpublish)
+DO NOT show:
+* sales
+* enrollments
+
+Features required:
+* Search bar
+* Filter by Program Code
+* ASC/DESC sorting
+* Reordering courses(drag and drop)
+* “New Course” button
+
+
+When clicked on “New Course” button
+
+⭐ 3-STEP COURSE CREATION FLOW (FULL PAGES, NOT MODALS)
+
+⭐ STEP 1 — Basic Info
+Route: /courses/create/step1
+Fields:
+* Title
+* Program Code
+* Description
+API:
+POST /admin/v1/cms/courses (Thumbnail not uploaded here → keep null)
+Navigation:
+* Continue → Step 2
+After save → redirect to Step 2.
+
+⭐ STEP 2 — Upload Thumbnail (Optional)
+Route: /courses/create/step2
+UI Requirements:
+* Upload box (drag & drop + button)
+* Preview after upload
+* Recommended specs:
+    * Aspect ratio: 16:9
+    * Recommended size: 1024×576
+    * Formats: JPG or PNG
+    * Max size: 1–2 MB (optional)
+    * 
+Secondary card:
+"I don’t have one — Skip for now"
+Flow:
+1. Get signed PUT URL POST /admin/v1/cms/files/get-upload-url
+2. Upload to R2
+3. Save thumbnail PUT /admin/v1/cms/courses/:id → update thumbnail_key + thumbnail_url
+4. After save → redirect to Step 3
+Navigation:
+* Back → Step 1
+* Continue → Step 3
+
+⭐ STEP 3 — Build Curriculum
+Route: /courses/create/step3
+CMS Management on a single screen:
+* Add/Edit/Delete Modules
+* Add/Edit/Delete Folders
+* Add/Edit/Delete Lessons
+* Upload lesson files (video/audio/script)
+Lesson file upload flow:
+1. POST /admin/v1/cms/files/get-upload-url
+2. Upload to signed URL (PUT)
+3. POST /admin/v1/cms/files/confirm
+Accepted file types:
+* video: video/*
+* audio: audio/*
+* script: application/pdf
+Additional setting:
+* Publish Toggle (switch) Field: is_published: boolean
+Final Action:
+Create
+
+PUT /admin/v1/cms/courses/:id
+{ is_published, other updated fields }
+Navigation:
+* Back → Step 2
+* Create → final submit
+
+
+2. COURSE DETAIL PAGE (COURSE BUILDER)
+When clicking a course in list → /courses/[id]
+Inside this page, admin can:
+* View & reorder modules
+* Open a module → see folders + lessons
+* Open folder → see lessons
+* Open lesson → upload files (video/audio/script)
+* Edit everything (full CRUD)
+This acts as: ✔ Course Editor AND ✔ Course Structure Preview
+
+⭐ TECHNOLOGY RULES
+* DO NOT build pricing system
+* DO NOT build payment pages
+* DO NOT display sales or enrollments
+* DO NOT copy Teachable colors
+* Keep our existing Admin Panel theme
+
+⭐ FINAL GOAL — WHAT YOU MUST DELIVER
+1. Fully working backend
+2. Fully working React frontend
+3. Courses list page
+4. 3-step create flow
+5. Thumbnail upload
+6. Complete course builder
+7. Direct-to-R2 uploads (video/audio/script)
+8. Reorder support (drag & drop)
+9. Clean UI using shadcn
+10. Everything connected end-to-end
