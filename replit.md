@@ -33,16 +33,18 @@ Preferred communication style: Simple, everyday language.
 
 ### CMS System (Course Management)
 - **Course Structure**: Hierarchical structure with courses → modules → folders → lessons → files
+- **Programs Management**: Dedicated CRUD interface at `/admin/programs` for managing programs (code + name). Courses link to programs via foreign key (`programId`).
 - **Admin Pages**: 
-  - `/admin/courses` - Course list with search, filter, reordering, publish/unpublish
-  - `/admin/courses/create/step1` - Basic Info step (title, program code, description)
+  - `/admin/programs` - Program management with create, edit, delete functionality
+  - `/admin/courses` - Course list with search, filter by program, reordering, publish/unpublish
+  - `/admin/courses/create/step1` - Basic Info step (title, program dropdown, description)
   - `/admin/courses/create/step2/:id` - Thumbnail upload step
   - `/admin/courses/create/step3/:id` - Curriculum builder (modules, folders, lessons)
   - `/admin/courses/:id` - Course builder for editing existing courses
   - `/admin/courses/:courseId/lessons/:lessonId` - Lesson detail with file uploads
-- **Database Tables**: cms_courses, cms_modules, cms_module_folders, cms_lessons, cms_lesson_files
+- **Database Tables**: programs, cms_courses (with programId FK), cms_modules, cms_module_folders, cms_lessons, cms_lesson_files
 - **Media Storage**: Cloudflare R2 for video, audio, and PDF files with signed URLs
-- **API Prefix**: All CMS routes use `/api/admin/v1/cms/` prefix
+- **API Prefix**: All CMS routes use `/api/admin/v1/cms/` prefix; Programs use `/api/admin/v1/programs`
 
 ### System Design Choices
 - **API Design**: RESTful APIs for data interaction, with distinct public and admin endpoints.
