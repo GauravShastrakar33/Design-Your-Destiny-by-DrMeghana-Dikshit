@@ -181,7 +181,7 @@ export type UserWithPrograms = User & { programs: string[] };
 export const cmsCourses = pgTable("cms_courses", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  programCode: text("program_code").notNull(),
+  programId: integer("program_id").references(() => programs.id, { onDelete: 'set null' }),
   description: text("description"),
   thumbnailKey: text("thumbnail_key"),
   isPublished: boolean("is_published").notNull().default(false),
