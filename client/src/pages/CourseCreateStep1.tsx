@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { z } from "zod";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -16,12 +16,20 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import type { Program } from "@shared/schema";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  programCode: z.string().min(1, "Program code is required"),
+  programId: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -31,18 +39,36 @@ export default function CourseCreateStep1() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
+  const adminToken = localStorage.getItem("@app:admin_token") || "";
+
+  const { data: programs = [] } = useQuery<Program[]>({
+    queryKey: ["/api/admin/v1/programs"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/v1/programs", {
+        headers: { "Authorization": `Bearer ${adminToken}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch programs");
+      return response.json();
+    },
+  });
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      programCode: "",
+      programId: "",
       description: "",
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const response = await apiRequest("POST", "/api/admin/v1/cms/courses", data);
+      const payload = {
+        title: data.title,
+        programId: data.programId ? parseInt(data.programId) : null,
+        description: data.description || null,
+      };
+      const response = await apiRequest("POST", "/api/admin/v1/cms/courses", payload);
       return response.json();
     },
     onSuccess: (course) => {
@@ -105,17 +131,24 @@ export default function CourseCreateStep1() {
 
               <FormField
                 control={form.control}
-                name="programCode"
+                name="programId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Program Code</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="e.g., MMB, USP, ENG"
-                        data-testid="input-program-code"
-                      />
-                    </FormControl>
+                    <FormLabel>Program (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-program">
+                          <SelectValue placeholder="Select a program" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {programs.map((program) => (
+                          <SelectItem key={program.id} value={String(program.id)}>
+                            {program.name} ({program.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
