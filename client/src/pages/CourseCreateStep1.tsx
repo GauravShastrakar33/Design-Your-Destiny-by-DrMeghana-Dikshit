@@ -65,7 +65,7 @@ export default function CourseCreateStep1() {
     mutationFn: async (data: FormData) => {
       const payload = {
         title: data.title,
-        programId: data.programId ? parseInt(data.programId) : null,
+        programId: data.programId && data.programId !== "none" ? parseInt(data.programId) : null,
         description: data.description || null,
       };
       const response = await apiRequest("POST", "/api/admin/v1/cms/courses", payload);
@@ -142,6 +142,7 @@ export default function CourseCreateStep1() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="none">-- No Program --</SelectItem>
                         {programs.map((program) => (
                           <SelectItem key={program.id} value={String(program.id)}>
                             {program.name} ({program.code})

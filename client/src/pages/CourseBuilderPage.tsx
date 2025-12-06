@@ -333,7 +333,7 @@ export default function CourseBuilderPage() {
   const handleSaveCourseInfo = () => {
     updateCourseMutation.mutate({ 
       title, 
-      programId: programId ? parseInt(programId) : null, 
+      programId: programId && programId !== "none" ? parseInt(programId) : null, 
       description 
     });
   };
@@ -426,6 +426,7 @@ export default function CourseBuilderPage() {
                         <SelectValue placeholder="Select a program" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">-- No Program --</SelectItem>
                         {programs.map((program) => (
                           <SelectItem key={program.id} value={String(program.id)}>
                             {program.name} ({program.code})
