@@ -7,7 +7,8 @@ import {
   insertSpiritualBreathSchema,
   insertCmsCourseSchema, insertCmsModuleSchema, insertCmsModuleFolderSchema,
   insertCmsLessonSchema, insertCmsLessonFileSchema,
-  cmsCourses, cmsModules, cmsModuleFolders, cmsLessons, cmsLessonFiles
+  cmsCourses, cmsModules, cmsModuleFolders, cmsLessons, cmsLessonFiles,
+  programs
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -1196,15 +1197,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
-  // CMS ROUTES - Courses, Modules, Folders, Lessons, Files
+  // CMS ROUTES - Programs, Courses, Modules, Folders, Lessons, Files
   // ============================================
+
+  // --- PROGRAMS CRUD ---
+  
+  // Get all programs
+  app.get("/api/admin/v1/programs", requireAdmin, async (req, res) => {
+    try {
+      const allPrograms = await db.select().from(programs).orderBy(asc(programs.name));
+      res.json(allPrograms);
+    } catch (error) {
+      console.error("Error fetching programs:", error);
+      res.status(500).json({ error: "Failed to fetch programs" });
+    }
+  });
+
+  // Create a new program
+  app.post("/api/admin/v1/programs", requireAdmin, async (req, res) => {
+    try {
+      const { code, name } = req.body;
+      
+      if (!code || !name) {
+        res.status(400).json({ error: "Code and name are required" });
+        return;
+      }
+      
+      const [newProgram] = await db.insert(programs).values({
+        code: String(code).toUpperCase(),
+        name: String(name),
+      }).returning();
+      
+      res.status(201).json(newProgram);
+    } catch (error: any) {
+      console.error("Error creating program:", error);
+      if (error.code === '23505') {
+        res.status(409).json({ error: "A program with this code already exists" });
+        return;
+      }
+      res.status(500).json({ error: "Failed to create program" });
+    }
+  });
+
+  // Update a program
+  app.put("/api/admin/v1/programs/:id", requireAdmin, async (req, res) => {
+    try {
+      const programId = parseInt(req.params.id);
+      const { code, name } = req.body;
+      
+      const [updated] = await db.update(programs)
+        .set({
+          ...(code && { code: String(code).toUpperCase() }),
+          ...(name && { name: String(name) }),
+        })
+        .where(eq(programs.id, programId))
+        .returning();
+      
+      if (!updated) {
+        res.status(404).json({ error: "Program not found" });
+        return;
+      }
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error updating program:", error);
+      if (error.code === '23505') {
+        res.status(409).json({ error: "A program with this code already exists" });
+        return;
+      }
+      res.status(500).json({ error: "Failed to update program" });
+    }
+  });
+
+  // Delete a program
+  app.delete("/api/admin/v1/programs/:id", requireAdmin, async (req, res) => {
+    try {
+      const programId = parseInt(req.params.id);
+      
+      // Check if any courses use this program
+      const linkedCourses = await db.select({ id: cmsCourses.id })
+        .from(cmsCourses)
+        .where(eq(cmsCourses.programId, programId));
+      
+      if (linkedCourses.length > 0) {
+        res.status(400).json({ 
+          error: "Cannot delete program", 
+          message: `This program is linked to ${linkedCourses.length} course(s). Please reassign or delete those courses first.` 
+        });
+        return;
+      }
+      
+      const [deleted] = await db.delete(programs)
+        .where(eq(programs.id, programId))
+        .returning();
+      
+      if (!deleted) {
+        res.status(404).json({ error: "Program not found" });
+        return;
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting program:", error);
+      res.status(500).json({ error: "Failed to delete program" });
+    }
+  });
 
   // --- CMS COURSES ---
   
   // Get all courses
   app.get("/api/admin/v1/cms/courses", requireAdmin, async (req, res) => {
     try {
-      const { search, programCode, sortOrder = "asc" } = req.query;
+      const { search, programId, sortOrder = "asc" } = req.query;
       
       const courses = await db.select().from(cmsCourses).orderBy(
         sortOrder === "desc" ? sql`position DESC` : asc(cmsCourses.position)
@@ -1219,9 +1323,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
       
-      if (programCode) {
+      if (programId) {
+        const pid = parseInt(String(programId));
         filteredCourses = filteredCourses.filter(c => 
-          c.programCode === String(programCode)
+          c.programId === pid
         );
       }
       
