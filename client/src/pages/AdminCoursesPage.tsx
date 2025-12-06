@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { CmsCourse } from "@shared/schema";
+import type { CmsCourse, Program } from "@shared/schema";
 import { format } from "date-fns";
 
 type CourseWithSignedUrl = CmsCourse & { thumbnailSignedUrl?: string | null };
@@ -40,6 +40,23 @@ export default function AdminCoursesPage() {
   const [courseToDelete, setCourseToDelete] = useState<CourseWithSignedUrl | null>(null);
 
   const adminToken = localStorage.getItem("@app:admin_token") || "";
+
+  const { data: programs = [] } = useQuery<Program[]>({
+    queryKey: ["/api/admin/v1/programs"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/v1/programs", {
+        headers: { "Authorization": `Bearer ${adminToken}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch programs");
+      return response.json();
+    },
+  });
+
+  const programMap = new Map(programs.map(p => [p.id, p]));
+  const getProgramName = (programId: number | null) => {
+    if (!programId) return "-";
+    return programMap.get(programId)?.name || "-";
+  };
 
   const { data: courses = [], isLoading } = useQuery<CourseWithSignedUrl[]>({
     queryKey: ["/api/admin/v1/cms/courses"],
@@ -97,11 +114,11 @@ export default function AdminCoursesPage() {
 
   const filteredCourses = sortedCourses.filter((course) => {
     const matchesSearch = !search || course.title.toLowerCase().includes(search.toLowerCase());
-    const matchesProgram = programFilter === "all" || course.programCode === programFilter;
+    const matchesProgram = programFilter === "all" || course.programId === parseInt(programFilter);
     return matchesSearch && matchesProgram;
   });
 
-  const uniqueProgramCodes = Array.from(new Set(courses.map((c) => c.programCode)));
+  const uniqueProgramIds = Array.from(new Set(courses.map((c) => c.programId).filter(Boolean))) as number[];
 
   const handleDelete = (course: CourseWithSignedUrl) => {
     setCourseToDelete(course);
@@ -169,9 +186,9 @@ export default function AdminCoursesPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Programs</SelectItem>
-              {uniqueProgramCodes.map((code) => (
-                <SelectItem key={code} value={code}>
-                  {code}
+              {uniqueProgramIds.map((pid) => (
+                <SelectItem key={pid} value={String(pid)}>
+                  {getProgramName(pid)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -251,7 +268,7 @@ export default function AdminCoursesPage() {
                       <span className="font-medium text-gray-900">{course.title}</span>
                     </td>
                     <td className="py-3 px-4 text-gray-600">
-                      {course.programCode}
+                      {getProgramName(course.programId)}
                     </td>
                     <td className="py-3 px-4 text-gray-600">
                       {course.createdAt ? format(new Date(course.createdAt), "dd MMM yy") : "-"}

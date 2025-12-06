@@ -10,6 +10,7 @@ import AdminProjectHeartPage from "@/pages/AdminProjectHeartPage";
 import AdminStudentsPage from "@/pages/AdminStudentsPage";
 import AdminsPage from "@/pages/AdminsPage";
 import AdminCoursesPage from "@/pages/AdminCoursesPage";
+import AdminProgramsPage from "@/pages/AdminProgramsPage";
 import CourseCreateStep1 from "@/pages/CourseCreateStep1";
 import CourseCreateStep2 from "@/pages/CourseCreateStep2";
 import CourseCreateStep3 from "@/pages/CourseCreateStep3";
@@ -31,6 +32,7 @@ export default function AdminRoutes() {
       <Route path="/admin/users/students" component={AdminStudentsPage} />
       <Route path="/admin/users/admins" component={AdminsPage} />
       <Route path="/admin/courses" component={AdminCoursesPage} />
+      <Route path="/admin/programs" component={AdminProgramsPage} />
       <Route path="/admin/courses/create/step1" component={CourseCreateStep1} />
       <Route path="/admin/courses/create/step2/:id" component={CourseCreateStep2} />
       <Route path="/admin/courses/create/step3/:id" component={CourseCreateStep3} />

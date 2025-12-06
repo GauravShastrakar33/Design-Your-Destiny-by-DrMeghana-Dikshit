@@ -89,6 +89,7 @@ const menuContent: Record<string, { title: string; items: { path: string; label:
     items: [
       { path: "/admin/courses", label: "All Courses", icon: List },
       { path: "/admin/courses/create/step1", label: "Create Course", icon: Plus },
+      { path: "/admin/programs", label: "Programs", icon: BookOpen },
     ]
   },
   project: {
