@@ -23,7 +23,14 @@ import {
 } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { CmsCourse, CmsModule, CmsModuleFolder, CmsLesson, CmsLessonFile } from "@shared/schema";
+import type { CmsCourse, CmsModule, CmsModuleFolder, CmsLesson, CmsLessonFile, Program } from "@shared/schema";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type CourseWithModules = CmsCourse & {
   thumbnailSignedUrl?: string | null;
@@ -40,7 +47,7 @@ export default function CourseBuilderPage() {
   const { toast } = useToast();
   
   const [title, setTitle] = useState("");
-  const [programCode, setProgramCode] = useState("");
+  const [programId, setProgramId] = useState<string>("");
   const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
   
@@ -75,10 +82,21 @@ export default function CourseBuilderPage() {
     enabled: !!courseId,
   });
 
+  const { data: programs = [] } = useQuery<Program[]>({
+    queryKey: ["/api/admin/v1/programs"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/v1/programs", {
+        headers: { "Authorization": `Bearer ${adminToken}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch programs");
+      return response.json();
+    },
+  });
+
   useEffect(() => {
     if (course) {
       setTitle(course.title);
-      setProgramCode(course.programCode);
+      setProgramId(course.programId ? String(course.programId) : "");
       setDescription(course.description || "");
     }
   }, [course]);
@@ -313,7 +331,11 @@ export default function CourseBuilderPage() {
   };
 
   const handleSaveCourseInfo = () => {
-    updateCourseMutation.mutate({ title, programCode, description });
+    updateCourseMutation.mutate({ 
+      title, 
+      programId: programId ? parseInt(programId) : null, 
+      description 
+    });
   };
 
   if (isLoading) {
@@ -398,13 +420,19 @@ export default function CourseBuilderPage() {
                     />
                   </div>
                   <div>
-                    <Label>Program Code</Label>
-                    <Input
-                      value={programCode || course?.programCode || ""}
-                      onChange={(e) => setProgramCode(e.target.value)}
-                      className="mt-2"
-                      data-testid="input-program-code"
-                    />
+                    <Label>Program (Optional)</Label>
+                    <Select value={programId} onValueChange={setProgramId}>
+                      <SelectTrigger className="mt-2" data-testid="select-program">
+                        <SelectValue placeholder="Select a program" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {programs.map((program) => (
+                          <SelectItem key={program.id} value={String(program.id)}>
+                            {program.name} ({program.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div>
