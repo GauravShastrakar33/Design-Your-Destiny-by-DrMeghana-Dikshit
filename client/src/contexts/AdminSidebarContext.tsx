@@ -54,6 +54,15 @@ const menuItems: MenuItem[] = [
     label: "Courses"
   },
   { 
+    id: "process",
+    label: "Process Library",
+    submenu: [
+      { path: "/admin/processes", label: "Processes" },
+      { path: "/admin/spiritual-breaths", label: "Spiritual Breaths" },
+      { path: "/admin/abundance-mastery", label: "Abundance Mastery" },
+    ]
+  },
+  { 
     id: "project",
     path: "/admin/project-heart", 
     label: "Project of Heart"

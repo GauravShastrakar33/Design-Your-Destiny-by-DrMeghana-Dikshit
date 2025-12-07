@@ -15,6 +15,9 @@ import {
   Settings,
   Plus,
   List,
+  Sparkles,
+  Wind,
+  DollarSign,
 } from "lucide-react";
 
 const menuIcons: Record<string, React.ElementType> = {
@@ -25,6 +28,7 @@ const menuIcons: Record<string, React.ElementType> = {
   articles: FileText,
   workshops: GraduationCap,
   courses: GraduationCap,
+  process: BookOpen,
   project: Heart,
 };
 
@@ -91,6 +95,14 @@ const menuContent: Record<
         icon: Plus,
       },
       { path: "/admin/programs", label: "Programs", icon: BookOpen },
+    ],
+  },
+  process: {
+    title: "Process Library",
+    items: [
+      { path: "/admin/processes", label: "Processes", icon: Sparkles },
+      { path: "/admin/spiritual-breaths", label: "Spiritual Breaths", icon: Wind },
+      { path: "/admin/abundance-mastery", label: "Abundance Mastery", icon: DollarSign },
     ],
   },
   project: {

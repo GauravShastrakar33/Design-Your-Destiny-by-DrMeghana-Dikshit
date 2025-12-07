@@ -7,7 +7,8 @@ import {
   FileText, 
   GraduationCap, 
   Heart,
-  LogOut
+  LogOut,
+  BookOpen
 } from "lucide-react";
 import { useAdminSidebar } from "@/contexts/AdminSidebarContext";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -26,6 +27,7 @@ const menuItemsConfig: MenuItemConfig[] = [
   { id: "sessions", path: "/admin/sessions", label: "Community Practices", icon: UsersRound },
   { id: "articles", path: "/admin/articles", label: "Articles", icon: FileText },
   { id: "courses", path: "/admin/courses", label: "Courses", icon: GraduationCap },
+  { id: "process", label: "Process Library", icon: BookOpen },
   { id: "project", path: "/admin/project-heart", label: "Project of Heart", icon: Heart },
 ];
 
