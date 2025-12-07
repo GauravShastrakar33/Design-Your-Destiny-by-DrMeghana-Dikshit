@@ -125,6 +125,26 @@ Preferred communication style: Simple, everyday language.
 - **AWS S3**: For media file uploads (e.g., article images).
 - **Cloudflare R2**: For CMS course content storage (video, audio, PDF files). Uses signed URLs for secure upload/download.
 
+### Global Search System
+- **Purpose**: Allows users to search across all mapped content (Processes, Spiritual Breaths, Abundance Mastery)
+- **Search Logic**: Only searches within courses that are mapped to features via `feature_course_map`
+- **Display Mode Awareness**: 
+  - DYD/USM (modules mode): Returns matching modules
+  - BREATH (lessons mode): Returns matching lessons
+  - ABUNDANCE (courses mode): Returns matching courses
+- **API Routes**:
+  - `GET /api/public/v1/search?q=keyword` - Search across mapped content
+  - `GET /api/public/v1/modules/:id` - Get module with lessons
+  - `GET /api/public/v1/lessons/:id` - Get lesson with files (signed R2 URLs)
+  - `GET /api/public/v1/courses/:id` - Get course with modules
+- **Deep-Link Routes**:
+  - `/processes/module/:id` - Process module detail page
+  - `/processes/lesson/:id` - Process lesson detail page
+  - `/spiritual-breaths/lesson/:id` - Spiritual breath lesson detail page
+  - `/abundance-mastery/course/:id` - Abundance course detail page
+- **Frontend Page**: `/search` with debounced input (300ms), grouped results by type
+
 ## Recent Changes
+- **December 2025**: Implemented global search system - searches only mapped content, deep-link pages for modules/lessons/courses with signed R2 URLs.
 - **December 2025**: Implemented frontend feature mapping system - allows admins to map CMS courses to Processes (DYD/USM), Spiritual Breaths, and Abundance Mastery features via new admin pages.
 - **December 2025**: Removed Practice Library functionality (process_folders, process_subfolders, processes, spiritual_breaths tables and APIs) to rebuild Processes, Spiritual Breaths, and Abundance Mastery as separate features.
