@@ -1981,6 +1981,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== MONEY CALENDAR ROUTES (User API) =====
+
+  // POST /api/v1/money-calendar/entry - Create or update a money entry
+  app.post("/api/v1/money-calendar/entry", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { date, amount } = req.body;
+
+      if (!date || typeof date !== "string") {
+        return res.status(400).json({ error: "Date is required in YYYY-MM-DD format" });
+      }
+
+      if (amount === undefined || amount === null || typeof amount !== "number") {
+        return res.status(400).json({ error: "Amount is required as a number" });
+      }
+
+      // Validate date format
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(date)) {
+        return res.status(400).json({ error: "Date must be in YYYY-MM-DD format" });
+      }
+
+      const entry = await storage.upsertMoneyEntry(
+        req.user.sub,
+        date,
+        amount.toString()
+      );
+
+      res.json({
+        id: entry.id,
+        date: entry.entryDate,
+        amount: parseFloat(entry.amount),
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt
+      });
+    } catch (error) {
+      console.error("Error saving money entry:", error);
+      res.status(500).json({ error: "Failed to save money entry" });
+    }
+  });
+
+  // GET /api/v1/money-calendar?month=YYYY-MM - Get monthly data with summary
+  app.get("/api/v1/money-calendar", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { month } = req.query;
+
+      if (!month || typeof month !== "string") {
+        return res.status(400).json({ error: "Month is required in YYYY-MM format" });
+      }
+
+      // Validate month format
+      const monthRegex = /^\d{4}-\d{2}$/;
+      if (!monthRegex.test(month)) {
+        return res.status(400).json({ error: "Month must be in YYYY-MM format" });
+      }
+
+      const [yearStr, monthStr] = month.split("-");
+      const year = parseInt(yearStr, 10);
+      const monthNum = parseInt(monthStr, 10);
+
+      if (monthNum < 1 || monthNum > 12) {
+        return res.status(400).json({ error: "Invalid month value" });
+      }
+
+      const data = await storage.getMoneyEntriesForMonth(req.user.sub, year, monthNum);
+
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching money calendar:", error);
+      res.status(500).json({ error: "Failed to fetch money calendar" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

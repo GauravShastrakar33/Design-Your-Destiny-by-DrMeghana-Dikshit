@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, serial, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -247,3 +247,24 @@ export const insertFeatureCourseMapSchema = createInsertSchema(featureCourseMap)
 
 export type InsertFeatureCourseMap = z.infer<typeof insertFeatureCourseMapSchema>;
 export type FeatureCourseMap = typeof featureCourseMap.$inferSelect;
+
+// Money Calendar Table
+export const moneyEntries = pgTable("money_entries", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  entryDate: date("entry_date", { mode: "string" }).notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueUserDate: unique("unique_user_date").on(table.userId, table.entryDate),
+}));
+
+export const insertMoneyEntrySchema = createInsertSchema(moneyEntries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertMoneyEntry = z.infer<typeof insertMoneyEntrySchema>;
+export type MoneyEntry = typeof moneyEntries.$inferSelect;

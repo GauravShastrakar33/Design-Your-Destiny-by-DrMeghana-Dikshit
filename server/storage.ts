@@ -7,10 +7,11 @@ import {
   type UserProgram, type InsertUserProgram,
   type FrontendFeature, type InsertFrontendFeature,
   type FeatureCourseMap, type InsertFeatureCourseMap,
+  type MoneyEntry,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
-  cmsCourses, cmsModules, cmsLessons
+  cmsCourses, cmsModules, cmsLessons, moneyEntries
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -727,6 +728,66 @@ export class DbStorage implements IStorage {
     const moduleIds = modules.map(m => m.id);
     if (moduleIds.length === 0) return [];
     return await db.select().from(cmsLessons).where(inArray(cmsLessons.moduleId, moduleIds)).orderBy(asc(cmsLessons.position));
+  }
+
+  // Money Calendar Methods
+  async upsertMoneyEntry(userId: number, entryDate: string, amount: string): Promise<MoneyEntry> {
+    const [entry] = await db
+      .insert(moneyEntries)
+      .values({
+        userId,
+        entryDate,
+        amount,
+      })
+      .onConflictDoUpdate({
+        target: [moneyEntries.userId, moneyEntries.entryDate],
+        set: {
+          amount,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return entry;
+  }
+
+  async getMoneyEntriesForMonth(userId: number, year: number, month: number): Promise<{ days: Record<string, number>; summary: { total: number; highest: number; average: number } }> {
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    const entries = await db
+      .select()
+      .from(moneyEntries)
+      .where(
+        and(
+          eq(moneyEntries.userId, userId),
+          sql`${moneyEntries.entryDate} >= ${startDate}::date`,
+          sql`${moneyEntries.entryDate} <= ${endDate}::date`
+        )
+      );
+
+    const days: Record<string, number> = {};
+    let total = 0;
+    let highest = 0;
+
+    for (const entry of entries) {
+      const amount = parseFloat(entry.amount);
+      days[entry.entryDate] = amount;
+      total += amount;
+      if (amount > highest) highest = amount;
+    }
+
+    const entryCount = entries.length;
+    const average = entryCount > 0 ? total / entryCount : 0;
+
+    return {
+      days,
+      summary: {
+        total: Math.round(total * 100) / 100,
+        highest: Math.round(highest * 100) / 100,
+        average: Math.round(average * 100) / 100,
+      },
+    };
   }
 }
 
