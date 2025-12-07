@@ -1,0 +1,165 @@
+🚀 Extend My CMS — Add Mapping Functionality to Admin Panel
+This project has:
+✔ Backend at server/
+✔ React Admin Panel at client/src/
+You need to add a mapping layer that lets the admin connect CMS Courses to specific Frontend Features:
+
+Process Library (Sidebar)
+   - Processes
+   - Spiritual Breaths
+   - Abundance Mastery
+These admin pages do NOT exist — you must create them.
+
+🎯 GOAL (Must Follow EXACTLY)
+Add mapping logic so my frontend app can fetch the right content from CMS.
+Feature → Mapping Rules
+Admin Page	Feature Code	Display Mode	Mapping Rule
+Processes (DYD)	DYD	modules	Select ONE CMS course → show its modules
+Processes (USM)	USM	modules	Select ONE CMS course → show its modules
+Spiritual Breaths	BREATH	lessons	Select ONE CMS course → show its lessons
+Abundance Mastery	ABUNDANCE	courses	Select MANY CMS courses, reorderable
+Additional Rules
+* No icons
+* No module-level mapping
+* Do NOT use program_code
+* Do NOT change CMS tables (courses/modules/lessons/files)
+* Only modify mapping-layer tables
+
+🧱 DATABASE CHANGES (Drizzle + SQL)
+Create 2 new tables inside:
+server/db/schema/mapping.ts
+
+1️⃣ frontend_features (static registry)
+CREATE TABLE IF NOT EXISTS frontend_features (
+  id SERIAL PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,      -- DYD, USM, BREATH, ABUNDANCE
+  display_name TEXT NOT NULL,
+  display_mode TEXT NOT NULL,     -- 'modules' | 'lessons' | 'courses'
+  created_at TIMESTAMP DEFAULT NOW()
+);
+Insert these rows (do NOT change CMS):
+
+DYD, 'DYD Processes', 'modules'
+USM, 'USM Processes', 'modules'
+BREATH, 'Spiritual Breaths', 'lessons'
+ABUNDANCE, 'Abundance Mastery', 'courses'
+
+2️⃣ feature_course_map
+CREATE TABLE IF NOT EXISTS feature_course_map (
+  id SERIAL PRIMARY KEY,
+  feature_id INT NOT NULL REFERENCES frontend_features(id) ON DELETE CASCADE,
+  course_id INT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  position INT DEFAULT 0,   -- used only for ABUNDANCE
+  created_at TIMESTAMP DEFAULT NOW(),
+  CONSTRAINT uq_feature_course UNIQUE (feature_id, course_id)
+);
+DYD/USM/BREATH can have max 1 mapping. ABUNDANCE can have many.
+
+🔌 BACKEND ROUTES (Admin API)
+Create:
+server/routes/admin/frontend-mapping/index.ts
+server/controllers/frontendMappingController.ts
+Use these endpoints:
+
+FEATURE LIST
+GET /admin/v1/frontend-mapping/features
+
+COURSE MAPPINGS
+GET    /admin/v1/frontend-mapping/features/:code/courses
+POST   /admin/v1/frontend-mapping/features/:code/courses
+DELETE /admin/v1/frontend-mapping/features/:code/courses/:courseId
+PATCH  /admin/v1/frontend-mapping/features/:code/courses/reorder
+
+Rules:
+* DYD/USM/BREATH → replace existing row on POST (only 1 allowed)
+* ABUNDANCE → append new course on POST, reorder on PATCH
+* DELETE allowed for all
+* Reject reorder for non-ABUNDANCE
+
+🌍 PUBLIC API (used by user app)
+Create:
+server/routes/public/features.ts
+
+Endpoint:
+GET /public/v1/features/:code
+
+Behavior by display_mode:
+1️⃣ 'modules' (DYD / USM)
+Return:
+* Selected course
+* Its modules (ordered by CMS)
+
+2️⃣ 'lessons' (BREATH)
+Return:
+* Selected course
+* Its lessons (directly; ignore folders)
+
+3️⃣ 'courses' (ABUNDANCE)
+Return:
+1. Built-in items:
+    * Money Calendar
+    * Rewiring Belief
+2. All mapped CMS courses sorted by position
+Built-ins MUST NOT be stored in DB.
+
+🖥️ FRONTEND ADMIN PANEL (React at client/src/pages)
+Create THREE NEW PAGES based on your sidebar routes:
+
+client/src/pages/Processes/index.tsx
+client/src/pages/SpiritualBreaths/index.tsx
+client/src/pages/AbundanceMastery/index.tsx
+And add them to the admin router.
+
+1️⃣ /admin/processes Page (DYD & USM Tabs)
+Create a segmented control:
+
+[ DYD ] [ USM ]
+Inside each tab:
+* Dropdown: select CMS Course
+* On change → POST mapping
+* Show module preview (read-only list)
+* Buttons:
+    * “Change Course”
+    * “Clear Selection”
+
+2️⃣ /admin/spiritual-breaths Page
+* Dropdown to select ONE CMS course
+* On select → POST mapping
+* Show list of lessons (read-only)
+
+3️⃣ /admin/abundance-mastery Page
+* Show two fixed built-in blocks first:
+    * Money Calendar
+    * Rewiring Belief
+* Under that:
+    * Add CMS Course (dropdown) → POST
+    * Mapped list (sortable with drag-and-drop)
+    * Remove course
+    * Reorder list → PATCH
+
+🧪 VALIDATIONS
+* Do not use program_code anywhere
+* Do not store built-in items in DB
+* Do not duplicate course mappings
+* DYD/USM/BREATH must always have max 1 mapped course
+* ABUNDANCE must allow unlimited mapped courses
+
+📁 Correct File Locations (Matching Real Project)
+BACKEND
+server/db/schema/mapping.ts
+server/controllers/frontendMappingController.ts
+server/routes/admin/frontend-mapping/index.ts
+server/routes/public/features.ts
+
+FRONTEND
+client/src/pages/Processes/index.tsx
+client/src/pages/SpiritualBreaths/index.tsx
+client/src/pages/AbundanceMastery/index.tsx
+
+Use existing:
+client/src/components
+client/src/lib/queryClient.ts
+client/src/routes
+
+UI 
+Keep ui, colours and theme as per the app theme
