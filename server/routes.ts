@@ -6,7 +6,7 @@ import {
   insertCmsCourseSchema, insertCmsModuleSchema, insertCmsModuleFolderSchema,
   insertCmsLessonSchema, insertCmsLessonFileSchema,
   cmsCourses, cmsModules, cmsModuleFolders, cmsLessons, cmsLessonFiles,
-  programs
+  programs, frontendFeatures, featureCourseMap
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -1782,6 +1782,202 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching public feature:", error);
       res.status(500).json({ error: "Failed to fetch feature" });
+    }
+  });
+
+  // ===== PUBLIC CONTENT APIs (for deep-linking) =====
+
+  // Get module by ID (for Processes deep-link)
+  app.get("/api/public/v1/modules/:id", async (req, res) => {
+    try {
+      const moduleId = parseInt(req.params.id);
+      const [module] = await db.select().from(cmsModules).where(eq(cmsModules.id, moduleId));
+      
+      if (!module) {
+        return res.status(404).json({ error: "Module not found" });
+      }
+
+      // Get lessons for this module
+      const lessons = await db.select().from(cmsLessons).where(eq(cmsLessons.moduleId, moduleId)).orderBy(asc(cmsLessons.position));
+
+      res.json({ module, lessons });
+    } catch (error) {
+      console.error("Error fetching module:", error);
+      res.status(500).json({ error: "Failed to fetch module" });
+    }
+  });
+
+  // Get lesson by ID (for Processes and Spiritual Breaths deep-link)
+  app.get("/api/public/v1/lessons/:id", async (req, res) => {
+    try {
+      const lessonId = parseInt(req.params.id);
+      const [lesson] = await db.select().from(cmsLessons).where(eq(cmsLessons.id, lessonId));
+      
+      if (!lesson) {
+        return res.status(404).json({ error: "Lesson not found" });
+      }
+
+      // Get files for this lesson (with signed URLs)
+      const files = await db.select().from(cmsLessonFiles).where(eq(cmsLessonFiles.lessonId, lessonId)).orderBy(asc(cmsLessonFiles.position));
+
+      // Generate signed URLs for files
+      const filesWithUrls = await Promise.all(files.map(async (file) => {
+        let signedUrl = null;
+        if (file.r2Key) {
+          try {
+            signedUrl = await getSignedGetUrl(file.r2Key, 3600);
+          } catch (e) {
+            console.error("Error generating signed URL:", e);
+          }
+        }
+        return { ...file, signedUrl };
+      }));
+
+      res.json({ lesson, files: filesWithUrls });
+    } catch (error) {
+      console.error("Error fetching lesson:", error);
+      res.status(500).json({ error: "Failed to fetch lesson" });
+    }
+  });
+
+  // Get course by ID (for Abundance Mastery deep-link)
+  app.get("/api/public/v1/courses/:id", async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
+      
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      // Get modules for this course
+      const modules = await storage.getModulesForCourse(courseId);
+
+      // Generate signed URL for thumbnail if exists
+      let thumbnailUrl = null;
+      if (course.thumbnailKey) {
+        try {
+          thumbnailUrl = await getSignedGetUrl(course.thumbnailKey, 3600);
+        } catch (e) {
+          console.error("Error generating thumbnail URL:", e);
+        }
+      }
+
+      res.json({ course: { ...course, thumbnailUrl }, modules });
+    } catch (error) {
+      console.error("Error fetching course:", error);
+      res.status(500).json({ error: "Failed to fetch course" });
+    }
+  });
+
+  // ===== PUBLIC SEARCH API =====
+
+  interface SearchResult {
+    type: "module" | "lesson" | "course";
+    feature: string;
+    id: number;
+    title: string;
+    module_id?: number;
+    navigate_to: string;
+  }
+
+  app.get("/api/public/v1/search", async (req, res) => {
+    try {
+      const query = (req.query.q as string || "").trim().toLowerCase();
+      
+      // If empty query, return empty results
+      if (!query) {
+        return res.json({ results: [] });
+      }
+
+      // For now, assume all features accessible (until access control is built)
+      const allowedFeatures = ["DYD", "USM", "BREATH", "ABUNDANCE"];
+      
+      const results: SearchResult[] = [];
+
+      // Get all features with their mappings
+      const features = await storage.getAllFrontendFeatures();
+      
+      for (const feature of features) {
+        if (!allowedFeatures.includes(feature.code)) continue;
+        
+        const mappings = await storage.getFeatureCourseMappings(feature.id);
+        if (mappings.length === 0) continue;
+
+        if (feature.displayMode === "modules") {
+          // DYD / USM - index modules and lessons
+          for (const mapping of mappings) {
+            const courseId = mapping.courseId;
+            const modules = await storage.getModulesForCourse(courseId);
+            
+            for (const module of modules) {
+              // Add module to index
+              if (module.title.toLowerCase().includes(query)) {
+                results.push({
+                  type: "module",
+                  feature: feature.code,
+                  id: module.id,
+                  title: module.title,
+                  navigate_to: `/processes/module/${module.id}`
+                });
+              }
+              
+              // Get lessons for this module
+              const lessons = await db.select().from(cmsLessons).where(eq(cmsLessons.moduleId, module.id)).orderBy(asc(cmsLessons.position));
+              
+              for (const lesson of lessons) {
+                if (lesson.title.toLowerCase().includes(query)) {
+                  results.push({
+                    type: "lesson",
+                    feature: feature.code,
+                    id: lesson.id,
+                    title: lesson.title,
+                    module_id: lesson.moduleId,
+                    navigate_to: `/processes/lesson/${lesson.id}`
+                  });
+                }
+              }
+            }
+          }
+        } else if (feature.displayMode === "lessons") {
+          // BREATH - index lessons only
+          for (const mapping of mappings) {
+            const courseId = mapping.courseId;
+            const lessons = await storage.getLessonsForCourse(courseId);
+            
+            for (const lesson of lessons) {
+              if (lesson.title.toLowerCase().includes(query)) {
+                results.push({
+                  type: "lesson",
+                  feature: feature.code,
+                  id: lesson.id,
+                  title: lesson.title,
+                  navigate_to: `/spiritual-breaths/lesson/${lesson.id}`
+                });
+              }
+            }
+          }
+        } else if (feature.displayMode === "courses") {
+          // ABUNDANCE - index courses only (NOT lessons, NOT built-ins)
+          for (const mapping of mappings) {
+            const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, mapping.courseId));
+            if (course && course.title.toLowerCase().includes(query)) {
+              results.push({
+                type: "course",
+                feature: feature.code,
+                id: course.id,
+                title: course.title,
+                navigate_to: `/abundance-mastery/course/${course.id}`
+              });
+            }
+          }
+        }
+      }
+
+      res.json({ results });
+    } catch (error) {
+      console.error("Error searching:", error);
+      res.status(500).json({ error: "Search failed" });
     }
   });
 
