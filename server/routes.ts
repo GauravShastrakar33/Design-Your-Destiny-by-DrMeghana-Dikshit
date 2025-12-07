@@ -1584,6 +1584,207 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== FRONTEND FEATURE MAPPING ROUTES =====
+
+  // Get all frontend features
+  app.get("/admin/v1/frontend-mapping/features", requireAdmin, async (req, res) => {
+    try {
+      const features = await storage.getAllFrontendFeatures();
+      res.json(features);
+    } catch (error) {
+      console.error("Error fetching frontend features:", error);
+      res.status(500).json({ error: "Failed to fetch features" });
+    }
+  });
+
+  // Get mapped courses for a feature
+  app.get("/admin/v1/frontend-mapping/features/:code/courses", requireAdmin, async (req, res) => {
+    try {
+      const { code } = req.params;
+      const feature = await storage.getFrontendFeatureByCode(code);
+      
+      if (!feature) {
+        return res.status(404).json({ error: "Feature not found" });
+      }
+
+      const mappings = await storage.getFeatureCourseMappings(feature.id);
+      res.json({ feature, mappings });
+    } catch (error) {
+      console.error("Error fetching feature course mappings:", error);
+      res.status(500).json({ error: "Failed to fetch mappings" });
+    }
+  });
+
+  // Map a course to a feature
+  app.post("/admin/v1/frontend-mapping/features/:code/courses", requireAdmin, async (req, res) => {
+    try {
+      const { code } = req.params;
+      const { courseId } = req.body;
+      
+      if (!courseId) {
+        return res.status(400).json({ error: "courseId is required" });
+      }
+
+      const feature = await storage.getFrontendFeatureByCode(code);
+      if (!feature) {
+        return res.status(404).json({ error: "Feature not found" });
+      }
+
+      // For DYD, USM, BREATH - only 1 course allowed, replace existing
+      if (["DYD", "USM", "BREATH"].includes(code)) {
+        await storage.clearFeatureCourseMappings(feature.id);
+      }
+
+      // Check if course already mapped for ABUNDANCE
+      if (code === "ABUNDANCE") {
+        const existingMappings = await storage.getFeatureCourseMappings(feature.id);
+        if (existingMappings.some(m => m.courseId === courseId)) {
+          return res.status(400).json({ error: "Course already mapped" });
+        }
+      }
+
+      // Get max position for ABUNDANCE
+      let position = 0;
+      if (code === "ABUNDANCE") {
+        const existingMappings = await storage.getFeatureCourseMappings(feature.id);
+        position = existingMappings.length > 0 ? Math.max(...existingMappings.map(m => m.position)) + 1 : 0;
+      }
+
+      const mapping = await storage.createFeatureCourseMapping({
+        featureId: feature.id,
+        courseId,
+        position
+      });
+
+      res.status(201).json(mapping);
+    } catch (error) {
+      console.error("Error creating feature course mapping:", error);
+      res.status(500).json({ error: "Failed to create mapping" });
+    }
+  });
+
+  // Delete a course mapping
+  app.delete("/admin/v1/frontend-mapping/features/:code/courses/:courseId", requireAdmin, async (req, res) => {
+    try {
+      const { code, courseId } = req.params;
+      
+      const feature = await storage.getFrontendFeatureByCode(code);
+      if (!feature) {
+        return res.status(404).json({ error: "Feature not found" });
+      }
+
+      const success = await storage.deleteFeatureCourseMapping(feature.id, parseInt(courseId));
+      
+      if (!success) {
+        return res.status(404).json({ error: "Mapping not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting feature course mapping:", error);
+      res.status(500).json({ error: "Failed to delete mapping" });
+    }
+  });
+
+  // Reorder courses for ABUNDANCE feature
+  app.patch("/admin/v1/frontend-mapping/features/:code/courses/reorder", requireAdmin, async (req, res) => {
+    try {
+      const { code } = req.params;
+      const { courseIds } = req.body;
+
+      if (code !== "ABUNDANCE") {
+        return res.status(400).json({ error: "Reorder only allowed for ABUNDANCE feature" });
+      }
+
+      if (!Array.isArray(courseIds)) {
+        return res.status(400).json({ error: "courseIds must be an array" });
+      }
+
+      const feature = await storage.getFrontendFeatureByCode(code);
+      if (!feature) {
+        return res.status(404).json({ error: "Feature not found" });
+      }
+
+      await storage.reorderFeatureCourseMappings(feature.id, courseIds);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reordering feature course mappings:", error);
+      res.status(500).json({ error: "Failed to reorder" });
+    }
+  });
+
+  // ===== PUBLIC FEATURE API =====
+
+  // Get feature content for user app
+  app.get("/api/public/v1/features/:code", async (req, res) => {
+    try {
+      const { code } = req.params;
+      
+      const feature = await storage.getFrontendFeatureByCode(code);
+      if (!feature) {
+        return res.status(404).json({ error: "Feature not found" });
+      }
+
+      const mappings = await storage.getFeatureCourseMappings(feature.id);
+
+      // Handle based on display_mode
+      if (feature.displayMode === "modules") {
+        // DYD / USM - return course with its modules
+        if (mappings.length === 0) {
+          return res.json({ feature, course: null, modules: [] });
+        }
+        
+        const courseId = mappings[0].courseId;
+        const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
+        const modules = await storage.getModulesForCourse(courseId);
+        
+        return res.json({ feature, course, modules });
+      }
+
+      if (feature.displayMode === "lessons") {
+        // BREATH - return course with its lessons (ignore folders)
+        if (mappings.length === 0) {
+          return res.json({ feature, course: null, lessons: [] });
+        }
+        
+        const courseId = mappings[0].courseId;
+        const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
+        const lessons = await storage.getLessonsForCourse(courseId);
+        
+        return res.json({ feature, course, lessons });
+      }
+
+      if (feature.displayMode === "courses") {
+        // ABUNDANCE - return built-ins + mapped courses
+        const builtIns = [
+          { id: "builtin-money-calendar", title: "Money Calendar", isBuiltIn: true },
+          { id: "builtin-rewiring-belief", title: "Rewiring Belief", isBuiltIn: true }
+        ];
+
+        const mappedCourses = await Promise.all(
+          mappings.map(async (m) => {
+            const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, m.courseId));
+            return {
+              id: course.id,
+              title: course.title,
+              description: course.description,
+              thumbnailKey: course.thumbnailKey,
+              position: m.position,
+              isBuiltIn: false
+            };
+          })
+        );
+
+        return res.json({ feature, builtIns, courses: mappedCourses });
+      }
+
+      res.json({ feature, mappings });
+    } catch (error) {
+      console.error("Error fetching public feature:", error);
+      res.status(500).json({ error: "Failed to fetch feature" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

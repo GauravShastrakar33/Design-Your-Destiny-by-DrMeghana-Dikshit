@@ -5,12 +5,16 @@ import {
   type Article, type InsertArticle,
   type Program, type InsertProgram,
   type UserProgram, type InsertUserProgram,
+  type FrontendFeature, type InsertFrontendFeature,
+  type FeatureCourseMap, type InsertFeatureCourseMap,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
-  programs as programsTable, userPrograms as userProgramsTable
+  programs as programsTable, userPrograms as userProgramsTable,
+  frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
+  cmsCourses, cmsModules, cmsLessons
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, ilike, and, or, inArray, sql, count } from "drizzle-orm";
+import { eq, ilike, and, or, inArray, sql, count, asc, desc } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -252,6 +256,32 @@ export class MemStorage implements IStorage {
   }
 
   async clearUserPrograms(userId: number): Promise<void> {
+  }
+
+  async getAllFrontendFeatures(): Promise<FrontendFeature[]> {
+    return [];
+  }
+
+  async getFrontendFeatureByCode(code: string): Promise<FrontendFeature | undefined> {
+    return undefined;
+  }
+
+  async getFeatureCourseMappings(featureId: number): Promise<(FeatureCourseMap & { course: { id: number; title: string } })[]> {
+    return [];
+  }
+
+  async createFeatureCourseMapping(mapping: InsertFeatureCourseMap): Promise<FeatureCourseMap> {
+    throw new Error("Not implemented");
+  }
+
+  async deleteFeatureCourseMapping(featureId: number, courseId: number): Promise<boolean> {
+    return false;
+  }
+
+  async clearFeatureCourseMappings(featureId: number): Promise<void> {
+  }
+
+  async reorderFeatureCourseMappings(featureId: number, courseIds: number[]): Promise<void> {
   }
 }
 
@@ -632,6 +662,71 @@ export class DbStorage implements IStorage {
       .where(eq(usersTable.id, id))
       .returning();
     return result.length > 0;
+  }
+
+  // ===== FRONTEND FEATURE MAPPING =====
+
+  async getAllFrontendFeatures(): Promise<FrontendFeature[]> {
+    return await db.select().from(frontendFeaturesTable).orderBy(asc(frontendFeaturesTable.id));
+  }
+
+  async getFrontendFeatureByCode(code: string): Promise<FrontendFeature | undefined> {
+    const result = await db.select().from(frontendFeaturesTable).where(eq(frontendFeaturesTable.code, code));
+    return result[0];
+  }
+
+  async getFeatureCourseMappings(featureId: number): Promise<(FeatureCourseMap & { course: { id: number; title: string } })[]> {
+    const mappings = await db
+      .select()
+      .from(featureCourseMapTable)
+      .where(eq(featureCourseMapTable.featureId, featureId))
+      .orderBy(asc(featureCourseMapTable.position));
+    
+    const result = await Promise.all(mappings.map(async (mapping) => {
+      const courseResult = await db.select({ id: cmsCourses.id, title: cmsCourses.title }).from(cmsCourses).where(eq(cmsCourses.id, mapping.courseId));
+      return {
+        ...mapping,
+        course: courseResult[0] || { id: mapping.courseId, title: 'Unknown Course' }
+      };
+    }));
+    return result;
+  }
+
+  async createFeatureCourseMapping(mapping: InsertFeatureCourseMap): Promise<FeatureCourseMap> {
+    const [newMapping] = await db.insert(featureCourseMapTable).values(mapping).returning();
+    return newMapping;
+  }
+
+  async deleteFeatureCourseMapping(featureId: number, courseId: number): Promise<boolean> {
+    const result = await db
+      .delete(featureCourseMapTable)
+      .where(and(eq(featureCourseMapTable.featureId, featureId), eq(featureCourseMapTable.courseId, courseId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async clearFeatureCourseMappings(featureId: number): Promise<void> {
+    await db.delete(featureCourseMapTable).where(eq(featureCourseMapTable.featureId, featureId));
+  }
+
+  async reorderFeatureCourseMappings(featureId: number, courseIds: number[]): Promise<void> {
+    for (let i = 0; i < courseIds.length; i++) {
+      await db
+        .update(featureCourseMapTable)
+        .set({ position: i })
+        .where(and(eq(featureCourseMapTable.featureId, featureId), eq(featureCourseMapTable.courseId, courseIds[i])));
+    }
+  }
+
+  async getModulesForCourse(courseId: number) {
+    return await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId)).orderBy(asc(cmsModules.position));
+  }
+
+  async getLessonsForCourse(courseId: number) {
+    const modules = await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId));
+    const moduleIds = modules.map(m => m.id);
+    if (moduleIds.length === 0) return [];
+    return await db.select().from(cmsLessons).where(inArray(cmsLessons.moduleId, moduleIds)).orderBy(asc(cmsLessons.position));
   }
 }
 

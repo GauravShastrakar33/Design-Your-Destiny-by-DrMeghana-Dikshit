@@ -214,3 +214,36 @@ export const insertCmsLessonFileSchema = createInsertSchema(cmsLessonFiles).omit
 
 export type InsertCmsLessonFile = z.infer<typeof insertCmsLessonFileSchema>;
 export type CmsLessonFile = typeof cmsLessonFiles.$inferSelect;
+
+// Frontend Feature Mapping Tables
+export const frontendFeatures = pgTable("frontend_features", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  displayName: text("display_name").notNull(),
+  displayMode: text("display_mode").notNull(), // 'modules' | 'lessons' | 'courses'
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertFrontendFeatureSchema = createInsertSchema(frontendFeatures).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertFrontendFeature = z.infer<typeof insertFrontendFeatureSchema>;
+export type FrontendFeature = typeof frontendFeatures.$inferSelect;
+
+export const featureCourseMap = pgTable("feature_course_map", {
+  id: serial("id").primaryKey(),
+  featureId: integer("feature_id").notNull().references(() => frontendFeatures.id, { onDelete: 'cascade' }),
+  courseId: integer("course_id").notNull().references(() => cmsCourses.id, { onDelete: 'cascade' }),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertFeatureCourseMapSchema = createInsertSchema(featureCourseMap).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertFeatureCourseMap = z.infer<typeof insertFeatureCourseMapSchema>;
+export type FeatureCourseMap = typeof featureCourseMap.$inferSelect;
