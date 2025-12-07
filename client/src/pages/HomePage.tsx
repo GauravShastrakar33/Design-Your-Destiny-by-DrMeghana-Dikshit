@@ -19,12 +19,14 @@ import {
 import { Card } from "@/components/ui/card";
 import ActionCard from "@/components/ActionCard";
 import { useToast } from "@/hooks/use-toast";
+import SearchOverlay from "@/components/SearchOverlay";
 
 export default function HomePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [practiceProgress] = useState({ current: 15, total: 30 });
   const [streakDays] = useState([true, true, false, true, true, false, false]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const actionCards = [
     {
@@ -114,7 +116,7 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => setLocation("/search")}
+              onClick={() => setIsSearchOpen(true)}
               className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
               data-testid="button-search"
             >
@@ -219,6 +221,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </div>
   );
 }
