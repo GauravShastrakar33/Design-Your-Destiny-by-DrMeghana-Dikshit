@@ -10,6 +10,9 @@ import AdminStudentsPage from "@/pages/AdminStudentsPage";
 import AdminsPage from "@/pages/AdminsPage";
 import AdminCoursesPage from "@/pages/AdminCoursesPage";
 import AdminProgramsPage from "@/pages/AdminProgramsPage";
+import AdminProcessesPage from "@/pages/AdminProcessesPage";
+import AdminSpiritualBreathsPage from "@/pages/AdminSpiritualBreathsPage";
+import AdminAbundanceMasteryPage from "@/pages/AdminAbundanceMasteryPage";
 import CourseCreateStep1 from "@/pages/CourseCreateStep1";
 import CourseCreateStep2 from "@/pages/CourseCreateStep2";
 import CourseCreateStep3 from "@/pages/CourseCreateStep3";
@@ -36,6 +39,9 @@ export default function AdminRoutes() {
       <Route path="/admin/courses/create/step3/:id" component={CourseCreateStep3} />
       <Route path="/admin/courses/:id" component={CourseBuilderPage} />
       <Route path="/admin/courses/:courseId/lessons/:lessonId" component={LessonDetailPage} />
+      <Route path="/admin/processes" component={AdminProcessesPage} />
+      <Route path="/admin/spiritual-breaths" component={AdminSpiritualBreathsPage} />
+      <Route path="/admin/abundance-mastery" component={AdminAbundanceMasteryPage} />
       <Route component={NotFound} />
     </Switch>
   );
