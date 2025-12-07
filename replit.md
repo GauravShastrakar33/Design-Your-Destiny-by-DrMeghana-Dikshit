@@ -25,11 +25,11 @@ Preferred communication style: Simple, everyday language.
 - **AI Video Integration**: Custom chat interface connecting to an external Gradio-hosted AI video generation service (`/process_query`) for personalized video responses. Stores conversation history and video URLs in localStorage.
 
 ### Feature Specifications
-- **Core Pages**: Home, Courses, Profile, AI Insights, Project of Heart, Processes, Community Practices, Articles, Spiritual Breaths, and Admin Panel.
-- **Content Management**: Full CRUD for Articles, Categories, Process Folders, Subfolders, Processes, and Spiritual Breaths via the Admin Panel.
-- **Practice Library**: Supports nested categories (Folders, Subfolders) for processes, and includes Spiritual Breaths. Media (video, audio) can be associated with practices.
+- **Core Pages**: Home, Courses, Profile, AI Insights, Project of Heart, Processes (Coming Soon), Community Practices, Articles, Spiritual Breaths (Coming Soon), and Admin Panel.
+- **Content Management**: Full CRUD for Articles and Categories via the Admin Panel. Processes and Spiritual Breaths features are being rebuilt separately.
 - **Article System**: Allows rich text editing, image uploads, category assignment, and publish/draft toggling.
 - **User Progression**: Tracks streaks, allows creation of custom playlists, and offers insights based on practice tracking.
+- **Planned Features**: Processes, Spiritual Breaths, and Abundance Mastery features are planned for future development.
 
 ### CMS System (Course Management)
 - **Course Structure**: Hierarchical structure with courses → modules → folders → lessons → files
@@ -50,7 +50,7 @@ Preferred communication style: Simple, everyday language.
 - **API Design**: RESTful APIs for data interaction, with distinct public and admin endpoints.
 - **Data Fetching**: Utilizes React Query for efficient data fetching, caching, and state management.
 - **Modularity**: Components and features are designed to be modular and extensible.
-- **Database Schema**: Structured for managing articles, categories, and a hierarchical practice library including folders, subfolders, processes, and spiritual breaths, with foreign key constraints.
+- **Database Schema**: Structured for managing articles, categories, CMS courses/modules/lessons, and programs with foreign key constraints.
 
 ## External Dependencies
 
@@ -101,5 +101,8 @@ Preferred communication style: Simple, everyday language.
 - **@gradio/client**: For connecting to the external Dr.M AI video generation API (https://dr-meghana-video.wowlabz.com/).
 
 ### Cloud Storage
-- **AWS S3**: For media file uploads (e.g., process media, spiritual breath media).
+- **AWS S3**: For media file uploads (e.g., article images).
 - **Cloudflare R2**: For CMS course content storage (video, audio, PDF files). Uses signed URLs for secure upload/download.
+
+## Recent Changes
+- **December 2025**: Removed Practice Library functionality (process_folders, process_subfolders, processes, spiritual_breaths tables and APIs) to rebuild Processes, Spiritual Breaths, and Abundance Mastery as separate features.
