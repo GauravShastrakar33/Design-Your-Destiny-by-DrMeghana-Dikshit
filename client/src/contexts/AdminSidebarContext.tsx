@@ -34,11 +34,6 @@ const menuItems: MenuItem[] = [
     label: "Session Banner"
   },
   { 
-    id: "process",
-    path: "/admin/process-library", 
-    label: "Process Library"
-  },
-  { 
     id: "sessions",
     path: "/admin/sessions", 
     label: "Community Practices"

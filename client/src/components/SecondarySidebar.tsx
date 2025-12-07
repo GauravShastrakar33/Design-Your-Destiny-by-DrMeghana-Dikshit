@@ -15,16 +15,12 @@ import {
   Settings,
   Plus,
   List,
-  DollarSign,
-  Wind,
-  Sparkles,
 } from "lucide-react";
 
 const menuIcons: Record<string, React.ElementType> = {
   dashboard: LayoutDashboard,
   users: Users,
   banner: Image,
-  process: BookOpen,
   sessions: UsersRound,
   articles: FileText,
   workshops: GraduationCap,
@@ -59,14 +55,6 @@ const menuContent: Record<
     items: [
       { path: "/admin/interventions", label: "All Banners", icon: List },
       { path: "/admin/interventions", label: "Add New", icon: Plus },
-    ],
-  },
-  process: {
-    title: "Practice Library",
-    items: [
-      { path: "/admin/process-library", label: "Processes", icon: Sparkles, disableActiveHighlight: true },
-      { path: "/admin/process-library", label: "Spiritual Breaths", icon: Wind, disableActiveHighlight: true },
-      { path: "/admin/process-library", label: "Abundance Mastery", icon: DollarSign, disableActiveHighlight: true },
     ],
   },
   sessions: {
