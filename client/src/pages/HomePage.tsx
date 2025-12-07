@@ -114,12 +114,7 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() =>
-                toast({
-                  title: "Search coming soon!",
-                  description: "This feature is under development.",
-                })
-              }
+              onClick={() => setLocation("/search")}
               className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
               data-testid="button-search"
             >
