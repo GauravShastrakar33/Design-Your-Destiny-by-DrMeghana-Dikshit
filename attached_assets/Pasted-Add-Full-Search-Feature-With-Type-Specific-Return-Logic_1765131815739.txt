@@ -1,0 +1,201 @@
+Add Full Search Feature With Type-Specific Return Logic + Deep Links
+
+Do NOT modify CMS tables Do NOT use program_code Do NOT expose unmapped CMS content
+Follow EVERYTHING below EXACTLY.
+
+🎯 GOAL
+Create a global search feature for the user app with the following rules:
+✔ Search ONLY mapped content (via feature_course_map)
+✔ Search ONLY content belonging to features (DYD, USM, BREATH, ABUNDANCE)
+✔ Search returns EXACT type matched:
+* If user searches a lesson → return a lesson
+* If user searches a module → return a module
+* If user searches a course → return a course
+✔ Deep-link directly into content
+(NO auto-scroll, NO expanding modules)
+✔ Abundance Mastery search returns ONLY COURSES, not lessons
+(Lessons are not standalone in Abundance UI)
+
+✔ Until access control is built, assume:
+req.user.access_features = ["DYD", "USM", "BREATH", "ABUNDANCE"]
+Do NOT block search.
+
+📁 FILES TO CREATE
+Backend
+server/routes/public/search.ts
+server/controllers/searchController.ts
+
+Frontend
+client/src/pages/Search/index.tsx
+Mount backend route in Express app entry:
+
+app.use(searchRoutes);
+
+🧱 SEARCH ENDPOINT
+Create:
+GET /public/v1/search?q=keyword
+
+🔧 BACKEND LOGIC — MUST FOLLOW EXACTLY
+1) Validate q
+If empty → return:
+{ "results": [] }
+
+2) Determine allowed features
+For now:
+const allowedFeatures = req.user?.access_features ?? ["DYD","USM","BREATH","ABUNDANCE"];
+
+3) Load mapped content for each feature
+Using:
+* frontend_features
+* feature_course_map
+* CMS tables (filtered by mapping only)
+
+🟪 FEATURE-BY-FEATURE SEARCH LOGIC
+⭐ 1️⃣ DYD & USM (display_mode = "modules")
+Fetch:
+* Mapped course (1)
+* Modules of that course
+* Lessons inside those modules
+ADD TO SEARCH INDEX:
+Module entry:
+
+{
+  type: "module",
+  feature: "DYD" | "USM",
+  id: module.id,
+  title: module.title,
+  navigate_to: `/processes/module/${module.id}`
+}
+Lesson entry:
+
+{
+  type: "lesson",
+  feature: "DYD" | "USM",
+  id: lesson.id,
+  title: lesson.title,
+  module_id: lesson.module_id,
+  navigate_to: `/processes/lesson/${lesson.id}`
+}
+Search returns specific lesson or module, not whole course.
+
+⭐ 2️⃣ Spiritual Breaths (display_mode = "lessons")
+Fetch:
+* Mapped course (1)
+* All lessons (ignore folders)
+Add:
+
+{
+  type: "lesson",
+  feature: "BREATH",
+  id: lesson.id,
+  title: lesson.title,
+  navigate_to: `/spiritual-breaths/lesson/${lesson.id}`
+}
+
+⭐ 3️⃣ Abundance Mastery (display_mode = "courses")
+IMPORTANT:
+Search should return ONLY mapped course titles, not lessons.
+Fetch:
+* All mapped CMS courses for ABUNDANCE
+Add:
+
+{
+  type: "course",
+  feature: "ABUNDANCE",
+  id: course.id,
+  title: course.title,
+  navigate_to: `/abundance-mastery/course/${course.id}`
+}
+Do NOT include:
+* Money Calendar
+* Rewiring Belief in search results
+(do NOT store or return them)
+
+🔍 4) Fuzzy Filter
+Case-insensitive .includes()
+
+📤 5) Return Response
+Example:
+
+{
+  "results": [
+    {
+      "type": "lesson",
+      "feature": "BREATH",
+      "id": 501,
+      "title": "Memory Development Breath",
+      "navigate_to": "/spiritual-breaths/lesson/501"
+    },
+    {
+      "type": "module",
+      "feature": "DYD",
+      "id": 101,
+      "title": "Wealth Code Activation",
+      "navigate_to": "/processes/module/101"
+    },
+    {
+      "type": "course",
+      "feature": "ABUNDANCE",
+      "id": 55,
+      "title": "Money Manifestation Challenge",
+      "navigate_to": "/abundance-mastery/course/55"
+    }
+  ]
+}
+
+🖥️ FRONTEND — Search UI
+Create:
+
+client/src/pages/Search/index.tsx
+Requirements:
+✔ Input with 300ms debounce
+✔ Call /public/v1/search?q=
+✔ Group results by type:
+* Modules
+* Lessons
+* Courses
+✔ On click:
+
+router.navigate(item.navigate_to);
+✔ NO SCROLLING + NO ACCORDION EXPANSION
+Open the correct content page directly.
+✔ UI must follow existing theme (Tailwind + shadcn)
+
+🧪 EDGE CASES
+If feature has no mapping → skip it
+If result type is lesson → deep link into lesson viewer
+If result type is module → deep link into module detail
+If result type is course → open abundance course detail
+If no results → show “No matching content”
+
+🗺️ REQUIRED DEEP-LINK ROUTES
+Create or ensure these frontend routes exist:
+DYD / USM
+/processes/module/:moduleId
+/processes/lesson/:lessonId
+
+Spiritual Breaths
+/spiritual-breaths/lesson/:lessonId
+
+Abundance Mastery
+/abundance-mastery/course/:courseId
+Replit must generate needed files.
+
+🏁 DELIVERABLES
+Backend
+* searchController.ts
+* search.ts route
+* integrated mapping-aware search
+* deep links included
+
+Frontend
+* Search page
+* Result rendering
+* navigate_to support
+
+NOTE:
+There is no user access control system yet.
+For now, set:
+req.user.access_features = ["DYD", "USM", "BREATH", "ABUNDANCE"]
+Later, when I add real access control, I will replace this with actual user permissions.
+Do NOT block search.
