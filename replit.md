@@ -46,6 +46,27 @@ Preferred communication style: Simple, everyday language.
 - **Media Storage**: Cloudflare R2 for video, audio, and PDF files with signed URLs
 - **API Prefix**: All CMS routes use `/api/admin/v1/cms/` prefix; Programs use `/api/admin/v1/programs`
 
+### Frontend Feature Mapping System
+- **Purpose**: Maps CMS courses to frontend features (Processes, Spiritual Breaths, Abundance Mastery) through admin-managed mappings
+- **Database Tables**: 
+  - `frontend_features` - Stores feature codes (DYD, USM, BREATH, ABUNDANCE) with display modes
+  - `feature_course_map` - Links features to courses with position ordering
+- **Display Modes**:
+  - `modules` - DYD/USM Processes show course modules
+  - `lessons` - Spiritual Breaths shows course lessons directly
+  - `courses` - Abundance Mastery shows multiple courses as a list
+- **Mapping Rules**:
+  - DYD, USM, BREATH: Allow only 1 course mapping (single selection)
+  - ABUNDANCE: Allows multiple courses with drag-reorder capability
+- **Built-in Items**: Money Calendar and Rewiring Belief are hardcoded in Abundance Mastery, not stored in DB
+- **Admin Pages**:
+  - `/admin/processes` - DYD/USM tabs with course selection and module preview
+  - `/admin/spiritual-breaths` - Course selection with lesson preview
+  - `/admin/abundance-mastery` - Built-ins display + sortable CMS course list
+- **API Routes**:
+  - Admin: `/admin/v1/frontend-mapping/features/:code/courses` (GET/POST/DELETE/PATCH reorder)
+  - Public: `/api/public/v1/features/:code` - Returns mapped content for user app
+
 ### System Design Choices
 - **API Design**: RESTful APIs for data interaction, with distinct public and admin endpoints.
 - **Data Fetching**: Utilizes React Query for efficient data fetching, caching, and state management.
@@ -105,4 +126,5 @@ Preferred communication style: Simple, everyday language.
 - **Cloudflare R2**: For CMS course content storage (video, audio, PDF files). Uses signed URLs for secure upload/download.
 
 ## Recent Changes
+- **December 2025**: Implemented frontend feature mapping system - allows admins to map CMS courses to Processes (DYD/USM), Spiritual Breaths, and Abundance Mastery features via new admin pages.
 - **December 2025**: Removed Practice Library functionality (process_folders, process_subfolders, processes, spiritual_breaths tables and APIs) to rebuild Processes, Spiritual Breaths, and Abundance Mastery as separate features.
