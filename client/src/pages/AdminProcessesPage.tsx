@@ -47,12 +47,13 @@ function FeatureTab({ code, label }: { code: string; label: string }) {
   });
 
   const selectedCourse = mappingData?.mappings?.[0];
+  const selectedCourseId = selectedCourse?.courseId;
 
   const { data: modules = [], isLoading: modulesLoading } = useQuery<CmsModule[]>({
-    queryKey: ["/api/admin/v1/cms/courses", selectedCourse?.courseId, "modules"],
-    enabled: !!selectedCourse?.courseId,
+    queryKey: ["/api/admin/v1/cms/courses", selectedCourseId, "modules"],
+    enabled: !!selectedCourseId,
     queryFn: async () => {
-      const response = await fetch(`/api/admin/v1/cms/courses/${selectedCourse?.courseId}/modules`, {
+      const response = await fetch(`/api/admin/v1/cms/courses/${selectedCourseId}/modules`, {
         headers: { Authorization: `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to fetch modules");
@@ -87,9 +88,10 @@ function FeatureTab({ code, label }: { code: string; label: string }) {
   });
 
   const handleCourseChange = (courseId: string) => {
-    if (courseId) {
-      mapCourseMutation.mutate(parseInt(courseId));
-    }
+    if (!courseId) return;
+    const newCourseId = parseInt(courseId);
+    if (newCourseId === selectedCourseId) return;
+    mapCourseMutation.mutate(newCourseId);
   };
 
   const handleClearSelection = () => {
@@ -118,8 +120,9 @@ function FeatureTab({ code, label }: { code: string; label: string }) {
 
         <div className="flex items-center gap-4">
           <Select
-            value={selectedCourse?.courseId?.toString() || ""}
+            value={selectedCourseId?.toString() || ""}
             onValueChange={handleCourseChange}
+            disabled={mapCourseMutation.isPending}
           >
             <SelectTrigger className="w-[300px]" data-testid={`select-${code.toLowerCase()}-course`}>
               <SelectValue placeholder="Select a course" />
@@ -144,6 +147,10 @@ function FeatureTab({ code, label }: { code: string; label: string }) {
               <X className="w-4 h-4 mr-1" />
               Clear Selection
             </Button>
+          )}
+
+          {mapCourseMutation.isPending && (
+            <Loader2 className="w-4 h-4 animate-spin text-brand" />
           )}
         </div>
       </Card>

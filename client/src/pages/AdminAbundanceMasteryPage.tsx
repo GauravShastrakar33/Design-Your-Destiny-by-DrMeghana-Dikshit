@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Loader2, Plus, Trash2, GripVertical, DollarSign, Calendar, Brain } from "lucide-react";
 import type { CmsCourse, FrontendFeature, FeatureCourseMap } from "@shared/schema";
 
+interface MappingWithCourse extends FeatureCourseMap {
+  course: { id: number; title: string };
+}
+
 interface MappingResponse {
   feature: FrontendFeature;
-  mappings: (FeatureCourseMap & { course: { id: number; title: string } })[];
+  mappings: MappingWithCourse[];
 }
 
 export default function AdminAbundanceMasteryPage() {
@@ -24,6 +28,7 @@ export default function AdminAbundanceMasteryPage() {
   const adminToken = localStorage.getItem("@app:admin_token") || "";
   const code = "ABUNDANCE";
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const [localOrder, setLocalOrder] = useState<MappingWithCourse[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CmsCourse[]>({
@@ -37,7 +42,7 @@ export default function AdminAbundanceMasteryPage() {
     },
   });
 
-  const { data: mappingData, isLoading: mappingLoading, refetch } = useQuery<MappingResponse>({
+  const { data: mappingData, isLoading: mappingLoading } = useQuery<MappingResponse>({
     queryKey: ["/admin/v1/frontend-mapping/features", code, "courses"],
     queryFn: async () => {
       const response = await fetch(`/admin/v1/frontend-mapping/features/${code}/courses`, {
@@ -48,8 +53,13 @@ export default function AdminAbundanceMasteryPage() {
     },
   });
 
-  const mappedCourses = mappingData?.mappings || [];
-  const mappedCourseIds = new Set(mappedCourses.map((m) => m.courseId));
+  useEffect(() => {
+    if (mappingData?.mappings) {
+      setLocalOrder(mappingData.mappings);
+    }
+  }, [mappingData?.mappings]);
+
+  const mappedCourseIds = new Set(localOrder.map((m) => m.courseId));
   const availableCourses = courses.filter((c) => !mappedCourseIds.has(c.id));
 
   const addCourseMutation = useMutation({
@@ -84,10 +94,14 @@ export default function AdminAbundanceMasteryPage() {
       await apiRequest("PATCH", `/admin/v1/frontend-mapping/features/${code}/courses/reorder`, { courseIds });
     },
     onSuccess: () => {
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["/admin/v1/frontend-mapping/features", code, "courses"] });
+      toast({ title: "Order updated" });
     },
     onError: () => {
       toast({ title: "Failed to reorder", variant: "destructive" });
+      if (mappingData?.mappings) {
+        setLocalOrder(mappingData.mappings);
+      }
     },
   });
 
@@ -101,24 +115,25 @@ export default function AdminAbundanceMasteryPage() {
     removeCourseMutation.mutate(courseId);
   };
 
-  const handleDragStart = (index: number) => {
+  const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === index) return;
 
-    const newOrder = [...mappedCourses];
+    const newOrder = [...localOrder];
     const [draggedItem] = newOrder.splice(draggedIndex, 1);
     newOrder.splice(index, 0, draggedItem);
-
+    setLocalOrder(newOrder);
     setDraggedIndex(index);
   };
 
   const handleDragEnd = () => {
     if (draggedIndex !== null) {
-      const courseIds = mappedCourses.map((m) => m.courseId);
+      const courseIds = localOrder.map((m) => m.courseId);
       reorderMutation.mutate(courseIds);
     }
     setDraggedIndex(null);
@@ -202,7 +217,7 @@ export default function AdminAbundanceMasteryPage() {
           </div>
         </Card>
 
-        {mappedCourses.length > 0 && (
+        {localOrder.length > 0 && (
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Mapped Courses</h3>
             <p className="text-gray-600 text-sm mb-4">
@@ -210,11 +225,11 @@ export default function AdminAbundanceMasteryPage() {
             </p>
 
             <div className="space-y-2">
-              {mappedCourses.map((mapping, index) => (
+              {localOrder.map((mapping, index) => (
                 <div
                   key={mapping.id}
                   draggable
-                  onDragStart={() => handleDragStart(index)}
+                  onDragStart={(e) => handleDragStart(e, index)}
                   onDragOver={(e) => handleDragOver(e, index)}
                   onDragEnd={handleDragEnd}
                   className={`flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-move transition-colors ${
