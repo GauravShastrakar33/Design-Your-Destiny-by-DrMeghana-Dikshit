@@ -4,10 +4,10 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { Course as DBCourse, Masterclass as DBMasterclass, WorkshopVideo as DBWorkshopVideo } from "@shared/schema";
+import type { Masterclass as DBMasterclass, WorkshopVideo as DBWorkshopVideo } from "@shared/schema";
 import rightDecisionThumbnail from "@assets/right-decision-thumbnail.png";
 
-type Tab = "upcoming" | "latest" | "dyd" | "usm" | "usc" | "usb";
+type Tab = "upcoming" | "latest";
 
 interface UpcomingMasterclass {
   id: string;
@@ -32,15 +32,6 @@ interface Video {
   author?: string;
   description?: string;
   videoId?: string;
-}
-
-interface Course {
-  id: string;
-  title: string;
-  thumbnail: string;
-  year: string;
-  type: "dyd" | "usm" | "usc" | "usb";
-  isCollection: boolean;
 }
 
 interface LastWatchedData {
@@ -80,18 +71,6 @@ function convertWorkshopVideo(video: DBWorkshopVideo): Video {
     author: video.author,
     description: video.description,
     videoId: `video-${video.id}`,
-  };
-}
-
-// Helper function to convert DB course to UI format
-function convertCourse(course: DBCourse): Course {
-  return {
-    id: course.id.toString(),
-    title: course.title,
-    thumbnail: course.thumbnail,
-    year: course.year,
-    type: course.type.toLowerCase() as "dyd" | "usm" | "usc" | "usb",
-    isCollection: true,
   };
 }
 
@@ -138,23 +117,14 @@ export default function WorkshopsPage() {
   // Fetch data from database
   const { data: dbMasterclasses = [] } = useQuery<DBMasterclass[]>({ queryKey: ["/api/masterclasses"] });
   const { data: dbWorkshopVideos = [] } = useQuery<DBWorkshopVideo[]>({ queryKey: ["/api/workshop-videos"] });
-  const { data: dbCourses = [] } = useQuery<DBCourse[]>({ queryKey: ["/api/courses"] });
 
   // Convert and filter data
   const upcomingMasterclasses = dbMasterclasses.map(convertMasterclass);
   const latestVideos = dbWorkshopVideos.map(convertWorkshopVideo);
-  const dydCourses = dbCourses.filter(c => c.type.toLowerCase() === "dyd").map(convertCourse);
-  const usmCourses = dbCourses.filter(c => c.type.toLowerCase() === "usm").map(convertCourse);
-  const uscCourses = dbCourses.filter(c => c.type.toLowerCase() === "usc").map(convertCourse);
-  const usbCourses = dbCourses.filter(c => c.type.toLowerCase() === "usb").map(convertCourse);
 
   const tabs = [
     { id: "upcoming" as Tab, label: "Upcoming" },
     { id: "latest" as Tab, label: "Latest" },
-    { id: "dyd" as Tab, label: "DYD" },
-    { id: "usm" as Tab, label: "USM" },
-    { id: "usc" as Tab, label: "USC" },
-    { id: "usb" as Tab, label: "USB" },
   ];
 
   // Load last watched data
@@ -188,12 +158,6 @@ export default function WorkshopsPage() {
       });
 
       setLocation(`/video-player?${params.toString()}`);
-    }
-  };
-
-  const handleCourseClick = (course: Course) => {
-    if (course.isCollection) {
-      setLocation(`/workshops/course/${course.id}`);
     }
   };
 
@@ -405,153 +369,6 @@ export default function WorkshopsPage() {
             </div>
           )}
 
-          {/* DYD Tab */}
-          {activeTab === "dyd" && (
-            <div className="space-y-4">
-              {dydCourses.map((course) => (
-                <Card
-                  key={course.id}
-                  className="overflow-hidden cursor-pointer hover-elevate active-elevate-2"
-                  onClick={() => handleCourseClick(course)}
-                  data-testid={`course-${course.id}`}
-                >
-                  <div className="relative h-48 flex items-end p-4 overflow-hidden rounded-2xl">
-                    {course.thumbnail.startsWith("bg-") ? (
-                      // ✅ Case 1: Tailwind gradient thumbnail
-                      <div className={`${course.thumbnail} absolute inset-0`} />
-                    ) : (
-                      // ✅ Case 2: Image thumbnail
-                      <img
-                        src={course.thumbnail}
-                        alt={course.title}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        onError={(e) =>
-                          (e.currentTarget.src = "/images/placeholder.jpg")
-                        } // fallback
-                      />
-                    )}
-
-                    {/* Overlay text */}
-                    <div className="relative z-10 text-white drop-shadow">
-                      <h3 className="text-2xl font-bold">{course.title}</h3>
-                      <p className="text-white/90 text-sm">{course.year}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* USM Tab */}
-          {activeTab === "usm" && (
-            <div className="space-y-4">
-              {usmCourses.map((course) => (
-                <Card
-                  key={course.id}
-                  className="overflow-hidden cursor-pointer hover-elevate active-elevate-2"
-                  onClick={() => handleCourseClick(course)}
-                  data-testid={`course-${course.id}`}
-                >
-                  <div className="relative h-48 flex items-end p-4 overflow-hidden">
-                    {course.thumbnail.startsWith("bg-") ? (
-                      // ✅ Case 1: Tailwind gradient background
-                      <div className={`${course.thumbnail} absolute inset-0`} />
-                    ) : (
-                      // ✅ Case 2: Image background
-                      <img
-                        src={course.thumbnail}
-                        alt={course.title}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        onError={(e) =>
-                          (e.currentTarget.src = "/images/placeholder.jpg")
-                        }
-                      />
-                    )}
-
-                    {/* Text overlay */}
-                    <div className="relative z-10 text-white">
-                      <h3 className="text-2xl font-bold">{course.title}</h3>
-                      <p className="text-white/90 text-sm">{course.year}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* USC Tab */}
-          {activeTab === "usc" && (
-            <div className="space-y-4">
-              {uscCourses.map((course) => (
-                <Card
-                  key={course.id}
-                  className="overflow-hidden cursor-pointer hover-elevate active-elevate-2"
-                  onClick={() => handleCourseClick(course)}
-                  data-testid={`course-${course.id}`}
-                >
-                  <div className="relative h-48 flex items-end p-4 overflow-hidden">
-                    {course.thumbnail.startsWith("bg-") ? (
-                      // ✅ Case 1: Tailwind gradient background
-                      <div className={`${course.thumbnail} absolute inset-0`} />
-                    ) : (
-                      // ✅ Case 2: Image thumbnail
-                      <img
-                        src={course.thumbnail}
-                        alt={course.title}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        onError={(e) =>
-                          (e.currentTarget.src = "/images/placeholder.jpg")
-                        }
-                      />
-                    )}
-
-                    {/* Text content */}
-                    <div className="relative z-10 text-white">
-                      <h3 className="text-2xl font-bold">{course.title}</h3>
-                      <p className="text-white/90 text-sm">{course.year}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* USB Tab */}
-          {activeTab === "usb" && (
-            <div className="space-y-4">
-              {usbCourses.map((course) => (
-                <Card
-                  key={course.id}
-                  className="overflow-hidden cursor-pointer hover-elevate active-elevate-2"
-                  onClick={() => handleCourseClick(course)}
-                  data-testid={`course-${course.id}`}
-                >
-                  <div className="relative h-48 flex items-end p-4 overflow-hidden">
-                    {course.thumbnail.startsWith("bg-") ? (
-                      // ✅ Case 1: Tailwind gradient background
-                      <div className={`${course.thumbnail} absolute inset-0`} />
-                    ) : (
-                      // ✅ Case 2: Image thumbnail
-                      <img
-                        src={course.thumbnail}
-                        alt={course.title}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        onError={(e) =>
-                          (e.currentTarget.src = "/images/placeholder.jpg")
-                        }
-                      />
-                    )}
-
-                    {/* Text content */}
-                    <div className="relative z-10 text-white">
-                      <h3 className="text-2xl font-bold">{course.title}</h3>
-                      <p className="text-white/90 text-sm">{course.year}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
