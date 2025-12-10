@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   ListMusic,
   Trash2,
@@ -6,15 +7,19 @@ import {
   Pause,
   ChevronDown,
   ChevronUp,
-  Bell,
-  BellOff,
   ArrowLeft,
+  Plus,
+  Pencil,
+  X,
+  GripVertical,
+  Check,
+  Music,
+  Loader2,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,244 +38,256 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  getPlaylists,
-  deletePlaylist,
-  updatePlaylist,
-  type SavedPlaylist,
-  saveProgress,
-  loadProgress,
-  markTrackComplete,
-  clearProgress,
-} from "@/lib/storage";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { findAudioByTitle } from "@/lib/audioLibrary";
+import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
+import type { Playlist, PlaylistItem } from "@shared/schema";
+
+interface PlaylistWithItems {
+  playlist: Playlist;
+  items: (PlaylistItem & {
+    lesson?: { id: number; title: string };
+    audioFiles: { id: number; fileName: string; signedUrl: string | null }[];
+  })[];
+}
+
+interface PlaylistSourceData {
+  course: { id: number; title: string } | null;
+  modules: {
+    id: number;
+    title: string;
+    lessons: {
+      id: number;
+      title: string;
+      audioFiles: { id: number; fileName: string; signedUrl: string | null }[];
+    }[];
+  }[];
+}
 
 export default function MyPracticePlaylistPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [playlists, setPlaylists] = useState<SavedPlaylist[]>([]);
-  const [expandedPlaylist, setExpandedPlaylist] = useState<string | null>(null);
-  const [playlistToDelete, setPlaylistToDelete] = useState<string | null>(null);
-  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
-  const [selectedPlaylistForReminder, setSelectedPlaylistForReminder] =
-    useState<SavedPlaylist | null>(null);
-  const [reminderTime, setReminderTime] = useState("");
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const [currentPlaylistId, setCurrentPlaylistId] = useState<string | null>(
-    null,
-  );
+  const [expandedPlaylistId, setExpandedPlaylistId] = useState<number | null>(null);
+  const [playlistToDelete, setPlaylistToDelete] = useState<number | null>(null);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [playlistToRename, setPlaylistToRename] = useState<Playlist | null>(null);
+  const [newTitle, setNewTitle] = useState("");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createTitle, setCreateTitle] = useState("");
+  const [lessonPickerOpen, setLessonPickerOpen] = useState(false);
+  const [editingPlaylistId, setEditingPlaylistId] = useState<number | null>(null);
+  const [selectedLessonIds, setSelectedLessonIds] = useState<number[]>([]);
+  const [editMode, setEditMode] = useState<number | null>(null);
+
+  const [currentPlaylistId, setCurrentPlaylistId] = useState<number | null>(null);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlayingPlaylist, setIsPlayingPlaylist] = useState(false);
   const [initialTime, setInitialTime] = useState(0);
-  const [lastSaveTime, setLastSaveTime] = useState(0);
 
-  useEffect(() => {
-    loadPlaylists();
-  }, []);
+  const { data: playlists = [], isLoading: playlistsLoading } = useQuery<Playlist[]>({
+    queryKey: ["/api/public/v1/playlists"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: isAuthenticated,
+  });
 
-  const loadPlaylists = () => {
-    setPlaylists(getPlaylists());
-  };
+  const { data: expandedPlaylistData, isLoading: expandedLoading } = useQuery<PlaylistWithItems>({
+    queryKey: ["/api/public/v1/playlists", expandedPlaylistId],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!expandedPlaylistId && isAuthenticated,
+  });
 
-  const handleDelete = (id: string) => {
-    deletePlaylist(id);
-    setPlaylistToDelete(null);
-    loadPlaylists();
-    toast({
-      title: "Playlist Deleted",
-      description: "Your playlist has been removed.",
-    });
-  };
+  const { data: playlistSource, isLoading: sourceLoading } = useQuery<PlaylistSourceData>({
+    queryKey: ["/api/public/v1/playlist/source"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: lessonPickerOpen && isAuthenticated,
+  });
 
-  const handleSetReminder = (playlist: SavedPlaylist) => {
-    setSelectedPlaylistForReminder(playlist);
-    setReminderTime(playlist.reminderTime || "");
-    setReminderDialogOpen(true);
-  };
+  const createPlaylistMutation = useMutation({
+    mutationFn: async (title: string) => {
+      const res = await apiRequest("POST", "/api/public/v1/playlists", { title });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists"] });
+      setCreateDialogOpen(false);
+      setCreateTitle("");
+      toast({ title: "Playlist created!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to create playlist", variant: "destructive" });
+    },
+  });
 
-  const handleSaveReminder = () => {
-    if (!selectedPlaylistForReminder) return;
+  const renamePlaylistMutation = useMutation({
+    mutationFn: async ({ id, title }: { id: number; title: string }) => {
+      const res = await apiRequest("PATCH", `/api/public/v1/playlists/${id}`, { title });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists"] });
+      setRenameDialogOpen(false);
+      setPlaylistToRename(null);
+      setNewTitle("");
+      toast({ title: "Playlist renamed!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to rename playlist", variant: "destructive" });
+    },
+  });
 
-    if (!reminderTime) {
-      toast({
-        title: "Time Required",
-        description: "Please select a reminder time.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    updatePlaylist(selectedPlaylistForReminder.id, {
-      reminderTime: reminderTime,
-    });
-
-    loadPlaylists();
-    setReminderDialogOpen(false);
-    setSelectedPlaylistForReminder(null);
-    setReminderTime("");
-
-    toast({
-      title: "Reminder Set!",
-      description: `Daily reminder set for ${formatTime(reminderTime)}`,
-    });
-  };
-
-  const handleRemoveReminder = () => {
-    if (!selectedPlaylistForReminder) return;
-
-    updatePlaylist(selectedPlaylistForReminder.id, {
-      reminderTime: undefined,
-    });
-
-    loadPlaylists();
-    setReminderDialogOpen(false);
-    setSelectedPlaylistForReminder(null);
-    setReminderTime("");
-
-    toast({
-      title: "Reminder Removed",
-      description: "Your reminder has been cleared.",
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(":");
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
-  };
-
-  const handlePlayPlaylist = (playlistId: string) => {
-    const playlist = playlists.find((p) => p.id === playlistId);
-    if (!playlist) return;
-
-    // Load saved progress
-    const savedProgress = loadProgress(playlistId);
-
-    if (savedProgress) {
-      // Resume from saved position - match by practice name
-      const trackIndex = playlist.practices.findIndex(
-        (p) => p === savedProgress.currentTrackId,
-      );
-
-      if (trackIndex !== -1) {
-        setCurrentTrackIndex(trackIndex);
-        setInitialTime(savedProgress.currentTime);
-      } else {
-        // If track not found, start from beginning
-        setCurrentTrackIndex(0);
-        setInitialTime(0);
+  const deletePlaylistMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/public/v1/playlists/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists"] });
+      setPlaylistToDelete(null);
+      if (currentPlaylistId === playlistToDelete) {
+        handleStopPlaylist();
       }
-    } else {
-      // Start from beginning
-      setCurrentTrackIndex(0);
-      setInitialTime(0);
-    }
+      toast({ title: "Playlist deleted!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete playlist", variant: "destructive" });
+    },
+  });
 
+  const setItemsMutation = useMutation({
+    mutationFn: async ({ playlistId, lessonIds }: { playlistId: number; lessonIds: number[] }) => {
+      const res = await apiRequest("POST", `/api/public/v1/playlists/${playlistId}/items`, { lessonIds });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists", editingPlaylistId] });
+      setLessonPickerOpen(false);
+      setEditingPlaylistId(null);
+      setSelectedLessonIds([]);
+      toast({ title: "Playlist updated!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to update playlist", variant: "destructive" });
+    },
+  });
+
+  const removeItemMutation = useMutation({
+    mutationFn: async ({ playlistId, itemId }: { playlistId: number; itemId: number }) => {
+      await apiRequest("DELETE", `/api/public/v1/playlists/${playlistId}/items/${itemId}`);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists", variables.playlistId] });
+      toast({ title: "Item removed!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to remove item", variant: "destructive" });
+    },
+  });
+
+  const reorderItemsMutation = useMutation({
+    mutationFn: async ({ playlistId, orderedItemIds }: { playlistId: number; orderedItemIds: number[] }) => {
+      await apiRequest("PATCH", `/api/public/v1/playlists/${playlistId}/items/reorder`, { orderedItemIds });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists", variables.playlistId] });
+    },
+    onError: () => {
+      toast({ title: "Failed to reorder items", variant: "destructive" });
+    },
+  });
+
+  const handleOpenRename = (playlist: Playlist) => {
+    setPlaylistToRename(playlist);
+    setNewTitle(playlist.title);
+    setRenameDialogOpen(true);
+  };
+
+  const handleRename = () => {
+    if (!playlistToRename || !newTitle.trim()) return;
+    renamePlaylistMutation.mutate({ id: playlistToRename.id, title: newTitle.trim() });
+  };
+
+  const handleCreate = () => {
+    if (!createTitle.trim()) return;
+    createPlaylistMutation.mutate(createTitle.trim());
+  };
+
+  const handleOpenLessonPicker = (playlistId: number) => {
+    setEditingPlaylistId(playlistId);
+    const playlistData = expandedPlaylistData?.items || [];
+    setSelectedLessonIds(playlistData.map((item) => item.lessonId));
+    setLessonPickerOpen(true);
+  };
+
+  const handleToggleLesson = (lessonId: number) => {
+    setSelectedLessonIds((prev) =>
+      prev.includes(lessonId) ? prev.filter((id) => id !== lessonId) : [...prev, lessonId]
+    );
+  };
+
+  const handleSaveLessons = () => {
+    if (!editingPlaylistId) return;
+    setItemsMutation.mutate({ playlistId: editingPlaylistId, lessonIds: selectedLessonIds });
+  };
+
+  const handlePlayPlaylist = (playlistId: number) => {
     setCurrentPlaylistId(playlistId);
+    setCurrentTrackIndex(0);
+    setInitialTime(0);
     setIsPlayingPlaylist(true);
   };
 
   const handleStopPlaylist = () => {
-    // Don't clear progress - user should be able to resume later
     setCurrentPlaylistId(null);
     setCurrentTrackIndex(0);
     setIsPlayingPlaylist(false);
     setInitialTime(0);
-    setLastSaveTime(0);
   };
 
   const handleTrackEnded = () => {
-    const currentPlaylist = playlists.find((p) => p.id === currentPlaylistId);
-    if (!currentPlaylist) return;
-
-    if (currentTrackIndex < currentPlaylist.practices.length - 1) {
-      const nextTrackIndex = currentTrackIndex + 1;
-      const nextPracticeName = currentPlaylist.practices[nextTrackIndex];
-
-      // Immediately save progress for next track at position 0
-      saveProgress(currentPlaylistId!, nextPracticeName, 0);
-      setLastSaveTime(Date.now()); // Reset throttle timer
-
-      setCurrentTrackIndex(nextTrackIndex);
-      setInitialTime(0); // Reset initial time for next track
+    const items = expandedPlaylistData?.items || [];
+    if (currentTrackIndex < items.length - 1) {
+      setCurrentTrackIndex(currentTrackIndex + 1);
+      setInitialTime(0);
     } else {
-      // Playlist completed - clear progress since we're done
-      if (currentPlaylistId) {
-        clearProgress(currentPlaylistId);
-      }
       handleStopPlaylist();
     }
   };
 
-  const handleProgressUpdate = (time: number, duration: number) => {
-    const currentPlaylist = playlists.find((p) => p.id === currentPlaylistId);
-    if (!currentPlaylistId || !currentPlaylist) return;
-
-    // Save using the practice name from the playlist (not audio title)
-    const practiceName = currentPlaylist.practices[currentTrackIndex];
-
-    // Throttle saves to every 3 seconds using timestamp check
-    const now = Date.now();
-    if (now - lastSaveTime >= 3000) {
-      saveProgress(currentPlaylistId, practiceName, time);
-      setLastSaveTime(now);
-    }
-  };
-
-  const handleTrackComplete = () => {
-    const currentPlaylist = playlists.find((p) => p.id === currentPlaylistId);
-    if (!currentPlaylist) return;
-
-    // Use practice name from playlist for consistency
-    const practiceName = currentPlaylist.practices[currentTrackIndex];
-
-    // Mark track as completed (90% rule)
-    markTrackComplete(
-      currentPlaylist.id,
-      practiceName,
-      currentPlaylist.practices.length,
-    );
-
-    toast({
-      title: "Track Completed!",
-      description: `You completed "${practiceName}"`,
-    });
-  };
-
   const getCurrentAudio = () => {
-    if (!currentPlaylistId) return null;
-
-    const playlist = playlists.find((p) => p.id === currentPlaylistId);
-    if (!playlist) return null;
-
-    const practiceName = playlist.practices[currentTrackIndex];
-    return findAudioByTitle(practiceName);
+    if (!expandedPlaylistData || !currentPlaylistId) return null;
+    const item = expandedPlaylistData.items[currentTrackIndex];
+    if (!item || !item.audioFiles.length) return null;
+    const audioFile = item.audioFiles[0];
+    return {
+      url: audioFile.signedUrl,
+      title: item.lesson?.title || audioFile.fileName,
+    };
   };
 
   const currentAudio = getCurrentAudio();
 
-  if (playlists.length === 0) {
+  const handleReorder = (newOrder: PlaylistWithItems["items"]) => {
+    if (!expandedPlaylistId || !expandedPlaylistData) return;
+    const orderedItemIds = newOrder.map((item) => item.id);
+    reorderItemsMutation.mutate({ playlistId: expandedPlaylistId, orderedItemIds });
+  };
+
+  if (authLoading) {
     return (
-      <div
-        className="min-h-screen pb-20"
-        style={{ backgroundColor: "#F3F3F3" }}
-      >
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F3F3F3" }}>
+        <Loader2 className="w-8 h-8 animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
         <div className="max-w-md mx-auto">
-          {/* Header */}
           <div className="sticky top-0 bg-white border-b border-border z-10">
             <div className="px-4 py-4 flex items-center gap-4">
               <button
@@ -281,10 +298,54 @@ export default function MyPracticePlaylistPage() {
                 <ArrowLeft className="w-6 h-6 text-foreground" />
               </button>
               <div className="flex-1 text-center">
-                <h1
-                  className="text-xl font-semibold text-gray-500"
-                  style={{ fontFamily: "Montserrat" }}
-                >
+                <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
+                  MY PROCESS
+                </h1>
+              </div>
+              <div className="w-10"></div>
+            </div>
+          </div>
+
+          <div className="px-4 py-12 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mb-4">
+              <ListMusic className="w-8 h-8 text-brand" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Login Required</h2>
+            <p className="text-gray-600 max-w-xs mb-4">
+              Please log in to create and manage your practice playlists.
+            </p>
+            <Button onClick={() => setLocation("/login")} style={{ backgroundColor: "#703DFA" }} data-testid="button-login">
+              Log In
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (playlistsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F3F3F3" }}>
+        <Loader2 className="w-8 h-8 animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (playlists.length === 0) {
+    return (
+      <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
+        <div className="max-w-md mx-auto">
+          <div className="sticky top-0 bg-white border-b border-border z-10">
+            <div className="px-4 py-4 flex items-center gap-4">
+              <button
+                onClick={() => setLocation("/")}
+                className="hover-elevate active-elevate-2 rounded-lg p-2"
+                data-testid="button-back"
+              >
+                <ArrowLeft className="w-6 h-6 text-foreground" />
+              </button>
+              <div className="flex-1 text-center">
+                <h1 className="text-xl font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
                   MY PROCESS
                 </h1>
               </div>
@@ -295,33 +356,54 @@ export default function MyPracticePlaylistPage() {
           <div className="px-4 py-6">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center space-y-4">
-                <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
-                  style={{ backgroundColor: "#F3F0FF" }}
-                >
-                  <ListMusic
-                    className="w-10 h-10"
-                    style={{ color: "#703DFA" }}
-                  />
+                <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: "#F3F0FF" }}>
+                  <ListMusic className="w-10 h-10" style={{ color: "#703DFA" }} />
                 </div>
-                <h2 className="text-xl font-semibold text-foreground">
-                  No Processes Yet
-                </h2>
-                <p className="text-muted-foreground max-w-xs">
-                  Design your practice to create your custom process
-                </p>
+                <h2 className="text-xl font-semibold text-foreground">No Processes Yet</h2>
+                <p className="text-muted-foreground max-w-xs">Create your first custom practice playlist</p>
                 <Button
-                  onClick={() => setLocation("/design-practice")}
+                  onClick={() => setCreateDialogOpen(true)}
                   className="mt-4 border-0"
                   style={{ backgroundColor: "#703DFA" }}
                   data-testid="button-create-playlist"
                 >
-                  Create Your First Process
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Your First Playlist
                 </Button>
               </div>
             </div>
           </div>
         </div>
+
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent className="max-w-md" data-testid="dialog-create-playlist">
+            <DialogHeader>
+              <DialogTitle>Create New Playlist</DialogTitle>
+              <DialogDescription>Give your playlist a name to get started.</DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                placeholder="e.g., Morning Ritual"
+                value={createTitle}
+                onChange={(e) => setCreateTitle(e.target.value)}
+                data-testid="input-playlist-title"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateDialogOpen(false)} data-testid="button-cancel-create">
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreate}
+                disabled={!createTitle.trim() || createPlaylistMutation.isPending}
+                style={{ backgroundColor: "#703DFA" }}
+                data-testid="button-confirm-create"
+              >
+                {createPlaylistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -329,7 +411,6 @@ export default function MyPracticePlaylistPage() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        {/* Header */}
         <div className="sticky top-0 bg-white border-b border-border z-10">
           <div className="px-4 py-4 flex items-center gap-4">
             <button
@@ -340,60 +421,38 @@ export default function MyPracticePlaylistPage() {
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
             <div className="flex-1 text-center">
-              <h1
-                className="text-base font-semibold text-gray-500"
-                style={{ fontFamily: "Montserrat" }}
-              >
+              <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
                 MY PROCESS
               </h1>
             </div>
-            <div className="w-10"></div>
+            <button
+              onClick={() => setCreateDialogOpen(true)}
+              className="hover-elevate active-elevate-2 rounded-lg p-2"
+              data-testid="button-add-playlist"
+            >
+              <Plus className="w-6 h-6" style={{ color: "#703DFA" }} />
+            </button>
           </div>
         </div>
 
         <div className="px-4 py-6 space-y-3">
           {playlists.map((playlist) => (
-            <Card
-              key={playlist.id}
-              className="overflow-hidden bg-white"
-              data-testid={`playlist-${playlist.id}`}
-            >
+            <Card key={playlist.id} className="overflow-hidden bg-white" data-testid={`playlist-${playlist.id}`}>
               <button
-                onClick={() =>
-                  setExpandedPlaylist(
-                    expandedPlaylist === playlist.id ? null : playlist.id,
-                  )
-                }
+                onClick={() => setExpandedPlaylistId(expandedPlaylistId === playlist.id ? null : playlist.id)}
                 className="w-full p-4 flex items-center gap-3 hover-elevate active-elevate-2"
                 data-testid={`button-expand-${playlist.id}`}
               >
-                <div
-                  className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: "#F3F0FF" }}
-                >
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F3F0FF" }}>
                   <ListMusic className="w-6 h-6" style={{ color: "#703DFA" }} />
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-foreground">
-                    {playlist.name}
-                  </h3>
+                  <h3 className="font-semibold text-foreground">{playlist.title}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {playlist.practices.length} practices •{" "}
-                    {formatDate(playlist.createdAt)}
+                    Created {new Date(playlist.createdAt).toLocaleDateString()}
                   </p>
-                  {playlist.reminderTime && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <Bell className="w-3 h-3" style={{ color: "#703DFA" }} />
-                      <span
-                        className="text-xs font-medium"
-                        style={{ color: "#703DFA" }}
-                      >
-                        {formatTime(playlist.reminderTime)}
-                      </span>
-                    </div>
-                  )}
                 </div>
-                {expandedPlaylist === playlist.id ? (
+                {expandedPlaylistId === playlist.id ? (
                   <ChevronUp className="w-5 h-5 text-muted-foreground" />
                 ) : (
                   <ChevronDown className="w-5 h-5 text-muted-foreground" />
@@ -401,7 +460,7 @@ export default function MyPracticePlaylistPage() {
               </button>
 
               <AnimatePresence>
-                {expandedPlaylist === playlist.id && (
+                {expandedPlaylistId === playlist.id && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
@@ -410,211 +469,298 @@ export default function MyPracticePlaylistPage() {
                     className="border-t border-border"
                   >
                     <div className="p-4 space-y-3">
-                      <div className="space-y-2">
-                        {playlist.practices.map((practice, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2 text-sm text-foreground"
-                            data-testid={`practice-item-${index}`}
-                          >
-                            <div
-                              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: "#703DFA" }}
-                            />
-                            <span
-                              className={
-                                currentPlaylistId === playlist.id &&
-                                currentTrackIndex === index
-                                  ? "font-semibold"
-                                  : "font-medium"
-                              }
-                              style={
-                                currentPlaylistId === playlist.id &&
-                                currentTrackIndex === index
-                                  ? { color: "#703DFA" }
-                                  : undefined
-                              }
+                      {expandedLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="w-5 h-5 animate-spin text-brand" />
+                        </div>
+                      ) : (
+                        <>
+                          {expandedPlaylistData?.items.length === 0 ? (
+                            <div className="text-center py-2">
+                              <p className="text-muted-foreground text-sm">No items in this playlist yet.</p>
+                            </div>
+                          ) : editMode === playlist.id ? (
+                            <Reorder.Group
+                              axis="y"
+                              values={expandedPlaylistData?.items || []}
+                              onReorder={handleReorder}
+                              className="space-y-2"
                             >
-                              {practice}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                              {expandedPlaylistData?.items.map((item) => (
+                                <Reorder.Item key={item.id} value={item} className="cursor-grab active:cursor-grabbing">
+                                  <div
+                                    className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
+                                    data-testid={`item-${item.id}`}
+                                  >
+                                    <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-sm font-medium text-foreground truncate block">
+                                        {item.lesson?.title || `Lesson ${item.lessonId}`}
+                                      </span>
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeItemMutation.mutate({ playlistId: playlist.id, itemId: item.id });
+                                      }}
+                                      className="p-1 hover:bg-red-100 rounded"
+                                      data-testid={`button-remove-item-${item.id}`}
+                                    >
+                                      <X className="w-4 h-4 text-red-500" />
+                                    </button>
+                                  </div>
+                                </Reorder.Item>
+                              ))}
+                            </Reorder.Group>
+                          ) : expandedPlaylistData?.items && expandedPlaylistData.items.length > 0 ? (
+                            <div className="space-y-2">
+                              {expandedPlaylistData.items.map((item, index) => (
+                                <div
+                                  key={item.id}
+                                  className={`flex items-center gap-2 text-sm ${
+                                    currentPlaylistId === playlist.id && currentTrackIndex === index
+                                      ? "text-brand font-semibold"
+                                      : "text-foreground"
+                                  }`}
+                                  data-testid={`practice-item-${index}`}
+                                >
+                                  <div
+                                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: "#703DFA" }}
+                                  />
+                                  <span className="font-medium">{item.lesson?.title || `Lesson ${item.lessonId}`}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
 
-                      {currentPlaylistId === playlist.id &&
-                        isPlayingPlaylist &&
-                        currentAudio && (
-                          <div className="pt-2">
-                            <AudioPlayer
-                              src={currentAudio.file}
-                              title={currentAudio.title}
-                              mode="playlist"
-                              autoPlay={true}
-                              initialTime={initialTime}
-                              onEnded={handleTrackEnded}
-                              onProgressUpdate={handleProgressUpdate}
-                              onComplete={handleTrackComplete}
-                            />
-                          </div>
-                        )}
+                          {currentPlaylistId === playlist.id && isPlayingPlaylist && currentAudio && (
+                            <div className="pt-2">
+                              <AudioPlayer
+                                src={currentAudio.url || ""}
+                                title={currentAudio.title}
+                                mode="playlist"
+                                autoPlay={true}
+                                initialTime={initialTime}
+                                onEnded={handleTrackEnded}
+                              />
+                            </div>
+                          )}
 
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          className="flex-1 border-0"
-                          style={{ backgroundColor: "#703DFA", color: "white" }}
-                          onClick={() =>
-                            currentPlaylistId === playlist.id
-                              ? handleStopPlaylist()
-                              : handlePlayPlaylist(playlist.id)
-                          }
-                          data-testid={`button-play-${playlist.id}`}
-                        >
-                          {currentPlaylistId === playlist.id ? (
-                            <>
-                              <Pause className="w-4 h-4 mr-2" />
-                              Stop
-                            </>
-                          ) : (
-                            <>
-                              <Play className="w-4 h-4 mr-2" />
-                              Play
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          className="bg-white border-0"
-                          onClick={() => handleSetReminder(playlist)}
-                          data-testid={`button-reminder-${playlist.id}`}
-                        >
-                          {playlist.reminderTime ? (
-                            <Bell
-                              className="w-4 h-4"
-                              style={{ color: "#703DFA" }}
-                              fill="currentColor"
-                            />
-                          ) : (
-                            <Bell
-                              className="w-4 h-4"
-                              style={{ color: "#703DFA" }}
-                            />
-                          )}
-                        </Button>
-                        <Button
-                          className="bg-white border-0"
-                          onClick={() => setPlaylistToDelete(playlist.id)}
-                          data-testid={`button-delete-${playlist.id}`}
-                        >
-                          <Trash2
-                            className="w-4 h-4"
-                            style={{ color: "#703DFA" }}
-                          />
-                        </Button>
-                      </div>
+                          <div className="flex gap-2 pt-2 flex-wrap">
+                            {(expandedPlaylistData?.items?.length || 0) > 0 && (
+                              <>
+                                <Button
+                                  className="flex-1 border-0"
+                                  style={{ backgroundColor: "#703DFA", color: "white" }}
+                                  onClick={() =>
+                                    currentPlaylistId === playlist.id ? handleStopPlaylist() : handlePlayPlaylist(playlist.id)
+                                  }
+                                  data-testid={`button-play-${playlist.id}`}
+                                >
+                                  {currentPlaylistId === playlist.id ? (
+                                    <>
+                                      <Pause className="w-4 h-4 mr-2" />
+                                      Stop
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Play className="w-4 h-4 mr-2" />
+                                      Play
+                                    </>
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => setEditMode(editMode === playlist.id ? null : playlist.id)}
+                                  data-testid={`button-edit-mode-${playlist.id}`}
+                                >
+                                  {editMode === playlist.id ? (
+                                    <Check className="w-4 h-4" style={{ color: "#703DFA" }} />
+                                  ) : (
+                                    <GripVertical className="w-4 h-4" style={{ color: "#703DFA" }} />
+                                  )}
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleOpenLessonPicker(playlist.id)}
+                              data-testid={`button-edit-items-${playlist.id}`}
+                            >
+                              <Plus className="w-4 h-4" style={{ color: "#703DFA" }} />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleOpenRename(playlist)}
+                              data-testid={`button-rename-${playlist.id}`}
+                            >
+                              <Pencil className="w-4 h-4" style={{ color: "#703DFA" }} />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setPlaylistToDelete(playlist.id)}
+                              data-testid={`button-delete-${playlist.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" style={{ color: "#703DFA" }} />
+                            </Button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </Card>
           ))}
-
-          {/* New Playlist Button */}
-          <div className="flex justify-end pt-3">
-            <Button
-              onClick={() => setLocation("/design-practice")}
-              style={{ backgroundColor: "#703DFA" }}
-              data-testid="button-new-playlist"
-            >
-              New Playlist
-            </Button>
-          </div>
         </div>
       </div>
 
-      <AlertDialog
-        open={!!playlistToDelete}
-        onOpenChange={() => setPlaylistToDelete(null)}
-      >
+      <AlertDialog open={!!playlistToDelete} onOpenChange={() => setPlaylistToDelete(null)}>
         <AlertDialogContent data-testid="dialog-confirm-delete">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Playlist?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              playlist.
-            </AlertDialogDescription>
+            <AlertDialogDescription>This action cannot be undone. This will permanently delete your playlist.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-delete">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => playlistToDelete && handleDelete(playlistToDelete)}
+              onClick={() => playlistToDelete && deletePlaylistMutation.mutate(playlistToDelete)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="button-confirm-delete"
             >
-              Delete
+              {deletePlaylistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
-        <DialogContent className="max-w-md" data-testid="dialog-set-reminder">
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-rename-playlist">
           <DialogHeader>
-            <DialogTitle>Set Daily Reminder</DialogTitle>
-            <DialogDescription>
-              Choose a time to be reminded about "
-              {selectedPlaylistForReminder?.name}"
-            </DialogDescription>
+            <DialogTitle>Rename Playlist</DialogTitle>
+            <DialogDescription>Enter a new name for your playlist.</DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label htmlFor="reminder-time" className="text-sm font-medium">
-              Reminder Time
-            </Label>
             <Input
-              id="reminder-time"
-              type="time"
-              value={reminderTime}
-              onChange={(e) => setReminderTime(e.target.value)}
-              className="mt-2"
-              data-testid="input-reminder-time"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Playlist name"
+              data-testid="input-rename-title"
             />
-            <p className="text-xs text-muted-foreground mt-2">
-              You'll receive a daily notification at this time
-            </p>
           </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            {selectedPlaylistForReminder?.reminderTime && (
-              <Button
-                variant="outline"
-                onClick={handleRemoveReminder}
-                className="w-full sm:w-auto"
-                data-testid="button-remove-reminder"
-              >
-                <BellOff className="w-4 h-4 mr-2" />
-                Remove Reminder
-              </Button>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)} data-testid="button-cancel-rename">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRename}
+              disabled={!newTitle.trim() || renamePlaylistMutation.isPending}
+              style={{ backgroundColor: "#703DFA" }}
+              data-testid="button-confirm-rename"
+            >
+              {renamePlaylistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Rename"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-create-playlist">
+          <DialogHeader>
+            <DialogTitle>Create New Playlist</DialogTitle>
+            <DialogDescription>Give your playlist a name to get started.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="e.g., Morning Ritual"
+              value={createTitle}
+              onChange={(e) => setCreateTitle(e.target.value)}
+              data-testid="input-playlist-title"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)} data-testid="button-cancel-create">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!createTitle.trim() || createPlaylistMutation.isPending}
+              style={{ backgroundColor: "#703DFA" }}
+              data-testid="button-confirm-create"
+            >
+              {createPlaylistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={lessonPickerOpen} onOpenChange={setLessonPickerOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col" data-testid="dialog-lesson-picker">
+          <DialogHeader>
+            <DialogTitle>Select Lessons</DialogTitle>
+            <DialogDescription>Choose audio lessons to add to your playlist.</DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto py-4">
+            {sourceLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-brand" />
+              </div>
+            ) : !playlistSource?.course ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No content available yet. Please check back later.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {playlistSource.modules.map((module) => (
+                  <div key={module.id} className="space-y-2">
+                    <h4 className="font-semibold text-sm text-gray-700">{module.title}</h4>
+                    <div className="space-y-1">
+                      {module.lessons.map((lesson) => {
+                        const isSelected = selectedLessonIds.includes(lesson.id);
+                        const hasAudio = lesson.audioFiles.length > 0;
+                        if (!hasAudio) return null;
+                        return (
+                          <button
+                            key={lesson.id}
+                            onClick={() => handleToggleLesson(lesson.id)}
+                            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                              isSelected ? "bg-brand/10 border border-brand" : "bg-gray-50 hover:bg-gray-100"
+                            }`}
+                            data-testid={`lesson-option-${lesson.id}`}
+                          >
+                            <Music className="w-4 h-4 text-brand flex-shrink-0" />
+                            <span className="flex-1 text-left text-sm">{lesson.title}</span>
+                            {isSelected && <Check className="w-4 h-4 text-brand" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
-            <div className="flex gap-2 flex-1">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setReminderDialogOpen(false);
-                  setSelectedPlaylistForReminder(null);
-                  setReminderTime("");
-                }}
-                className="flex-1"
-                data-testid="button-cancel-reminder"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSaveReminder}
-                className="flex-1"
-                data-testid="button-save-reminder"
-              >
-                Save Reminder
-              </Button>
-            </div>
+          </div>
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setLessonPickerOpen(false)} data-testid="button-cancel-lessons">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveLessons}
+              disabled={selectedLessonIds.length === 0 || setItemsMutation.isPending}
+              style={{ backgroundColor: "#703DFA" }}
+              data-testid="button-save-lessons"
+            >
+              {setItemsMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                `Save (${selectedLessonIds.length} selected)`
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

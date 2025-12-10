@@ -19,7 +19,7 @@ function getAuthHeaders(url: string): Record<string, string> {
     if (adminToken) {
       headers["Authorization"] = `Bearer ${adminToken}`;
     }
-  } else if (normalizedUrl.startsWith("/api/v1")) {
+  } else if (normalizedUrl.startsWith("/api/v1") || normalizedUrl.startsWith("/api/public/v1")) {
     const userToken = localStorage.getItem("@app:user_token");
     if (userToken) {
       headers["Authorization"] = `Bearer ${userToken}`;
