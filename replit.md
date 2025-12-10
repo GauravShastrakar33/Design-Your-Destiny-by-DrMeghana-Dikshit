@@ -49,20 +49,24 @@ Preferred communication style: Simple, everyday language.
 ### Frontend Feature Mapping System
 - **Purpose**: Maps CMS courses to frontend features (Processes, Spiritual Breaths, Abundance Mastery) through admin-managed mappings
 - **Database Tables**: 
-  - `frontend_features` - Stores feature codes (DYD, USM, BREATH, ABUNDANCE) with display modes
+  - `frontend_features` - Stores feature codes (DYD, USM, BREATH, ABUNDANCE, PLAYLIST) with display modes
   - `feature_course_map` - Links features to courses with position ordering
+  - `playlists` - User-created playlists for My Processes feature
+  - `playlist_items` - Links playlists to lessons with position ordering
 - **Display Modes**:
   - `modules` - DYD/USM Processes show course modules
   - `lessons` - Spiritual Breaths shows course lessons directly
   - `courses` - Abundance Mastery shows multiple courses as a list
+  - `modules` - PLAYLIST (My Processes) shows modules with audio lessons for user playlists
 - **Mapping Rules**:
-  - DYD, USM, BREATH: Allow only 1 course mapping (single selection)
+  - DYD, USM, BREATH, PLAYLIST: Allow only 1 course mapping (single selection)
   - ABUNDANCE: Allows multiple courses with drag-reorder capability
 - **Built-in Items**: Money Calendar and Rewiring Belief are hardcoded in Abundance Mastery, not stored in DB
 - **Admin Pages**:
   - `/admin/processes` - DYD/USM tabs with course selection and module preview
   - `/admin/spiritual-breaths` - Course selection with lesson preview
   - `/admin/abundance-mastery` - Built-ins display + sortable CMS course list
+  - `/admin/my-processes` - Course selection for PLAYLIST feature with audio lesson count preview
 - **API Routes**:
   - Admin: `/admin/v1/frontend-mapping/features/:code/courses` (GET/POST/DELETE/PATCH reorder)
   - Public: `/api/public/v1/features/:code` - Returns mapped content for user app
@@ -145,6 +149,7 @@ Preferred communication style: Simple, everyday language.
 - **Frontend Page**: `/search` with debounced input (300ms), grouped results by type
 
 ## Recent Changes
+- **December 2025**: Added My Processes (PLAYLIST) admin page at `/admin/my-processes` for mapping a course to provide audio lessons for user playlists.
 - **December 2025**: Implemented global search system - searches only mapped content, deep-link pages for modules/lessons/courses with signed R2 URLs.
 - **December 2025**: Implemented frontend feature mapping system - allows admins to map CMS courses to Processes (DYD/USM), Spiritual Breaths, and Abundance Mastery features via new admin pages.
 - **December 2025**: Removed Practice Library functionality (process_folders, process_subfolders, processes, spiritual_breaths tables and APIs) to rebuild Processes, Spiritual Breaths, and Abundance Mastery as separate features.

@@ -1630,8 +1630,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Feature not found" });
       }
 
-      // For DYD, USM, BREATH - only 1 course allowed, replace existing
-      if (["DYD", "USM", "BREATH"].includes(code)) {
+      // For DYD, USM, BREATH, PLAYLIST - only 1 course allowed, replace existing
+      if (["DYD", "USM", "BREATH", "PLAYLIST"].includes(code)) {
         await storage.clearFeatureCourseMappings(feature.id);
       }
 
@@ -2058,6 +2058,316 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching money calendar:", error);
       res.status(500).json({ error: "Failed to fetch money calendar" });
+    }
+  });
+
+  // ===== PLAYLIST ROUTES (User API) =====
+
+  // GET /api/public/v1/playlist/source - Get playlist source (mapped course with audio-only lessons)
+  app.get("/api/public/v1/playlist/source", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const feature = await storage.getFrontendFeatureByCode("PLAYLIST");
+      if (!feature) {
+        return res.status(404).json({ error: "PLAYLIST feature not configured" });
+      }
+
+      const mappings = await storage.getFeatureCourseMappings(feature.id);
+      if (mappings.length === 0) {
+        return res.json({ course: null, modules: [] });
+      }
+
+      const courseId = mappings[0].courseId;
+      const data = await storage.getPlaylistSourceData(courseId);
+
+      if (!data) {
+        return res.json({ course: null, modules: [] });
+      }
+
+      // Generate signed URLs for audio files
+      const modulesWithSignedUrls = await Promise.all(data.modules.map(async (module: any) => ({
+        ...module,
+        lessons: await Promise.all(module.lessons.map(async (lesson: any) => ({
+          ...lesson,
+          audioFiles: await Promise.all(lesson.audioFiles.map(async (file: any) => {
+            let signedUrl = null;
+            if (file.r2Key) {
+              try {
+                signedUrl = await getSignedGetUrl(file.r2Key, 3600);
+              } catch (e) {
+                console.error("Error generating signed URL:", e);
+              }
+            }
+            return { ...file, signedUrl };
+          }))
+        })))
+      })));
+
+      res.json({ course: data.course, modules: modulesWithSignedUrls });
+    } catch (error) {
+      console.error("Error fetching playlist source:", error);
+      res.status(500).json({ error: "Failed to fetch playlist source" });
+    }
+  });
+
+  // GET /api/public/v1/playlists - List user's playlists
+  app.get("/api/public/v1/playlists", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const playlists = await storage.getUserPlaylists(req.user.sub);
+      res.json(playlists);
+    } catch (error) {
+      console.error("Error fetching playlists:", error);
+      res.status(500).json({ error: "Failed to fetch playlists" });
+    }
+  });
+
+  // POST /api/public/v1/playlists - Create a playlist
+  app.post("/api/public/v1/playlists", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { title } = req.body;
+
+      if (!title || typeof title !== "string" || title.trim() === "") {
+        return res.status(400).json({ error: "Title is required" });
+      }
+
+      const playlist = await storage.createPlaylist({
+        userId: req.user.sub,
+        title: title.trim()
+      });
+
+      res.status(201).json(playlist);
+    } catch (error) {
+      console.error("Error creating playlist:", error);
+      res.status(500).json({ error: "Failed to create playlist" });
+    }
+  });
+
+  // GET /api/public/v1/playlists/:id - Get playlist with items
+  app.get("/api/public/v1/playlists/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const playlistId = parseInt(req.params.id);
+      const playlist = await storage.getPlaylistById(playlistId);
+
+      if (!playlist) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+
+      if (playlist.userId !== req.user.sub) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const items = await storage.getPlaylistItems(playlistId);
+
+      // Get audio files for each lesson with signed URLs
+      const itemsWithAudio = await Promise.all(items.map(async (item) => {
+        const audioFiles = await db
+          .select()
+          .from(cmsLessonFiles)
+          .where(and(eq(cmsLessonFiles.lessonId, item.lessonId), eq(cmsLessonFiles.fileType, 'audio')))
+          .orderBy(asc(cmsLessonFiles.position));
+
+        const audioFilesWithUrls = await Promise.all(audioFiles.map(async (file) => {
+          let signedUrl = null;
+          if (file.r2Key) {
+            try {
+              signedUrl = await getSignedGetUrl(file.r2Key, 3600);
+            } catch (e) {
+              console.error("Error generating signed URL:", e);
+            }
+          }
+          return { ...file, signedUrl };
+        }));
+
+        return { ...item, audioFiles: audioFilesWithUrls };
+      }));
+
+      res.json({ playlist, items: itemsWithAudio });
+    } catch (error) {
+      console.error("Error fetching playlist:", error);
+      res.status(500).json({ error: "Failed to fetch playlist" });
+    }
+  });
+
+  // PATCH /api/public/v1/playlists/:id - Rename playlist
+  app.patch("/api/public/v1/playlists/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const playlistId = parseInt(req.params.id);
+      const playlist = await storage.getPlaylistById(playlistId);
+
+      if (!playlist) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+
+      if (playlist.userId !== req.user.sub) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const { title } = req.body;
+
+      if (!title || typeof title !== "string" || title.trim() === "") {
+        return res.status(400).json({ error: "Title is required" });
+      }
+
+      const updated = await storage.updatePlaylist(playlistId, title.trim());
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating playlist:", error);
+      res.status(500).json({ error: "Failed to update playlist" });
+    }
+  });
+
+  // DELETE /api/public/v1/playlists/:id - Delete playlist
+  app.delete("/api/public/v1/playlists/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const playlistId = parseInt(req.params.id);
+      const playlist = await storage.getPlaylistById(playlistId);
+
+      if (!playlist) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+
+      if (playlist.userId !== req.user.sub) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      await storage.deletePlaylist(playlistId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting playlist:", error);
+      res.status(500).json({ error: "Failed to delete playlist" });
+    }
+  });
+
+  // POST /api/public/v1/playlists/:id/items - Set playlist items (replace all)
+  app.post("/api/public/v1/playlists/:id/items", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const playlistId = parseInt(req.params.id);
+      const playlist = await storage.getPlaylistById(playlistId);
+
+      if (!playlist) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+
+      if (playlist.userId !== req.user.sub) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const { lessonIds } = req.body;
+
+      if (!Array.isArray(lessonIds)) {
+        return res.status(400).json({ error: "lessonIds must be an array" });
+      }
+
+      // Validate all lessons belong to mapped PLAYLIST course and have audio
+      for (const lessonId of lessonIds) {
+        const inMappedCourse = await storage.isLessonInMappedCourse(lessonId, "PLAYLIST");
+        if (!inMappedCourse) {
+          return res.status(400).json({ error: `Lesson ${lessonId} is not in the mapped playlist course` });
+        }
+
+        const hasAudio = await storage.doesLessonHaveAudio(lessonId);
+        if (!hasAudio) {
+          return res.status(400).json({ error: `Lesson ${lessonId} has no audio files` });
+        }
+      }
+
+      const items = await storage.setPlaylistItems(playlistId, lessonIds);
+      res.json(items);
+    } catch (error) {
+      console.error("Error setting playlist items:", error);
+      res.status(500).json({ error: "Failed to set playlist items" });
+    }
+  });
+
+  // PATCH /api/public/v1/playlists/:id/items/reorder - Reorder playlist items
+  app.patch("/api/public/v1/playlists/:id/items/reorder", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const playlistId = parseInt(req.params.id);
+      const playlist = await storage.getPlaylistById(playlistId);
+
+      if (!playlist) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+
+      if (playlist.userId !== req.user.sub) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const { orderedItemIds } = req.body;
+
+      if (!Array.isArray(orderedItemIds)) {
+        return res.status(400).json({ error: "orderedItemIds must be an array" });
+      }
+
+      await storage.reorderPlaylistItems(playlistId, orderedItemIds);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reordering playlist items:", error);
+      res.status(500).json({ error: "Failed to reorder playlist items" });
+    }
+  });
+
+  // DELETE /api/public/v1/playlists/:id/items/:itemId - Remove one item
+  app.delete("/api/public/v1/playlists/:id/items/:itemId", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const playlistId = parseInt(req.params.id);
+      const itemId = parseInt(req.params.itemId);
+
+      const playlist = await storage.getPlaylistById(playlistId);
+
+      if (!playlist) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+
+      if (playlist.userId !== req.user.sub) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const success = await storage.deletePlaylistItem(playlistId, itemId);
+
+      if (!success) {
+        return res.status(404).json({ error: "Item not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting playlist item:", error);
+      res.status(500).json({ error: "Failed to delete playlist item" });
     }
   });
 

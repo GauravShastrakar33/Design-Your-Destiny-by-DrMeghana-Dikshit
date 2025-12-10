@@ -8,10 +8,13 @@ import {
   type FrontendFeature, type InsertFrontendFeature,
   type FeatureCourseMap, type InsertFeatureCourseMap,
   type MoneyEntry,
+  type Playlist, type InsertPlaylist,
+  type PlaylistItem, type InsertPlaylistItem,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
-  cmsCourses, cmsModules, cmsLessons, moneyEntries
+  cmsCourses, cmsModules, cmsLessons, cmsLessonFiles, moneyEntries,
+  playlists as playlistsTable, playlistItems as playlistItemsTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -788,6 +791,149 @@ export class DbStorage implements IStorage {
         average: Math.round(average * 100) / 100,
       },
     };
+  }
+
+  // Playlist Methods
+  async getUserPlaylists(userId: number): Promise<Playlist[]> {
+    return await db.select().from(playlistsTable).where(eq(playlistsTable.userId, userId)).orderBy(desc(playlistsTable.createdAt));
+  }
+
+  async getPlaylistById(id: number): Promise<Playlist | undefined> {
+    const [playlist] = await db.select().from(playlistsTable).where(eq(playlistsTable.id, id));
+    return playlist;
+  }
+
+  async createPlaylist(playlist: InsertPlaylist): Promise<Playlist> {
+    const [newPlaylist] = await db.insert(playlistsTable).values(playlist).returning();
+    return newPlaylist;
+  }
+
+  async updatePlaylist(id: number, title: string): Promise<Playlist | undefined> {
+    const [updated] = await db
+      .update(playlistsTable)
+      .set({ title, updatedAt: new Date() })
+      .where(eq(playlistsTable.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deletePlaylist(id: number): Promise<boolean> {
+    const result = await db.delete(playlistsTable).where(eq(playlistsTable.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getPlaylistItems(playlistId: number): Promise<(PlaylistItem & { lesson: { id: number; title: string; description: string | null } })[]> {
+    const items = await db
+      .select()
+      .from(playlistItemsTable)
+      .where(eq(playlistItemsTable.playlistId, playlistId))
+      .orderBy(asc(playlistItemsTable.position));
+
+    const result = await Promise.all(items.map(async (item) => {
+      const [lesson] = await db
+        .select({ id: cmsLessons.id, title: cmsLessons.title, description: cmsLessons.description })
+        .from(cmsLessons)
+        .where(eq(cmsLessons.id, item.lessonId));
+      return {
+        ...item,
+        lesson: lesson || { id: item.lessonId, title: 'Unknown Lesson', description: null }
+      };
+    }));
+    return result;
+  }
+
+  async setPlaylistItems(playlistId: number, lessonIds: number[]): Promise<PlaylistItem[]> {
+    await db.delete(playlistItemsTable).where(eq(playlistItemsTable.playlistId, playlistId));
+    
+    if (lessonIds.length === 0) return [];
+
+    const items = lessonIds.map((lessonId, index) => ({
+      playlistId,
+      lessonId,
+      position: index,
+    }));
+
+    return await db.insert(playlistItemsTable).values(items).returning();
+  }
+
+  async reorderPlaylistItems(playlistId: number, orderedItemIds: number[]): Promise<void> {
+    for (let i = 0; i < orderedItemIds.length; i++) {
+      await db
+        .update(playlistItemsTable)
+        .set({ position: i })
+        .where(and(eq(playlistItemsTable.playlistId, playlistId), eq(playlistItemsTable.id, orderedItemIds[i])));
+    }
+  }
+
+  async deletePlaylistItem(playlistId: number, itemId: number): Promise<boolean> {
+    const result = await db
+      .delete(playlistItemsTable)
+      .where(and(eq(playlistItemsTable.playlistId, playlistId), eq(playlistItemsTable.id, itemId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getPlaylistSourceData(courseId: number) {
+    const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
+    if (!course) return null;
+
+    const modules = await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId)).orderBy(asc(cmsModules.position));
+    
+    const modulesWithLessons = await Promise.all(modules.map(async (module) => {
+      const lessons = await db.select().from(cmsLessons).where(eq(cmsLessons.moduleId, module.id)).orderBy(asc(cmsLessons.position));
+      
+      const lessonsWithAudio = await Promise.all(lessons.map(async (lesson) => {
+        const audioFiles = await db
+          .select()
+          .from(cmsLessonFiles)
+          .where(and(eq(cmsLessonFiles.lessonId, lesson.id), eq(cmsLessonFiles.fileType, 'audio')))
+          .orderBy(asc(cmsLessonFiles.position));
+        
+        if (audioFiles.length === 0) return null;
+        
+        return {
+          ...lesson,
+          audioFiles
+        };
+      }));
+
+      const filteredLessons = lessonsWithAudio.filter(l => l !== null);
+      if (filteredLessons.length === 0) return null;
+
+      return {
+        ...module,
+        lessons: filteredLessons
+      };
+    }));
+
+    return {
+      course,
+      modules: modulesWithLessons.filter(m => m !== null)
+    };
+  }
+
+  async isLessonInMappedCourse(lessonId: number, featureCode: string): Promise<boolean> {
+    const feature = await this.getFrontendFeatureByCode(featureCode);
+    if (!feature) return false;
+
+    const mappings = await this.getFeatureCourseMappings(feature.id);
+    if (mappings.length === 0) return false;
+
+    const courseId = mappings[0].courseId;
+    const modules = await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId));
+    const moduleIds = modules.map(m => m.id);
+    if (moduleIds.length === 0) return false;
+
+    const [lesson] = await db.select().from(cmsLessons).where(and(eq(cmsLessons.id, lessonId), inArray(cmsLessons.moduleId, moduleIds)));
+    return !!lesson;
+  }
+
+  async doesLessonHaveAudio(lessonId: number): Promise<boolean> {
+    const audioFiles = await db
+      .select()
+      .from(cmsLessonFiles)
+      .where(and(eq(cmsLessonFiles.lessonId, lessonId), eq(cmsLessonFiles.fileType, 'audio')));
+    return audioFiles.length > 0;
   }
 }
 

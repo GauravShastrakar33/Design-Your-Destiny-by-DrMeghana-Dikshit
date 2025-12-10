@@ -18,6 +18,7 @@ import {
   Sparkles,
   Wind,
   DollarSign,
+  Music,
 } from "lucide-react";
 
 const menuIcons: Record<string, React.ElementType> = {
@@ -103,6 +104,7 @@ const menuContent: Record<
       { path: "/admin/processes", label: "Processes", icon: Sparkles },
       { path: "/admin/spiritual-breaths", label: "Spiritual Breaths", icon: Wind },
       { path: "/admin/abundance-mastery", label: "Abundance Mastery", icon: DollarSign },
+      { path: "/admin/my-processes", label: "My Processes", icon: Music },
     ],
   },
   project: {

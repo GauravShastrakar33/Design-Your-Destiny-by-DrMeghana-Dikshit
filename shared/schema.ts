@@ -268,3 +268,39 @@ export const insertMoneyEntrySchema = createInsertSchema(moneyEntries).omit({
 
 export type InsertMoneyEntry = z.infer<typeof insertMoneyEntrySchema>;
 export type MoneyEntry = typeof moneyEntries.$inferSelect;
+
+// User Playlists Tables
+export const playlists = pgTable("playlists", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertPlaylistSchema = createInsertSchema(playlists).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPlaylist = z.infer<typeof insertPlaylistSchema>;
+export type Playlist = typeof playlists.$inferSelect;
+
+export const playlistItems = pgTable("playlist_items", {
+  id: serial("id").primaryKey(),
+  playlistId: integer("playlist_id").notNull().references(() => playlists.id, { onDelete: 'cascade' }),
+  lessonId: integer("lesson_id").notNull().references(() => cmsLessons.id, { onDelete: 'cascade' }),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+}, (table) => ({
+  uniquePlaylistLesson: unique("unique_playlist_lesson").on(table.playlistId, table.lessonId),
+}));
+
+export const insertPlaylistItemSchema = createInsertSchema(playlistItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPlaylistItem = z.infer<typeof insertPlaylistItemSchema>;
+export type PlaylistItem = typeof playlistItems.$inferSelect;
