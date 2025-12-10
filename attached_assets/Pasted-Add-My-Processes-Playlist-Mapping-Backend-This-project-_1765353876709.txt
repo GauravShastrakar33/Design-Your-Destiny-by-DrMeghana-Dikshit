@@ -1,0 +1,91 @@
+Add My Processes (Playlist) Mapping + Backend
+This project has:
+* Backend at server/
+* React Admin Panel at client/src/
+* CMS (courses/modules/lessons/lesson_files)
+* Existing mapping layer (frontend_features + feature_course_map)
+* Public features API
+Goal: Admin maps ONE CMS Course as the source for My Processes. User app then shows that course’s modules (e.g., DYD Practices, USM Practices) with their audio lessons so users can build playlists.
+
+🎯 Feature Definition
+* Feature Code: PLAYLIST
+* Display Mode: modules (modules with lessons included)
+* Mapping Rule: Select ONE CMS course → playlist feature uses all modules & lessons (audio files only) from that course.
+* No icons, no module-level manual mapping, do not use program_code, do not alter CMS tables.
+
+🧱 Database (Drizzle) — Mapping + Playlists
+1. frontend_features (existing) — seed a new row:
+
+PLAYLIST, 'My Processes', 'modules'
+2. feature_course_map (existing) — reuse:
+* PLAYLIST must allow max 1 mapped course.
+* No reorder.
+3. New tables for user playlists (store user-created playlists): File: server/db/schema/playlist.ts
+* playlists: id, user_id (FK users.id), title, created_at, updated_at
+* playlist_items: id, playlist_id (FK playlists.id ON DELETE CASCADE), lesson_id (FK lessons.id), position, created_at
+* Constraint: UNIQUE(playlist_id, lesson_id)
+
+🔌 Admin API (reuse mapping endpoints)
+Use existing controllers/routes and just support code PLAYLIST:
+* GET /admin/v1/frontend-mapping/features
+* GET /admin/v1/frontend-mapping/features/PLAYLIST/courses
+* POST /admin/v1/frontend-mapping/features/PLAYLIST/courses (replace existing; only 1 allowed)
+* DELETE /admin/v1/frontend-mapping/features/PLAYLIST/courses/:courseId (clear)
+Rules:
+* Enforce single-course mapping for PLAYLIST.
+* Reject reorder for PLAYLIST.
+
+🌍 Public API (for user app)
+1. Playlist Source (audio-only) File: server/routes/public/playlistSource.ts
+* GET /public/v1/playlist/source
+    * Read mapped course for PLAYLIST.
+    * Return course + all modules (ordered) + lessons that have at least one lesson_files.file_type='audio'.
+    * For each lesson, include only its audio files (ignore video/script).
+    * Keep CMS ordering.
+2. User Playlists CRUD (used by your existing frontend) File: server/routes/public/playlists.ts
+* GET /public/v1/playlists → list user’s playlists
+* POST /public/v1/playlists → create { title }
+* GET /public/v1/playlists/:id → playlist + items (ordered)
+* PATCH /public/v1/playlists/:id → rename { title }
+* DELETE /public/v1/playlists/:id → delete playlist
+Items
+* POST /public/v1/playlists/:id/items → { lessonIds: number[] } (replace all items; position by index)
+* PATCH /public/v1/playlists/:id/items/reorder → { orderedItemIds: number[] }
+* DELETE /public/v1/playlists/:id/items/:itemId → remove one
+Validations
+* All routes use req.user.id; enforce ownership.
+* Only allow adding lessons that belong to the mapped PLAYLIST course.
+* Only allow adding lessons that have audio files.
+* No program_code anywhere.
+
+🖥️ Admin Panel (React)
+Create a new page and menu:
+* Sidebar: Process Library → My Processes
+* Route/Page: client/src/pages/DesignPlaylist/index.tsx
+UI (match existing “Processes” page style):
+* Header: My Processes (Playlist Mapping)
+* Helper text: “Select a CMS course to power the My Processes feature.”
+* Dropdown: list CMS courses → on select, POST mapping for PLAYLIST
+* Show read-only preview: modules count + audio lesson counts (from the selected course)
+* Buttons: Change Course, Clear Selection
+
+📁 File Locations (match current project)
+Backend
+* server/db/schema/mapping.ts (seed PLAYLIST)
+* server/db/schema/playlist.ts (new)
+* server/routes/admin/frontend-mapping/index.ts (existing; support PLAYLIST)
+* server/controllers/frontendMappingController.ts (existing; support PLAYLIST)
+* server/routes/public/playlistSource.ts (new)
+* server/routes/public/playlists.ts (new)
+Frontend (Admin)
+* client/src/pages/DesignPlaylist/index.tsx
+* Use existing client/src/components, client/src/lib/queryClient.ts, client/src/routes
+UI
+* Keep the same theme/components as other mapping pages.
+
+🧪 Acceptance Criteria
+* Admin can open Process Library → My Processes, select one CMS course, and see a preview.
+* Public API returns that course’s modules with audio lessons only, in CMS order.
+* User app shows USM Practices and DYD Practices sections (modules) with their audio lessons.
+* User can create/edit/reorder/delete playlists that reference lessons from the mapped course.
+* No use of program_code. No changes to CMS schema. Only mapping + playlist tables added.  Do not disturb or change any other functionality or UI 
