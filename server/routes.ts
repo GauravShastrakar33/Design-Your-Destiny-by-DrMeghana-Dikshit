@@ -94,31 +94,11 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
 // Convert PDF text to formatted HTML (handles line-by-line output from pdf2json)
+// Note: PDF line breaks are intentional and should be preserved
 export function convertTextToFormattedHtml(text: string): string {
   // Normalize newlines
   const norm = text.replace(/\r\n/g, "\n").replace(/\u00A0/g, " ").trim();
-  let lines = norm.split("\n").map(l => l.trim());
-  
-  // First pass: merge broken lines (line without terminal punctuation + next line starting lowercase)
-  const mergedLines: string[] = [];
-  let i = 0;
-  while (i < lines.length) {
-    let line = lines[i];
-    
-    // Keep merging while current line has no terminal punctuation and next starts lowercase
-    while (i + 1 < lines.length && 
-           line.length > 0 && 
-           !/[.!?:"]$/.test(line) && 
-           lines[i + 1].length > 0 &&
-           /^[a-z]/.test(lines[i + 1])) {
-      i++;
-      line = line + ' ' + lines[i];
-    }
-    
-    mergedLines.push(line);
-    i++;
-  }
-  lines = mergedLines;
+  const lines = norm.split("\n").map(l => l.trim());
   
   const html: string[] = [];
   let currentParagraph: string[] = [];
