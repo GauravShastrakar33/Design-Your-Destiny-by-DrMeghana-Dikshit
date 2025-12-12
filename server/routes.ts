@@ -94,7 +94,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
 // Convert PDF text to formatted HTML (handles line-by-line output from pdf2json)
-// Note: PDF line breaks are intentional and should be preserved exactly
+// Merges lines within paragraphs, preserves blank lines as paragraph separators
 export function convertTextToFormattedHtml(text: string): string {
   // Normalize newlines
   const norm = text.replace(/\r\n/g, "\n").replace(/\u00A0/g, " ").trim();
@@ -162,12 +162,12 @@ export function convertTextToFormattedHtml(text: string): string {
     }
   }
   
-  // Flush accumulated paragraph lines to HTML (preserving line breaks with <br>)
+  // Flush accumulated paragraph lines to HTML (merge lines into flowing text)
   function flushParagraph() {
     flushList();
     if (currentParagraph.length > 0) {
-      // Join lines with <br> to preserve intentional line breaks
-      const content = currentParagraph.join('<br>');
+      // Merge lines with spaces into one flowing paragraph
+      const content = currentParagraph.join(' ').trim();
       if (content) {
         html.push(`<p class="my-4 leading-relaxed">${content}</p>`);
       }
