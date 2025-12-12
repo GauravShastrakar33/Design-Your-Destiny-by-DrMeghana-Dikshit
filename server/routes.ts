@@ -27,6 +27,92 @@ import { authenticateJWT, type AuthPayload } from "./middleware/auth";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
+// Helper function to convert PDF text to formatted HTML
+function convertTextToFormattedHtml(text: string): string {
+  // Split text into lines
+  const lines = text.split('\n');
+  const htmlParts: string[] = [];
+  let currentParagraph: string[] = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const nextLine = lines[i + 1]?.trim() || '';
+    
+    // Skip empty lines - they indicate paragraph breaks
+    if (!line) {
+      if (currentParagraph.length > 0) {
+        const paragraphText = currentParagraph.join(' ');
+        htmlParts.push(`<p>${paragraphText}</p>`);
+        currentParagraph = [];
+      }
+      continue;
+    }
+    
+    // Detect headings: short lines (< 60 chars) followed by blank line or content
+    // and typically uppercase or title-like
+    const isShortLine = line.length < 60;
+    const isNextLineEmpty = !nextLine;
+    const looksLikeHeading = isShortLine && (
+      line === line.toUpperCase() || // ALL CAPS
+      /^[A-Z][^.!?]*$/.test(line) || // Starts with capital, no ending punctuation
+      /^(Step|Part|Chapter|Section|Introduction|Conclusion|Intention|Affirmation)\s*\d*/i.test(line)
+    );
+    
+    if (looksLikeHeading && (isNextLineEmpty || i === 0)) {
+      // Flush current paragraph first
+      if (currentParagraph.length > 0) {
+        const paragraphText = currentParagraph.join(' ');
+        htmlParts.push(`<p>${paragraphText}</p>`);
+        currentParagraph = [];
+      }
+      // Add as heading
+      htmlParts.push(`<h3 class="font-semibold text-lg mt-4 mb-2">${line}</h3>`);
+      continue;
+    }
+    
+    // Check for bullet points
+    if (/^[-•*]\s/.test(line)) {
+      if (currentParagraph.length > 0) {
+        const paragraphText = currentParagraph.join(' ');
+        htmlParts.push(`<p>${paragraphText}</p>`);
+        currentParagraph = [];
+      }
+      const bulletText = line.replace(/^[-•*]\s*/, '');
+      htmlParts.push(`<li>${bulletText}</li>`);
+      continue;
+    }
+    
+    // Check for numbered lists
+    if (/^\d+[.)]\s/.test(line)) {
+      if (currentParagraph.length > 0) {
+        const paragraphText = currentParagraph.join(' ');
+        htmlParts.push(`<p>${paragraphText}</p>`);
+        currentParagraph = [];
+      }
+      const numberedText = line.replace(/^\d+[.)]\s*/, '');
+      htmlParts.push(`<li>${numberedText}</li>`);
+      continue;
+    }
+    
+    // Regular text - add to current paragraph
+    currentParagraph.push(line);
+  }
+  
+  // Flush any remaining paragraph
+  if (currentParagraph.length > 0) {
+    const paragraphText = currentParagraph.join(' ');
+    htmlParts.push(`<p>${paragraphText}</p>`);
+  }
+  
+  // Wrap consecutive <li> elements in <ul>
+  let result = htmlParts.join('\n');
+  result = result.replace(/(<li>.*?<\/li>\n?)+/g, (match) => {
+    return `<ul class="list-disc list-inside space-y-1 my-2">\n${match}</ul>\n`;
+  });
+  
+  return result;
+}
+
 // Ensure public/articles directory exists
 const articlesDir = path.join(process.cwd(), "public", "articles");
 if (!fs.existsSync(articlesDir)) {
@@ -1558,32 +1644,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const downloadResult = await downloadR2Object(parsed.data.r2Key);
           
           if (downloadResult.success && downloadResult.data) {
-            // Use pdf2html for HTML conversion with formatting
-            const pdf2html = await import("pdf2html");
+            // Use pdf-parse v2 to extract text
+            const { PDFParse } = await import("pdf-parse");
+            const parser = new PDFParse({ data: downloadResult.data });
+            const textResult = await parser.getText();
+            extractedText = textResult.text;
+            await parser.destroy();
             
-            // Get HTML content from PDF buffer
-            const htmlContent = await pdf2html.html(downloadResult.data);
-            
-            // Clean up the HTML - remove page markers, headers/footers
-            let cleanedHtml = htmlContent
-              // Remove page number patterns
-              .replace(/<p[^>]*>\s*\d+\s*<\/p>/gi, '')
-              .replace(/<div[^>]*>\s*\d+\s*<\/div>/gi, '')
-              // Remove empty paragraphs
-              .replace(/<p[^>]*>\s*<\/p>/gi, '')
-              // Remove excessive whitespace
-              .replace(/\s+/g, ' ')
-              // Remove inline styles that might conflict with our styling
-              .replace(/style="[^"]*"/gi, '')
-              // Normalize spacing
-              .trim();
-            
-            scriptHtml = cleanedHtml;
-            console.log("PDF converted to HTML, length:", scriptHtml?.length || 0);
-            
-            // Also extract plain text for search/fallback
-            const textContent = await pdf2html.text(downloadResult.data);
-            extractedText = textContent;
+            // Convert extracted text to formatted HTML
+            if (extractedText) {
+              scriptHtml = convertTextToFormattedHtml(extractedText);
+              console.log("PDF converted to HTML, length:", scriptHtml?.length || 0);
+            }
           } else {
             console.error("Failed to download PDF for conversion:", downloadResult.error);
           }
