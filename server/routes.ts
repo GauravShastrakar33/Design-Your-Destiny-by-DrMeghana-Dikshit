@@ -33,7 +33,57 @@ import {
   generateLessonFileKey,
   downloadR2Object,
 } from "./r2Upload";
-// pdf-parse will be dynamically imported when needed
+// pdf2json for extracting text with preserved line breaks
+import PDFParser from "pdf2json";
+
+// Extract text from PDF buffer using pdf2json (preserves line-by-line structure)
+async function extractTextWithPdf2json(buffer: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const pdfParser = new (PDFParser as any)(null, 1);
+
+    pdfParser.on("pdfParser_dataError", (errData: any) => {
+      reject(errData.parserError);
+    });
+
+    pdfParser.on("pdfParser_dataReady", (pdfData: any) => {
+      const pages = pdfData.Pages || [];
+      const lines: string[] = [];
+
+      pages.forEach((page: any) => {
+        // Group texts by Y position to reconstruct lines
+        const textsByY: Map<number, string[]> = new Map();
+        
+        (page.Texts || []).forEach((textItem: any) => {
+          const y = Math.round(textItem.y * 10); // Round Y to group nearby items
+          const text = textItem.R?.map((r: any) => decodeURIComponent(r.T)).join('') || '';
+          
+          if (text.trim()) {
+            if (!textsByY.has(y)) {
+              textsByY.set(y, []);
+            }
+            textsByY.get(y)!.push(text);
+          }
+        });
+        
+        // Sort by Y position and join texts on same line
+        const sortedYs = Array.from(textsByY.keys()).sort((a, b) => a - b);
+        sortedYs.forEach(y => {
+          const lineText = textsByY.get(y)!.join(' ').trim();
+          if (lineText) {
+            lines.push(lineText);
+          }
+        });
+        
+        lines.push(""); // Add paragraph break between pages
+      });
+
+      resolve(lines.join("\n"));
+    });
+
+    pdfParser.parseBuffer(buffer);
+  });
+}
+
 import { db } from "./db";
 import { eq, asc, and, ilike, or, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -43,118 +93,159 @@ import { authenticateJWT, type AuthPayload } from "./middleware/auth";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
-// Keep real paragraphs and line breaks from pdf-parse output
+// Convert PDF text to formatted HTML (handles line-by-line output from pdf2json)
 export function convertTextToFormattedHtml(text: string): string {
-  // 1) normalize newlines
-  const norm = text
-    .replace(/\r\n/g, "\n")
-    .replace(/\u00A0/g, " ")
-    .trim();
-
-  // 2) split into "blocks" by 1+ blank lines (paragraph gaps)
-  //    This keeps natural paragraph spacing from the PDF
-  const blocks = norm.split(/\n{2,}/);
-
+  // Normalize newlines
+  const norm = text.replace(/\r\n/g, "\n").replace(/\u00A0/g, " ").trim();
+  let lines = norm.split("\n").map(l => l.trim());
+  
+  // First pass: merge broken lines (line without terminal punctuation + next line starting lowercase)
+  const mergedLines: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    let line = lines[i];
+    
+    // Keep merging while current line has no terminal punctuation and next starts lowercase
+    while (i + 1 < lines.length && 
+           line.length > 0 && 
+           !/[.!?:"]$/.test(line) && 
+           lines[i + 1].length > 0 &&
+           /^[a-z]/.test(lines[i + 1])) {
+      i++;
+      line = line + ' ' + lines[i];
+    }
+    
+    mergedLines.push(line);
+    i++;
+  }
+  lines = mergedLines;
+  
   const html: string[] = [];
-
-  // Header heuristics tuned for your scripts (Intention, Affirmation, Tapping (...))
+  let currentParagraph: string[] = [];
+  let currentListType: 'ul' | 'ol' | null = null;
+  let listItems: string[] = [];
+  
+  // Header keywords for wellness content (exact matches only)
   const headerKeywords = [
-    "intention",
-    "affirmation",
-    "tapping",
-    "forgiveness",
-    "release",
-    "breathing",
-    "meditation",
-    "visualization",
-    "notes",
-    "summary",
-    "overview",
+    "intention", "affirmation", "tapping", "forgiveness", "release",
+    "breathing", "meditation", "visualization", "notes", "summary",
+    "overview", "step", "part", "exercise", "practice", "dyd", "usm"
   ];
-
-  const looksLikeHeader = (s: string) => {
-    const t = s.trim();
+  
+  // Check if a line looks like a section header (strict rules)
+  function isHeader(line: string): boolean {
+    const t = line.trim();
     if (!t) return false;
-    if (t.length > 60) return false;
-    if (/[.!?]$/.test(t)) return false; // sentences are not headers
-    const lower = t.toLowerCase();
-
-    // exact keyword or keyword with parens e.g. Tapping (Release)
-    if (headerKeywords.some((k) => lower === k || lower.startsWith(k + " ")))
-      return true;
-
-    // Short, title-like line (<= 6 words), not all-caps noise
+    
+    // Skip page markers
+    if (/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/i.test(t)) return false;
+    
+    // Must be short (under 35 chars, max 3 words)
     const words = t.split(/\s+/);
-    if (words.length <= 6 && /^[A-Z]/.test(t)) return true;
-
+    if (t.length > 35 || words.length > 3) return false;
+    
+    // Skip lines with commas (usually sentences)
+    if (/,/.test(t)) return false;
+    
+    // Skip lines ending with sentence punctuation
+    if (/[.!?;]$/.test(t)) return false;
+    
+    // Skip lines with common verbs/phrases that indicate sentences
+    if (/\b(say|the|your|my|and|or|is|are|was|were|on|in|at|to|for|with|from)\b/i.test(t)) {
+      return false;
+    }
+    
+    const lower = t.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+    
+    // Exact keyword match (single word headers)
+    if (headerKeywords.includes(lower)) return true;
+    
+    // Keyword with parenthetical (e.g., "Tapping (Release)")
+    const keywordWithParen = headerKeywords.find(k => lower.startsWith(k) && /^\w+\s*\([^)]+\)$/.test(t));
+    if (keywordWithParen) return true;
+    
+    // Very short title (1-2 words, starts with capital)
+    if (words.length <= 2 && t.length < 25 && /^[A-Z]/.test(t)) return true;
+    
     return false;
-  };
-
-  // helper: list detection inside a block
-  const splitLines = (b: string) =>
-    b
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(
-        (l) => l.length > 0 && !/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/i.test(l),
-      );
-
-  const isUnordered = (line: string) => /^[-•*]\s+/.test(line);
-  const isOrdered = (line: string) => /^\d+\s*[.)]\s+/.test(line);
-
-  for (const block of blocks) {
-    const lines = splitLines(block);
-    if (lines.length === 0) {
-      // multiple blank lines => add extra gap
-      html.push('<div class="h-4"></div>');
-      continue;
-    }
-
-    // Single short line that looks like a header
-    if (lines.length === 1 && looksLikeHeader(lines[0])) {
-      const header = lines[0].replace(/[,:]$/, "").trim();
-      html.push(
-        `<h3 class="mt-6 mb-2 text-lg font-semibold text-primary">${header}</h3>`,
-      );
-      continue;
-    }
-
-    // Entire block is a list?
-    const allUnordered = lines.every(isUnordered);
-    const allOrdered = lines.every(isOrdered);
-
-    if (allUnordered) {
-      html.push('<ul class="list-disc list-inside space-y-1 my-3">');
-      for (const l of lines)
-        html.push(`<li>${l.replace(/^[-•*]\s+/, "")}</li>`);
-      html.push("</ul>");
-      continue;
-    }
-    if (allOrdered) {
-      html.push('<ol class="list-decimal list-inside space-y-1 my-3">');
-      for (const l of lines)
-        html.push(`<li>${l.replace(/^\d+\s*[.)]\s+/, "")}</li>`);
-      html.push("</ol>");
-      continue;
-    }
-
-    // Mixed content: keep line breaks *inside* the block
-    // Convert single \n to <br/> so you see original line wrapping
-    const body = lines.join("<br/>");
-
-    // If the first line looks like a header, split it out
-    if (looksLikeHeader(lines[0])) {
-      const header = lines[0].replace(/[,:]$/, "").trim();
-      const rest = lines.slice(1).join("<br/>");
-      html.push(
-        `<h3 class="mt-6 mb-2 text-lg font-semibold text-primary">${header}</h3>`,
-      );
-      if (rest.trim()) html.push(`<p class="my-3 leading-relaxed">${rest}</p>`);
-    } else {
-      html.push(`<p class="my-3 leading-relaxed">${body}</p>`);
+  }
+  
+  // Flush accumulated list items
+  function flushList() {
+    if (listItems.length > 0 && currentListType) {
+      const tag = currentListType;
+      html.push(`<${tag} class="${tag === 'ul' ? 'list-disc' : 'list-decimal'} list-inside space-y-1 my-4">`);
+      listItems.forEach(item => html.push(`<li class="ml-4">${item}</li>`));
+      html.push(`</${tag}>`);
+      listItems = [];
+      currentListType = null;
     }
   }
-
+  
+  // Flush accumulated paragraph text to HTML
+  function flushParagraph() {
+    flushList();
+    if (currentParagraph.length > 0) {
+      const text = currentParagraph.join(' ').trim();
+      if (text) {
+        html.push(`<p class="my-4 leading-relaxed">${text}</p>`);
+      }
+      currentParagraph = [];
+    }
+  }
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Skip page markers
+    if (/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/i.test(line)) {
+      continue;
+    }
+    
+    // Empty line = paragraph break
+    if (!line) {
+      flushParagraph();
+      continue;
+    }
+    
+    // Check if this is a header
+    if (isHeader(line)) {
+      flushParagraph();
+      const headerText = line.replace(/[,:]$/, '').trim();
+      html.push(`<h3 class="mt-6 mb-3 text-lg font-semibold text-primary">${headerText}</h3>`);
+      continue;
+    }
+    
+    // Check for bullet points
+    if (/^[-•*]\s+/.test(line)) {
+      flushParagraph();
+      if (currentListType !== 'ul') {
+        flushList();
+        currentListType = 'ul';
+      }
+      listItems.push(line.replace(/^[-•*]\s+/, ''));
+      continue;
+    }
+    
+    // Check for numbered lists
+    if (/^\d+\s*[.)]\s+/.test(line)) {
+      flushParagraph();
+      if (currentListType !== 'ol') {
+        flushList();
+        currentListType = 'ol';
+      }
+      listItems.push(line.replace(/^\d+\s*[.)]\s+/, ''));
+      continue;
+    }
+    
+    // Regular content - add to current paragraph
+    flushList(); // End any open list
+    currentParagraph.push(line);
+  }
+  
+  // Flush remaining content
+  flushParagraph();
+  
   return html.join("\n");
 }
 
@@ -1895,19 +1986,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let extractedText: string | null = null;
         let scriptHtml: string | null = null;
 
-        // Convert PDF to HTML with formatting preserved
+        // Convert PDF to HTML with formatting preserved using pdf2json
         if (parsed.data.fileType === "script" && parsed.data.r2Key) {
           try {
             console.log("Converting PDF to HTML:", parsed.data.r2Key);
             const downloadResult = await downloadR2Object(parsed.data.r2Key);
 
             if (downloadResult.success && downloadResult.data) {
-              // Use pdf-parse v2 to extract text
-              const { PDFParse } = await import("pdf-parse");
-              const parser = new PDFParse({ data: downloadResult.data });
-              const textResult = await parser.getText();
-              extractedText = textResult.text;
-              await parser.destroy();
+              // Use pdf2json to extract text (preserves line breaks)
+              extractedText = await extractTextWithPdf2json(downloadResult.data);
 
               // Convert extracted text to formatted HTML
               if (extractedText) {
