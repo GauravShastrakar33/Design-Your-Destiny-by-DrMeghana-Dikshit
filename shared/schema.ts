@@ -203,6 +203,7 @@ export const cmsLessonFiles = pgTable("cms_lesson_files", {
   publicUrl: text("public_url"),
   sizeMb: integer("size_mb"),
   durationSec: integer("duration_sec"),
+  extractedText: text("extracted_text"), // For PDF/script files - stores extracted text content
   position: integer("position").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
