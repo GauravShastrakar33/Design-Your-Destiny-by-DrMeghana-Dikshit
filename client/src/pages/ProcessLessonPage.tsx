@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Loader2, Video, Music, FileText, Download } from "lucide-react";
+import { ArrowLeft, Loader2, Video, Music, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import type { CmsLesson, CmsLessonFile } from "@shared/schema";
 
 interface LessonFileWithUrl extends CmsLessonFile {
@@ -125,22 +124,17 @@ export default function ProcessLessonPage() {
             </Card>
           )}
 
-          {scriptFile && scriptFile.signedUrl && (
+          {scriptFile && scriptFile.extractedText && (
             <Card className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-amber-600" />
-                  <span className="font-medium text-foreground">Script / PDF</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(scriptFile.signedUrl!, "_blank")}
-                  data-testid="button-download-script"
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Open
-                </Button>
+              <div className="flex items-center gap-3 mb-4">
+                <FileText className="w-5 h-5 text-amber-600" />
+                <span className="font-medium text-foreground">Script</span>
+              </div>
+              <div 
+                className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap"
+                data-testid="text-script-content"
+              >
+                {scriptFile.extractedText}
               </div>
             </Card>
           )}

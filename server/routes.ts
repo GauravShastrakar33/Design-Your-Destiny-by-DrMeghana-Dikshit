@@ -15,8 +15,9 @@ import fs from "fs";
 import { uploadToS3, checkS3Credentials } from "./s3Upload";
 import { 
   checkR2Credentials, getSignedPutUrl, getSignedGetUrl, deleteR2Object,
-  generateCourseThumnailKey, generateLessonFileKey 
+  generateCourseThumnailKey, generateLessonFileKey, downloadR2Object 
 } from "./r2Upload";
+import * as pdfParse from "pdf-parse";
 import { db } from "./db";
 import { eq, asc, and, ilike, or, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -1547,9 +1548,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const position = (maxPos?.max || 0) + 1;
       
+      let extractedText: string | null = null;
+      
+      // Extract text from PDF files
+      if (parsed.data.fileType === "script" && parsed.data.r2Key) {
+        try {
+          console.log("Extracting text from PDF:", parsed.data.r2Key);
+          const downloadResult = await downloadR2Object(parsed.data.r2Key);
+          
+          if (downloadResult.success && downloadResult.data) {
+            const pdfData = await (pdfParse as any).default(downloadResult.data);
+            extractedText = pdfData.text;
+            console.log("PDF text extracted, length:", extractedText?.length || 0);
+          } else {
+            console.error("Failed to download PDF for text extraction:", downloadResult.error);
+          }
+        } catch (pdfError) {
+          console.error("Error extracting PDF text:", pdfError);
+          // Continue without extracted text - file will still be saved
+        }
+      }
+      
       const [file] = await db.insert(cmsLessonFiles).values({
         ...parsed.data,
         position,
+        extractedText,
       }).returning();
       
       res.status(201).json(file);

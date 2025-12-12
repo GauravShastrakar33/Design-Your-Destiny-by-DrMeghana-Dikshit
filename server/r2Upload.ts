@@ -252,6 +252,48 @@ export interface UploadToR2Result {
   error?: string;
 }
 
+export interface DownloadR2ObjectResult {
+  success: boolean;
+  data?: Buffer;
+  error?: string;
+}
+
+export async function downloadR2Object(key: string): Promise<DownloadR2ObjectResult> {
+  try {
+    const credCheck = checkR2Credentials();
+    if (!credCheck.valid) {
+      return { success: false, error: credCheck.error };
+    }
+
+    const client = getR2Client();
+
+    const command = new GetObjectCommand({
+      Bucket: r2Config.bucketName!,
+      Key: key,
+    });
+
+    const response = await client.send(command);
+    
+    if (!response.Body) {
+      return { success: false, error: "No body in response" };
+    }
+
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of response.Body as any) {
+      chunks.push(chunk);
+    }
+    const data = Buffer.concat(chunks);
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("R2 download error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
 export async function uploadBufferToR2(
   buffer: Buffer,
   key: string,
