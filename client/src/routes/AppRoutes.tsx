@@ -4,20 +4,13 @@ import ProcessesPage from "@/pages/ProcessesPage";
 import DesignYourPracticePage from "@/pages/DesignYourPracticePage";
 import CommunityPracticesPage from "@/pages/CommunityPracticesPage";
 import SpiritualBreathsPage from "@/pages/SpiritualBreathsPage";
-import ArticlesPage from "@/pages/ArticlesPage";
-import ArticleDetailPage from "@/pages/ArticleDetailPage";
 import WorkshopsPage from "@/pages/WorkshopsPage";
 import MyPracticePlaylistPage from "@/pages/MyPracticePlaylistPage";
 import ProjectOfHeartPage from "@/pages/ProjectOfHeartPage";
 import ProfilePage from "@/pages/ProfilePage";
 import DrMPage from "@/pages/DrMPage";
-import EmotionMasteryPage from "@/pages/EmotionMasteryPage";
 import MoneyMasteryPage from "@/pages/MoneyMasteryPage";
-import MusicJournalingPage from "@/pages/MusicJournalingPage";
 import ProcessChecklistPage from "@/pages/ProcessChecklistPage";
-import LevelUpPage from "@/pages/LevelUpPage";
-import ChallengeDashboardScreen from "@/pages/ChallengeDashboardScreen";
-import ChallengeHistoryScreen from "@/pages/ChallengeHistoryScreen";
 import MoreQuotesPage from "@/pages/MoreQuotesPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import AIInsightsPage from "@/pages/AIInsightsPage";
@@ -40,23 +33,13 @@ export default function AppRoutes() {
       <Route path="/design-practice" component={DesignYourPracticePage} />
       <Route path="/community-practices" component={CommunityPracticesPage} />
       <Route path="/spiritual-breaths" component={SpiritualBreathsPage} />
-      <Route path="/articles/:id" component={ArticleDetailPage} />
-      <Route path="/articles" component={ArticlesPage} />
       <Route path="/workshops" component={WorkshopsPage} />
       <Route path="/playlist" component={MyPracticePlaylistPage} />
       <Route path="/heart" component={ProjectOfHeartPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/drm" component={DrMPage} />
-      <Route path="/emotion-mastery" component={EmotionMasteryPage} />
       <Route path="/money-mastery" component={MoneyMasteryPage} />
-      <Route path="/music-journaling" component={MusicJournalingPage} />
       <Route path="/process-checklist" component={ProcessChecklistPage} />
-      <Route path="/level-up" component={LevelUpPage} />
-      <Route path="/level-up/history" component={ChallengeHistoryScreen} />
-      <Route
-        path="/level-up/:challengeId"
-        component={ChallengeDashboardScreen}
-      />
       <Route path="/more-quotes" component={MoreQuotesPage} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/ai-insights" component={AIInsightsPage} />

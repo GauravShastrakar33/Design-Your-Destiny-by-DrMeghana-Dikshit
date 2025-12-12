@@ -4,16 +4,10 @@ import {
   Sparkles,
   Users,
   Wind,
-  BookOpen,
   ListMusic,
-  Heart,
   DollarSign,
-  Music,
   CheckSquare,
-  TrendingUp,
   Bell,
-  Play,
-  Lock,
   Search,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -58,20 +52,6 @@ export default function HomePage() {
       testId: "card-my-playlist",
     },
     {
-      title: "Emotion Mastery",
-      icon: Heart,
-      gradient: "bg-gradient-focus",
-      path: "/emotion-mastery",
-      testId: "card-emotional-mastery",
-    },
-    {
-      title: "Articles",
-      icon: BookOpen,
-      gradient: "bg-gradient-ocean",
-      path: "/articles",
-      testId: "card-articles",
-    },
-    {
       title: "Abundance Mastery",
       icon: DollarSign,
       gradient: "bg-gradient-forest",
@@ -84,20 +64,6 @@ export default function HomePage() {
       gradient: "bg-gradient-desert",
       path: "/process-checklist",
       testId: "card-process-checklist",
-    },
-    {
-      title: "Music Journaling",
-      icon: Music,
-      gradient: "bg-gradient-lavender",
-      path: "/music-journaling",
-      testId: "card-music-journaling",
-    },
-    {
-      title: "Level Up",
-      icon: TrendingUp,
-      gradient: "bg-gradient-fire",
-      path: "/level-up",
-      testId: "card-level-up",
     },
   ];
 
