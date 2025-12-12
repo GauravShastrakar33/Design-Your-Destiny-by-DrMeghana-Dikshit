@@ -1557,11 +1557,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const downloadResult = await downloadR2Object(parsed.data.r2Key);
           
           if (downloadResult.success && downloadResult.data) {
-            // Dynamic import for pdf-parse
-            const pdfParseModule = await import("pdf-parse") as any;
-            const pdfParseFn = pdfParseModule.default || pdfParseModule;
-            const pdfData = await pdfParseFn(downloadResult.data);
-            extractedText = pdfData.text;
+            // pdf-parse v2 uses a class-based API
+            const { PDFParse } = await import("pdf-parse");
+            const parser = new PDFParse({ data: downloadResult.data });
+            const textResult = await parser.getText();
+            extractedText = textResult.text;
+            await parser.destroy();
             console.log("PDF text extracted, length:", extractedText?.length || 0);
           } else {
             console.error("Failed to download PDF for text extraction:", downloadResult.error);
