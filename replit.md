@@ -150,8 +150,8 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 - **December 2025**: PDF files uploaded via admin are now automatically extracted to formatted HTML and displayed inline in Processes/Spiritual Breaths pages instead of showing a PDF download button. Uses pdf2json library (NOT pdf-parse) for better line-by-line preservation. The `convertTextToFormattedHtml` function in server/routes.ts applies:
-  - Preserves intentional line breaks within paragraphs using `<br>` tags
-  - Empty lines create separate paragraph blocks
+  - Merges lines within paragraphs into flowing text (joined with spaces)
+  - Empty lines in PDF create separate paragraph blocks (visual spacing preserved)
   - Strict header detection (≤3 words, <35 chars, no commas, keyword-based)
   - Proper `<ul>`/`<ol>` list handling
   - Re-upload existing PDFs to regenerate scriptHtml with new conversion logic.
