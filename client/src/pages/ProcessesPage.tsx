@@ -73,9 +73,6 @@ function ModulesList({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-foreground truncate">{module.title}</h3>
-              {module.description && (
-                <p className="text-sm text-muted-foreground truncate">{module.description}</p>
-              )}
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
           </div>

@@ -1843,10 +1843,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate signed URLs for files
       const filesWithUrls = await Promise.all(files.map(async (file) => {
-        let signedUrl = null;
+        let signedUrl: string | null = null;
         if (file.r2Key) {
           try {
-            signedUrl = await getSignedGetUrl(file.r2Key, 3600);
+            const result = await getSignedGetUrl(file.r2Key, 3600);
+            // Handle both string and object {success, url} response formats
+            if (typeof result === 'string') {
+              signedUrl = result;
+            } else if (result && typeof result === 'object' && 'url' in result) {
+              signedUrl = (result as { url: string }).url;
+            }
           } catch (e) {
             console.error("Error generating signed URL:", e);
           }
