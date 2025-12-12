@@ -17,7 +17,9 @@ import {
   checkR2Credentials, getSignedPutUrl, getSignedGetUrl, deleteR2Object,
   generateCourseThumnailKey, generateLessonFileKey, downloadR2Object 
 } from "./r2Upload";
-import * as pdfParse from "pdf-parse";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse");
 import { db } from "./db";
 import { eq, asc, and, ilike, or, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -1557,7 +1559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const downloadResult = await downloadR2Object(parsed.data.r2Key);
           
           if (downloadResult.success && downloadResult.data) {
-            const pdfData = await (pdfParse as any).default(downloadResult.data);
+            const pdfData = await pdfParse(downloadResult.data);
             extractedText = pdfData.text;
             console.log("PDF text extracted, length:", extractedText?.length || 0);
           } else {
