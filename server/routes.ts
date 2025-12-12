@@ -1549,27 +1549,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const position = (maxPos?.max || 0) + 1;
       
       let extractedText: string | null = null;
+      let scriptHtml: string | null = null;
       
-      // Extract text from PDF files
+      // Convert PDF to HTML with formatting preserved
       if (parsed.data.fileType === "script" && parsed.data.r2Key) {
         try {
-          console.log("Extracting text from PDF:", parsed.data.r2Key);
+          console.log("Converting PDF to HTML:", parsed.data.r2Key);
           const downloadResult = await downloadR2Object(parsed.data.r2Key);
           
           if (downloadResult.success && downloadResult.data) {
-            // pdf-parse v2 uses a class-based API
-            const { PDFParse } = await import("pdf-parse");
-            const parser = new PDFParse({ data: downloadResult.data });
-            const textResult = await parser.getText();
-            extractedText = textResult.text;
-            await parser.destroy();
-            console.log("PDF text extracted, length:", extractedText?.length || 0);
+            // Use pdf2html for HTML conversion with formatting
+            const pdf2html = await import("pdf2html");
+            
+            // Get HTML content from PDF buffer
+            const htmlContent = await pdf2html.html(downloadResult.data);
+            
+            // Clean up the HTML - remove page markers, headers/footers
+            let cleanedHtml = htmlContent
+              // Remove page number patterns
+              .replace(/<p[^>]*>\s*\d+\s*<\/p>/gi, '')
+              .replace(/<div[^>]*>\s*\d+\s*<\/div>/gi, '')
+              // Remove empty paragraphs
+              .replace(/<p[^>]*>\s*<\/p>/gi, '')
+              // Remove excessive whitespace
+              .replace(/\s+/g, ' ')
+              // Remove inline styles that might conflict with our styling
+              .replace(/style="[^"]*"/gi, '')
+              // Normalize spacing
+              .trim();
+            
+            scriptHtml = cleanedHtml;
+            console.log("PDF converted to HTML, length:", scriptHtml?.length || 0);
+            
+            // Also extract plain text for search/fallback
+            const textContent = await pdf2html.text(downloadResult.data);
+            extractedText = textContent;
           } else {
-            console.error("Failed to download PDF for text extraction:", downloadResult.error);
+            console.error("Failed to download PDF for conversion:", downloadResult.error);
           }
         } catch (pdfError) {
-          console.error("Error extracting PDF text:", pdfError);
-          // Continue without extracted text - file will still be saved
+          console.error("Error converting PDF to HTML:", pdfError);
+          // Continue without HTML - file will still be saved
         }
       }
       
@@ -1577,6 +1597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...parsed.data,
         position,
         extractedText,
+        scriptHtml,
       }).returning();
       
       res.status(201).json(file);

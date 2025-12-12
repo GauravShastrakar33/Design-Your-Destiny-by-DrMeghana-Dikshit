@@ -124,18 +124,26 @@ export default function ProcessLessonPage() {
             </Card>
           )}
 
-          {scriptFile && scriptFile.extractedText && (
+          {scriptFile && (scriptFile.scriptHtml || scriptFile.extractedText) && (
             <Card className="p-4">
               <div className="flex items-center gap-3 mb-4">
                 <FileText className="w-5 h-5 text-amber-600" />
                 <span className="font-medium text-foreground">Script</span>
               </div>
-              <div 
-                className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap"
-                data-testid="text-script-content"
-              >
-                {scriptFile.extractedText}
-              </div>
+              {scriptFile.scriptHtml ? (
+                <div 
+                  className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground"
+                  data-testid="text-script-content"
+                  dangerouslySetInnerHTML={{ __html: scriptFile.scriptHtml }}
+                />
+              ) : (
+                <div 
+                  className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap"
+                  data-testid="text-script-content"
+                >
+                  {scriptFile.extractedText}
+                </div>
+              )}
             </Card>
           )}
 
