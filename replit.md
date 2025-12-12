@@ -149,6 +149,7 @@ Preferred communication style: Simple, everyday language.
 - **Frontend Page**: `/search` with debounced input (300ms), grouped results by type
 
 ## Recent Changes
+- **December 2025**: Removed 4 features from user app: Emotional Mastery (deleted completely), Music Journaling (deleted completely), Articles (removed from UI, admin panel preserved), Level Up (removed from UI, code kept for future use).
 - **December 2025**: Added My Processes (PLAYLIST) admin page at `/admin/my-processes` for mapping a course to provide audio lessons for user playlists.
 - **December 2025**: Implemented global search system - searches only mapped content, deep-link pages for modules/lessons/courses with signed R2 URLs.
 - **December 2025**: Implemented frontend feature mapping system - allows admins to map CMS courses to Processes (DYD/USM), Spiritual Breaths, and Abundance Mastery features via new admin pages.
