@@ -149,7 +149,11 @@ Preferred communication style: Simple, everyday language.
 - **Frontend Page**: `/search` with debounced input (300ms), grouped results by type
 
 ## Recent Changes
-- **December 2025**: PDF files uploaded via admin are now automatically extracted to text and displayed inline in Processes/Spiritual Breaths pages instead of showing a PDF download button. Uses pdf-parse library with extractedText column in cms_lesson_files table.
+- **December 2025**: PDF files uploaded via admin are now automatically extracted to formatted HTML and displayed inline in Processes/Spiritual Breaths pages instead of showing a PDF download button. Uses pdf2json library (NOT pdf-parse) for better line-by-line preservation. The `convertTextToFormattedHtml` function in server/routes.ts applies:
+  - Line merging to rejoin broken sentences
+  - Strict header detection (≤3 words, <35 chars, no commas, keyword-based)
+  - Proper `<ul>`/`<ol>` list handling
+  - Re-upload existing PDFs to regenerate scriptHtml with new conversion logic.
 - **December 2025**: Removed 4 features from user app: Emotional Mastery (deleted completely), Music Journaling (deleted completely), Articles (removed from UI, admin panel preserved), Level Up (removed from UI, code kept for future use).
 - **December 2025**: Added My Processes (PLAYLIST) admin page at `/admin/my-processes` for mapping a course to provide audio lessons for user playlists.
 - **December 2025**: Implemented global search system - searches only mapped content, deep-link pages for modules/lessons/courses with signed R2 URLs.
