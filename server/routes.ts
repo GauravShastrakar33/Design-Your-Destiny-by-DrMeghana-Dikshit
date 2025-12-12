@@ -1,21 +1,37 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { 
-  insertCommunitySessionSchema, insertCategorySchema, insertArticleSchema,
-  insertCmsCourseSchema, insertCmsModuleSchema, insertCmsModuleFolderSchema,
-  insertCmsLessonSchema, insertCmsLessonFileSchema,
-  cmsCourses, cmsModules, cmsModuleFolders, cmsLessons, cmsLessonFiles,
-  programs, frontendFeatures, featureCourseMap
+import {
+  insertCommunitySessionSchema,
+  insertCategorySchema,
+  insertArticleSchema,
+  insertCmsCourseSchema,
+  insertCmsModuleSchema,
+  insertCmsModuleFolderSchema,
+  insertCmsLessonSchema,
+  insertCmsLessonFileSchema,
+  cmsCourses,
+  cmsModules,
+  cmsModuleFolders,
+  cmsLessons,
+  cmsLessonFiles,
+  programs,
+  frontendFeatures,
+  featureCourseMap,
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { uploadToS3, checkS3Credentials } from "./s3Upload";
-import { 
-  checkR2Credentials, getSignedPutUrl, getSignedGetUrl, deleteR2Object,
-  generateCourseThumnailKey, generateLessonFileKey, downloadR2Object 
+import {
+  checkR2Credentials,
+  getSignedPutUrl,
+  getSignedGetUrl,
+  deleteR2Object,
+  generateCourseThumnailKey,
+  generateLessonFileKey,
+  downloadR2Object,
 } from "./r2Upload";
 // pdf-parse will be dynamically imported when needed
 import { db } from "./db";
@@ -27,128 +43,119 @@ import { authenticateJWT, type AuthPayload } from "./middleware/auth";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
-// Helper function to convert PDF text to formatted HTML
-function convertTextToFormattedHtml(text: string): string {
-  const lines = text.split('\n');
-  const htmlParts: string[] = [];
-  let currentParagraph: string[] = [];
-  
-  // Section header keywords (case-insensitive matching)
-  const sectionKeywords = [
-    'intention', 'affirmation', 'tapping', 'forgiveness', 'release',
-    'step', 'part', 'chapter', 'section', 'introduction', 'conclusion',
-    'meditation', 'visualization', 'breathing', 'exercise', 'practice',
-    'instructions', 'notes', 'summary', 'overview', 'dyd', 'usm'
+// Keep real paragraphs and line breaks from pdf-parse output
+export function convertTextToFormattedHtml(text: string): string {
+  // 1) normalize newlines
+  const norm = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\u00A0/g, " ")
+    .trim();
+
+  // 2) split into "blocks" by 1+ blank lines (paragraph gaps)
+  //    This keeps natural paragraph spacing from the PDF
+  const blocks = norm.split(/\n{2,}/);
+
+  const html: string[] = [];
+
+  // Header heuristics tuned for your scripts (Intention, Affirmation, Tapping (...))
+  const headerKeywords = [
+    "intention",
+    "affirmation",
+    "tapping",
+    "forgiveness",
+    "release",
+    "breathing",
+    "meditation",
+    "visualization",
+    "notes",
+    "summary",
+    "overview",
   ];
-  
-  // Check if a line is a section header
-  function isSectionHeader(line: string): boolean {
-    const trimmed = line.trim();
-    
-    // Skip empty lines
-    if (!trimmed) return false;
-    
-    // Skip lines that end with sentence punctuation - they are content, not headers
-    if (/[.!?,;]$/.test(trimmed)) return false;
-    
-    // Skip lines that look like incomplete sentences (contain verbs/articles mid-sentence)
-    if (/\b(that|which|who|the|a|an|is|are|was|were|I|you|we|they)\s/i.test(trimmed) && trimmed.length > 25) {
-      return false;
-    }
-    
-    const wordCount = trimmed.split(/\s+/).length;
-    
-    // Page markers like "-- 1 of 3 --" - skip them completely
-    if (/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/.test(trimmed)) return true;
-    
-    // Exact match with section keywords (case-insensitive)
-    const lowerLine = trimmed.toLowerCase().replace(/[^a-z\s]/g, '').trim();
-    const matchesKeyword = sectionKeywords.some(kw => lowerLine === kw);
-    if (matchesKeyword) return true;
-    
-    // All caps short line (under 25 chars, 1-3 words) like "DYD" or "STEP ONE"
-    const isAllCaps = trimmed === trimmed.toUpperCase() && 
-                      /[A-Z]/.test(trimmed) && 
-                      trimmed.length < 25 && 
-                      wordCount <= 3;
-    if (isAllCaps) return true;
-    
-    // Short title-like lines (1-4 words, no punctuation, starts with capital)
-    // Like "Tapping (Release)", "Forgiveness", "Wealth Code Activation 1"
-    const isTitleLike = wordCount <= 4 && 
-                        trimmed.length < 40 &&
-                        /^[A-Z]/.test(trimmed) &&
-                        !/\b(and|or|the|a|an|to|of|in|for|with|on|at|by)\b/i.test(trimmed);
-    if (isTitleLike) return true;
-    
+
+  const looksLikeHeader = (s: string) => {
+    const t = s.trim();
+    if (!t) return false;
+    if (t.length > 60) return false;
+    if (/[.!?]$/.test(t)) return false; // sentences are not headers
+    const lower = t.toLowerCase();
+
+    // exact keyword or keyword with parens e.g. Tapping (Release)
+    if (headerKeywords.some((k) => lower === k || lower.startsWith(k + " ")))
+      return true;
+
+    // Short, title-like line (<= 6 words), not all-caps noise
+    const words = t.split(/\s+/);
+    if (words.length <= 6 && /^[A-Z]/.test(t)) return true;
+
     return false;
+  };
+
+  // helper: list detection inside a block
+  const splitLines = (b: string) =>
+    b
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(
+        (l) => l.length > 0 && !/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/i.test(l),
+      );
+
+  const isUnordered = (line: string) => /^[-•*]\s+/.test(line);
+  const isOrdered = (line: string) => /^\d+\s*[.)]\s+/.test(line);
+
+  for (const block of blocks) {
+    const lines = splitLines(block);
+    if (lines.length === 0) {
+      // multiple blank lines => add extra gap
+      html.push('<div class="h-4"></div>');
+      continue;
+    }
+
+    // Single short line that looks like a header
+    if (lines.length === 1 && looksLikeHeader(lines[0])) {
+      const header = lines[0].replace(/[,:]$/, "").trim();
+      html.push(
+        `<h3 class="mt-6 mb-2 text-lg font-semibold text-primary">${header}</h3>`,
+      );
+      continue;
+    }
+
+    // Entire block is a list?
+    const allUnordered = lines.every(isUnordered);
+    const allOrdered = lines.every(isOrdered);
+
+    if (allUnordered) {
+      html.push('<ul class="list-disc list-inside space-y-1 my-3">');
+      for (const l of lines)
+        html.push(`<li>${l.replace(/^[-•*]\s+/, "")}</li>`);
+      html.push("</ul>");
+      continue;
+    }
+    if (allOrdered) {
+      html.push('<ol class="list-decimal list-inside space-y-1 my-3">');
+      for (const l of lines)
+        html.push(`<li>${l.replace(/^\d+\s*[.)]\s+/, "")}</li>`);
+      html.push("</ol>");
+      continue;
+    }
+
+    // Mixed content: keep line breaks *inside* the block
+    // Convert single \n to <br/> so you see original line wrapping
+    const body = lines.join("<br/>");
+
+    // If the first line looks like a header, split it out
+    if (looksLikeHeader(lines[0])) {
+      const header = lines[0].replace(/[,:]$/, "").trim();
+      const rest = lines.slice(1).join("<br/>");
+      html.push(
+        `<h3 class="mt-6 mb-2 text-lg font-semibold text-primary">${header}</h3>`,
+      );
+      if (rest.trim()) html.push(`<p class="my-3 leading-relaxed">${rest}</p>`);
+    } else {
+      html.push(`<p class="my-3 leading-relaxed">${body}</p>`);
+    }
   }
-  
-  // Flush current paragraph to HTML
-  function flushParagraph() {
-    if (currentParagraph.length > 0) {
-      const text = currentParagraph.join(' ').trim();
-      if (text) {
-        htmlParts.push(`<p class="mb-4">${text}</p>`);
-      }
-      currentParagraph = [];
-    }
-  }
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    
-    // Skip page markers entirely
-    if (/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/.test(line)) {
-      flushParagraph();
-      continue;
-    }
-    
-    // Skip empty lines - they create paragraph breaks
-    if (!line) {
-      flushParagraph();
-      continue;
-    }
-    
-    // Check for section headers
-    if (isSectionHeader(line)) {
-      flushParagraph();
-      // Clean up the header text (remove trailing comma/colon)
-      const headerText = line.replace(/[,:]$/, '').trim();
-      htmlParts.push(`<h3 class="font-semibold text-lg mt-6 mb-2 text-primary">${headerText}</h3>`);
-      continue;
-    }
-    
-    // Check for bullet points
-    if (/^[-•*]\s/.test(line)) {
-      flushParagraph();
-      const bulletText = line.replace(/^[-•*]\s*/, '');
-      htmlParts.push(`<li class="ml-4">${bulletText}</li>`);
-      continue;
-    }
-    
-    // Check for numbered lists
-    if (/^\d+[.)]\s/.test(line)) {
-      flushParagraph();
-      const numberedText = line.replace(/^\d+[.)]\s*/, '');
-      htmlParts.push(`<li class="ml-4">${numberedText}</li>`);
-      continue;
-    }
-    
-    // Regular text - add to current paragraph
-    currentParagraph.push(line);
-  }
-  
-  // Flush any remaining paragraph
-  flushParagraph();
-  
-  // Wrap consecutive <li> elements in <ul>
-  let result = htmlParts.join('\n');
-  result = result.replace(/(<li[^>]*>.*?<\/li>\n?)+/g, (match) => {
-    return `<ul class="list-disc list-inside space-y-2 my-4 pl-2">\n${match}</ul>\n`;
-  });
-  
-  return result;
+
+  return html.join("\n");
 }
 
 // Ensure public/articles directory exists
@@ -163,9 +170,9 @@ const articleImageStorage = multer.diskStorage({
     cb(null, articlesDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
+  },
 });
 
 const uploadArticleImage = multer({
@@ -173,26 +180,28 @@ const uploadArticleImage = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = allowedTypes.test(
+      path.extname(file.originalname).toLowerCase(),
+    );
     const mimetype = allowedTypes.test(file.mimetype);
     if (extname && mimetype) {
       cb(null, true);
     } else {
       cb(new Error("Only image files are allowed"));
     }
-  }
+  },
 });
 
 // Admin auth middleware - supports both JWT and legacy password auth
 const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
-  
+
   // Legacy password-based auth (backward compatible)
   if (authHeader === `Bearer ${ADMIN_PASSWORD}`) {
     next();
     return;
   }
-  
+
   // JWT-based auth
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.split(" ")[1];
@@ -207,14 +216,14 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
       // Token invalid, continue to unauthorized response
     }
   }
-  
+
   res.status(401).json({ error: "Unauthorized" });
 };
 
 // Super Admin only middleware - for admin management routes
 const requireSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
-  
+
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.split(" ")[1];
     try {
@@ -228,7 +237,7 @@ const requireSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
       // Token invalid
     }
   }
-  
+
   res.status(403).json({ error: "Super Admin access required" });
 };
 
@@ -237,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sessions", async (req, res) => {
     try {
       const sessions = await storage.getAllCommunitySessions();
-      const activeSessions = sessions.filter(s => s.isActive);
+      const activeSessions = sessions.filter((s) => s.isActive);
       res.json(activeSessions);
     } catch (error) {
       console.error("Error fetching sessions:", error);
@@ -264,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/admin/v1/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;
-      
+
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password required" });
       }
@@ -293,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = jwt.sign(
         { sub: user.id, email: user.email, role: user.role },
         JWT_SECRET,
-        { expiresIn: "30d" }
+        { expiresIn: "30d" },
       );
 
       res.json({
@@ -302,8 +311,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role
-        }
+          role: user.role,
+        },
       });
     } catch (error) {
       console.error("Error during admin login:", error);
@@ -315,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/v1/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;
-      
+
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password required" });
       }
@@ -328,7 +337,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Allow USER and COACH roles to login to user app
       // SUPER_ADMIN should use admin login only
       if (user.role === "SUPER_ADMIN") {
-        return res.status(403).json({ message: "Super Admin must use admin login" });
+        return res
+          .status(403)
+          .json({ message: "Super Admin must use admin login" });
       }
 
       if (user.status !== "active") {
@@ -346,7 +357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = jwt.sign(
         { sub: user.id, email: user.email, role: user.role },
         JWT_SECRET,
-        { expiresIn: "30d" }
+        { expiresIn: "30d" },
       );
 
       res.json({
@@ -355,8 +366,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role
-        }
+          role: user.role,
+        },
       });
     } catch (error) {
       console.error("Error during user login:", error);
@@ -370,7 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      
+
       const user = await storage.getUserById(req.user.sub);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -381,7 +392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: user.name,
         email: user.email,
         role: user.role,
-        phone: user.phone
+        phone: user.phone,
       });
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -408,7 +419,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(session);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Validation failed", details: error.errors });
+        res
+          .status(400)
+          .json({ error: "Validation failed", details: error.errors });
       } else {
         console.error("Error creating session:", error);
         res.status(500).json({ error: "Failed to create session" });
@@ -420,18 +433,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/sessions/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const validatedData = insertCommunitySessionSchema.partial().parse(req.body);
+      const validatedData = insertCommunitySessionSchema
+        .partial()
+        .parse(req.body);
       const session = await storage.updateCommunitySession(id, validatedData);
-      
+
       if (!session) {
         res.status(404).json({ error: "Session not found" });
         return;
       }
-      
+
       res.json(session);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Validation failed", details: error.errors });
+        res
+          .status(400)
+          .json({ error: "Validation failed", details: error.errors });
       } else {
         console.error("Error updating session:", error);
         res.status(500).json({ error: "Failed to update session" });
@@ -444,12 +461,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteCommunitySession(id);
-      
+
       if (!success) {
         res.status(404).json({ error: "Session not found" });
         return;
       }
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting session:", error);
@@ -467,7 +484,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
 
-      const result = await storage.getStudents({ search, programCode: program, page, limit });
+      const result = await storage.getStudents({
+        search,
+        programCode: program,
+        page,
+        limit,
+      });
       res.json(result);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -480,12 +502,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const student = await storage.getStudentById(id);
-      
+
       if (!student) {
         res.status(404).json({ error: "Student not found" });
         return;
       }
-      
+
       res.json(student);
     } catch (error) {
       console.error("Error fetching student:", error);
@@ -509,14 +531,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const passwordHash = await bcrypt.hash(password || "User@123", 10);
 
-      const student = await storage.createStudent({
-        name,
-        email,
-        phone: phone || null,
-        passwordHash,
-        role: "USER",
-        status: "active"
-      }, programCode);
+      const student = await storage.createStudent(
+        {
+          name,
+          email,
+          phone: phone || null,
+          passwordHash,
+          role: "USER",
+          status: "active",
+        },
+        programCode,
+      );
 
       res.status(201).json({ message: "Student added", userId: student.id });
     } catch (error) {
@@ -531,13 +556,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { name, email, phone, status, programCode } = req.body;
 
-      const student = await storage.updateStudent(id, { name, email, phone, status }, programCode);
-      
+      const student = await storage.updateStudent(
+        id,
+        { name, email, phone, status },
+        programCode,
+      );
+
       if (!student) {
         res.status(404).json({ error: "Student not found" });
         return;
       }
-      
+
       res.json({ message: "Student updated" });
     } catch (error) {
       console.error("Error updating student:", error);
@@ -556,12 +585,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const student = await storage.updateStudentStatus(id, status);
-      
+
       if (!student) {
         res.status(404).json({ error: "Student not found" });
         return;
       }
-      
+
       res.json({ message: "Status updated" });
     } catch (error) {
       console.error("Error updating student status:", error);
@@ -574,12 +603,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteStudent(id);
-      
+
       if (!success) {
         res.status(404).json({ error: "Student not found" });
         return;
       }
-      
+
       res.json({ message: "Student deleted" });
     } catch (error) {
       console.error("Error deleting student:", error);
@@ -620,12 +649,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const admin = await storage.getAdminById(id);
-      
+
       if (!admin) {
         res.status(404).json({ error: "Admin not found" });
         return;
       }
-      
+
       res.json(admin);
     } catch (error) {
       console.error("Error fetching admin:", error);
@@ -643,7 +672,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (!["SUPER_ADMIN", "COACH"].includes(role)) {
-        return res.status(400).json({ error: "Role must be SUPER_ADMIN or COACH" });
+        return res
+          .status(400)
+          .json({ error: "Role must be SUPER_ADMIN or COACH" });
       }
 
       const existingUser = await storage.getUserByEmail(email);
@@ -659,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: phone || null,
         passwordHash,
         role,
-        status: status || "active"
+        status: status || "active",
       });
 
       res.status(201).json({ message: "Admin created", adminId: admin.id });
@@ -676,16 +707,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { name, email, role, status } = req.body;
 
       if (role && !["SUPER_ADMIN", "COACH"].includes(role)) {
-        return res.status(400).json({ error: "Role must be SUPER_ADMIN or COACH" });
+        return res
+          .status(400)
+          .json({ error: "Role must be SUPER_ADMIN or COACH" });
       }
 
-      const admin = await storage.updateAdmin(id, { name, email, role, status });
-      
+      const admin = await storage.updateAdmin(id, {
+        name,
+        email,
+        role,
+        status,
+      });
+
       if (!admin) {
         res.status(404).json({ error: "Admin not found" });
         return;
       }
-      
+
       res.json({ message: "Admin updated" });
     } catch (error) {
       console.error("Error updating admin:", error);
@@ -694,33 +732,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update admin status (block/unblock) - SUPER_ADMIN only
-  app.patch("/admin/v1/admins/:id/status", requireSuperAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const { status } = req.body;
+  app.patch(
+    "/admin/v1/admins/:id/status",
+    requireSuperAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const { status } = req.body;
 
-      if (!["active", "blocked"].includes(status)) {
-        return res.status(400).json({ error: "Invalid status" });
-      }
+        if (!["active", "blocked"].includes(status)) {
+          return res.status(400).json({ error: "Invalid status" });
+        }
 
-      // Prevent self-blocking
-      if (req.user && req.user.sub === id) {
-        return res.status(400).json({ error: "Cannot change your own status" });
-      }
+        // Prevent self-blocking
+        if (req.user && req.user.sub === id) {
+          return res
+            .status(400)
+            .json({ error: "Cannot change your own status" });
+        }
 
-      const admin = await storage.updateAdminStatus(id, status);
-      
-      if (!admin) {
-        res.status(404).json({ error: "Admin not found" });
-        return;
+        const admin = await storage.updateAdminStatus(id, status);
+
+        if (!admin) {
+          res.status(404).json({ error: "Admin not found" });
+          return;
+        }
+
+        res.json({ message: "Status updated" });
+      } catch (error) {
+        console.error("Error updating admin status:", error);
+        res.status(500).json({ error: "Failed to update status" });
       }
-      
-      res.json({ message: "Status updated" });
-    } catch (error) {
-      console.error("Error updating admin status:", error);
-      res.status(500).json({ error: "Failed to update status" });
-    }
-  });
+    },
+  );
 
   // Delete admin (SUPER_ADMIN only)
   app.delete("/admin/v1/admins/:id", requireSuperAdmin, async (req, res) => {
@@ -733,12 +777,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const success = await storage.deleteAdmin(id);
-      
+
       if (!success) {
         res.status(404).json({ error: "Admin not found" });
         return;
       }
-      
+
       res.json({ message: "Admin deleted" });
     } catch (error) {
       console.error("Error deleting admin:", error);
@@ -767,7 +811,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(category);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Validation failed", details: error.errors });
+        res
+          .status(400)
+          .json({ error: "Validation failed", details: error.errors });
       } else {
         console.error("Error creating category:", error);
         res.status(500).json({ error: "Failed to create category" });
@@ -793,12 +839,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const article = await storage.getArticle(id);
-      
+
       if (!article || !article.isPublished) {
         res.status(404).json({ error: "Article not found" });
         return;
       }
-      
+
       res.json(article);
     } catch (error) {
       console.error("Error fetching article:", error);
@@ -825,7 +871,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(article);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Validation failed", details: error.errors });
+        res
+          .status(400)
+          .json({ error: "Validation failed", details: error.errors });
       } else {
         console.error("Error creating article:", error);
         res.status(500).json({ error: "Failed to create article" });
@@ -839,16 +887,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertArticleSchema.partial().parse(req.body);
       const article = await storage.updateArticle(id, validatedData);
-      
+
       if (!article) {
         res.status(404).json({ error: "Article not found" });
         return;
       }
-      
+
       res.json(article);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Validation failed", details: error.errors });
+        res
+          .status(400)
+          .json({ error: "Validation failed", details: error.errors });
       } else {
         console.error("Error updating article:", error);
         res.status(500).json({ error: "Failed to update article" });
@@ -861,12 +911,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteArticle(id);
-      
+
       if (!success) {
         res.status(404).json({ error: "Article not found" });
         return;
       }
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting article:", error);
@@ -875,31 +925,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin route: Upload article image
-  app.post("/api/admin/upload/article-image", requireAdmin, uploadArticleImage.single("image"), (req, res) => {
-    try {
-      if (!req.file) {
-        res.status(400).json({ error: "No file uploaded" });
-        return;
+  app.post(
+    "/api/admin/upload/article-image",
+    requireAdmin,
+    uploadArticleImage.single("image"),
+    (req, res) => {
+      try {
+        if (!req.file) {
+          res.status(400).json({ error: "No file uploaded" });
+          return;
+        }
+
+        const imageUrl = `/articles/${req.file.filename}`;
+        res.json({ imageUrl });
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        res.status(500).json({ error: "Failed to upload image" });
       }
-      
-      const imageUrl = `/articles/${req.file.filename}`;
-      res.json({ imageUrl });
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      res.status(500).json({ error: "Failed to upload image" });
-    }
-  });
+    },
+  );
 
   // ============================================
   // CMS ROUTES - Programs, Courses, Modules, Folders, Lessons, Files
   // ============================================
 
   // --- PROGRAMS CRUD ---
-  
+
   // Get all programs
   app.get("/api/admin/v1/programs", requireAdmin, async (req, res) => {
     try {
-      const allPrograms = await db.select().from(programs).orderBy(asc(programs.name));
+      const allPrograms = await db
+        .select()
+        .from(programs)
+        .orderBy(asc(programs.name));
       res.json(allPrograms);
     } catch (error) {
       console.error("Error fetching programs:", error);
@@ -911,22 +969,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/v1/programs", requireAdmin, async (req, res) => {
     try {
       const { code, name } = req.body;
-      
+
       if (!code || !name) {
         res.status(400).json({ error: "Code and name are required" });
         return;
       }
-      
-      const [newProgram] = await db.insert(programs).values({
-        code: String(code).toUpperCase(),
-        name: String(name),
-      }).returning();
-      
+
+      const [newProgram] = await db
+        .insert(programs)
+        .values({
+          code: String(code).toUpperCase(),
+          name: String(name),
+        })
+        .returning();
+
       res.status(201).json(newProgram);
     } catch (error: any) {
       console.error("Error creating program:", error);
-      if (error.code === '23505') {
-        res.status(409).json({ error: "A program with this code already exists" });
+      if (error.code === "23505") {
+        res
+          .status(409)
+          .json({ error: "A program with this code already exists" });
         return;
       }
       res.status(500).json({ error: "Failed to create program" });
@@ -938,25 +1001,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const programId = parseInt(req.params.id);
       const { code, name } = req.body;
-      
-      const [updated] = await db.update(programs)
+
+      const [updated] = await db
+        .update(programs)
         .set({
           ...(code && { code: String(code).toUpperCase() }),
           ...(name && { name: String(name) }),
         })
         .where(eq(programs.id, programId))
         .returning();
-      
+
       if (!updated) {
         res.status(404).json({ error: "Program not found" });
         return;
       }
-      
+
       res.json(updated);
     } catch (error: any) {
       console.error("Error updating program:", error);
-      if (error.code === '23505') {
-        res.status(409).json({ error: "A program with this code already exists" });
+      if (error.code === "23505") {
+        res
+          .status(409)
+          .json({ error: "A program with this code already exists" });
         return;
       }
       res.status(500).json({ error: "Failed to update program" });
@@ -967,29 +1033,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/v1/programs/:id", requireAdmin, async (req, res) => {
     try {
       const programId = parseInt(req.params.id);
-      
+
       // Check if any courses use this program
-      const linkedCourses = await db.select({ id: cmsCourses.id })
+      const linkedCourses = await db
+        .select({ id: cmsCourses.id })
         .from(cmsCourses)
         .where(eq(cmsCourses.programId, programId));
-      
+
       if (linkedCourses.length > 0) {
-        res.status(400).json({ 
-          error: "Cannot delete program", 
-          message: `This program is linked to ${linkedCourses.length} course(s). Please reassign or delete those courses first.` 
+        res.status(400).json({
+          error: "Cannot delete program",
+          message: `This program is linked to ${linkedCourses.length} course(s). Please reassign or delete those courses first.`,
         });
         return;
       }
-      
-      const [deleted] = await db.delete(programs)
+
+      const [deleted] = await db
+        .delete(programs)
         .where(eq(programs.id, programId))
         .returning();
-      
+
       if (!deleted) {
         res.status(404).json({ error: "Program not found" });
         return;
       }
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting program:", error);
@@ -998,32 +1066,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // --- CMS COURSES ---
-  
+
   // Get all courses
   app.get("/api/admin/v1/cms/courses", requireAdmin, async (req, res) => {
     try {
       const { search, programId, sortOrder = "asc" } = req.query;
-      
-      const courses = await db.select().from(cmsCourses).orderBy(
-        sortOrder === "desc" ? sql`position DESC` : asc(cmsCourses.position)
-      );
-      
+
+      const courses = await db
+        .select()
+        .from(cmsCourses)
+        .orderBy(
+          sortOrder === "desc" ? sql`position DESC` : asc(cmsCourses.position),
+        );
+
       let filteredCourses = courses;
-      
+
       if (search) {
         const searchLower = String(search).toLowerCase();
-        filteredCourses = filteredCourses.filter(c => 
-          c.title.toLowerCase().includes(searchLower)
+        filteredCourses = filteredCourses.filter((c) =>
+          c.title.toLowerCase().includes(searchLower),
         );
       }
-      
+
       if (programId) {
         const pid = parseInt(String(programId));
-        filteredCourses = filteredCourses.filter(c => 
-          c.programId === pid
-        );
+        filteredCourses = filteredCourses.filter((c) => c.programId === pid);
       }
-      
+
       // Generate signed thumbnail URLs from keys
       const coursesWithSignedUrls = await Promise.all(
         filteredCourses.map(async (course) => {
@@ -1035,9 +1104,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
           return { ...course, thumbnailSignedUrl };
-        })
+        }),
       );
-      
+
       res.json(coursesWithSignedUrls);
     } catch (error) {
       console.error("Error fetching courses:", error);
@@ -1049,14 +1118,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/v1/cms/courses/:id", requireAdmin, async (req, res) => {
     try {
       const courseId = parseInt(req.params.id);
-      
-      const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
-      
+
+      const [course] = await db
+        .select()
+        .from(cmsCourses)
+        .where(eq(cmsCourses.id, courseId));
+
       if (!course) {
         res.status(404).json({ error: "Course not found" });
         return;
       }
-      
+
       // Generate signed thumbnail URL from key
       let thumbnailSignedUrl: string | null = null;
       if (course.thumbnailKey) {
@@ -1065,31 +1137,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
           thumbnailSignedUrl = signedResult.url;
         }
       }
-      
+
       // Get modules with their folders and lessons
-      const modules = await db.select().from(cmsModules)
+      const modules = await db
+        .select()
+        .from(cmsModules)
         .where(eq(cmsModules.courseId, courseId))
         .orderBy(asc(cmsModules.position));
-      
-      const modulesWithContent = await Promise.all(modules.map(async (module) => {
-        const folders = await db.select().from(cmsModuleFolders)
-          .where(eq(cmsModuleFolders.moduleId, module.id))
-          .orderBy(asc(cmsModuleFolders.position));
-        
-        const lessons = await db.select().from(cmsLessons)
-          .where(eq(cmsLessons.moduleId, module.id))
-          .orderBy(asc(cmsLessons.position));
-        
-        const lessonsWithFiles = await Promise.all(lessons.map(async (lesson) => {
-          const files = await db.select().from(cmsLessonFiles)
-            .where(eq(cmsLessonFiles.lessonId, lesson.id))
-            .orderBy(asc(cmsLessonFiles.position));
-          return { ...lesson, files };
-        }));
-        
-        return { ...module, folders, lessons: lessonsWithFiles };
-      }));
-      
+
+      const modulesWithContent = await Promise.all(
+        modules.map(async (module) => {
+          const folders = await db
+            .select()
+            .from(cmsModuleFolders)
+            .where(eq(cmsModuleFolders.moduleId, module.id))
+            .orderBy(asc(cmsModuleFolders.position));
+
+          const lessons = await db
+            .select()
+            .from(cmsLessons)
+            .where(eq(cmsLessons.moduleId, module.id))
+            .orderBy(asc(cmsLessons.position));
+
+          const lessonsWithFiles = await Promise.all(
+            lessons.map(async (lesson) => {
+              const files = await db
+                .select()
+                .from(cmsLessonFiles)
+                .where(eq(cmsLessonFiles.lessonId, lesson.id))
+                .orderBy(asc(cmsLessonFiles.position));
+              return { ...lesson, files };
+            }),
+          );
+
+          return { ...module, folders, lessons: lessonsWithFiles };
+        }),
+      );
+
       res.json({ ...course, thumbnailSignedUrl, modules: modulesWithContent });
     } catch (error) {
       console.error("Error fetching course:", error);
@@ -1102,22 +1186,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const parsed = insertCmsCourseSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({ error: "Invalid course data", details: parsed.error.errors });
+        res
+          .status(400)
+          .json({ error: "Invalid course data", details: parsed.error.errors });
         return;
       }
-      
+
       // Get max position
-      const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(position), 0)` }).from(cmsCourses);
+      const [maxPos] = await db
+        .select({ max: sql<number>`COALESCE(MAX(position), 0)` })
+        .from(cmsCourses);
       const position = (maxPos?.max || 0) + 1;
-      
+
       const adminId = req.user?.sub || null;
-      
-      const [course] = await db.insert(cmsCourses).values({
-        ...parsed.data,
-        position,
-        createdByAdminId: adminId,
-      }).returning();
-      
+
+      const [course] = await db
+        .insert(cmsCourses)
+        .values({
+          ...parsed.data,
+          position,
+          createdByAdminId: adminId,
+        })
+        .returning();
+
       res.status(201).json(course);
     } catch (error) {
       console.error("Error creating course:", error);
@@ -1129,18 +1220,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/v1/cms/courses/:id", requireAdmin, async (req, res) => {
     try {
       const courseId = parseInt(req.params.id);
-      
-      const [existing] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
+
+      const [existing] = await db
+        .select()
+        .from(cmsCourses)
+        .where(eq(cmsCourses.id, courseId));
       if (!existing) {
         res.status(404).json({ error: "Course not found" });
         return;
       }
-      
-      const [updated] = await db.update(cmsCourses)
+
+      const [updated] = await db
+        .update(cmsCourses)
         .set({ ...req.body, updatedAt: new Date() })
         .where(eq(cmsCourses.id, courseId))
         .returning();
-      
+
       res.json(updated);
     } catch (error) {
       console.error("Error updating course:", error);
@@ -1149,86 +1244,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete course
-  app.delete("/api/admin/v1/cms/courses/:id", requireAdmin, async (req, res) => {
-    try {
-      const courseId = parseInt(req.params.id);
-      
-      await db.delete(cmsCourses).where(eq(cmsCourses.id, courseId));
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting course:", error);
-      res.status(500).json({ error: "Failed to delete course" });
-    }
-  });
+  app.delete(
+    "/api/admin/v1/cms/courses/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const courseId = parseInt(req.params.id);
+
+        await db.delete(cmsCourses).where(eq(cmsCourses.id, courseId));
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting course:", error);
+        res.status(500).json({ error: "Failed to delete course" });
+      }
+    },
+  );
 
   // Toggle course publish status
-  app.patch("/api/admin/v1/cms/courses/:id/publish", requireAdmin, async (req, res) => {
-    try {
-      const courseId = parseInt(req.params.id);
-      const { isPublished } = req.body;
-      
-      if (typeof isPublished !== "boolean") {
-        res.status(400).json({ error: "isPublished must be a boolean" });
-        return;
+  app.patch(
+    "/api/admin/v1/cms/courses/:id/publish",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const courseId = parseInt(req.params.id);
+        const { isPublished } = req.body;
+
+        if (typeof isPublished !== "boolean") {
+          res.status(400).json({ error: "isPublished must be a boolean" });
+          return;
+        }
+
+        const [updated] = await db
+          .update(cmsCourses)
+          .set({ isPublished, updatedAt: new Date() })
+          .where(eq(cmsCourses.id, courseId))
+          .returning();
+
+        if (!updated) {
+          res.status(404).json({ error: "Course not found" });
+          return;
+        }
+
+        res.json(updated);
+      } catch (error) {
+        console.error("Error toggling course publish:", error);
+        res.status(500).json({ error: "Failed to toggle course publish" });
       }
-      
-      const [updated] = await db.update(cmsCourses)
-        .set({ isPublished, updatedAt: new Date() })
-        .where(eq(cmsCourses.id, courseId))
-        .returning();
-      
-      if (!updated) {
-        res.status(404).json({ error: "Course not found" });
-        return;
-      }
-      
-      res.json(updated);
-    } catch (error) {
-      console.error("Error toggling course publish:", error);
-      res.status(500).json({ error: "Failed to toggle course publish" });
-    }
-  });
+    },
+  );
 
   // Reorder courses
-  app.patch("/api/admin/v1/cms/courses/reorder", requireAdmin, async (req, res) => {
-    try {
-      const { items } = req.body as { items: { id: number; position: number }[] };
-      
-      if (!Array.isArray(items)) {
-        res.status(400).json({ error: "Invalid reorder data" });
-        return;
+  app.patch(
+    "/api/admin/v1/cms/courses/reorder",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { items } = req.body as {
+          items: { id: number; position: number }[];
+        };
+
+        if (!Array.isArray(items)) {
+          res.status(400).json({ error: "Invalid reorder data" });
+          return;
+        }
+
+        await Promise.all(
+          items.map((item) =>
+            db
+              .update(cmsCourses)
+              .set({ position: item.position, updatedAt: new Date() })
+              .where(eq(cmsCourses.id, item.id)),
+          ),
+        );
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error reordering courses:", error);
+        res.status(500).json({ error: "Failed to reorder courses" });
       }
-      
-      await Promise.all(items.map(item => 
-        db.update(cmsCourses)
-          .set({ position: item.position, updatedAt: new Date() })
-          .where(eq(cmsCourses.id, item.id))
-      ));
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error reordering courses:", error);
-      res.status(500).json({ error: "Failed to reorder courses" });
-    }
-  });
+    },
+  );
 
   // --- CMS MODULES ---
-  
+
   // Get modules for a course (query param style)
   app.get("/api/admin/v1/cms/modules", requireAdmin, async (req, res) => {
     try {
       const courseId = parseInt(req.query.courseId as string);
-      
+
       if (!courseId) {
         res.status(400).json({ error: "courseId is required" });
         return;
       }
-      
-      const modules = await db.select().from(cmsModules)
+
+      const modules = await db
+        .select()
+        .from(cmsModules)
         .where(eq(cmsModules.courseId, courseId))
         .orderBy(asc(cmsModules.position));
-      
+
       res.json(modules);
     } catch (error) {
       console.error("Error fetching modules:", error);
@@ -1237,47 +1352,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get modules for a course (path param style - used by admin processes page)
-  app.get("/api/admin/v1/cms/courses/:courseId/modules", requireAdmin, async (req, res) => {
-    try {
-      const courseId = parseInt(req.params.courseId);
-      
-      if (!courseId || isNaN(courseId)) {
-        res.status(400).json({ error: "Valid courseId is required" });
-        return;
+  app.get(
+    "/api/admin/v1/cms/courses/:courseId/modules",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const courseId = parseInt(req.params.courseId);
+
+        if (!courseId || isNaN(courseId)) {
+          res.status(400).json({ error: "Valid courseId is required" });
+          return;
+        }
+
+        const modules = await db
+          .select()
+          .from(cmsModules)
+          .where(eq(cmsModules.courseId, courseId))
+          .orderBy(asc(cmsModules.position));
+
+        res.json(modules);
+      } catch (error) {
+        console.error("Error fetching modules for course:", error);
+        res.status(500).json({ error: "Failed to fetch modules" });
       }
-      
-      const modules = await db.select().from(cmsModules)
-        .where(eq(cmsModules.courseId, courseId))
-        .orderBy(asc(cmsModules.position));
-      
-      res.json(modules);
-    } catch (error) {
-      console.error("Error fetching modules for course:", error);
-      res.status(500).json({ error: "Failed to fetch modules" });
-    }
-  });
+    },
+  );
 
   // Create module
   app.post("/api/admin/v1/cms/modules", requireAdmin, async (req, res) => {
     try {
       const parsed = insertCmsModuleSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({ error: "Invalid module data", details: parsed.error.errors });
+        res
+          .status(400)
+          .json({ error: "Invalid module data", details: parsed.error.errors });
         return;
       }
-      
+
       // Get max position for this course
-      const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(position), 0)` })
+      const [maxPos] = await db
+        .select({ max: sql<number>`COALESCE(MAX(position), 0)` })
         .from(cmsModules)
         .where(eq(cmsModules.courseId, parsed.data.courseId));
-      
+
       const position = (maxPos?.max || 0) + 1;
-      
-      const [module] = await db.insert(cmsModules).values({
-        ...parsed.data,
-        position,
-      }).returning();
-      
+
+      const [module] = await db
+        .insert(cmsModules)
+        .values({
+          ...parsed.data,
+          position,
+        })
+        .returning();
+
       res.status(201).json(module);
     } catch (error) {
       console.error("Error creating module:", error);
@@ -1289,17 +1416,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/v1/cms/modules/:id", requireAdmin, async (req, res) => {
     try {
       const moduleId = parseInt(req.params.id);
-      
-      const [updated] = await db.update(cmsModules)
+
+      const [updated] = await db
+        .update(cmsModules)
         .set({ ...req.body, updatedAt: new Date() })
         .where(eq(cmsModules.id, moduleId))
         .returning();
-      
+
       if (!updated) {
         res.status(404).json({ error: "Module not found" });
         return;
       }
-      
+
       res.json(updated);
     } catch (error) {
       console.error("Error updating module:", error);
@@ -1308,53 +1436,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete module
-  app.delete("/api/admin/v1/cms/modules/:id", requireAdmin, async (req, res) => {
-    try {
-      const moduleId = parseInt(req.params.id);
-      
-      await db.delete(cmsModules).where(eq(cmsModules.id, moduleId));
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting module:", error);
-      res.status(500).json({ error: "Failed to delete module" });
-    }
-  });
+  app.delete(
+    "/api/admin/v1/cms/modules/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const moduleId = parseInt(req.params.id);
+
+        await db.delete(cmsModules).where(eq(cmsModules.id, moduleId));
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting module:", error);
+        res.status(500).json({ error: "Failed to delete module" });
+      }
+    },
+  );
 
   // Reorder modules
-  app.patch("/api/admin/v1/cms/modules/reorder", requireAdmin, async (req, res) => {
-    try {
-      const { items } = req.body as { items: { id: number; position: number }[] };
-      
-      await Promise.all(items.map(item => 
-        db.update(cmsModules)
-          .set({ position: item.position, updatedAt: new Date() })
-          .where(eq(cmsModules.id, item.id))
-      ));
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error reordering modules:", error);
-      res.status(500).json({ error: "Failed to reorder modules" });
-    }
-  });
+  app.patch(
+    "/api/admin/v1/cms/modules/reorder",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { items } = req.body as {
+          items: { id: number; position: number }[];
+        };
+
+        await Promise.all(
+          items.map((item) =>
+            db
+              .update(cmsModules)
+              .set({ position: item.position, updatedAt: new Date() })
+              .where(eq(cmsModules.id, item.id)),
+          ),
+        );
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error reordering modules:", error);
+        res.status(500).json({ error: "Failed to reorder modules" });
+      }
+    },
+  );
 
   // --- CMS MODULE FOLDERS ---
-  
+
   // Get folders for a module
   app.get("/api/admin/v1/cms/folders", requireAdmin, async (req, res) => {
     try {
       const moduleId = parseInt(req.query.moduleId as string);
-      
+
       if (!moduleId) {
         res.status(400).json({ error: "moduleId is required" });
         return;
       }
-      
-      const folders = await db.select().from(cmsModuleFolders)
+
+      const folders = await db
+        .select()
+        .from(cmsModuleFolders)
         .where(eq(cmsModuleFolders.moduleId, moduleId))
         .orderBy(asc(cmsModuleFolders.position));
-      
+
       res.json(folders);
     } catch (error) {
       console.error("Error fetching folders:", error);
@@ -1367,21 +1510,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const parsed = insertCmsModuleFolderSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({ error: "Invalid folder data", details: parsed.error.errors });
+        res
+          .status(400)
+          .json({ error: "Invalid folder data", details: parsed.error.errors });
         return;
       }
-      
-      const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(position), 0)` })
+
+      const [maxPos] = await db
+        .select({ max: sql<number>`COALESCE(MAX(position), 0)` })
         .from(cmsModuleFolders)
         .where(eq(cmsModuleFolders.moduleId, parsed.data.moduleId));
-      
+
       const position = (maxPos?.max || 0) + 1;
-      
-      const [folder] = await db.insert(cmsModuleFolders).values({
-        ...parsed.data,
-        position,
-      }).returning();
-      
+
+      const [folder] = await db
+        .insert(cmsModuleFolders)
+        .values({
+          ...parsed.data,
+          position,
+        })
+        .returning();
+
       res.status(201).json(folder);
     } catch (error) {
       console.error("Error creating folder:", error);
@@ -1393,17 +1542,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/v1/cms/folders/:id", requireAdmin, async (req, res) => {
     try {
       const folderId = parseInt(req.params.id);
-      
-      const [updated] = await db.update(cmsModuleFolders)
+
+      const [updated] = await db
+        .update(cmsModuleFolders)
         .set({ ...req.body, updatedAt: new Date() })
         .where(eq(cmsModuleFolders.id, folderId))
         .returning();
-      
+
       if (!updated) {
         res.status(404).json({ error: "Folder not found" });
         return;
       }
-      
+
       res.json(updated);
     } catch (error) {
       console.error("Error updating folder:", error);
@@ -1412,58 +1562,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete folder
-  app.delete("/api/admin/v1/cms/folders/:id", requireAdmin, async (req, res) => {
-    try {
-      const folderId = parseInt(req.params.id);
-      
-      await db.delete(cmsModuleFolders).where(eq(cmsModuleFolders.id, folderId));
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting folder:", error);
-      res.status(500).json({ error: "Failed to delete folder" });
-    }
-  });
+  app.delete(
+    "/api/admin/v1/cms/folders/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const folderId = parseInt(req.params.id);
+
+        await db
+          .delete(cmsModuleFolders)
+          .where(eq(cmsModuleFolders.id, folderId));
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting folder:", error);
+        res.status(500).json({ error: "Failed to delete folder" });
+      }
+    },
+  );
 
   // Reorder folders
-  app.patch("/api/admin/v1/cms/folders/reorder", requireAdmin, async (req, res) => {
-    try {
-      const { items } = req.body as { items: { id: number; position: number }[] };
-      
-      await Promise.all(items.map(item => 
-        db.update(cmsModuleFolders)
-          .set({ position: item.position, updatedAt: new Date() })
-          .where(eq(cmsModuleFolders.id, item.id))
-      ));
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error reordering folders:", error);
-      res.status(500).json({ error: "Failed to reorder folders" });
-    }
-  });
+  app.patch(
+    "/api/admin/v1/cms/folders/reorder",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { items } = req.body as {
+          items: { id: number; position: number }[];
+        };
+
+        await Promise.all(
+          items.map((item) =>
+            db
+              .update(cmsModuleFolders)
+              .set({ position: item.position, updatedAt: new Date() })
+              .where(eq(cmsModuleFolders.id, item.id)),
+          ),
+        );
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error reordering folders:", error);
+        res.status(500).json({ error: "Failed to reorder folders" });
+      }
+    },
+  );
 
   // --- CMS LESSONS ---
-  
+
   // Get lessons for a module (optionally filtered by folder)
   app.get("/api/admin/v1/cms/lessons", requireAdmin, async (req, res) => {
     try {
       const moduleId = parseInt(req.query.moduleId as string);
-      const folderId = req.query.folderId ? parseInt(req.query.folderId as string) : null;
-      
+      const folderId = req.query.folderId
+        ? parseInt(req.query.folderId as string)
+        : null;
+
       if (!moduleId) {
         res.status(400).json({ error: "moduleId is required" });
         return;
       }
-      
-      let query = db.select().from(cmsLessons).where(eq(cmsLessons.moduleId, moduleId));
-      
+
+      let query = db
+        .select()
+        .from(cmsLessons)
+        .where(eq(cmsLessons.moduleId, moduleId));
+
       const lessons = await query.orderBy(asc(cmsLessons.position));
-      
-      const filteredLessons = folderId !== null 
-        ? lessons.filter(l => l.folderId === folderId)
-        : lessons;
-      
+
+      const filteredLessons =
+        folderId !== null
+          ? lessons.filter((l) => l.folderId === folderId)
+          : lessons;
+
       res.json(filteredLessons);
     } catch (error) {
       console.error("Error fetching lessons:", error);
@@ -1475,18 +1646,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/v1/cms/lessons/:id", requireAdmin, async (req, res) => {
     try {
       const lessonId = parseInt(req.params.id);
-      
-      const [lesson] = await db.select().from(cmsLessons).where(eq(cmsLessons.id, lessonId));
-      
+
+      const [lesson] = await db
+        .select()
+        .from(cmsLessons)
+        .where(eq(cmsLessons.id, lessonId));
+
       if (!lesson) {
         res.status(404).json({ error: "Lesson not found" });
         return;
       }
-      
-      const files = await db.select().from(cmsLessonFiles)
+
+      const files = await db
+        .select()
+        .from(cmsLessonFiles)
         .where(eq(cmsLessonFiles.lessonId, lessonId))
         .orderBy(asc(cmsLessonFiles.position));
-      
+
       res.json({ ...lesson, files });
     } catch (error) {
       console.error("Error fetching lesson:", error);
@@ -1499,21 +1675,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const parsed = insertCmsLessonSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({ error: "Invalid lesson data", details: parsed.error.errors });
+        res
+          .status(400)
+          .json({ error: "Invalid lesson data", details: parsed.error.errors });
         return;
       }
-      
-      const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(position), 0)` })
+
+      const [maxPos] = await db
+        .select({ max: sql<number>`COALESCE(MAX(position), 0)` })
         .from(cmsLessons)
         .where(eq(cmsLessons.moduleId, parsed.data.moduleId));
-      
+
       const position = (maxPos?.max || 0) + 1;
-      
-      const [lesson] = await db.insert(cmsLessons).values({
-        ...parsed.data,
-        position,
-      }).returning();
-      
+
+      const [lesson] = await db
+        .insert(cmsLessons)
+        .values({
+          ...parsed.data,
+          position,
+        })
+        .returning();
+
       res.status(201).json(lesson);
     } catch (error) {
       console.error("Error creating lesson:", error);
@@ -1525,17 +1707,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/v1/cms/lessons/:id", requireAdmin, async (req, res) => {
     try {
       const lessonId = parseInt(req.params.id);
-      
-      const [updated] = await db.update(cmsLessons)
+
+      const [updated] = await db
+        .update(cmsLessons)
         .set({ ...req.body, updatedAt: new Date() })
         .where(eq(cmsLessons.id, lessonId))
         .returning();
-      
+
       if (!updated) {
         res.status(404).json({ error: "Lesson not found" });
         return;
       }
-      
+
       res.json(updated);
     } catch (error) {
       console.error("Error updating lesson:", error);
@@ -1544,59 +1727,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete lesson
-  app.delete("/api/admin/v1/cms/lessons/:id", requireAdmin, async (req, res) => {
-    try {
-      const lessonId = parseInt(req.params.id);
-      
-      // First delete associated files from R2
-      const files = await db.select().from(cmsLessonFiles).where(eq(cmsLessonFiles.lessonId, lessonId));
-      for (const file of files) {
-        await deleteR2Object(file.r2Key);
+  app.delete(
+    "/api/admin/v1/cms/lessons/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const lessonId = parseInt(req.params.id);
+
+        // First delete associated files from R2
+        const files = await db
+          .select()
+          .from(cmsLessonFiles)
+          .where(eq(cmsLessonFiles.lessonId, lessonId));
+        for (const file of files) {
+          await deleteR2Object(file.r2Key);
+        }
+
+        await db.delete(cmsLessons).where(eq(cmsLessons.id, lessonId));
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting lesson:", error);
+        res.status(500).json({ error: "Failed to delete lesson" });
       }
-      
-      await db.delete(cmsLessons).where(eq(cmsLessons.id, lessonId));
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting lesson:", error);
-      res.status(500).json({ error: "Failed to delete lesson" });
-    }
-  });
+    },
+  );
 
   // Reorder lessons
-  app.patch("/api/admin/v1/cms/lessons/reorder", requireAdmin, async (req, res) => {
-    try {
-      const { items } = req.body as { items: { id: number; position: number }[] };
-      
-      await Promise.all(items.map(item => 
-        db.update(cmsLessons)
-          .set({ position: item.position, updatedAt: new Date() })
-          .where(eq(cmsLessons.id, item.id))
-      ));
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error reordering lessons:", error);
-      res.status(500).json({ error: "Failed to reorder lessons" });
-    }
-  });
+  app.patch(
+    "/api/admin/v1/cms/lessons/reorder",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { items } = req.body as {
+          items: { id: number; position: number }[];
+        };
+
+        await Promise.all(
+          items.map((item) =>
+            db
+              .update(cmsLessons)
+              .set({ position: item.position, updatedAt: new Date() })
+              .where(eq(cmsLessons.id, item.id)),
+          ),
+        );
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error reordering lessons:", error);
+        res.status(500).json({ error: "Failed to reorder lessons" });
+      }
+    },
+  );
 
   // --- CMS FILES ---
-  
+
   // Get files for a lesson
   app.get("/api/admin/v1/cms/files", requireAdmin, async (req, res) => {
     try {
       const lessonId = parseInt(req.query.lessonId as string);
-      
+
       if (!lessonId) {
         res.status(400).json({ error: "lessonId is required" });
         return;
       }
-      
-      const files = await db.select().from(cmsLessonFiles)
+
+      const files = await db
+        .select()
+        .from(cmsLessonFiles)
         .where(eq(cmsLessonFiles.lessonId, lessonId))
         .orderBy(asc(cmsLessonFiles.position));
-      
+
       res.json(files);
     } catch (error) {
       console.error("Error fetching files:", error);
@@ -1605,131 +1806,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get signed PUT URL for file upload
-  app.post("/api/admin/v1/cms/files/get-upload-url", requireAdmin, async (req, res) => {
-    try {
-      const { filename, contentType, lessonId, fileType, courseId, uploadType } = req.body;
-      
-      if (!filename || !contentType) {
-        res.status(400).json({ error: "filename and contentType are required" });
-        return;
-      }
-      
-      const credCheck = checkR2Credentials();
-      if (!credCheck.valid) {
-        res.status(503).json({ 
-          error: "R2 credentials not configured", 
-          details: credCheck.error,
-          message: "Please configure R2 credentials to upload files"
+  app.post(
+    "/api/admin/v1/cms/files/get-upload-url",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const {
+          filename,
+          contentType,
+          lessonId,
+          fileType,
+          courseId,
+          uploadType,
+        } = req.body;
+
+        if (!filename || !contentType) {
+          res
+            .status(400)
+            .json({ error: "filename and contentType are required" });
+          return;
+        }
+
+        const credCheck = checkR2Credentials();
+        if (!credCheck.valid) {
+          res.status(503).json({
+            error: "R2 credentials not configured",
+            details: credCheck.error,
+            message: "Please configure R2 credentials to upload files",
+          });
+          return;
+        }
+
+        let key: string;
+
+        if (uploadType === "thumbnail" && courseId) {
+          key = generateCourseThumnailKey(courseId, filename);
+        } else if (lessonId && fileType) {
+          key = generateLessonFileKey(lessonId, fileType, filename);
+        } else {
+          res.status(400).json({ error: "Invalid upload parameters" });
+          return;
+        }
+
+        const result = await getSignedPutUrl(key, contentType);
+
+        if (!result.success) {
+          res.status(500).json({ error: result.error });
+          return;
+        }
+
+        // Generate a signed GET URL for immediate preview after upload
+        const getResult = await getSignedGetUrl(key);
+        const signedUrl = getResult.success ? getResult.url : null;
+
+        res.json({
+          uploadUrl: result.uploadUrl,
+          key: result.key,
+          signedUrl, // Use signed URL instead of public URL
         });
-        return;
+      } catch (error) {
+        console.error("Error getting upload URL:", error);
+        res.status(500).json({ error: "Failed to get upload URL" });
       }
-      
-      let key: string;
-      
-      if (uploadType === "thumbnail" && courseId) {
-        key = generateCourseThumnailKey(courseId, filename);
-      } else if (lessonId && fileType) {
-        key = generateLessonFileKey(lessonId, fileType, filename);
-      } else {
-        res.status(400).json({ error: "Invalid upload parameters" });
-        return;
-      }
-      
-      const result = await getSignedPutUrl(key, contentType);
-      
-      if (!result.success) {
-        res.status(500).json({ error: result.error });
-        return;
-      }
-      
-      // Generate a signed GET URL for immediate preview after upload
-      const getResult = await getSignedGetUrl(key);
-      const signedUrl = getResult.success ? getResult.url : null;
-      
-      res.json({
-        uploadUrl: result.uploadUrl,
-        key: result.key,
-        signedUrl, // Use signed URL instead of public URL
-      });
-    } catch (error) {
-      console.error("Error getting upload URL:", error);
-      res.status(500).json({ error: "Failed to get upload URL" });
-    }
-  });
+    },
+  );
 
   // Confirm file upload and save metadata
-  app.post("/api/admin/v1/cms/files/confirm", requireAdmin, async (req, res) => {
-    try {
-      const parsed = insertCmsLessonFileSchema.safeParse(req.body);
-      if (!parsed.success) {
-        res.status(400).json({ error: "Invalid file data", details: parsed.error.errors });
-        return;
-      }
-      
-      const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(position), 0)` })
-        .from(cmsLessonFiles)
-        .where(eq(cmsLessonFiles.lessonId, parsed.data.lessonId));
-      
-      const position = (maxPos?.max || 0) + 1;
-      
-      let extractedText: string | null = null;
-      let scriptHtml: string | null = null;
-      
-      // Convert PDF to HTML with formatting preserved
-      if (parsed.data.fileType === "script" && parsed.data.r2Key) {
-        try {
-          console.log("Converting PDF to HTML:", parsed.data.r2Key);
-          const downloadResult = await downloadR2Object(parsed.data.r2Key);
-          
-          if (downloadResult.success && downloadResult.data) {
-            // Use pdf-parse v2 to extract text
-            const { PDFParse } = await import("pdf-parse");
-            const parser = new PDFParse({ data: downloadResult.data });
-            const textResult = await parser.getText();
-            extractedText = textResult.text;
-            await parser.destroy();
-            
-            // Convert extracted text to formatted HTML
-            if (extractedText) {
-              scriptHtml = convertTextToFormattedHtml(extractedText);
-              console.log("PDF converted to HTML, length:", scriptHtml?.length || 0);
-            }
-          } else {
-            console.error("Failed to download PDF for conversion:", downloadResult.error);
-          }
-        } catch (pdfError) {
-          console.error("Error converting PDF to HTML:", pdfError);
-          // Continue without HTML - file will still be saved
+  app.post(
+    "/api/admin/v1/cms/files/confirm",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const parsed = insertCmsLessonFileSchema.safeParse(req.body);
+        if (!parsed.success) {
+          res
+            .status(400)
+            .json({ error: "Invalid file data", details: parsed.error.errors });
+          return;
         }
+
+        const [maxPos] = await db
+          .select({ max: sql<number>`COALESCE(MAX(position), 0)` })
+          .from(cmsLessonFiles)
+          .where(eq(cmsLessonFiles.lessonId, parsed.data.lessonId));
+
+        const position = (maxPos?.max || 0) + 1;
+
+        let extractedText: string | null = null;
+        let scriptHtml: string | null = null;
+
+        // Convert PDF to HTML with formatting preserved
+        if (parsed.data.fileType === "script" && parsed.data.r2Key) {
+          try {
+            console.log("Converting PDF to HTML:", parsed.data.r2Key);
+            const downloadResult = await downloadR2Object(parsed.data.r2Key);
+
+            if (downloadResult.success && downloadResult.data) {
+              // Use pdf-parse v2 to extract text
+              const { PDFParse } = await import("pdf-parse");
+              const parser = new PDFParse({ data: downloadResult.data });
+              const textResult = await parser.getText();
+              extractedText = textResult.text;
+              await parser.destroy();
+
+              // Convert extracted text to formatted HTML
+              if (extractedText) {
+                scriptHtml = convertTextToFormattedHtml(extractedText);
+                console.log(
+                  "PDF converted to HTML, length:",
+                  scriptHtml?.length || 0,
+                );
+              }
+            } else {
+              console.error(
+                "Failed to download PDF for conversion:",
+                downloadResult.error,
+              );
+            }
+          } catch (pdfError) {
+            console.error("Error converting PDF to HTML:", pdfError);
+            // Continue without HTML - file will still be saved
+          }
+        }
+
+        const [file] = await db
+          .insert(cmsLessonFiles)
+          .values({
+            ...parsed.data,
+            position,
+            extractedText,
+            scriptHtml,
+          })
+          .returning();
+
+        res.status(201).json(file);
+      } catch (error) {
+        console.error("Error confirming file upload:", error);
+        res.status(500).json({ error: "Failed to confirm file upload" });
       }
-      
-      const [file] = await db.insert(cmsLessonFiles).values({
-        ...parsed.data,
-        position,
-        extractedText,
-        scriptHtml,
-      }).returning();
-      
-      res.status(201).json(file);
-    } catch (error) {
-      console.error("Error confirming file upload:", error);
-      res.status(500).json({ error: "Failed to confirm file upload" });
-    }
-  });
+    },
+  );
 
   // Delete file
   app.delete("/api/admin/v1/cms/files/:id", requireAdmin, async (req, res) => {
     try {
       const fileId = parseInt(req.params.id);
-      
-      const [file] = await db.select().from(cmsLessonFiles).where(eq(cmsLessonFiles.id, fileId));
-      
+
+      const [file] = await db
+        .select()
+        .from(cmsLessonFiles)
+        .where(eq(cmsLessonFiles.id, fileId));
+
       if (file) {
         await deleteR2Object(file.r2Key);
       }
-      
+
       await db.delete(cmsLessonFiles).where(eq(cmsLessonFiles.id, fileId));
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting file:", error);
@@ -1738,159 +1971,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get signed GET URL for protected file access
-  app.get("/api/admin/v1/cms/files/:id/signed-url", requireAdmin, async (req, res) => {
-    try {
-      const fileId = parseInt(req.params.id);
-      
-      const [file] = await db.select().from(cmsLessonFiles).where(eq(cmsLessonFiles.id, fileId));
-      
-      if (!file) {
-        res.status(404).json({ error: "File not found" });
-        return;
+  app.get(
+    "/api/admin/v1/cms/files/:id/signed-url",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const fileId = parseInt(req.params.id);
+
+        const [file] = await db
+          .select()
+          .from(cmsLessonFiles)
+          .where(eq(cmsLessonFiles.id, fileId));
+
+        if (!file) {
+          res.status(404).json({ error: "File not found" });
+          return;
+        }
+
+        const result = await getSignedGetUrl(file.r2Key);
+
+        if (!result.success) {
+          res.status(500).json({ error: result.error });
+          return;
+        }
+
+        res.json({ url: result.url });
+      } catch (error) {
+        console.error("Error getting signed URL:", error);
+        res.status(500).json({ error: "Failed to get signed URL" });
       }
-      
-      const result = await getSignedGetUrl(file.r2Key);
-      
-      if (!result.success) {
-        res.status(500).json({ error: result.error });
-        return;
-      }
-      
-      res.json({ url: result.url });
-    } catch (error) {
-      console.error("Error getting signed URL:", error);
-      res.status(500).json({ error: "Failed to get signed URL" });
-    }
-  });
+    },
+  );
 
   // ===== FRONTEND FEATURE MAPPING ROUTES =====
 
   // Get all frontend features
-  app.get("/admin/v1/frontend-mapping/features", requireAdmin, async (req, res) => {
-    try {
-      const features = await storage.getAllFrontendFeatures();
-      res.json(features);
-    } catch (error) {
-      console.error("Error fetching frontend features:", error);
-      res.status(500).json({ error: "Failed to fetch features" });
-    }
-  });
+  app.get(
+    "/admin/v1/frontend-mapping/features",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const features = await storage.getAllFrontendFeatures();
+        res.json(features);
+      } catch (error) {
+        console.error("Error fetching frontend features:", error);
+        res.status(500).json({ error: "Failed to fetch features" });
+      }
+    },
+  );
 
   // Get mapped courses for a feature
-  app.get("/admin/v1/frontend-mapping/features/:code/courses", requireAdmin, async (req, res) => {
-    try {
-      const { code } = req.params;
-      const feature = await storage.getFrontendFeatureByCode(code);
-      
-      if (!feature) {
-        return res.status(404).json({ error: "Feature not found" });
-      }
+  app.get(
+    "/admin/v1/frontend-mapping/features/:code/courses",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { code } = req.params;
+        const feature = await storage.getFrontendFeatureByCode(code);
 
-      const mappings = await storage.getFeatureCourseMappings(feature.id);
-      res.json({ feature, mappings });
-    } catch (error) {
-      console.error("Error fetching feature course mappings:", error);
-      res.status(500).json({ error: "Failed to fetch mappings" });
-    }
-  });
+        if (!feature) {
+          return res.status(404).json({ error: "Feature not found" });
+        }
+
+        const mappings = await storage.getFeatureCourseMappings(feature.id);
+        res.json({ feature, mappings });
+      } catch (error) {
+        console.error("Error fetching feature course mappings:", error);
+        res.status(500).json({ error: "Failed to fetch mappings" });
+      }
+    },
+  );
 
   // Map a course to a feature
-  app.post("/admin/v1/frontend-mapping/features/:code/courses", requireAdmin, async (req, res) => {
-    try {
-      const { code } = req.params;
-      const { courseId } = req.body;
-      
-      if (!courseId) {
-        return res.status(400).json({ error: "courseId is required" });
-      }
+  app.post(
+    "/admin/v1/frontend-mapping/features/:code/courses",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { code } = req.params;
+        const { courseId } = req.body;
 
-      const feature = await storage.getFrontendFeatureByCode(code);
-      if (!feature) {
-        return res.status(404).json({ error: "Feature not found" });
-      }
-
-      // For DYD, USM, BREATH, PLAYLIST - only 1 course allowed, replace existing
-      if (["DYD", "USM", "BREATH", "PLAYLIST"].includes(code)) {
-        await storage.clearFeatureCourseMappings(feature.id);
-      }
-
-      // Check if course already mapped for ABUNDANCE
-      if (code === "ABUNDANCE") {
-        const existingMappings = await storage.getFeatureCourseMappings(feature.id);
-        if (existingMappings.some(m => m.courseId === courseId)) {
-          return res.status(400).json({ error: "Course already mapped" });
+        if (!courseId) {
+          return res.status(400).json({ error: "courseId is required" });
         }
+
+        const feature = await storage.getFrontendFeatureByCode(code);
+        if (!feature) {
+          return res.status(404).json({ error: "Feature not found" });
+        }
+
+        // For DYD, USM, BREATH, PLAYLIST - only 1 course allowed, replace existing
+        if (["DYD", "USM", "BREATH", "PLAYLIST"].includes(code)) {
+          await storage.clearFeatureCourseMappings(feature.id);
+        }
+
+        // Check if course already mapped for ABUNDANCE
+        if (code === "ABUNDANCE") {
+          const existingMappings = await storage.getFeatureCourseMappings(
+            feature.id,
+          );
+          if (existingMappings.some((m) => m.courseId === courseId)) {
+            return res.status(400).json({ error: "Course already mapped" });
+          }
+        }
+
+        // Get max position for ABUNDANCE
+        let position = 0;
+        if (code === "ABUNDANCE") {
+          const existingMappings = await storage.getFeatureCourseMappings(
+            feature.id,
+          );
+          position =
+            existingMappings.length > 0
+              ? Math.max(...existingMappings.map((m) => m.position)) + 1
+              : 0;
+        }
+
+        const mapping = await storage.createFeatureCourseMapping({
+          featureId: feature.id,
+          courseId,
+          position,
+        });
+
+        res.status(201).json(mapping);
+      } catch (error) {
+        console.error("Error creating feature course mapping:", error);
+        res.status(500).json({ error: "Failed to create mapping" });
       }
-
-      // Get max position for ABUNDANCE
-      let position = 0;
-      if (code === "ABUNDANCE") {
-        const existingMappings = await storage.getFeatureCourseMappings(feature.id);
-        position = existingMappings.length > 0 ? Math.max(...existingMappings.map(m => m.position)) + 1 : 0;
-      }
-
-      const mapping = await storage.createFeatureCourseMapping({
-        featureId: feature.id,
-        courseId,
-        position
-      });
-
-      res.status(201).json(mapping);
-    } catch (error) {
-      console.error("Error creating feature course mapping:", error);
-      res.status(500).json({ error: "Failed to create mapping" });
-    }
-  });
+    },
+  );
 
   // Delete a course mapping
-  app.delete("/admin/v1/frontend-mapping/features/:code/courses/:courseId", requireAdmin, async (req, res) => {
-    try {
-      const { code, courseId } = req.params;
-      
-      const feature = await storage.getFrontendFeatureByCode(code);
-      if (!feature) {
-        return res.status(404).json({ error: "Feature not found" });
-      }
+  app.delete(
+    "/admin/v1/frontend-mapping/features/:code/courses/:courseId",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { code, courseId } = req.params;
 
-      const success = await storage.deleteFeatureCourseMapping(feature.id, parseInt(courseId));
-      
-      if (!success) {
-        return res.status(404).json({ error: "Mapping not found" });
-      }
+        const feature = await storage.getFrontendFeatureByCode(code);
+        if (!feature) {
+          return res.status(404).json({ error: "Feature not found" });
+        }
 
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting feature course mapping:", error);
-      res.status(500).json({ error: "Failed to delete mapping" });
-    }
-  });
+        const success = await storage.deleteFeatureCourseMapping(
+          feature.id,
+          parseInt(courseId),
+        );
+
+        if (!success) {
+          return res.status(404).json({ error: "Mapping not found" });
+        }
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting feature course mapping:", error);
+        res.status(500).json({ error: "Failed to delete mapping" });
+      }
+    },
+  );
 
   // Reorder courses for ABUNDANCE feature
-  app.patch("/admin/v1/frontend-mapping/features/:code/courses/reorder", requireAdmin, async (req, res) => {
-    try {
-      const { code } = req.params;
-      const { courseIds } = req.body;
+  app.patch(
+    "/admin/v1/frontend-mapping/features/:code/courses/reorder",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { code } = req.params;
+        const { courseIds } = req.body;
 
-      if (code !== "ABUNDANCE") {
-        return res.status(400).json({ error: "Reorder only allowed for ABUNDANCE feature" });
+        if (code !== "ABUNDANCE") {
+          return res
+            .status(400)
+            .json({ error: "Reorder only allowed for ABUNDANCE feature" });
+        }
+
+        if (!Array.isArray(courseIds)) {
+          return res.status(400).json({ error: "courseIds must be an array" });
+        }
+
+        const feature = await storage.getFrontendFeatureByCode(code);
+        if (!feature) {
+          return res.status(404).json({ error: "Feature not found" });
+        }
+
+        await storage.reorderFeatureCourseMappings(feature.id, courseIds);
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error reordering feature course mappings:", error);
+        res.status(500).json({ error: "Failed to reorder" });
       }
-
-      if (!Array.isArray(courseIds)) {
-        return res.status(400).json({ error: "courseIds must be an array" });
-      }
-
-      const feature = await storage.getFrontendFeatureByCode(code);
-      if (!feature) {
-        return res.status(404).json({ error: "Feature not found" });
-      }
-
-      await storage.reorderFeatureCourseMappings(feature.id, courseIds);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error reordering feature course mappings:", error);
-      res.status(500).json({ error: "Failed to reorder" });
-    }
-  });
+    },
+  );
 
   // ===== PUBLIC FEATURE API =====
 
@@ -1898,7 +2170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/public/v1/features/:code", async (req, res) => {
     try {
       const { code } = req.params;
-      
+
       const feature = await storage.getFrontendFeatureByCode(code);
       if (!feature) {
         return res.status(404).json({ error: "Feature not found" });
@@ -1912,11 +2184,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (mappings.length === 0) {
           return res.json({ feature, course: null, modules: [] });
         }
-        
+
         const courseId = mappings[0].courseId;
-        const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
+        const [course] = await db
+          .select()
+          .from(cmsCourses)
+          .where(eq(cmsCourses.id, courseId));
         const modules = await storage.getModulesForCourse(courseId);
-        
+
         return res.json({ feature, course, modules });
       }
 
@@ -1925,33 +2200,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (mappings.length === 0) {
           return res.json({ feature, course: null, lessons: [] });
         }
-        
+
         const courseId = mappings[0].courseId;
-        const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
+        const [course] = await db
+          .select()
+          .from(cmsCourses)
+          .where(eq(cmsCourses.id, courseId));
         const lessons = await storage.getLessonsForCourse(courseId);
-        
+
         return res.json({ feature, course, lessons });
       }
 
       if (feature.displayMode === "courses") {
         // ABUNDANCE - return built-ins + mapped courses
         const builtIns = [
-          { id: "builtin-money-calendar", title: "Money Calendar", isBuiltIn: true },
-          { id: "builtin-rewiring-belief", title: "Rewiring Belief", isBuiltIn: true }
+          {
+            id: "builtin-money-calendar",
+            title: "Money Calendar",
+            isBuiltIn: true,
+          },
+          {
+            id: "builtin-rewiring-belief",
+            title: "Rewiring Belief",
+            isBuiltIn: true,
+          },
         ];
 
         const mappedCourses = await Promise.all(
           mappings.map(async (m) => {
-            const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, m.courseId));
+            const [course] = await db
+              .select()
+              .from(cmsCourses)
+              .where(eq(cmsCourses.id, m.courseId));
             return {
               id: course.id,
               title: course.title,
               description: course.description,
               thumbnailKey: course.thumbnailKey,
               position: m.position,
-              isBuiltIn: false
+              isBuiltIn: false,
             };
-          })
+          }),
         );
 
         return res.json({ feature, builtIns, courses: mappedCourses });
@@ -1970,14 +2259,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/public/v1/modules/:id", async (req, res) => {
     try {
       const moduleId = parseInt(req.params.id);
-      const [module] = await db.select().from(cmsModules).where(eq(cmsModules.id, moduleId));
-      
+      const [module] = await db
+        .select()
+        .from(cmsModules)
+        .where(eq(cmsModules.id, moduleId));
+
       if (!module) {
         return res.status(404).json({ error: "Module not found" });
       }
 
       // Get lessons for this module
-      const lessons = await db.select().from(cmsLessons).where(eq(cmsLessons.moduleId, moduleId)).orderBy(asc(cmsLessons.position));
+      const lessons = await db
+        .select()
+        .from(cmsLessons)
+        .where(eq(cmsLessons.moduleId, moduleId))
+        .orderBy(asc(cmsLessons.position));
 
       res.json({ module, lessons });
     } catch (error) {
@@ -1990,33 +2286,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/public/v1/lessons/:id", async (req, res) => {
     try {
       const lessonId = parseInt(req.params.id);
-      const [lesson] = await db.select().from(cmsLessons).where(eq(cmsLessons.id, lessonId));
-      
+      const [lesson] = await db
+        .select()
+        .from(cmsLessons)
+        .where(eq(cmsLessons.id, lessonId));
+
       if (!lesson) {
         return res.status(404).json({ error: "Lesson not found" });
       }
 
       // Get files for this lesson (with signed URLs)
-      const files = await db.select().from(cmsLessonFiles).where(eq(cmsLessonFiles.lessonId, lessonId)).orderBy(asc(cmsLessonFiles.position));
+      const files = await db
+        .select()
+        .from(cmsLessonFiles)
+        .where(eq(cmsLessonFiles.lessonId, lessonId))
+        .orderBy(asc(cmsLessonFiles.position));
 
       // Generate signed URLs for files
-      const filesWithUrls = await Promise.all(files.map(async (file) => {
-        let signedUrl: string | null = null;
-        if (file.r2Key) {
-          try {
-            const result = await getSignedGetUrl(file.r2Key, 3600);
-            // Handle both string and object {success, url} response formats
-            if (typeof result === 'string') {
-              signedUrl = result;
-            } else if (result && typeof result === 'object' && 'url' in result) {
-              signedUrl = (result as { url: string }).url;
+      const filesWithUrls = await Promise.all(
+        files.map(async (file) => {
+          let signedUrl: string | null = null;
+          if (file.r2Key) {
+            try {
+              const result = await getSignedGetUrl(file.r2Key, 3600);
+              // Handle both string and object {success, url} response formats
+              if (typeof result === "string") {
+                signedUrl = result;
+              } else if (
+                result &&
+                typeof result === "object" &&
+                "url" in result
+              ) {
+                signedUrl = (result as { url: string }).url;
+              }
+            } catch (e) {
+              console.error("Error generating signed URL:", e);
             }
-          } catch (e) {
-            console.error("Error generating signed URL:", e);
           }
-        }
-        return { ...file, signedUrl };
-      }));
+          return { ...file, signedUrl };
+        }),
+      );
 
       res.json({ lesson, files: filesWithUrls });
     } catch (error) {
@@ -2029,8 +2338,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/public/v1/courses/:id", async (req, res) => {
     try {
       const courseId = parseInt(req.params.id);
-      const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
-      
+      const [course] = await db
+        .select()
+        .from(cmsCourses)
+        .where(eq(cmsCourses.id, courseId));
+
       if (!course) {
         return res.status(404).json({ error: "Course not found" });
       }
@@ -2068,8 +2380,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/public/v1/search", async (req, res) => {
     try {
-      const query = (req.query.q as string || "").trim().toLowerCase();
-      
+      const query = ((req.query.q as string) || "").trim().toLowerCase();
+
       // If empty query, return empty results
       if (!query) {
         return res.json({ results: [] });
@@ -2077,15 +2389,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For now, assume all features accessible (until access control is built)
       const allowedFeatures = ["DYD", "USM", "BREATH", "ABUNDANCE"];
-      
+
       const results: SearchResult[] = [];
 
       // Get all features with their mappings
       const features = await storage.getAllFrontendFeatures();
-      
+
       for (const feature of features) {
         if (!allowedFeatures.includes(feature.code)) continue;
-        
+
         const mappings = await storage.getFeatureCourseMappings(feature.id);
         if (mappings.length === 0) continue;
 
@@ -2094,7 +2406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const mapping of mappings) {
             const courseId = mapping.courseId;
             const modules = await storage.getModulesForCourse(courseId);
-            
+
             for (const module of modules) {
               // Add module to index
               if (module.title.toLowerCase().includes(query)) {
@@ -2103,13 +2415,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   feature: feature.code,
                   id: module.id,
                   title: module.title,
-                  navigate_to: `/processes/module/${module.id}`
+                  navigate_to: `/processes/module/${module.id}`,
                 });
               }
-              
+
               // Get lessons for this module
-              const lessons = await db.select().from(cmsLessons).where(eq(cmsLessons.moduleId, module.id)).orderBy(asc(cmsLessons.position));
-              
+              const lessons = await db
+                .select()
+                .from(cmsLessons)
+                .where(eq(cmsLessons.moduleId, module.id))
+                .orderBy(asc(cmsLessons.position));
+
               for (const lesson of lessons) {
                 if (lesson.title.toLowerCase().includes(query)) {
                   results.push({
@@ -2118,7 +2434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     id: lesson.id,
                     title: lesson.title,
                     module_id: lesson.moduleId,
-                    navigate_to: `/processes/lesson/${lesson.id}`
+                    navigate_to: `/processes/lesson/${lesson.id}`,
                   });
                 }
               }
@@ -2129,7 +2445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const mapping of mappings) {
             const courseId = mapping.courseId;
             const lessons = await storage.getLessonsForCourse(courseId);
-            
+
             for (const lesson of lessons) {
               if (lesson.title.toLowerCase().includes(query)) {
                 results.push({
@@ -2137,7 +2453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   feature: feature.code,
                   id: lesson.id,
                   title: lesson.title,
-                  navigate_to: `/spiritual-breaths/lesson/${lesson.id}`
+                  navigate_to: `/spiritual-breaths/lesson/${lesson.id}`,
                 });
               }
             }
@@ -2145,14 +2461,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else if (feature.displayMode === "courses") {
           // ABUNDANCE - index courses only (NOT lessons, NOT built-ins)
           for (const mapping of mappings) {
-            const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, mapping.courseId));
+            const [course] = await db
+              .select()
+              .from(cmsCourses)
+              .where(eq(cmsCourses.id, mapping.courseId));
             if (course && course.title.toLowerCase().includes(query)) {
               results.push({
                 type: "course",
                 feature: feature.code,
                 id: course.id,
                 title: course.title,
-                navigate_to: `/abundance-mastery/course/${course.id}`
+                navigate_to: `/abundance-mastery/course/${course.id}`,
               });
             }
           }
@@ -2169,46 +2488,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== MONEY CALENDAR ROUTES (User API) =====
 
   // POST /api/v1/money-calendar/entry - Create or update a money entry
-  app.post("/api/v1/money-calendar/entry", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app.post(
+    "/api/v1/money-calendar/entry",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        const { date, amount } = req.body;
+
+        if (!date || typeof date !== "string") {
+          return res
+            .status(400)
+            .json({ error: "Date is required in YYYY-MM-DD format" });
+        }
+
+        if (
+          amount === undefined ||
+          amount === null ||
+          typeof amount !== "number"
+        ) {
+          return res
+            .status(400)
+            .json({ error: "Amount is required as a number" });
+        }
+
+        // Validate date format
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date)) {
+          return res
+            .status(400)
+            .json({ error: "Date must be in YYYY-MM-DD format" });
+        }
+
+        const entry = await storage.upsertMoneyEntry(
+          req.user.sub,
+          date,
+          amount.toString(),
+        );
+
+        res.json({
+          id: entry.id,
+          date: entry.entryDate,
+          amount: parseFloat(entry.amount),
+          createdAt: entry.createdAt,
+          updatedAt: entry.updatedAt,
+        });
+      } catch (error) {
+        console.error("Error saving money entry:", error);
+        res.status(500).json({ error: "Failed to save money entry" });
       }
-
-      const { date, amount } = req.body;
-
-      if (!date || typeof date !== "string") {
-        return res.status(400).json({ error: "Date is required in YYYY-MM-DD format" });
-      }
-
-      if (amount === undefined || amount === null || typeof amount !== "number") {
-        return res.status(400).json({ error: "Amount is required as a number" });
-      }
-
-      // Validate date format
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(date)) {
-        return res.status(400).json({ error: "Date must be in YYYY-MM-DD format" });
-      }
-
-      const entry = await storage.upsertMoneyEntry(
-        req.user.sub,
-        date,
-        amount.toString()
-      );
-
-      res.json({
-        id: entry.id,
-        date: entry.entryDate,
-        amount: parseFloat(entry.amount),
-        createdAt: entry.createdAt,
-        updatedAt: entry.updatedAt
-      });
-    } catch (error) {
-      console.error("Error saving money entry:", error);
-      res.status(500).json({ error: "Failed to save money entry" });
-    }
-  });
+    },
+  );
 
   // GET /api/v1/money-calendar?month=YYYY-MM - Get monthly data with summary
   app.get("/api/v1/money-calendar", authenticateJWT, async (req, res) => {
@@ -2220,13 +2553,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { month } = req.query;
 
       if (!month || typeof month !== "string") {
-        return res.status(400).json({ error: "Month is required in YYYY-MM format" });
+        return res
+          .status(400)
+          .json({ error: "Month is required in YYYY-MM format" });
       }
 
       // Validate month format
       const monthRegex = /^\d{4}-\d{2}$/;
       if (!monthRegex.test(month)) {
-        return res.status(400).json({ error: "Month must be in YYYY-MM format" });
+        return res
+          .status(400)
+          .json({ error: "Month must be in YYYY-MM format" });
       }
 
       const [yearStr, monthStr] = month.split("-");
@@ -2237,7 +2574,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid month value" });
       }
 
-      const data = await storage.getMoneyEntriesForMonth(req.user.sub, year, monthNum);
+      const data = await storage.getMoneyEntriesForMonth(
+        req.user.sub,
+        year,
+        monthNum,
+      );
 
       res.json(data);
     } catch (error) {
@@ -2249,54 +2590,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== PLAYLIST ROUTES (User API) =====
 
   // GET /api/public/v1/playlist/source - Get playlist source (mapped course with audio-only lessons)
-  app.get("/api/public/v1/playlist/source", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app.get(
+    "/api/public/v1/playlist/source",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        const feature = await storage.getFrontendFeatureByCode("PLAYLIST");
+        if (!feature) {
+          return res
+            .status(404)
+            .json({ error: "PLAYLIST feature not configured" });
+        }
+
+        const mappings = await storage.getFeatureCourseMappings(feature.id);
+        if (mappings.length === 0) {
+          return res.json({ course: null, modules: [] });
+        }
+
+        const courseId = mappings[0].courseId;
+        const data = await storage.getPlaylistSourceData(courseId);
+
+        if (!data) {
+          return res.json({ course: null, modules: [] });
+        }
+
+        // Generate signed URLs for audio files
+        const modulesWithSignedUrls = await Promise.all(
+          data.modules.map(async (module: any) => ({
+            ...module,
+            lessons: await Promise.all(
+              module.lessons.map(async (lesson: any) => ({
+                ...lesson,
+                audioFiles: await Promise.all(
+                  lesson.audioFiles.map(async (file: any) => {
+                    let signedUrl = null;
+                    if (file.r2Key) {
+                      try {
+                        signedUrl = await getSignedGetUrl(file.r2Key, 3600);
+                      } catch (e) {
+                        console.error("Error generating signed URL:", e);
+                      }
+                    }
+                    return { ...file, signedUrl };
+                  }),
+                ),
+              })),
+            ),
+          })),
+        );
+
+        res.json({ course: data.course, modules: modulesWithSignedUrls });
+      } catch (error) {
+        console.error("Error fetching playlist source:", error);
+        res.status(500).json({ error: "Failed to fetch playlist source" });
       }
-
-      const feature = await storage.getFrontendFeatureByCode("PLAYLIST");
-      if (!feature) {
-        return res.status(404).json({ error: "PLAYLIST feature not configured" });
-      }
-
-      const mappings = await storage.getFeatureCourseMappings(feature.id);
-      if (mappings.length === 0) {
-        return res.json({ course: null, modules: [] });
-      }
-
-      const courseId = mappings[0].courseId;
-      const data = await storage.getPlaylistSourceData(courseId);
-
-      if (!data) {
-        return res.json({ course: null, modules: [] });
-      }
-
-      // Generate signed URLs for audio files
-      const modulesWithSignedUrls = await Promise.all(data.modules.map(async (module: any) => ({
-        ...module,
-        lessons: await Promise.all(module.lessons.map(async (lesson: any) => ({
-          ...lesson,
-          audioFiles: await Promise.all(lesson.audioFiles.map(async (file: any) => {
-            let signedUrl = null;
-            if (file.r2Key) {
-              try {
-                signedUrl = await getSignedGetUrl(file.r2Key, 3600);
-              } catch (e) {
-                console.error("Error generating signed URL:", e);
-              }
-            }
-            return { ...file, signedUrl };
-          }))
-        })))
-      })));
-
-      res.json({ course: data.course, modules: modulesWithSignedUrls });
-    } catch (error) {
-      console.error("Error fetching playlist source:", error);
-      res.status(500).json({ error: "Failed to fetch playlist source" });
-    }
-  });
+    },
+  );
 
   // GET /api/public/v1/playlists - List user's playlists
   app.get("/api/public/v1/playlists", authenticateJWT, async (req, res) => {
@@ -2328,7 +2681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const playlist = await storage.createPlaylist({
         userId: req.user.sub,
-        title: title.trim()
+        title: title.trim(),
       });
 
       res.status(201).json(playlist);
@@ -2359,27 +2712,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const items = await storage.getPlaylistItems(playlistId);
 
       // Get audio files for each lesson with signed URLs
-      const itemsWithAudio = await Promise.all(items.map(async (item) => {
-        const audioFiles = await db
-          .select()
-          .from(cmsLessonFiles)
-          .where(and(eq(cmsLessonFiles.lessonId, item.lessonId), eq(cmsLessonFiles.fileType, 'audio')))
-          .orderBy(asc(cmsLessonFiles.position));
+      const itemsWithAudio = await Promise.all(
+        items.map(async (item) => {
+          const audioFiles = await db
+            .select()
+            .from(cmsLessonFiles)
+            .where(
+              and(
+                eq(cmsLessonFiles.lessonId, item.lessonId),
+                eq(cmsLessonFiles.fileType, "audio"),
+              ),
+            )
+            .orderBy(asc(cmsLessonFiles.position));
 
-        const audioFilesWithUrls = await Promise.all(audioFiles.map(async (file) => {
-          let signedUrl = null;
-          if (file.r2Key) {
-            try {
-              signedUrl = await getSignedGetUrl(file.r2Key, 3600);
-            } catch (e) {
-              console.error("Error generating signed URL:", e);
-            }
-          }
-          return { ...file, signedUrl };
-        }));
+          const audioFilesWithUrls = await Promise.all(
+            audioFiles.map(async (file) => {
+              let signedUrl = null;
+              if (file.r2Key) {
+                try {
+                  signedUrl = await getSignedGetUrl(file.r2Key, 3600);
+                } catch (e) {
+                  console.error("Error generating signed URL:", e);
+                }
+              }
+              return { ...file, signedUrl };
+            }),
+          );
 
-        return { ...item, audioFiles: audioFilesWithUrls };
-      }));
+          return { ...item, audioFiles: audioFilesWithUrls };
+        }),
+      );
 
       res.json({ playlist, items: itemsWithAudio });
     } catch (error) {
@@ -2389,172 +2751,201 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PATCH /api/public/v1/playlists/:id - Rename playlist
-  app.patch("/api/public/v1/playlists/:id", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app.patch(
+    "/api/public/v1/playlists/:id",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        const playlistId = parseInt(req.params.id);
+        const playlist = await storage.getPlaylistById(playlistId);
+
+        if (!playlist) {
+          return res.status(404).json({ error: "Playlist not found" });
+        }
+
+        if (playlist.userId !== req.user.sub) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+
+        const { title } = req.body;
+
+        if (!title || typeof title !== "string" || title.trim() === "") {
+          return res.status(400).json({ error: "Title is required" });
+        }
+
+        const updated = await storage.updatePlaylist(playlistId, title.trim());
+        res.json(updated);
+      } catch (error) {
+        console.error("Error updating playlist:", error);
+        res.status(500).json({ error: "Failed to update playlist" });
       }
-
-      const playlistId = parseInt(req.params.id);
-      const playlist = await storage.getPlaylistById(playlistId);
-
-      if (!playlist) {
-        return res.status(404).json({ error: "Playlist not found" });
-      }
-
-      if (playlist.userId !== req.user.sub) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const { title } = req.body;
-
-      if (!title || typeof title !== "string" || title.trim() === "") {
-        return res.status(400).json({ error: "Title is required" });
-      }
-
-      const updated = await storage.updatePlaylist(playlistId, title.trim());
-      res.json(updated);
-    } catch (error) {
-      console.error("Error updating playlist:", error);
-      res.status(500).json({ error: "Failed to update playlist" });
-    }
-  });
+    },
+  );
 
   // DELETE /api/public/v1/playlists/:id - Delete playlist
-  app.delete("/api/public/v1/playlists/:id", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app.delete(
+    "/api/public/v1/playlists/:id",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        const playlistId = parseInt(req.params.id);
+        const playlist = await storage.getPlaylistById(playlistId);
+
+        if (!playlist) {
+          return res.status(404).json({ error: "Playlist not found" });
+        }
+
+        if (playlist.userId !== req.user.sub) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+
+        await storage.deletePlaylist(playlistId);
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting playlist:", error);
+        res.status(500).json({ error: "Failed to delete playlist" });
       }
-
-      const playlistId = parseInt(req.params.id);
-      const playlist = await storage.getPlaylistById(playlistId);
-
-      if (!playlist) {
-        return res.status(404).json({ error: "Playlist not found" });
-      }
-
-      if (playlist.userId !== req.user.sub) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      await storage.deletePlaylist(playlistId);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting playlist:", error);
-      res.status(500).json({ error: "Failed to delete playlist" });
-    }
-  });
+    },
+  );
 
   // POST /api/public/v1/playlists/:id/items - Set playlist items (replace all)
-  app.post("/api/public/v1/playlists/:id/items", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
-
-      const playlistId = parseInt(req.params.id);
-      const playlist = await storage.getPlaylistById(playlistId);
-
-      if (!playlist) {
-        return res.status(404).json({ error: "Playlist not found" });
-      }
-
-      if (playlist.userId !== req.user.sub) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const { lessonIds } = req.body;
-
-      if (!Array.isArray(lessonIds)) {
-        return res.status(400).json({ error: "lessonIds must be an array" });
-      }
-
-      // Validate all lessons belong to mapped PLAYLIST course and have audio
-      for (const lessonId of lessonIds) {
-        const inMappedCourse = await storage.isLessonInMappedCourse(lessonId, "PLAYLIST");
-        if (!inMappedCourse) {
-          return res.status(400).json({ error: `Lesson ${lessonId} is not in the mapped playlist course` });
+  app.post(
+    "/api/public/v1/playlists/:id/items",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
         }
 
-        const hasAudio = await storage.doesLessonHaveAudio(lessonId);
-        if (!hasAudio) {
-          return res.status(400).json({ error: `Lesson ${lessonId} has no audio files` });
-        }
-      }
+        const playlistId = parseInt(req.params.id);
+        const playlist = await storage.getPlaylistById(playlistId);
 
-      const items = await storage.setPlaylistItems(playlistId, lessonIds);
-      res.json(items);
-    } catch (error) {
-      console.error("Error setting playlist items:", error);
-      res.status(500).json({ error: "Failed to set playlist items" });
-    }
-  });
+        if (!playlist) {
+          return res.status(404).json({ error: "Playlist not found" });
+        }
+
+        if (playlist.userId !== req.user.sub) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+
+        const { lessonIds } = req.body;
+
+        if (!Array.isArray(lessonIds)) {
+          return res.status(400).json({ error: "lessonIds must be an array" });
+        }
+
+        // Validate all lessons belong to mapped PLAYLIST course and have audio
+        for (const lessonId of lessonIds) {
+          const inMappedCourse = await storage.isLessonInMappedCourse(
+            lessonId,
+            "PLAYLIST",
+          );
+          if (!inMappedCourse) {
+            return res.status(400).json({
+              error: `Lesson ${lessonId} is not in the mapped playlist course`,
+            });
+          }
+
+          const hasAudio = await storage.doesLessonHaveAudio(lessonId);
+          if (!hasAudio) {
+            return res
+              .status(400)
+              .json({ error: `Lesson ${lessonId} has no audio files` });
+          }
+        }
+
+        const items = await storage.setPlaylistItems(playlistId, lessonIds);
+        res.json(items);
+      } catch (error) {
+        console.error("Error setting playlist items:", error);
+        res.status(500).json({ error: "Failed to set playlist items" });
+      }
+    },
+  );
 
   // PATCH /api/public/v1/playlists/:id/items/reorder - Reorder playlist items
-  app.patch("/api/public/v1/playlists/:id/items/reorder", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app.patch(
+    "/api/public/v1/playlists/:id/items/reorder",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        const playlistId = parseInt(req.params.id);
+        const playlist = await storage.getPlaylistById(playlistId);
+
+        if (!playlist) {
+          return res.status(404).json({ error: "Playlist not found" });
+        }
+
+        if (playlist.userId !== req.user.sub) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+
+        const { orderedItemIds } = req.body;
+
+        if (!Array.isArray(orderedItemIds)) {
+          return res
+            .status(400)
+            .json({ error: "orderedItemIds must be an array" });
+        }
+
+        await storage.reorderPlaylistItems(playlistId, orderedItemIds);
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error reordering playlist items:", error);
+        res.status(500).json({ error: "Failed to reorder playlist items" });
       }
-
-      const playlistId = parseInt(req.params.id);
-      const playlist = await storage.getPlaylistById(playlistId);
-
-      if (!playlist) {
-        return res.status(404).json({ error: "Playlist not found" });
-      }
-
-      if (playlist.userId !== req.user.sub) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const { orderedItemIds } = req.body;
-
-      if (!Array.isArray(orderedItemIds)) {
-        return res.status(400).json({ error: "orderedItemIds must be an array" });
-      }
-
-      await storage.reorderPlaylistItems(playlistId, orderedItemIds);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error reordering playlist items:", error);
-      res.status(500).json({ error: "Failed to reorder playlist items" });
-    }
-  });
+    },
+  );
 
   // DELETE /api/public/v1/playlists/:id/items/:itemId - Remove one item
-  app.delete("/api/public/v1/playlists/:id/items/:itemId", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app.delete(
+    "/api/public/v1/playlists/:id/items/:itemId",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        const playlistId = parseInt(req.params.id);
+        const itemId = parseInt(req.params.itemId);
+
+        const playlist = await storage.getPlaylistById(playlistId);
+
+        if (!playlist) {
+          return res.status(404).json({ error: "Playlist not found" });
+        }
+
+        if (playlist.userId !== req.user.sub) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+
+        const success = await storage.deletePlaylistItem(playlistId, itemId);
+
+        if (!success) {
+          return res.status(404).json({ error: "Item not found" });
+        }
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting playlist item:", error);
+        res.status(500).json({ error: "Failed to delete playlist item" });
       }
-
-      const playlistId = parseInt(req.params.id);
-      const itemId = parseInt(req.params.itemId);
-
-      const playlist = await storage.getPlaylistById(playlistId);
-
-      if (!playlist) {
-        return res.status(404).json({ error: "Playlist not found" });
-      }
-
-      if (playlist.userId !== req.user.sub) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const success = await storage.deletePlaylistItem(playlistId, itemId);
-
-      if (!success) {
-        return res.status(404).json({ error: "Item not found" });
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting playlist item:", error);
-      res.status(500).json({ error: "Failed to delete playlist item" });
-    }
-  });
+    },
+  );
 
   const httpServer = createServer(app);
 

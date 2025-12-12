@@ -1,0 +1,77 @@
+We need to replace pdf-parse with pdf2json for script extraction.
+Please update the backend accordingly.
+
+Why we must switch:
+
+pdf-parse is flattening the entire PDF script into one long paragraph.
+It removes almost all line breaks and paragraph spacing from the original PDF.
+This makes the script inside the app unreadable — all tapping instructions and paragraphs merge into a single block.
+
+Example problem we are facing:
+
+In the PDF, each tapping instruction is on separate lines
+
+But pdf-parse merges them into one huge paragraph
+
+This causes the formatting issue we are seeing in the Script screen.
+
+pdf2json is a pure Node.js library (no system binaries), and it preserves line-by-line structure, paragraph gaps, and correct text order.
+This makes it possible to generate properly formatted HTML that matches the original PDF's structure.
+
+What to do:
+1. Install pdf2json
+npm install pdf2json
+
+2. Replace the pdf-parse extraction code in the confirm endpoint
+
+Current code (to remove):
+
+const PDFParse = (await import('pdf-parse')).default;
+const pdfParser = new PDFParse();
+const pdfData = await pdfParser.parseBuffer(fileBuffer);
+const extractedText = pdfData.text;
+const scriptHtml = convertTextToFormattedHtml(extractedText);
+
+3. Replace with pdf2json extraction:
+import PDFParser from "pdf2json";
+
+async function extractTextWithPdf2json(buffer) {
+  return new Promise((resolve, reject) => {
+    const pdfParser = new PDFParser();
+
+    pdfParser.on("pdfParser_dataError", err => reject(err.parserError));
+
+    pdfParser.on("pdfParser_dataReady", pdfData => {
+      const pages = pdfData.formImage.Pages;
+      const lines = [];
+
+      pages.forEach(page => {
+        page.Texts.forEach(t => {
+          const line = decodeURIComponent(t.R[0].T);
+          lines.push(line);
+        });
+        lines.push(""); // paragraph break after each page
+      });
+
+      resolve(lines.join("\n"));
+    });
+
+    pdfParser.parseBuffer(buffer);
+  });
+}
+
+4. Use this instead of pdf-parse:
+const extractedText = await extractTextWithPdf2json(fileBuffer);
+const scriptHtml = convertTextToFormattedHtml(extractedText);
+
+Expected outcome:
+
+Scripts will now show proper paragraphs
+
+Line breaks will be preserved
+
+Tapping steps will no longer merge into one block
+
+Readability inside the app will match the real PDF
+
+This change solves the core formatting issue and requires no server binaries, so it is fully compatible with Replit.
