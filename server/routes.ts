@@ -29,68 +29,109 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 
 // Helper function to convert PDF text to formatted HTML
 function convertTextToFormattedHtml(text: string): string {
-  // Split text into lines
   const lines = text.split('\n');
   const htmlParts: string[] = [];
   let currentParagraph: string[] = [];
   
+  // Section header keywords (case-insensitive matching)
+  const sectionKeywords = [
+    'intention', 'affirmation', 'tapping', 'forgiveness', 'release',
+    'step', 'part', 'chapter', 'section', 'introduction', 'conclusion',
+    'meditation', 'visualization', 'breathing', 'exercise', 'practice',
+    'instructions', 'notes', 'summary', 'overview', 'dyd', 'usm'
+  ];
+  
+  // Check if a line is a section header
+  function isSectionHeader(line: string): boolean {
+    const trimmed = line.trim();
+    
+    // Skip empty lines
+    if (!trimmed) return false;
+    
+    // Skip lines that end with sentence punctuation - they are content, not headers
+    if (/[.!?,;]$/.test(trimmed)) return false;
+    
+    // Skip lines that look like incomplete sentences (contain verbs/articles mid-sentence)
+    if (/\b(that|which|who|the|a|an|is|are|was|were|I|you|we|they)\s/i.test(trimmed) && trimmed.length > 25) {
+      return false;
+    }
+    
+    const wordCount = trimmed.split(/\s+/).length;
+    
+    // Page markers like "-- 1 of 3 --" - skip them completely
+    if (/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/.test(trimmed)) return true;
+    
+    // Exact match with section keywords (case-insensitive)
+    const lowerLine = trimmed.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+    const matchesKeyword = sectionKeywords.some(kw => lowerLine === kw);
+    if (matchesKeyword) return true;
+    
+    // All caps short line (under 25 chars, 1-3 words) like "DYD" or "STEP ONE"
+    const isAllCaps = trimmed === trimmed.toUpperCase() && 
+                      /[A-Z]/.test(trimmed) && 
+                      trimmed.length < 25 && 
+                      wordCount <= 3;
+    if (isAllCaps) return true;
+    
+    // Short title-like lines (1-4 words, no punctuation, starts with capital)
+    // Like "Tapping (Release)", "Forgiveness", "Wealth Code Activation 1"
+    const isTitleLike = wordCount <= 4 && 
+                        trimmed.length < 40 &&
+                        /^[A-Z]/.test(trimmed) &&
+                        !/\b(and|or|the|a|an|to|of|in|for|with|on|at|by)\b/i.test(trimmed);
+    if (isTitleLike) return true;
+    
+    return false;
+  }
+  
+  // Flush current paragraph to HTML
+  function flushParagraph() {
+    if (currentParagraph.length > 0) {
+      const text = currentParagraph.join(' ').trim();
+      if (text) {
+        htmlParts.push(`<p class="mb-4">${text}</p>`);
+      }
+      currentParagraph = [];
+    }
+  }
+  
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    const nextLine = lines[i + 1]?.trim() || '';
     
-    // Skip empty lines - they indicate paragraph breaks
-    if (!line) {
-      if (currentParagraph.length > 0) {
-        const paragraphText = currentParagraph.join(' ');
-        htmlParts.push(`<p>${paragraphText}</p>`);
-        currentParagraph = [];
-      }
+    // Skip page markers entirely
+    if (/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/.test(line)) {
+      flushParagraph();
       continue;
     }
     
-    // Detect headings: short lines (< 60 chars) followed by blank line or content
-    // and typically uppercase or title-like
-    const isShortLine = line.length < 60;
-    const isNextLineEmpty = !nextLine;
-    const looksLikeHeading = isShortLine && (
-      line === line.toUpperCase() || // ALL CAPS
-      /^[A-Z][^.!?]*$/.test(line) || // Starts with capital, no ending punctuation
-      /^(Step|Part|Chapter|Section|Introduction|Conclusion|Intention|Affirmation)\s*\d*/i.test(line)
-    );
+    // Skip empty lines - they create paragraph breaks
+    if (!line) {
+      flushParagraph();
+      continue;
+    }
     
-    if (looksLikeHeading && (isNextLineEmpty || i === 0)) {
-      // Flush current paragraph first
-      if (currentParagraph.length > 0) {
-        const paragraphText = currentParagraph.join(' ');
-        htmlParts.push(`<p>${paragraphText}</p>`);
-        currentParagraph = [];
-      }
-      // Add as heading
-      htmlParts.push(`<h3 class="font-semibold text-lg mt-4 mb-2">${line}</h3>`);
+    // Check for section headers
+    if (isSectionHeader(line)) {
+      flushParagraph();
+      // Clean up the header text (remove trailing comma/colon)
+      const headerText = line.replace(/[,:]$/, '').trim();
+      htmlParts.push(`<h3 class="font-semibold text-lg mt-6 mb-2 text-primary">${headerText}</h3>`);
       continue;
     }
     
     // Check for bullet points
     if (/^[-•*]\s/.test(line)) {
-      if (currentParagraph.length > 0) {
-        const paragraphText = currentParagraph.join(' ');
-        htmlParts.push(`<p>${paragraphText}</p>`);
-        currentParagraph = [];
-      }
+      flushParagraph();
       const bulletText = line.replace(/^[-•*]\s*/, '');
-      htmlParts.push(`<li>${bulletText}</li>`);
+      htmlParts.push(`<li class="ml-4">${bulletText}</li>`);
       continue;
     }
     
     // Check for numbered lists
     if (/^\d+[.)]\s/.test(line)) {
-      if (currentParagraph.length > 0) {
-        const paragraphText = currentParagraph.join(' ');
-        htmlParts.push(`<p>${paragraphText}</p>`);
-        currentParagraph = [];
-      }
+      flushParagraph();
       const numberedText = line.replace(/^\d+[.)]\s*/, '');
-      htmlParts.push(`<li>${numberedText}</li>`);
+      htmlParts.push(`<li class="ml-4">${numberedText}</li>`);
       continue;
     }
     
@@ -99,15 +140,12 @@ function convertTextToFormattedHtml(text: string): string {
   }
   
   // Flush any remaining paragraph
-  if (currentParagraph.length > 0) {
-    const paragraphText = currentParagraph.join(' ');
-    htmlParts.push(`<p>${paragraphText}</p>`);
-  }
+  flushParagraph();
   
   // Wrap consecutive <li> elements in <ul>
   let result = htmlParts.join('\n');
-  result = result.replace(/(<li>.*?<\/li>\n?)+/g, (match) => {
-    return `<ul class="list-disc list-inside space-y-1 my-2">\n${match}</ul>\n`;
+  result = result.replace(/(<li[^>]*>.*?<\/li>\n?)+/g, (match) => {
+    return `<ul class="list-disc list-inside space-y-2 my-4 pl-2">\n${match}</ul>\n`;
   });
   
   return result;
