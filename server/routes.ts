@@ -1090,7 +1090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // --- CMS MODULES ---
   
-  // Get modules for a course
+  // Get modules for a course (query param style)
   app.get("/api/admin/v1/cms/modules", requireAdmin, async (req, res) => {
     try {
       const courseId = parseInt(req.query.courseId as string);
@@ -1107,6 +1107,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(modules);
     } catch (error) {
       console.error("Error fetching modules:", error);
+      res.status(500).json({ error: "Failed to fetch modules" });
+    }
+  });
+
+  // Get modules for a course (path param style - used by admin processes page)
+  app.get("/api/admin/v1/cms/courses/:courseId/modules", requireAdmin, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.courseId);
+      
+      if (!courseId || isNaN(courseId)) {
+        res.status(400).json({ error: "Valid courseId is required" });
+        return;
+      }
+      
+      const modules = await db.select().from(cmsModules)
+        .where(eq(cmsModules.courseId, courseId))
+        .orderBy(asc(cmsModules.position));
+      
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching modules for course:", error);
       res.status(500).json({ error: "Failed to fetch modules" });
     }
   });
