@@ -14,6 +14,8 @@ import AdminProcessesPage from "@/pages/AdminProcessesPage";
 import AdminSpiritualBreathsPage from "@/pages/AdminSpiritualBreathsPage";
 import AdminAbundanceMasteryPage from "@/pages/AdminAbundanceMasteryPage";
 import AdminPlaylistMappingPage from "@/pages/AdminPlaylistMappingPage";
+import AdminSessionBannersPage from "@/pages/AdminSessionBannersPage";
+import AdminSessionBannerFormPage from "@/pages/AdminSessionBannerFormPage";
 import CourseCreateStep1 from "@/pages/CourseCreateStep1";
 import CourseCreateStep2 from "@/pages/CourseCreateStep2";
 import CourseCreateStep3 from "@/pages/CourseCreateStep3";
@@ -44,6 +46,9 @@ export default function AdminRoutes() {
       <Route path="/admin/spiritual-breaths" component={AdminSpiritualBreathsPage} />
       <Route path="/admin/abundance-mastery" component={AdminAbundanceMasteryPage} />
       <Route path="/admin/my-processes" component={AdminPlaylistMappingPage} />
+      <Route path="/admin/session-banner/banners" component={AdminSessionBannersPage} />
+      <Route path="/admin/session-banner/banners/new" component={AdminSessionBannerFormPage} />
+      <Route path="/admin/session-banner/banners/:id/edit" component={AdminSessionBannerFormPage} />
       <Route component={NotFound} />
     </Switch>
   );
