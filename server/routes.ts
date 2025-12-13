@@ -3211,13 +3211,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let posterUrl = null;
 
       if (banner.thumbnailKey) {
-        thumbnailUrl = await getSignedGetUrl(banner.thumbnailKey);
+        const result = await getSignedGetUrl(banner.thumbnailKey);
+        thumbnailUrl = result.success ? result.url : null;
       }
       if (banner.videoKey) {
-        videoUrl = await getSignedGetUrl(banner.videoKey);
+        const result = await getSignedGetUrl(banner.videoKey);
+        videoUrl = result.success ? result.url : null;
       }
       if (banner.posterKey) {
-        posterUrl = await getSignedGetUrl(banner.posterKey);
+        const result = await getSignedGetUrl(banner.posterKey);
+        posterUrl = result.success ? result.url : null;
       }
 
       // Check if live badge should show (session banners only)

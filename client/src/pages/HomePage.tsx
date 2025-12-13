@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sparkles,
   Users,
@@ -15,12 +16,33 @@ import ActionCard from "@/components/ActionCard";
 import { useToast } from "@/hooks/use-toast";
 import SearchOverlay from "@/components/SearchOverlay";
 
+interface BannerData {
+  banner: {
+    id: number;
+    type: "session" | "advertisement";
+    thumbnailUrl: string | null;
+    videoUrl: string | null;
+    posterUrl: string | null;
+    ctaText: string | null;
+    ctaLink: string | null;
+    liveEnabled: boolean;
+  } | null;
+  status: "active" | "scheduled" | "expired" | "none";
+}
+
 export default function HomePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [practiceProgress] = useState({ current: 15, total: 30 });
   const [streakDays] = useState([true, true, false, true, true, false, false]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const { data: bannerData } = useQuery<BannerData>({
+    queryKey: ["/api/public/v1/session-banner"],
+  });
+
+  const banner = bannerData?.banner;
+  const bannerStatus = bannerData?.status;
 
   const actionCards = [
     {
@@ -98,41 +120,61 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Live Session Section */}
-        <div className="w-full mt-3 mb-4">
-          {/* Image Banner */}
-          <div className="relative w-full h-56 overflow-hidden shadow-md">
-            <img
-              src="/DR-M-Banner-Intervention1.png"
-              alt="Live Session"
-              className="w-full h-full object-cover"
-            />
+        {/* Dynamic Banner Section */}
+        {banner && (
+          <div className="w-full mt-3 mb-4">
+            {banner.type === "advertisement" && banner.videoUrl ? (
+              <div className="relative w-full h-56 overflow-hidden shadow-md bg-black">
+                <video
+                  src={banner.videoUrl}
+                  poster={banner.posterUrl || undefined}
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  data-testid="video-banner"
+                />
+              </div>
+            ) : banner.thumbnailUrl ? (
+              <div className="relative w-full h-56 overflow-hidden shadow-md">
+                <img
+                  src={banner.thumbnailUrl}
+                  alt="Session Banner"
+                  className="w-full h-full object-cover"
+                  data-testid="img-banner"
+                />
+                {banner.type === "session" && banner.liveEnabled && bannerStatus === "active" && (
+                  <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-white/20 backdrop-blur-lg px-3 py-1 rounded-md">
+                    <span className="h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse"></span>
+                    <span className="text-xs font-medium text-white">LIVE</span>
+                  </div>
+                )}
+              </div>
+            ) : null}
 
-            {/* LIVE Tag */}
-            <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-white/20 backdrop-blur-lg px-3 py-1 rounded-md">
-              <span className="h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse"></span>
-              <span className="text-xs font-medium text-white">LIVE</span>
-            </div>
+            {banner.ctaText && banner.ctaLink && banner.ctaLink.trim() !== "" && (
+              <div className="w-full flex justify-center">
+                <button
+                  onClick={() => {
+                    if (banner.ctaLink) {
+                      window.open(banner.ctaLink, "_blank");
+                    }
+                  }}
+                  className="mt-3 w-[85%] px-4 py-3 rounded-full font-bold shadow-md hover:opacity-90 transition text-xl"
+                  style={{
+                    backgroundColor: "#E5AC19",
+                    color: "#0D131F",
+                    fontFamily: "Inter",
+                  }}
+                  data-testid="button-banner-cta"
+                >
+                  {banner.ctaText}
+                </button>
+              </div>
+            )}
           </div>
-
-          {/* Join Button */}
-          <div className="w-full flex justify-center">
-            <button
-              onClick={() =>
-                window.open("https://zoom.us/j/your-meeting-id", "_blank")
-              }
-              className="mt-3 w-[85%] px-4 py-3 rounded-full font-bold shadow-md hover:opacity-90 transition text-xl"
-              style={{
-                backgroundColor: "#E5AC19",
-                color: "#0D131F",
-                fontFamily: "Inter",
-              }}
-              data-testid="button-join-live"
-            >
-              JOIN NOW
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* Content Container */}
         <div className="px-4 pb-4 space-y-4">
