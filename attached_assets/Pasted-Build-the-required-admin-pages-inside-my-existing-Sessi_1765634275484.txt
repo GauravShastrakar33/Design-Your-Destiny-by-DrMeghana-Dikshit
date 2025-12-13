@@ -1,0 +1,134 @@
+Build the required admin pages inside my existing “Session Banner” module. I already have the left menu items “All Banners” and “Add New”. Generate the complete UI + logic exactly as described below.
+
+🎯 ADMIN MODULE: SESSION BANNER
+Create these 2 pages:
+
+🟣 1. All Banners Page
+Route: /admin/session-banner/banners
+Create a table listing all banners (thumbnail banners + advertisement banners).
+Table Columns:
+* Preview (image or poster)
+* Type
+    * “Session Thumbnail”
+    * “Advertisement Video”
+* CTA Label
+* Start Date & Time
+* End Date & Time
+* LIVE Enabled (Yes/No → only applies to session banners)
+* Status
+    * Active
+    * Scheduled
+    * Expired
+* Actions
+    * Edit
+    * Duplicate
+    * Delete
+UX Requirements:
+* Admin can reuse old banners via Duplicate and just edit dates.
+* Sort banners by nearest start time first.
+* Clean and minimal UI.
+
+🟡 2. Add New Banner Page
+Route: /admin/session-banner/banners/new
+Create a form with banner type selection and relevant fields.
+
+A. Banner Type Selection
+
+( ) Session Thumbnail Banner
+( ) Advertisement Video Banner
+
+🔵 If “Session Thumbnail Banner” is selected
+Fields:
+* Upload Thumbnail (PNG/JPG/WebP)
+* Auto-fit or crop to 16:9
+* Thumbnail preview
+CTA:
+* CTA Text
+* CTA Link
+Scheduling:
+* Start Date & Time
+* End Date & Time
+LIVE Mode (Optional):
+A toggle:
+
+Enable LIVE mode for this session?  [ON/OFF]
+When LIVE mode is enabled:
+* The app must show "LIVE" badge when current time >= start time
+* Before start time, show the session date & time under the banner
+* After end time, banner becomes expired automatically
+
+🟣 If “Advertisement Video Banner” is selected
+Fields:
+* Upload Video (MP4)
+    * No duration limit
+* Auto-generate Poster Image
+* Video Preview + Poster Preview
+Toggle:
+
+Use this video as an advertisement banner?  [ON/OFF]
+CTA (optional):
+* CTA Text
+* CTA Link
+Scheduling:
+* Start Date & Time
+* End Date & Time
+
+🟦 3. Edit Banner Page
+Route: /admin/session-banner/banners/:id/edit
+Same form as Add New, but with:
+* Pre-filled values
+* Existing thumbnail/video preview
+* Ability to change type, CTA, scheduling, LIVE toggle
+* Ability to reuse banners without forcing new uploads
+
+⚙️ Backend Requirements
+Data structure:
+
+{
+  "id": string,
+  "type": "session" | "advertisement",
+  "thumbnailUrl": "",
+  "videoUrl": "",
+  "posterUrl": "",
+  "ctaText": "",
+  "ctaLink": "",
+  "startAt": "",
+  "endAt": "",
+  "status": "scheduled" | "active" | "expired",
+  "useVideo": boolean,
+  "liveEnabled": boolean   // Only for session banners
+}
+
+🔄 Scheduling + LIVE + Fallback Logic
+Implement the following behavior:
+1. Auto Activation
+* When current time >= startAt → banner becomes Active
+* When current time >= endAt → banner becomes Expired
+2. LIVE Mode (only for session banners)
+If liveEnabled = true:
+* Before start time → show session date/time
+* At start time → show LIVE badge automatically
+* After end time → LIVE ends, banner expires
+3. Fallback Logic ( Last Active Banner)
+If no scheduled/active banner exists:
+* Continue showing the last active banner, even if it is expired.
+* This prevents the app from ever having an empty banner area.
+If absolutely nothing exists, show a default static banner.
+
+🎨 UI Expectations
+* Use React + Tailwind (or match the existing style)
+* Components required:
+    * Image uploader
+    * Video uploader
+    * Poster generator
+    * Date-Time picker
+    * Toggle switches
+    * Preview components
+* Align with existing admin layout
+
+🚀 Goal
+Generate fully functional pages for:
+* All Banners
+* Add New Banner
+* Edit Banner
+Including LIVE functionality for session banners and fallback to the last active banner.

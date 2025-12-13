@@ -52,11 +52,12 @@ async function extractTextWithPdf2json(buffer: Buffer): Promise<string> {
       pages.forEach((page: any) => {
         // Group texts by Y position to reconstruct lines
         const textsByY: Map<number, string[]> = new Map();
-        
+
         (page.Texts || []).forEach((textItem: any) => {
           const y = Math.round(textItem.y * 10); // Round Y to group nearby items
-          const text = textItem.R?.map((r: any) => decodeURIComponent(r.T)).join('') || '';
-          
+          const text =
+            textItem.R?.map((r: any) => decodeURIComponent(r.T)).join("") || "";
+
           if (text.trim()) {
             if (!textsByY.has(y)) {
               textsByY.set(y, []);
@@ -64,16 +65,16 @@ async function extractTextWithPdf2json(buffer: Buffer): Promise<string> {
             textsByY.get(y)!.push(text);
           }
         });
-        
+
         // Sort by Y position and join texts on same line
         const sortedYs = Array.from(textsByY.keys()).sort((a, b) => a - b);
-        sortedYs.forEach(y => {
-          const lineText = textsByY.get(y)!.join(' ').trim();
+        sortedYs.forEach((y) => {
+          const lineText = textsByY.get(y)!.join(" ").trim();
           if (lineText) {
             lines.push(lineText);
           }
         });
-        
+
         lines.push(""); // Add paragraph break between pages
       });
 
@@ -92,141 +93,154 @@ import { authenticateJWT, type AuthPayload } from "./middleware/auth";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const JWT_SECRET = process.env.JWT_SECRET as string;
-
 // Convert PDF text to formatted HTML (handles line-by-line output from pdf2json)
-// Note: PDF line breaks are intentional and should be preserved exactly
 export function convertTextToFormattedHtml(text: string): string {
   // Normalize newlines
-  const norm = text.replace(/\r\n/g, "\n").replace(/\u00A0/g, " ").trim();
-  const lines = norm.split("\n").map(l => l.trim());
-  
+  const norm = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\u00A0/g, " ")
+    .trim();
+  const lines = norm.split("\n").map((l) => l.trim());
+
   const html: string[] = [];
   let currentParagraph: string[] = [];
-  let currentListType: 'ul' | 'ol' | null = null;
+  let currentListType: "ul" | "ol" | null = null;
   let listItems: string[] = [];
-  
-  // Header keywords for wellness content (exact matches only)
+
+  // Header keywords
   const headerKeywords = [
-    "intention", "affirmation", "tapping", "forgiveness", "release",
-    "breathing", "meditation", "visualization", "notes", "summary",
-    "overview", "step", "part", "exercise", "practice", "dyd", "usm"
+    "intention",
+    "affirmation",
+    "tapping",
+    "forgiveness",
+    "release",
+    "breathing",
+    "meditation",
+    "visualization",
+    "notes",
+    "summary",
+    "overview",
+    "step",
+    "part",
+    "exercise",
+    "practice",
+    "dyd",
+    "usm",
   ];
-  
-  // Check if a line looks like a section header (strict rules)
+
   function isHeader(line: string): boolean {
     const t = line.trim();
     if (!t) return false;
-    
-    // Skip page markers
+
     if (/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/i.test(t)) return false;
-    
-    // Must be short (under 35 chars, max 3 words)
+
     const words = t.split(/\s+/);
     if (t.length > 35 || words.length > 3) return false;
-    
-    // Skip lines with commas (usually sentences)
     if (/,/.test(t)) return false;
-    
-    // Skip lines ending with sentence punctuation
     if (/[.!?;]$/.test(t)) return false;
-    
-    // Skip lines with common verbs/phrases that indicate sentences
-    if (/\b(say|the|your|my|and|or|is|are|was|were|on|in|at|to|for|with|from)\b/i.test(t)) {
+
+    if (
+      /\b(say|the|your|my|and|or|is|are|was|were|on|in|at|to|for|with|from)\b/i.test(
+        t,
+      )
+    ) {
       return false;
     }
-    
-    const lower = t.toLowerCase().replace(/[^a-z\s]/g, '').trim();
-    
-    // Exact keyword match (single word headers)
+
+    const lower = t
+      .toLowerCase()
+      .replace(/[^a-z\s]/g, "")
+      .trim();
+
     if (headerKeywords.includes(lower)) return true;
-    
-    // Keyword with parenthetical (e.g., "Tapping (Release)")
-    const keywordWithParen = headerKeywords.find(k => lower.startsWith(k) && /^\w+\s*\([^)]+\)$/.test(t));
-    if (keywordWithParen) return true;
-    
-    // Very short title (1-2 words, starts with capital)
+
+    if (
+      headerKeywords.find(
+        (k) => lower.startsWith(k) && /^\w+\s*\([^)]+\)$/.test(t),
+      )
+    )
+      return true;
+
     if (words.length <= 2 && t.length < 25 && /^[A-Z]/.test(t)) return true;
-    
+
     return false;
   }
-  
-  // Flush accumulated list items
+
   function flushList() {
     if (listItems.length > 0 && currentListType) {
       const tag = currentListType;
-      html.push(`<${tag} class="${tag === 'ul' ? 'list-disc' : 'list-decimal'} list-inside space-y-1 my-4">`);
-      listItems.forEach(item => html.push(`<li class="ml-4">${item}</li>`));
+      html.push(
+        `<${tag} class="${tag === "ul" ? "list-disc" : "list-decimal"} list-inside space-y-1 my-4">`,
+      );
+      listItems.forEach((item) => html.push(`<li class="ml-4">${item}</li>`));
       html.push(`</${tag}>`);
       listItems = [];
       currentListType = null;
     }
   }
-  
-  // Flush accumulated paragraph lines to HTML (preserving line breaks with <br>)
+
+  // FIXED: merge paragraph lines, do not create <br>
   function flushParagraph() {
     flushList();
     if (currentParagraph.length > 0) {
-      // Join lines with <br> to preserve intentional line breaks
-      const content = currentParagraph.join('<br>');
+      const content = currentParagraph.join(" ").trim(); // MERGE LINES HERE
       if (content) {
         html.push(`<p class="my-4 leading-relaxed">${content}</p>`);
       }
       currentParagraph = [];
     }
   }
-  
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    
+
     // Skip page markers
-    if (/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/i.test(line)) {
-      continue;
-    }
-    
-    // Empty line = paragraph break (preserved as visual separation)
+    if (/^--\s*\d+\s*(of|\/)\s*\d+\s*--$/i.test(line)) continue;
+
+    // Empty line = paragraph break
     if (!line) {
       flushParagraph();
       continue;
     }
-    
-    // Check if this is a header
+
+    // Headers
     if (isHeader(line)) {
       flushParagraph();
-      const headerText = line.replace(/[,:]$/, '').trim();
-      html.push(`<h3 class="mt-6 mb-3 text-lg font-semibold text-primary">${headerText}</h3>`);
+      const headerText = line.replace(/[,:]$/, "").trim();
+      html.push(
+        `<h3 class="mt-6 mb-3 text-lg font-semibold text-primary">${headerText}</h3>`,
+      );
       continue;
     }
-    
-    // Check for bullet points
+
+    // Bullet lists
     if (/^[-•*]\s+/.test(line)) {
       flushParagraph();
-      if (currentListType !== 'ul') {
+      if (currentListType !== "ul") {
         flushList();
-        currentListType = 'ul';
+        currentListType = "ul";
       }
-      listItems.push(line.replace(/^[-•*]\s+/, ''));
+      listItems.push(line.replace(/^[-•*]\s+/, ""));
       continue;
     }
-    
-    // Check for numbered lists
+
+    // Numbered lists
     if (/^\d+\s*[.)]\s+/.test(line)) {
       flushParagraph();
-      if (currentListType !== 'ol') {
+      if (currentListType !== "ol") {
         flushList();
-        currentListType = 'ol';
+        currentListType = "ol";
       }
-      listItems.push(line.replace(/^\d+\s*[.)]\s+/, ''));
+      listItems.push(line.replace(/^\d+\s*[.)]\s+/, ""));
       continue;
     }
-    
-    // Regular content - add to current paragraph (each line preserved)
-    flushList(); // End any open list
+
+    // Regular paragraph content
+    flushList();
     currentParagraph.push(line);
   }
-  
-  // Flush remaining content
+
   flushParagraph();
-  
   return html.join("\n");
 }
 
@@ -1975,7 +1989,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             if (downloadResult.success && downloadResult.data) {
               // Use pdf2json to extract text (preserves line breaks)
-              extractedText = await extractTextWithPdf2json(downloadResult.data);
+              extractedText = await extractTextWithPdf2json(
+                downloadResult.data,
+              );
 
               // Convert extracted text to formatted HTML
               if (extractedText) {
