@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,6 +10,8 @@ import {
   CheckSquare,
   Bell,
   Search,
+  Play,
+  Pause,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import ActionCard from "@/components/ActionCard";
@@ -36,6 +38,8 @@ export default function HomePage() {
   const [practiceProgress] = useState({ current: 15, total: 30 });
   const [streakDays] = useState([true, true, false, true, true, false, false]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const { data: bannerData } = useQuery<BannerData>({
     queryKey: ["/api/public/v1/session-banner"],
@@ -43,6 +47,17 @@ export default function HomePage() {
 
   const banner = bannerData?.banner;
   const bannerStatus = bannerData?.status;
+
+  const toggleVideoPlayback = () => {
+    if (videoRef.current) {
+      if (isVideoPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsVideoPlaying(!isVideoPlaying);
+    }
+  };
 
   const actionCards = [
     {
@@ -126,6 +141,7 @@ export default function HomePage() {
             {banner.type === "advertisement" && banner.videoUrl ? (
               <div className="relative w-full h-56 overflow-hidden shadow-md bg-black">
                 <video
+                  ref={videoRef}
                   src={banner.videoUrl}
                   poster={banner.posterUrl || undefined}
                   className="w-full h-full object-cover"
@@ -135,6 +151,17 @@ export default function HomePage() {
                   playsInline
                   data-testid="video-banner"
                 />
+                <button
+                  onClick={toggleVideoPlayback}
+                  className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition"
+                  data-testid="button-video-toggle"
+                >
+                  {isVideoPlaying ? (
+                    <Pause className="w-5 h-5 text-white" />
+                  ) : (
+                    <Play className="w-5 h-5 text-white ml-0.5" />
+                  )}
+                </button>
               </div>
             ) : banner.thumbnailUrl ? (
               <div className="relative w-full h-56 overflow-hidden shadow-md">
