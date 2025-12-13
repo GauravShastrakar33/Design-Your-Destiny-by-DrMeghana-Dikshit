@@ -161,27 +161,27 @@ export default function HomePage() {
                   playsInline
                   data-testid="video-banner"
                 />
-                <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
                   <button
                     onClick={toggleMute}
-                    className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition"
+                    className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition"
                     data-testid="button-video-mute"
                   >
                     {isMuted ? (
-                      <VolumeX className="w-5 h-5 text-white" />
+                      <VolumeX className="w-4 h-4 text-white" />
                     ) : (
-                      <Volume2 className="w-5 h-5 text-white" />
+                      <Volume2 className="w-4 h-4 text-white" />
                     )}
                   </button>
                   <button
                     onClick={toggleVideoPlayback}
-                    className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition"
+                    className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition"
                     data-testid="button-video-toggle"
                   >
                     {isVideoPlaying ? (
-                      <Pause className="w-5 h-5 text-white" />
+                      <Pause className="w-4 h-4 text-white" />
                     ) : (
-                      <Play className="w-5 h-5 text-white ml-0.5" />
+                      <Play className="w-4 h-4 text-white ml-0.5" />
                     )}
                   </button>
                 </div>
