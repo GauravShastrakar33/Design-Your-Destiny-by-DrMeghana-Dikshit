@@ -306,3 +306,28 @@ export const insertPlaylistItemSchema = createInsertSchema(playlistItems).omit({
 
 export type InsertPlaylistItem = z.infer<typeof insertPlaylistItemSchema>;
 export type PlaylistItem = typeof playlistItems.$inferSelect;
+
+// Session Banners Table
+export const sessionBanners = pgTable("session_banners", {
+  id: serial("id").primaryKey(),
+  type: varchar("type", { length: 20 }).notNull(), // "session" | "advertisement"
+  thumbnailKey: text("thumbnail_key"),
+  videoKey: text("video_key"),
+  posterKey: text("poster_key"),
+  ctaText: text("cta_text"),
+  ctaLink: text("cta_link"),
+  startAt: timestamp("start_at", { mode: "date" }).notNull(),
+  endAt: timestamp("end_at", { mode: "date" }).notNull(),
+  liveEnabled: boolean("live_enabled").notNull().default(false),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertSessionBannerSchema = createInsertSchema(sessionBanners).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSessionBanner = z.infer<typeof insertSessionBannerSchema>;
+export type SessionBanner = typeof sessionBanners.$inferSelect;

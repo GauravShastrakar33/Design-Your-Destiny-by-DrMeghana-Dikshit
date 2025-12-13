@@ -10,11 +10,13 @@ import {
   type MoneyEntry,
   type Playlist, type InsertPlaylist,
   type PlaylistItem, type InsertPlaylistItem,
+  type SessionBanner, type InsertSessionBanner,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
   cmsCourses, cmsModules, cmsLessons, cmsLessonFiles, moneyEntries,
-  playlists as playlistsTable, playlistItems as playlistItemsTable
+  playlists as playlistsTable, playlistItems as playlistItemsTable,
+  sessionBanners as sessionBannersTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -934,6 +936,74 @@ export class DbStorage implements IStorage {
       .from(cmsLessonFiles)
       .where(and(eq(cmsLessonFiles.lessonId, lessonId), eq(cmsLessonFiles.fileType, 'audio')));
     return audioFiles.length > 0;
+  }
+
+  // ===== SESSION BANNERS =====
+
+  async getAllSessionBanners(): Promise<SessionBanner[]> {
+    return await db.select().from(sessionBannersTable).orderBy(desc(sessionBannersTable.startAt));
+  }
+
+  async getSessionBannerById(id: number): Promise<SessionBanner | undefined> {
+    const [banner] = await db.select().from(sessionBannersTable).where(eq(sessionBannersTable.id, id));
+    return banner;
+  }
+
+  async createSessionBanner(banner: InsertSessionBanner): Promise<SessionBanner> {
+    const [newBanner] = await db.insert(sessionBannersTable).values(banner).returning();
+    return newBanner;
+  }
+
+  async updateSessionBanner(id: number, banner: Partial<InsertSessionBanner>): Promise<SessionBanner | undefined> {
+    const [updated] = await db
+      .update(sessionBannersTable)
+      .set({ ...banner, updatedAt: new Date() })
+      .where(eq(sessionBannersTable.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteSessionBanner(id: number): Promise<boolean> {
+    const result = await db.delete(sessionBannersTable).where(eq(sessionBannersTable.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getActiveBanner(): Promise<SessionBanner | undefined> {
+    const now = new Date();
+    const [active] = await db
+      .select()
+      .from(sessionBannersTable)
+      .where(
+        and(
+          sql`${sessionBannersTable.startAt} <= ${now}`,
+          sql`${sessionBannersTable.endAt} > ${now}`
+        )
+      )
+      .orderBy(desc(sessionBannersTable.startAt))
+      .limit(1);
+    return active;
+  }
+
+  async getNextScheduledBanner(): Promise<SessionBanner | undefined> {
+    const now = new Date();
+    const [scheduled] = await db
+      .select()
+      .from(sessionBannersTable)
+      .where(sql`${sessionBannersTable.startAt} > ${now}`)
+      .orderBy(asc(sessionBannersTable.startAt))
+      .limit(1);
+    return scheduled;
+  }
+
+  async getLastExpiredBanner(): Promise<SessionBanner | undefined> {
+    const now = new Date();
+    const [expired] = await db
+      .select()
+      .from(sessionBannersTable)
+      .where(sql`${sessionBannersTable.endAt} <= ${now}`)
+      .orderBy(desc(sessionBannersTable.endAt))
+      .limit(1);
+    return expired;
   }
 }
 

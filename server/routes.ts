@@ -3031,6 +3031,212 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // ===== SESSION BANNER ADMIN ROUTES =====
+
+  // GET /api/admin/v1/session-banners - List all banners
+  app.get("/api/admin/v1/session-banners", requireAdmin, async (req, res) => {
+    try {
+      const banners = await storage.getAllSessionBanners();
+      res.json(banners);
+    } catch (error) {
+      console.error("Error fetching session banners:", error);
+      res.status(500).json({ error: "Failed to fetch session banners" });
+    }
+  });
+
+  // GET /api/admin/v1/session-banners/:id - Get single banner
+  app.get("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const banner = await storage.getSessionBannerById(id);
+      if (!banner) {
+        return res.status(404).json({ error: "Banner not found" });
+      }
+      res.json(banner);
+    } catch (error) {
+      console.error("Error fetching session banner:", error);
+      res.status(500).json({ error: "Failed to fetch session banner" });
+    }
+  });
+
+  // POST /api/admin/v1/session-banners - Create banner
+  app.post("/api/admin/v1/session-banners", requireAdmin, async (req, res) => {
+    try {
+      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled } = req.body;
+      
+      if (!type || !startAt || !endAt) {
+        return res.status(400).json({ error: "type, startAt, and endAt are required" });
+      }
+
+      const banner = await storage.createSessionBanner({
+        type,
+        thumbnailKey: thumbnailKey || null,
+        videoKey: videoKey || null,
+        posterKey: posterKey || null,
+        ctaText: ctaText || null,
+        ctaLink: ctaLink || null,
+        startAt: new Date(startAt),
+        endAt: new Date(endAt),
+        liveEnabled: liveEnabled || false,
+      });
+      res.status(201).json(banner);
+    } catch (error) {
+      console.error("Error creating session banner:", error);
+      res.status(500).json({ error: "Failed to create session banner" });
+    }
+  });
+
+  // PUT /api/admin/v1/session-banners/:id - Update banner
+  app.put("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled } = req.body;
+
+      const updateData: any = {};
+      if (type !== undefined) updateData.type = type;
+      if (thumbnailKey !== undefined) updateData.thumbnailKey = thumbnailKey;
+      if (videoKey !== undefined) updateData.videoKey = videoKey;
+      if (posterKey !== undefined) updateData.posterKey = posterKey;
+      if (ctaText !== undefined) updateData.ctaText = ctaText;
+      if (ctaLink !== undefined) updateData.ctaLink = ctaLink;
+      if (startAt !== undefined) updateData.startAt = new Date(startAt);
+      if (endAt !== undefined) updateData.endAt = new Date(endAt);
+      if (liveEnabled !== undefined) updateData.liveEnabled = liveEnabled;
+
+      const banner = await storage.updateSessionBanner(id, updateData);
+      if (!banner) {
+        return res.status(404).json({ error: "Banner not found" });
+      }
+      res.json(banner);
+    } catch (error) {
+      console.error("Error updating session banner:", error);
+      res.status(500).json({ error: "Failed to update session banner" });
+    }
+  });
+
+  // DELETE /api/admin/v1/session-banners/:id - Delete banner
+  app.delete("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteSessionBanner(id);
+      if (!success) {
+        return res.status(404).json({ error: "Banner not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting session banner:", error);
+      res.status(500).json({ error: "Failed to delete session banner" });
+    }
+  });
+
+  // POST /api/admin/v1/session-banners/:id/duplicate - Duplicate banner
+  app.post("/api/admin/v1/session-banners/:id/duplicate", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const original = await storage.getSessionBannerById(id);
+      if (!original) {
+        return res.status(404).json({ error: "Banner not found" });
+      }
+
+      const duplicate = await storage.createSessionBanner({
+        type: original.type,
+        thumbnailKey: original.thumbnailKey,
+        videoKey: original.videoKey,
+        posterKey: original.posterKey,
+        ctaText: original.ctaText,
+        ctaLink: original.ctaLink,
+        startAt: original.startAt,
+        endAt: original.endAt,
+        liveEnabled: original.liveEnabled,
+      });
+      res.status(201).json(duplicate);
+    } catch (error) {
+      console.error("Error duplicating session banner:", error);
+      res.status(500).json({ error: "Failed to duplicate session banner" });
+    }
+  });
+
+  // GET /api/admin/v1/session-banners/upload-url - Get signed URL for R2 upload
+  app.get("/api/admin/v1/session-banners/upload-url", requireAdmin, async (req, res) => {
+    try {
+      const { filename, contentType } = req.query as { filename: string; contentType: string };
+      if (!filename || !contentType) {
+        return res.status(400).json({ error: "filename and contentType are required" });
+      }
+
+      const key = `session-banners/${Date.now()}-${filename}`;
+      const signedUrl = await getSignedPutUrl(key, contentType);
+      res.json({ key, signedUrl });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  // ===== SESSION BANNER PUBLIC ROUTE =====
+
+  // GET /api/public/v1/session-banner - Get current active banner with fallback
+  app.get("/api/public/v1/session-banner", async (req, res) => {
+    try {
+      // Try to get active banner first
+      let banner = await storage.getActiveBanner();
+      let status = "active";
+
+      // If no active, try next scheduled
+      if (!banner) {
+        banner = await storage.getNextScheduledBanner();
+        status = "scheduled";
+      }
+
+      // If no scheduled, try last expired
+      if (!banner) {
+        banner = await storage.getLastExpiredBanner();
+        status = "expired";
+      }
+
+      if (!banner) {
+        return res.json({ banner: null, status: "none" });
+      }
+
+      // Generate signed URLs for media
+      let thumbnailUrl = null;
+      let videoUrl = null;
+      let posterUrl = null;
+
+      if (banner.thumbnailKey) {
+        thumbnailUrl = await getSignedGetUrl(banner.thumbnailKey);
+      }
+      if (banner.videoKey) {
+        videoUrl = await getSignedGetUrl(banner.videoKey);
+      }
+      if (banner.posterKey) {
+        posterUrl = await getSignedGetUrl(banner.posterKey);
+      }
+
+      // Check if live badge should show (session banners only)
+      const now = new Date();
+      const isLive = banner.type === "session" && 
+                     banner.liveEnabled && 
+                     status === "active" &&
+                     now >= banner.startAt && 
+                     now < banner.endAt;
+
+      res.json({
+        banner: {
+          ...banner,
+          thumbnailUrl,
+          videoUrl,
+          posterUrl,
+        },
+        status,
+        isLive,
+      });
+    } catch (error) {
+      console.error("Error fetching public session banner:", error);
+      res.status(500).json({ error: "Failed to fetch session banner" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
