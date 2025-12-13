@@ -3044,6 +3044,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/admin/v1/session-banners/upload-url - Get signed URL for R2 upload
+  // NOTE: This must be BEFORE the /:id route to prevent "upload-url" being parsed as an ID
+  app.get("/api/admin/v1/session-banners/upload-url", requireAdmin, async (req, res) => {
+    try {
+      const { filename, contentType } = req.query as { filename: string; contentType: string };
+      if (!filename || !contentType) {
+        return res.status(400).json({ error: "filename and contentType are required" });
+      }
+
+      const key = `session-banners/${Date.now()}-${filename}`;
+      const result = await getSignedPutUrl(key, contentType);
+      
+      if (!result.success) {
+        console.error("R2 upload URL error:", result.error);
+        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
+      }
+
+      res.json({ key: result.key, signedUrl: result.uploadUrl });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
   // GET /api/admin/v1/session-banners/:id - Get single banner
   app.get("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
     try {
@@ -3153,23 +3177,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error duplicating session banner:", error);
       res.status(500).json({ error: "Failed to duplicate session banner" });
-    }
-  });
-
-  // GET /api/admin/v1/session-banners/upload-url - Get signed URL for R2 upload
-  app.get("/api/admin/v1/session-banners/upload-url", requireAdmin, async (req, res) => {
-    try {
-      const { filename, contentType } = req.query as { filename: string; contentType: string };
-      if (!filename || !contentType) {
-        return res.status(400).json({ error: "filename and contentType are required" });
-      }
-
-      const key = `session-banners/${Date.now()}-${filename}`;
-      const signedUrl = await getSignedPutUrl(key, contentType);
-      res.json({ key, signedUrl });
-    } catch (error) {
-      console.error("Error generating upload URL:", error);
-      res.status(500).json({ error: "Failed to generate upload URL" });
     }
   });
 
