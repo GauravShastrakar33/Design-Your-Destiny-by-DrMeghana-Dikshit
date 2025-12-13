@@ -12,6 +12,8 @@ import {
   Search,
   Play,
   Pause,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import ActionCard from "@/components/ActionCard";
@@ -39,6 +41,7 @@ export default function HomePage() {
   const [streakDays] = useState([true, true, false, true, true, false, false]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const { data: bannerData } = useQuery<BannerData>({
@@ -56,6 +59,13 @@ export default function HomePage() {
         videoRef.current.play();
       }
       setIsVideoPlaying(!isVideoPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
     }
   };
 
@@ -151,17 +161,30 @@ export default function HomePage() {
                   playsInline
                   data-testid="video-banner"
                 />
-                <button
-                  onClick={toggleVideoPlayback}
-                  className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition"
-                  data-testid="button-video-toggle"
-                >
-                  {isVideoPlaying ? (
-                    <Pause className="w-5 h-5 text-white" />
-                  ) : (
-                    <Play className="w-5 h-5 text-white ml-0.5" />
-                  )}
-                </button>
+                <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                  <button
+                    onClick={toggleMute}
+                    className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition"
+                    data-testid="button-video-mute"
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-5 h-5 text-white" />
+                    ) : (
+                      <Volume2 className="w-5 h-5 text-white" />
+                    )}
+                  </button>
+                  <button
+                    onClick={toggleVideoPlayback}
+                    className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition"
+                    data-testid="button-video-toggle"
+                  >
+                    {isVideoPlaying ? (
+                      <Pause className="w-5 h-5 text-white" />
+                    ) : (
+                      <Play className="w-5 h-5 text-white ml-0.5" />
+                    )}
+                  </button>
+                </div>
               </div>
             ) : banner.thumbnailUrl ? (
               <div className="relative w-full h-56 overflow-hidden shadow-md">
