@@ -3065,10 +3065,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
           const audioFilesWithUrls = await Promise.all(
             audioFiles.map(async (file) => {
-              let signedUrl = null;
+              let signedUrl: string | null = null;
               if (file.r2Key) {
                 try {
-                  signedUrl = await getSignedGetUrl(file.r2Key, 3600);
+                  const result = await getSignedGetUrl(file.r2Key, 3600);
+                  if (result.success && result.url) {
+                    signedUrl = result.url;
+                  }
                 } catch (e) {
                   console.error("Error generating signed URL:", e);
                 }
