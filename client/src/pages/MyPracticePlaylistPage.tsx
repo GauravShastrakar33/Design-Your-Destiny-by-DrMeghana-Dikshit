@@ -275,13 +275,7 @@ export default function MyPracticePlaylistPage() {
     setCurrentTrackIndex(0);
     setInitialTime(0);
     setIsPlayingPlaylist(true);
-    
-    // Log first track immediately
-    if (items.length > 0) {
-      const firstItem = items[0];
-      const lessonName = firstItem.lesson?.title || `Lesson ${firstItem.lessonId}`;
-      logPlaylistActivity(firstItem.lessonId, lessonName);
-    }
+    // Activity is logged only when tracks complete (in handleTrackEnded)
   };
 
   const handleStopPlaylist = () => {
@@ -293,17 +287,17 @@ export default function MyPracticePlaylistPage() {
   };
 
   const handleTrackEnded = () => {
+    // Log the track that just completed
+    const completedItem = playingItems[currentTrackIndex];
+    if (completedItem) {
+      const lessonName = completedItem.lesson?.title || `Lesson ${completedItem.lessonId}`;
+      logPlaylistActivity(completedItem.lessonId, lessonName);
+    }
+    
+    // Advance to next track or stop
     if (currentTrackIndex < playingItems.length - 1) {
-      const nextIndex = currentTrackIndex + 1;
-      setCurrentTrackIndex(nextIndex);
+      setCurrentTrackIndex(currentTrackIndex + 1);
       setInitialTime(0);
-      
-      // Log next track using stored playingItems snapshot
-      const nextItem = playingItems[nextIndex];
-      if (nextItem) {
-        const lessonName = nextItem.lesson?.title || `Lesson ${nextItem.lessonId}`;
-        logPlaylistActivity(nextItem.lessonId, lessonName);
-      }
     } else {
       handleStopPlaylist();
     }
