@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   ListMusic,
@@ -87,6 +87,9 @@ export default function MyPracticePlaylistPage() {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlayingPlaylist, setIsPlayingPlaylist] = useState(false);
   const [initialTime, setInitialTime] = useState(0);
+  
+  // Store playing playlist items snapshot - independent of UI expansion state
+  const [playingItems, setPlayingItems] = useState<PlaylistWithItems["items"]>([]);
 
   const { data: playlists = [], isLoading: playlistsLoading } = useQuery<Playlist[]>({
     queryKey: ["/api/public/v1/playlists"],
@@ -199,6 +202,37 @@ export default function MyPracticePlaylistPage() {
     },
   });
 
+  // Activity logging mutation for AI Insights
+  const logActivityMutation = useMutation({
+    mutationFn: async (params: { lessonId: number; lessonName: string }) => {
+      const res = await apiRequest("POST", "/api/v1/activity/log", {
+        lessonId: params.lessonId,
+        lessonName: params.lessonName,
+        featureType: "PROCESS",
+        activityDate: new Date().toISOString().split('T')[0],
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "/api/v1/activity/monthly-stats"
+      });
+    },
+  });
+
+  // Track which lessons have been logged this session to avoid duplicate logs
+  const loggedLessonsRef = useRef<Set<number>>(new Set());
+
+  const logPlaylistActivity = (lessonId: number, lessonName: string) => {
+    if (!isAuthenticated) return;
+    if (loggedLessonsRef.current.has(lessonId)) return;
+    
+    loggedLessonsRef.current.add(lessonId);
+    logActivityMutation.mutate({ lessonId, lessonName });
+  };
+
   const handleOpenRename = (playlist: Playlist) => {
     setPlaylistToRename(playlist);
     setNewTitle(playlist.title);
@@ -234,10 +268,20 @@ export default function MyPracticePlaylistPage() {
   };
 
   const handlePlayPlaylist = (playlistId: number) => {
+    // Capture items snapshot when playback starts (independent of UI state)
+    const items = expandedPlaylistData?.items || [];
+    setPlayingItems(items);
     setCurrentPlaylistId(playlistId);
     setCurrentTrackIndex(0);
     setInitialTime(0);
     setIsPlayingPlaylist(true);
+    
+    // Log first track immediately
+    if (items.length > 0) {
+      const firstItem = items[0];
+      const lessonName = firstItem.lesson?.title || `Lesson ${firstItem.lessonId}`;
+      logPlaylistActivity(firstItem.lessonId, lessonName);
+    }
   };
 
   const handleStopPlaylist = () => {
@@ -245,21 +289,29 @@ export default function MyPracticePlaylistPage() {
     setCurrentTrackIndex(0);
     setIsPlayingPlaylist(false);
     setInitialTime(0);
+    setPlayingItems([]);
   };
 
   const handleTrackEnded = () => {
-    const items = expandedPlaylistData?.items || [];
-    if (currentTrackIndex < items.length - 1) {
-      setCurrentTrackIndex(currentTrackIndex + 1);
+    if (currentTrackIndex < playingItems.length - 1) {
+      const nextIndex = currentTrackIndex + 1;
+      setCurrentTrackIndex(nextIndex);
       setInitialTime(0);
+      
+      // Log next track using stored playingItems snapshot
+      const nextItem = playingItems[nextIndex];
+      if (nextItem) {
+        const lessonName = nextItem.lesson?.title || `Lesson ${nextItem.lessonId}`;
+        logPlaylistActivity(nextItem.lessonId, lessonName);
+      }
     } else {
       handleStopPlaylist();
     }
   };
 
   const getCurrentAudio = () => {
-    if (!expandedPlaylistData || !currentPlaylistId) return null;
-    const item = expandedPlaylistData.items[currentTrackIndex];
+    if (!currentPlaylistId || playingItems.length === 0) return null;
+    const item = playingItems[currentTrackIndex];
     if (!item || !item.audioFiles.length) return null;
     const audioFile = item.audioFiles[0];
     return {
