@@ -539,6 +539,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== ACTIVITY LOGGING ROUTES (AI INSIGHTS) =====
+
+  // Log user activity (practice/breath/checklist)
+  app.post("/api/v1/activity/log", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { lessonId, lessonName, featureType, activityDate } = req.body;
+
+      // Validate required fields
+      if (!lessonId || typeof lessonId !== 'number') {
+        return res.status(400).json({ error: "lessonId is required and must be a number" });
+      }
+      if (!lessonName || typeof lessonName !== 'string') {
+        return res.status(400).json({ error: "lessonName is required" });
+      }
+      if (!featureType || !['PROCESS', 'BREATH', 'CHECKLIST'].includes(featureType)) {
+        return res.status(400).json({ error: "featureType must be PROCESS, BREATH, or CHECKLIST" });
+      }
+
+      // Use provided date or server date
+      const dateToUse = activityDate || new Date().toISOString().split('T')[0];
+
+      const result = await storage.logActivity(
+        req.user.sub,
+        lessonId,
+        lessonName,
+        featureType,
+        dateToUse
+      );
+
+      res.json({ success: true, logged: result.logged });
+    } catch (error) {
+      console.error("Error logging activity:", error);
+      res.status(500).json({ error: "Failed to log activity" });
+    }
+  });
+
+  // Get monthly activity stats for AI Insights
+  app.get("/api/v1/activity/monthly-stats", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const month = (req.query.month as string) || new Date().toISOString().slice(0, 7);
+
+      const stats = await storage.getMonthlyStats(req.user.sub, month);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching monthly stats:", error);
+      res.status(500).json({ error: "Failed to fetch monthly stats" });
+    }
+  });
+
   // Admin routes: Get all sessions (including inactive)
   app.get("/api/admin/sessions", requireAdmin, async (req, res) => {
     try {

@@ -12,13 +12,15 @@ import {
   type PlaylistItem, type InsertPlaylistItem,
   type SessionBanner, type InsertSessionBanner,
   type UserStreak, type InsertUserStreak,
+  type ActivityLog, type InsertActivityLog, type FeatureType,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
   cmsCourses, cmsModules, cmsLessons, cmsLessonFiles, moneyEntries,
   playlists as playlistsTable, playlistItems as playlistItemsTable,
   sessionBanners as sessionBannersTable,
-  userStreaks as userStreaksTable
+  userStreaks as userStreaksTable,
+  activityLogs as activityLogsTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -1050,6 +1052,129 @@ export class DbStorage implements IStorage {
       ));
     
     return records.map(r => r.activityDate);
+  }
+
+  // ===== ACTIVITY LOGS (AI INSIGHTS) =====
+
+  async logActivity(
+    userId: number,
+    lessonId: number,
+    lessonName: string,
+    featureType: FeatureType,
+    activityDate: string
+  ): Promise<{ logged: boolean; activity: ActivityLog }> {
+    // Validate date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(activityDate)) {
+      // Fall back to server date if invalid
+      activityDate = new Date().toISOString().split('T')[0];
+    }
+
+    // Validate date is within ±1 day of server time
+    const serverDate = new Date();
+    const inputDate = new Date(activityDate + 'T12:00:00');
+    const diffDays = Math.abs((serverDate.getTime() - inputDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays > 1) {
+      activityDate = serverDate.toISOString().split('T')[0];
+    }
+
+    // Check if already logged for this user/lesson/feature/date
+    const [existing] = await db
+      .select()
+      .from(activityLogsTable)
+      .where(and(
+        eq(activityLogsTable.userId, userId),
+        eq(activityLogsTable.lessonId, lessonId),
+        eq(activityLogsTable.featureType, featureType),
+        eq(activityLogsTable.activityDate, activityDate)
+      ));
+
+    if (existing) {
+      return { logged: false, activity: existing };
+    }
+
+    // Insert new activity log
+    const [newLog] = await db
+      .insert(activityLogsTable)
+      .values({ userId, lessonId, lessonName, featureType, activityDate })
+      .returning();
+
+    return { logged: true, activity: newLog };
+  }
+
+  async getMonthlyStats(userId: number, month: string): Promise<{
+    PROCESS: { lessonId: number; lessonName: string; count: number }[];
+    BREATH: { lessonId: number; lessonName: string; count: number }[];
+    CHECKLIST: { lessonId: number; lessonName: string; count: number }[];
+    maxCount: number;
+  }> {
+    // Validate month format (YYYY-MM)
+    const monthRegex = /^\d{4}-\d{2}$/;
+    if (!monthRegex.test(month)) {
+      month = new Date().toISOString().slice(0, 7);
+    }
+
+    // Ensure month is within last 6 months
+    const now = new Date();
+    const inputDate = new Date(month + '-01');
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    if (inputDate < sixMonthsAgo) {
+      month = sixMonthsAgo.toISOString().slice(0, 7);
+    }
+
+    // Query activities for the given month
+    const startDate = month + '-01';
+    const endDate = month + '-31'; // Works for all months since we use <= comparison
+
+    const activities = await db
+      .select({
+        lessonId: activityLogsTable.lessonId,
+        lessonName: activityLogsTable.lessonName,
+        featureType: activityLogsTable.featureType,
+        count: count(activityLogsTable.id),
+      })
+      .from(activityLogsTable)
+      .where(and(
+        eq(activityLogsTable.userId, userId),
+        sql`${activityLogsTable.activityDate} >= ${startDate}`,
+        sql`${activityLogsTable.activityDate} <= ${endDate}`
+      ))
+      .groupBy(activityLogsTable.lessonId, activityLogsTable.lessonName, activityLogsTable.featureType);
+
+    // Group by feature type
+    const result = {
+      PROCESS: [] as { lessonId: number; lessonName: string; count: number }[],
+      BREATH: [] as { lessonId: number; lessonName: string; count: number }[],
+      CHECKLIST: [] as { lessonId: number; lessonName: string; count: number }[],
+      maxCount: 0,
+    };
+
+    for (const activity of activities) {
+      const item = {
+        lessonId: activity.lessonId,
+        lessonName: activity.lessonName,
+        count: Number(activity.count),
+      };
+
+      if (item.count > result.maxCount) {
+        result.maxCount = item.count;
+      }
+
+      if (activity.featureType === 'PROCESS') {
+        result.PROCESS.push(item);
+      } else if (activity.featureType === 'BREATH') {
+        result.BREATH.push(item);
+      } else if (activity.featureType === 'CHECKLIST') {
+        result.CHECKLIST.push(item);
+      }
+    }
+
+    // Sort each array by count descending
+    result.PROCESS.sort((a, b) => b.count - a.count);
+    result.BREATH.sort((a, b) => b.count - a.count);
+    result.CHECKLIST.sort((a, b) => b.count - a.count);
+
+    return result;
   }
 }
 

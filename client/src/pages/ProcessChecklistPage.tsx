@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, CheckCircle2, Edit, Sparkles, Check } from "lucide-react";
 import { useLocation } from "wouter";
+import { useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import {
   Dialog,
   DialogContent,
@@ -52,6 +54,36 @@ export default function ProcessChecklistPage() {
   const [tempSelectedPractices, setTempSelectedPractices] = useState<string[]>(
     [],
   );
+
+  // Track which practices we've logged today (to avoid duplicate API calls)
+  const [loggedToday, setLoggedToday] = useState<Set<string>>(new Set());
+
+  const isAuthenticated = !!localStorage.getItem("@app:user_token");
+
+  // Activity logging mutation for AI Insights
+  const logActivityMutation = useMutation({
+    mutationFn: async (params: { lessonId: number; lessonName: string }) => {
+      const res = await apiRequest("POST", "/api/v1/activity/log", {
+        lessonId: params.lessonId,
+        lessonName: params.lessonName,
+        featureType: "CHECKLIST",
+        activityDate: new Date().toISOString().split('T')[0],
+      });
+      return res.json();
+    },
+  });
+
+  const logChecklistActivity = (practice: string) => {
+    if (!isAuthenticated) return;
+    if (loggedToday.has(practice)) return;
+    
+    // Use index in ALL_PRACTICES as stable ID (add 10000 to avoid collision with lesson IDs)
+    const practiceIndex = ALL_PRACTICES.indexOf(practice);
+    const lessonId = practiceIndex >= 0 ? 10000 + practiceIndex : 10000 + practice.length;
+    
+    setLoggedToday(prev => new Set(prev).add(practice));
+    logActivityMutation.mutate({ lessonId, lessonName: practice });
+  };
 
   useEffect(() => {
     // Load user's custom checklist
@@ -142,12 +174,19 @@ export default function ProcessChecklistPage() {
   };
 
   const toggleTodayPractice = (practice: string) => {
+    const isNowChecking = !completedToday.includes(practice);
+    
     setCompletedToday((prev) =>
       prev.includes(practice)
         ? prev.filter((p) => p !== practice)
         : [...prev, practice],
     );
     setSaved(false);
+
+    // Log activity when checking (not unchecking)
+    if (isNowChecking) {
+      logChecklistActivity(practice);
+    }
   };
 
   const handleSaveToday = () => {

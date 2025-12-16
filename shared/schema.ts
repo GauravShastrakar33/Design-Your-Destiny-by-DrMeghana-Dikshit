@@ -349,3 +349,32 @@ export const insertUserStreakSchema = createInsertSchema(userStreaks).omit({
 
 export type InsertUserStreak = z.infer<typeof insertUserStreakSchema>;
 export type UserStreak = typeof userStreaks.$inferSelect;
+
+// Activity Logs Table - tracks user practice activity for AI Insights
+export const activityLogs = pgTable("activity_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lessonId: integer("lesson_id").notNull(),
+  lessonName: varchar("lesson_name", { length: 255 }).notNull(),
+  featureType: varchar("feature_type", { length: 50 }).notNull(), // 'PROCESS' | 'BREATH' | 'CHECKLIST'
+  activityDate: varchar("activity_date", { length: 10 }).notNull(), // YYYY-MM-DD format
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueUserLessonFeatureDate: unique("unique_user_lesson_feature_date").on(
+    table.userId, 
+    table.lessonId, 
+    table.featureType, 
+    table.activityDate
+  ),
+}));
+
+export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type ActivityLog = typeof activityLogs.$inferSelect;
+
+export const featureTypeEnum = ["PROCESS", "BREATH", "CHECKLIST"] as const;
+export type FeatureType = typeof featureTypeEnum[number];
