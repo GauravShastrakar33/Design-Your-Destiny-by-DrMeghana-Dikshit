@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { ArrowLeft, Loader2, Video, Music, FileText, Wind } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useRef } from "react";
 import type { CmsLesson, CmsLessonFile } from "@shared/schema";
 
@@ -34,6 +34,13 @@ export default function SpiritualBreathLessonPage() {
         activityDate: new Date().toISOString().split('T')[0],
       });
       return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "/api/v1/activity/monthly-stats"
+      });
     },
   });
 
