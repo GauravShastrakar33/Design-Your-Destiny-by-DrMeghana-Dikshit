@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Calendar, Brain, Video, Sparkles, CheckCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ArrowLeft, Calendar, Brain, CheckCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -354,52 +354,6 @@ export default function MoneyMasteryPage() {
                   <span className="mr-1 text-sm">Start Rewiring</span>
                   <span style={{ color: "#703DFA" }}>→</span>
                 </Button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Money Manifestation Challenge */}
-          <Card 
-            className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md h-[140px]"
-            onClick={() => setLocation("/money-manifestation")}
-            data-testid="card-money-manifestation"
-          >
-            <div className="flex items-start gap-3">
-              <Video className="w-7 h-7 flex-shrink-0" style={{ color: "#703DFA" }} />
-              <div className="flex-1">
-                <h2 className="text-foreground text-lg font-bold mb-1">Money Manifestation Challenge</h2>
-                <p className="text-muted-foreground text-sm mb-3">
-                  30-day video series to manifest abundance
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">Day 1 of 30</span>
-                  <div className="flex-1 h-2 bg-muted rounded-full">
-                    <div className="w-[3%] h-full rounded-full" style={{ backgroundColor: "#703DFA" }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Raining Abundance */}
-          <Card 
-            className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md h-[140px]"
-            onClick={() => setLocation("/raining-abundance")}
-            data-testid="card-raining-abundance"
-          >
-            <div className="flex items-start gap-3">
-              <Sparkles className="w-7 h-7 flex-shrink-0" style={{ color: "#703DFA" }} />
-              <div className="flex-1">
-                <h2 className="text-foreground text-lg font-bold mb-1">Raining Abundance</h2>
-                <p className="text-muted-foreground text-sm mb-3">
-                  21-day journey to attract prosperity
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">Day 1 of 21</span>
-                  <div className="flex-1 h-2 bg-muted rounded-full">
-                    <div className="w-[5%] h-full rounded-full" style={{ backgroundColor: "#703DFA" }} />
-                  </div>
-                </div>
               </div>
             </div>
           </Card>
