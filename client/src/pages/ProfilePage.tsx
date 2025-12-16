@@ -530,30 +530,6 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* AI Insights Card */}
-        <button
-          onClick={() => setLocation("/ai-insights")}
-          className="w-full text-left bg-white rounded-2xl p-5 shadow-md hover-elevate active-elevate-2"
-          data-testid="button-ai-insights"
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h3 className="text-black text-sm font-bold tracking-wider uppercase mb-2">
-                AI INSIGHTS
-              </h3>
-              <p className="text-gray-700 text-sm">
-                Receive personalised insights for your streak
-              </p>
-            </div>
-            <div className="flex-shrink-0 ml-3">
-              <Sparkles className="w-6 h-6 text-[#703DFA]" />
-            </div>
-          </div>
-          <div className="flex items-center justify-end mt-3">
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </div>
-        </button>
-
         {/* My Prescription Card */}
         <div
           className="bg-white rounded-2xl shadow-md overflow-hidden"
