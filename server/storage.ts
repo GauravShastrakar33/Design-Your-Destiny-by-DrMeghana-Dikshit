@@ -51,6 +51,7 @@ export interface IStorage {
 
   getAllPrograms(): Promise<Program[]>;
   getProgramByCode(code: string): Promise<Program | undefined>;
+  getProgramById(id: number): Promise<Program | undefined>;
   createProgram(program: InsertProgram): Promise<Program>;
 
   getStudents(params: { search?: string; programCode?: string; page?: number; limit?: number }): Promise<{ data: UserWithPrograms[]; pagination: { total: number; page: number; pages: number } }>;
@@ -217,6 +218,10 @@ export class MemStorage implements IStorage {
   }
 
   async getProgramByCode(code: string): Promise<Program | undefined> {
+    return undefined;
+  }
+
+  async getProgramById(id: number): Promise<Program | undefined> {
     return undefined;
   }
 
@@ -432,6 +437,12 @@ export class DbStorage implements IStorage {
   async getProgramByCode(code: string): Promise<Program | undefined> {
     return await db.query.programs.findFirst({
       where: (programs, { eq }) => eq(programs.code, code),
+    });
+  }
+
+  async getProgramById(id: number): Promise<Program | undefined> {
+    return await db.query.programs.findFirst({
+      where: (programs, { eq }) => eq(programs.id, id),
     });
   }
 

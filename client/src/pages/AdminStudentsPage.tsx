@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreVertical, Edit, Trash2, Ban, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, MoreVertical, Edit, Trash2, Ban, CheckCircle, ChevronLeft, ChevronRight, Upload, Download, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { UserWithPrograms, Program } from "@shared/schema";
 
 interface StudentsResponse {
@@ -63,6 +63,18 @@ export default function AdminStudentsPage() {
   const [editingStudent, setEditingStudent] = useState<UserWithPrograms | null>(null);
   const [deletingStudent, setDeletingStudent] = useState<UserWithPrograms | null>(null);
   const [statusStudent, setStatusStudent] = useState<{ student: UserWithPrograms; newStatus: string } | null>(null);
+  
+  // Bulk upload state
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null);
+  const [bulkUploadProgram, setBulkUploadProgram] = useState("");
+  const [bulkUploadResult, setBulkUploadResult] = useState<{
+    totalRows: number;
+    created: number;
+    skipped: number;
+    errors: { row: number; reason: string }[];
+  } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -264,6 +276,85 @@ export default function AdminStudentsPage() {
   const startItem = (pagination.page - 1) * limit + 1;
   const endItem = Math.min(pagination.page * limit, pagination.total);
 
+  // Bulk upload handlers
+  const handleBulkUploadClose = () => {
+    setIsBulkUploadOpen(false);
+    setBulkUploadFile(null);
+    setBulkUploadProgram("");
+    setBulkUploadResult(null);
+  };
+
+  const handleDownloadSampleCSV = async () => {
+    try {
+      const response = await fetch("/api/admin/students/sample-csv", {
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to download sample");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "student_upload_sample.csv";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Could not download sample CSV",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkUpload = async () => {
+    if (!bulkUploadFile || !bulkUploadProgram) return;
+
+    setIsUploading(true);
+    setBulkUploadResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", bulkUploadFile);
+      formData.append("programId", bulkUploadProgram);
+
+      const response = await fetch("/api/admin/students/bulk-upload", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Upload failed");
+      }
+
+      setBulkUploadResult(result);
+      queryClient.invalidateQueries({ queryKey: ["/admin/v1/students"] });
+
+      if (result.created > 0) {
+        toast({
+          title: "Upload Complete",
+          description: `Successfully created ${result.created} student(s)`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to process bulk upload",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
@@ -271,14 +362,24 @@ export default function AdminStudentsPage() {
           <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">Students</h1>
           <p className="text-gray-600 mt-1">Manage student accounts and programs</p>
         </div>
-        <Button
-          onClick={() => setIsAddDialogOpen(true)}
-          className="bg-brand hover:bg-brand/90"
-          data-testid="button-add-student"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Student
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setIsBulkUploadOpen(true)}
+            data-testid="button-bulk-upload"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Bulk Upload
+          </Button>
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-brand hover:bg-brand/90"
+            data-testid="button-add-student"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Student
+          </Button>
+        </div>
       </div>
 
       <Card className="p-6">
@@ -629,6 +730,136 @@ export default function AdminStudentsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Upload Modal */}
+      <Dialog open={isBulkUploadOpen} onOpenChange={(open) => !open && handleBulkUploadClose()}>
+        <DialogContent className="max-w-lg" data-testid="dialog-bulk-upload">
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Students</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* Download sample link */}
+            <button
+              type="button"
+              onClick={handleDownloadSampleCSV}
+              className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              data-testid="link-download-sample"
+            >
+              <Download className="w-4 h-4 mr-1" />
+              Download Sample CSV
+            </button>
+
+            {/* CSV File Input */}
+            <div className="space-y-2">
+              <Label htmlFor="csvFile">CSV File *</Label>
+              <Input
+                id="csvFile"
+                type="file"
+                accept=".csv"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setBulkUploadFile(file);
+                  setBulkUploadResult(null);
+                }}
+                className="cursor-pointer"
+                data-testid="input-csv-file"
+              />
+              {bulkUploadFile && (
+                <p className="text-sm text-gray-500">
+                  Selected: {bulkUploadFile.name}
+                </p>
+              )}
+            </div>
+
+            {/* Program Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="bulkProgram">Program *</Label>
+              <Select
+                value={bulkUploadProgram}
+                onValueChange={setBulkUploadProgram}
+              >
+                <SelectTrigger data-testid="select-bulk-program">
+                  <SelectValue placeholder="Select program" />
+                </SelectTrigger>
+                <SelectContent>
+                  {programsData.map((program) => (
+                    <SelectItem key={program.id} value={program.id.toString()}>
+                      {program.code} - {program.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                All students will be assigned to this program
+              </p>
+            </div>
+
+            {/* Upload Results */}
+            {bulkUploadResult && (
+              <div className="space-y-3 p-4 rounded-lg bg-gray-50 border" data-testid="bulk-upload-result">
+                <h4 className="font-medium text-gray-900">Upload Results</h4>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{bulkUploadResult.totalRows}</p>
+                    <p className="text-xs text-gray-500">Total Rows</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-green-600">{bulkUploadResult.created}</p>
+                    <p className="text-xs text-gray-500">Created</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-orange-600">{bulkUploadResult.skipped}</p>
+                    <p className="text-xs text-gray-500">Skipped</p>
+                  </div>
+                </div>
+
+                {bulkUploadResult.errors.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Errors:</p>
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {bulkUploadResult.errors.map((error, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-start gap-2 text-sm text-red-600 bg-red-50 p-2 rounded"
+                        >
+                          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                          <span>Row {error.row}: {error.reason}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {bulkUploadResult.created > 0 && bulkUploadResult.skipped === 0 && (
+                  <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded">
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span className="font-medium">All students uploaded successfully!</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleBulkUploadClose}
+              data-testid="button-bulk-cancel"
+            >
+              {bulkUploadResult ? "Close" : "Cancel"}
+            </Button>
+            {!bulkUploadResult && (
+              <Button
+                onClick={handleBulkUpload}
+                disabled={!bulkUploadFile || !bulkUploadProgram || isUploading}
+                className="bg-brand hover:bg-brand/90"
+                data-testid="button-bulk-submit"
+              >
+                {isUploading ? "Uploading..." : "Upload"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

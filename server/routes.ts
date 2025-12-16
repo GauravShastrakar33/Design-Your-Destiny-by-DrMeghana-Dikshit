@@ -755,6 +755,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes: Download sample CSV for bulk upload
+  app.get("/api/admin/students/sample-csv", requireAdmin, (req, res) => {
+    const sampleCSV = `full_name,email,phone
+John Doe,john.doe@example.com,+1234567890
+Jane Smith,jane.smith@example.com,
+Bob Wilson,bob.wilson@example.com,+9876543210`;
+    
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=student_upload_sample.csv");
+    res.send(sampleCSV);
+  });
+
+  // Configure multer for CSV upload (memory storage)
+  const uploadCSV = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === "text/csv" || file.originalname.endsWith(".csv")) {
+        cb(null, true);
+      } else {
+        cb(new Error("Only CSV files are allowed"));
+      }
+    },
+  });
+
+  // Admin routes: Bulk upload students via CSV
+  app.post("/api/admin/students/bulk-upload", requireAdmin, uploadCSV.single("file"), async (req, res) => {
+    try {
+      const { parse } = await import("csv-parse/sync");
+      
+      // Validate file
+      if (!req.file) {
+        return res.status(400).json({ error: "CSV file is required" });
+      }
+
+      // Validate programId
+      const programId = req.body.programId;
+      if (!programId) {
+        return res.status(400).json({ error: "Program is required" });
+      }
+
+      const program = await storage.getProgramById(parseInt(programId));
+      if (!program) {
+        return res.status(400).json({ error: "Invalid program selected" });
+      }
+
+      // Parse CSV
+      const csvContent = req.file.buffer.toString("utf-8");
+      let records: any[];
+      
+      try {
+        records = parse(csvContent, {
+          columns: true,
+          skip_empty_lines: true,
+          trim: true,
+          relax_column_count: true,
+        });
+      } catch (parseError) {
+        return res.status(400).json({ error: "Invalid CSV format. Please check file structure." });
+      }
+
+      // Validate row limit
+      if (records.length > 1000) {
+        return res.status(400).json({ error: "Maximum 1000 rows allowed per upload" });
+      }
+
+      const errors: { row: number; reason: string }[] = [];
+      let created = 0;
+      const defaultPassword = "User@123";
+      const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+      // Email validation regex
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      // Process each row
+      for (let i = 0; i < records.length; i++) {
+        const row = records[i];
+        const rowNumber = i + 2; // CSV row number (1-indexed + header row)
+
+        // Get full_name (support both full_name and name columns)
+        const fullName = (row.full_name || row.name || "").trim();
+        if (!fullName) {
+          errors.push({ row: rowNumber, reason: "Missing full_name" });
+          continue;
+        }
+
+        // Get and validate email
+        const email = (row.email || "").trim().toLowerCase();
+        if (!email) {
+          errors.push({ row: rowNumber, reason: "Missing email" });
+          continue;
+        }
+        if (!emailRegex.test(email)) {
+          errors.push({ row: rowNumber, reason: "Invalid email format" });
+          continue;
+        }
+
+        // Check if email already exists
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser) {
+          errors.push({ row: rowNumber, reason: "Email already exists" });
+          continue;
+        }
+
+        // Get phone (optional)
+        const phone = (row.phone || "").trim() || null;
+
+        // Create student using existing logic (ignoring any program/password from CSV)
+        try {
+          await storage.createStudent(
+            {
+              name: fullName,
+              email,
+              phone,
+              passwordHash,
+              role: "USER",
+              status: "active",
+            },
+            program.code, // Always use program from modal, not CSV
+          );
+          created++;
+        } catch (createError: any) {
+          errors.push({ row: rowNumber, reason: createError.message || "Failed to create student" });
+        }
+      }
+
+      res.json({
+        totalRows: records.length,
+        created,
+        skipped: errors.length,
+        errors,
+      });
+    } catch (error) {
+      console.error("Error in bulk upload:", error);
+      res.status(500).json({ error: "Failed to process bulk upload" });
+    }
+  });
+
   // Admin routes: Get all programs
   app.get("/admin/v1/programs", requireAdmin, async (req, res) => {
     try {
