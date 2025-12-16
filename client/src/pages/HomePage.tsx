@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Sparkles,
   Users,
@@ -14,11 +14,13 @@ import {
   Pause,
   Volume2,
   VolumeX,
+  Flame,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import ActionCard from "@/components/ActionCard";
 import { useToast } from "@/hooks/use-toast";
 import SearchOverlay from "@/components/SearchOverlay";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface BannerData {
   banner: {
@@ -34,19 +36,56 @@ interface BannerData {
   status: "active" | "scheduled" | "expired" | "none";
 }
 
+interface StreakDay {
+  date: string;
+  active: boolean;
+}
+
 export default function HomePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [practiceProgress] = useState({ current: 15, total: 30 });
-  const [streakDays] = useState([true, true, false, true, true, false, false]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [markAttempted, setMarkAttempted] = useState(false);
 
   const { data: bannerData } = useQuery<BannerData>({
     queryKey: ["/api/public/v1/session-banner"],
   });
+
+  // Check if user is authenticated
+  const isAuthenticated = !!localStorage.getItem("@app:user_token");
+
+  // Fetch streak data - only when authenticated
+  const { data: streakData } = useQuery<StreakDay[]>({
+    queryKey: ["/api/v1/streak/last-7-days"],
+    enabled: isAuthenticated,
+  });
+
+  // Mark today mutation
+  const markTodayMutation = useMutation({
+    mutationFn: async (date: string) => {
+      const res = await apiRequest("POST", "/api/v1/streak/mark-today", { date });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/v1/streak/last-7-days"] });
+    },
+    onError: (error) => {
+      console.error("Failed to mark streak:", error);
+    },
+  });
+
+  // Mark today on page load (only once per session, only if authenticated)
+  useEffect(() => {
+    if (!markAttempted && isAuthenticated) {
+      const today = new Date().toISOString().split('T')[0];
+      setMarkAttempted(true);
+      markTodayMutation.mutate(today);
+    }
+  }, [markAttempted, isAuthenticated]);
 
   const banner = bannerData?.banner;
   const bannerStatus = bannerData?.status;
@@ -253,9 +292,59 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* 7-Day Streak Tracker - Only show when authenticated */}
+          {isAuthenticated && (
+          <div
+            className="bg-white rounded-2xl p-4 shadow-sm border border-[#232A34]/10 mt-4"
+            data-testid="card-streak"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-500" />
+                <span className="text-sm font-semibold text-[#232A34]">7-Day Streak</span>
+              </div>
+              <span className="text-xs text-gray-500">
+                {streakData ? `${streakData.filter(d => d.active).length} day${streakData.filter(d => d.active).length !== 1 ? 's' : ''} this week` : ''}
+              </span>
+            </div>
+            <div className="flex justify-between gap-1">
+              {(streakData || Array(7).fill({ date: '', active: false })).map((day, index) => {
+                const dayDate = day.date ? new Date(day.date + 'T12:00:00') : new Date();
+                const dayName = day.date ? dayDate.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0) : ['M', 'T', 'W', 'T', 'F', 'S', 'S'][index];
+                const isToday = day.date === new Date().toISOString().split('T')[0];
+                
+                return (
+                  <div
+                    key={day.date || index}
+                    className="flex flex-col items-center gap-1"
+                    data-testid={`streak-day-${index}`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                        day.active
+                          ? 'bg-gradient-to-br from-orange-400 to-orange-600 shadow-sm'
+                          : 'bg-gray-100'
+                      } ${isToday ? 'ring-2 ring-orange-300 ring-offset-1' : ''}`}
+                    >
+                      {day.active ? (
+                        <Flame className="w-4 h-4 text-white" />
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-gray-300" />
+                      )}
+                    </div>
+                    <span className={`text-xs ${day.active ? 'text-orange-600 font-medium' : 'text-gray-400'}`}>
+                      {dayName}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          )}
+
           {/* Motivational Quote Card */}
           <div
-            className="rounded-2xl p-4 shadow-md relative mt-6"
+            className="rounded-2xl p-4 shadow-md relative mt-4"
             style={{
               background: "#703DFA",
             }}

@@ -11,12 +11,14 @@ import {
   type Playlist, type InsertPlaylist,
   type PlaylistItem, type InsertPlaylistItem,
   type SessionBanner, type InsertSessionBanner,
+  type UserStreak, type InsertUserStreak,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
   cmsCourses, cmsModules, cmsLessons, cmsLessonFiles, moneyEntries,
   playlists as playlistsTable, playlistItems as playlistItemsTable,
-  sessionBanners as sessionBannersTable
+  sessionBanners as sessionBannersTable,
+  userStreaks as userStreaksTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -1004,6 +1006,39 @@ export class DbStorage implements IStorage {
       .orderBy(desc(sessionBannersTable.endAt))
       .limit(1);
     return expired;
+  }
+
+  // ===== USER STREAKS =====
+
+  async markUserActivityDate(userId: number, activityDate: string): Promise<UserStreak> {
+    const [existing] = await db
+      .select()
+      .from(userStreaksTable)
+      .where(and(eq(userStreaksTable.userId, userId), eq(userStreaksTable.activityDate, activityDate)));
+    
+    if (existing) {
+      return existing;
+    }
+
+    const [newStreak] = await db
+      .insert(userStreaksTable)
+      .values({ userId, activityDate })
+      .returning();
+    return newStreak;
+  }
+
+  async getUserStreakDates(userId: number, dates: string[]): Promise<string[]> {
+    if (dates.length === 0) return [];
+    
+    const records = await db
+      .select({ activityDate: userStreaksTable.activityDate })
+      .from(userStreaksTable)
+      .where(and(
+        eq(userStreaksTable.userId, userId),
+        inArray(userStreaksTable.activityDate, dates)
+      ));
+    
+    return records.map(r => r.activityDate);
   }
 }
 

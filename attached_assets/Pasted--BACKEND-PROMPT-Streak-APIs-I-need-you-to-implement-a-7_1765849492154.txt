@@ -1,0 +1,88 @@
+🔹 BACKEND PROMPT (Streak APIs)
+
+I need you to implement a 7-day streak system on the backend.
+
+Requirements:
+
+1. Create a database table to track daily user activity.
+   - Each record represents that a user opened the app on a specific date.
+   - Columns:
+     - id (primary key)
+     - user_id (foreign key to users)
+     - activity_date (string in YYYY-MM-DD, user’s local date)
+     - created_at
+   - Ensure (user_id + activity_date) is UNIQUE.
+
+2. Create an API endpoint to mark today as active.
+   - Endpoint: POST /api/streak/mark-today
+   - Logic:
+     - Accept the user’s local date from frontend (YYYY-MM-DD).
+     - Insert the record if it doesn’t exist.
+     - Must be idempotent (multiple calls should not create duplicates).
+     - Return success response.
+
+3. Create an API endpoint to fetch the last 7 days of activity.
+   - Endpoint: GET /api/streak/last-7-days
+   - Logic:
+     - Calculate the last 7 days including today (based on user timezone date passed or derived).
+     - Return an array of 7 objects:
+       {
+         date: "YYYY-MM-DD",
+         active: true | false
+       }
+     - If no record exists for a day, active = false.
+
+4. Do NOT store streak counts in the database.
+   - Streak must be derived from daily activity records only.
+
+5. Add proper authentication checks so users only access their own streak data.
+
+6. Handle timezone correctly:
+   - Treat activity_date as a date string, not a timestamp.
+   - Assume frontend sends correct local date.
+
+7. Write clean, maintainable, and production-ready code.
+
+
+🔹 FRONTEND PROMPT (Streak Logic + Cache)
+
+I need to integrate a 7-day streak feature on the frontend of the application
+
+Requirements:
+
+1. On app launch or Home page load:
+   - Call POST /api/streak/mark-today with the user’s local date (YYYY-MM-DD).
+   - Then call GET /api/streak/last-7-days to fetch streak data.
+
+2. Implement a local cache layer:
+   - Store the last-7-days streak response in local storage (or an abstracted storage helper).
+   - Cache is ONLY for performance and offline support, not the source of truth.
+
+3. App behavior:
+   - Load streak data from cache immediately for fast UI rendering.
+   - Sync with backend in the background.
+   - If backend response differs, update cache and re-render.
+
+4. Offline handling:
+   - If the user is offline:
+     - Load cached streak data.
+     - Optimistically mark today as active in cache.
+     - Sync with backend when network is restored.
+
+5. Streak calculation rules:
+   - Do NOT calculate or store a streak count.
+   - Use the backend-provided last-7-days data directly.
+
+6. Code structure:
+   - Create a reusable streak service/helper.
+   - Keep logic separate from UI components.
+   - Make the storage layer abstract so it can be replaced with Capacitor Preferences later without refactoring logic.
+
+7. UI:
+   - Use the existing app theme, spacing, typography, and visual language as reference.
+
+8. Ensure the solution is compatible with:
+   - Web
+   - PWA
+   - Future Capacitor Android & iOS builds
+

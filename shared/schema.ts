@@ -331,3 +331,21 @@ export const insertSessionBannerSchema = createInsertSchema(sessionBanners).omit
 
 export type InsertSessionBanner = z.infer<typeof insertSessionBannerSchema>;
 export type SessionBanner = typeof sessionBanners.$inferSelect;
+
+// User Streaks Table - tracks daily app activity for streak calculation
+export const userStreaks = pgTable("user_streaks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  activityDate: varchar("activity_date", { length: 10 }).notNull(), // YYYY-MM-DD format
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueUserActivityDate: unique("unique_user_activity_date").on(table.userId, table.activityDate),
+}));
+
+export const insertUserStreakSchema = createInsertSchema(userStreaks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertUserStreak = z.infer<typeof insertUserStreakSchema>;
+export type UserStreak = typeof userStreaks.$inferSelect;

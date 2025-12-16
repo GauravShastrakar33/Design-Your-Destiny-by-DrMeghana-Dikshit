@@ -486,6 +486,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== USER STREAK ROUTES =====
+
+  // Mark today as active for streak tracking
+  app.post("/api/v1/streak/mark-today", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { date } = req.body;
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ error: "Invalid date format. Use YYYY-MM-DD" });
+      }
+
+      await storage.markUserActivityDate(req.user.sub, date);
+      res.json({ success: true, date });
+    } catch (error) {
+      console.error("Error marking streak:", error);
+      res.status(500).json({ error: "Failed to mark activity" });
+    }
+  });
+
+  // Get last 7 days of streak activity
+  app.get("/api/v1/streak/last-7-days", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const baseDate = req.query.date as string || new Date().toISOString().split('T')[0];
+      
+      const dates: string[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() - i);
+        dates.push(d.toISOString().split('T')[0]);
+      }
+
+      const activeDates = await storage.getUserStreakDates(req.user.sub, dates);
+      const activeDateSet = new Set(activeDates);
+
+      const result = dates.map(date => ({
+        date,
+        active: activeDateSet.has(date)
+      }));
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching streak:", error);
+      res.status(500).json({ error: "Failed to fetch streak data" });
+    }
+  });
+
   // Admin routes: Get all sessions (including inactive)
   app.get("/api/admin/sessions", requireAdmin, async (req, res) => {
     try {
