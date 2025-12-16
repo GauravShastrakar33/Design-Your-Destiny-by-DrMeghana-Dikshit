@@ -1,0 +1,138 @@
+### Admin portal
+### User Management -> Students
+
+Context
+We already have an User Management System with Admin and Students.
+We have student system with:
+* Student list table
+* “Add Student” modal
+* Backend logic to create a student with:
+    * full_name (required)
+    * email (required, unique)
+    * phone (optional)
+    * password (optional → defaults to User@123)
+    * program (required)
+    * status = Active
+
+We now need to implement Bulk Upload Students using CSV, behaving exactly like Add Student, but in bulk.
+
+🔹 REQUIREMENT: BULK UPLOAD STUDENTS (CSV)
+
+1️⃣ UI REQUIREMENTS (Students Page)
+Button
+* Add a “Bulk Upload” button next to “Add Student”
+On Click
+* Open a modal / drawer
+Modal Contents
+* CSV file upload input (required)
+* Program dropdown (required)
+    * Dropdown populated from existing programs
+* “Download Sample CSV” link
+* Upload button
+* Cancel button
+* Validation + error summary area
+❌ Upload must be blocked if:
+* CSV is not selected
+* Program is not selected
+
+2️⃣ CSV FORMAT (STRICT)
+
+full_name,email,phone
+
+Column Rules
+* full_name → required
+* email → required, must be unique
+* phone → optional
+* program → optional column, IGNORED if present
+* password → optional column, IGNORED if present
+* Extra columns → ignored
+* Header row → mandatory
+
+⚠️ Program assignment always comes from the Bulk Upload modal dropdown, not from the CSV.
+⚠️ Password is always set using system default (User@123), regardless of CSV content.
+
+
+🔒 Important Safety Note (Must be in prompt)
+* CSV must never override:
+    * program
+    * password
+* Even if column exists, backend must ignore it completely.
+
+
+3️⃣ API ENDPOINT
+
+POST /api/admin/students/bulk-upload
+Request
+* multipart/form-data
+* CSV file key: file
+* Program identifier key: programId
+* Admin-only access
+
+4️⃣ BACKEND LOGIC
+Step 1: Request Validation
+* Validate admin role
+* Validate programId exists
+* Accept only .csv files
+* Max rows: 1000
+
+Step 2: CSV Parsing
+* Parse CSV using a robust parser
+* Trim all values
+* Ignore empty rows
+
+Step 3: Row Validation
+For each row:
+* If full_name missing → skip
+* If email missing or invalid → skip
+* If email already exists → skip
+Each skipped row must capture:
+* Row number
+* Clear reason
+
+Step 4: Student Creation
+For each valid row:
+* Create student using the same service / logic as Add Student
+* Set:
+    * full_name
+    * email
+    * phone
+    * password → default (User@123)
+    * program → from programId (mandatory)
+    * status → Active
+* Use DB transactions
+* Do NOT fail entire upload if a row fails
+
+5️⃣ RESPONSE FORMAT (MANDATORY)
+
+{
+  "totalRows": 40,
+  "created": 32,
+  "skipped": 8,
+  "errors": [
+    { "row": 5, "reason": "Email already exists" },
+    { "row": 12, "reason": "Invalid email format" }
+  ]
+}
+* row numbering excludes header
+* errors must always be returned (empty array if none)
+
+6️⃣ SECURITY & SAFETY
+* Admin-only API
+* Prevent duplicate user creation
+* Do NOT send emails
+* Do NOT auto-login users
+* Do NOT store raw CSV after processing
+
+7️⃣ SUCCESS CRITERIA
+* Admin can upload CSV via modal
+* Program is mandatory and selected once
+* Students are created exactly like Add Student
+* Partial success allowed
+* Clear error reporting
+* Student list updates correctly
+
+8️⃣ IMPORTANT IMPLEMENTATION NOTES
+* Do NOT create a parallel user creation flow
+
+✅ FINAL DESIGN CONFIRMATION
+✔ Program comes from UI dropdown ✔ CSV contains only student identity fields ✔ No passwords in CSV ✔ Clean admin experience ✔ Secure by default
