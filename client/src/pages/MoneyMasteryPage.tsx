@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Calendar, Brain, CheckCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ArrowLeft, Calendar, Brain, CheckCircle, ChevronLeft, ChevronRight, X, BookOpen, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,25 @@ interface MoneyEarnings {
   [date: string]: number; // "2025-10-01": 400
 }
 
+interface AbundanceCourse {
+  id: number;
+  title: string;
+  description: string | null;
+  thumbnailKey: string | null;
+  position: number;
+  isBuiltIn: boolean;
+}
+
+interface AbundanceFeatureResponse {
+  feature: {
+    id: number;
+    code: string;
+    displayMode: string;
+  };
+  builtIns: Array<{ id: string; title: string; isBuiltIn: boolean }>;
+  courses: AbundanceCourse[];
+}
+
 export default function MoneyMasteryPage() {
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState(new Date());
@@ -23,6 +43,18 @@ export default function MoneyMasteryPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [earningAmount, setEarningAmount] = useState("");
+
+  // Fetch courses mapped to ABUNDANCE feature
+  const { data: abundanceData, isLoading: isLoadingCourses } = useQuery<AbundanceFeatureResponse>({
+    queryKey: ["/api/public/v1/features", "ABUNDANCE"],
+    queryFn: async () => {
+      const response = await fetch("/api/public/v1/features/ABUNDANCE");
+      if (!response.ok) throw new Error("Failed to fetch abundance courses");
+      return response.json();
+    },
+  });
+
+  const mappedCourses = (abundanceData?.courses || []).sort((a, b) => a.position - b.position);
 
   useEffect(() => {
     // Check if beliefs are saved
@@ -357,6 +389,38 @@ export default function MoneyMasteryPage() {
               </div>
             </div>
           </Card>
+
+          {/* Mapped CMS Courses */}
+          {isLoadingCourses && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#703DFA" }} />
+            </div>
+          )}
+
+          {!isLoadingCourses && mappedCourses.length > 0 && (
+            <div className="space-y-4">
+              {mappedCourses.map((course) => (
+                <Card 
+                  key={course.id}
+                  className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
+                  onClick={() => setLocation(`/abundance-mastery/course/${course.id}`)}
+                  data-testid={`card-course-${course.id}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <BookOpen className="w-7 h-7 flex-shrink-0" style={{ color: "#703DFA" }} />
+                    <div className="flex-1">
+                      <h2 className="text-foreground text-lg font-bold mb-1">{course.title}</h2>
+                      {course.description && (
+                        <p className="text-muted-foreground text-sm line-clamp-2">
+                          {course.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
