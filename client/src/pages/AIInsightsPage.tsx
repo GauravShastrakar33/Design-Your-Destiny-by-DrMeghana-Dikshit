@@ -75,12 +75,15 @@ export default function AIInsightsPage() {
       const response = await fetch(`/api/v1/activity/monthly-stats?month=${selectedMonth?.value}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("@app:user_token")}`,
+          'Cache-Control': 'no-cache',
         },
       });
       if (!response.ok) throw new Error("Failed to fetch monthly stats");
       return response.json();
     },
     enabled: isAuthenticated && !!selectedMonth,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const handlePrevMonth = () => {

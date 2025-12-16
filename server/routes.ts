@@ -588,7 +588,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const month = (req.query.month as string) || new Date().toISOString().slice(0, 7);
 
+      console.log(`[monthly-stats] Fetching stats for userId=${req.user.sub}, month=${month}`);
+      
       const stats = await storage.getMonthlyStats(req.user.sub, month);
+      
+      console.log(`[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, BREATH=${stats.BREATH.length}, CHECKLIST=${stats.CHECKLIST.length}`);
+      
+      res.set('Cache-Control', 'no-store');
       res.json(stats);
     } catch (error) {
       console.error("Error fetching monthly stats:", error);
