@@ -149,6 +149,7 @@ Preferred communication style: Simple, everyday language.
 - **Frontend Page**: `/search` with debounced input (300ms), grouped results by type
 
 ## Recent Changes
+- **December 2025**: Added Bulk Upload Students feature in Admin → Students page. Allows uploading CSV files with full_name, email, phone columns. Program is assigned from modal dropdown (not CSV). Default password is User@123. Max 1000 rows per upload. Returns detailed error reporting with row numbers. API: `POST /api/admin/students/bulk-upload` and `GET /api/admin/students/sample-csv`.
 - **December 2025**: PDF files uploaded via admin are now automatically extracted to formatted HTML and displayed inline in Processes/Spiritual Breaths pages instead of showing a PDF download button. Uses pdf2json library (NOT pdf-parse) for better line-by-line preservation. The `convertTextToFormattedHtml` function in server/routes.ts applies:
   - Preserves intentional line breaks within paragraphs using `<br>` tags
   - Empty lines create separate paragraph blocks
