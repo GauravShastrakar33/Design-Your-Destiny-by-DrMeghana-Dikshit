@@ -53,7 +53,10 @@ function getAvailableMonths(): { value: string; label: string }[] {
   
   for (let i = 0; i < 6; i++) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const value = date.toISOString().slice(0, 7);
+    // Use local date formatting to avoid UTC timezone shift issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const value = `${year}-${month}`;
     const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     months.push({ value, label });
   }
