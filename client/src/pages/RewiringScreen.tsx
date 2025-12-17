@@ -1,60 +1,110 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, Brain, Zap, Plus, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Brain, Zap, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-interface BeliefPair {
-  limiting: string;
-  uplifting: string;
-}
+import type { RewiringBelief } from "@shared/schema";
 
 export default function RewiringScreen() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [beliefs, setBeliefs] = useState<BeliefPair[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingBelief, setEditingBelief] = useState<RewiringBelief | null>(null);
   const [formData, setFormData] = useState({ limiting: "", uplifting: "" });
 
-  // Load saved beliefs on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("@app:rewiring_beliefs");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.length > 0) {
-          // Remove 'hidden' property if it exists from old format
-          const cleaned = parsed.map((b: any) => ({
-            limiting: b.limiting,
-            uplifting: b.uplifting,
-          }));
-          setBeliefs(cleaned);
-        }
-      } catch (error) {
-        console.error("Error loading beliefs:", error);
-      }
-    }
-  }, []);
+  const { data: beliefs = [], isLoading } = useQuery<RewiringBelief[]>({
+    queryKey: ["/api/v1/rewiring-beliefs"],
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: { limitingBelief: string; upliftingBelief: string }) => {
+      const res = await apiRequest("POST", "/api/v1/rewiring-beliefs", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/v1/rewiring-beliefs"] });
+      setShowModal(false);
+      setFormData({ limiting: "", uplifting: "" });
+      toast({
+        title: "Beautiful progress, Champion!",
+        description: "Your belief is saved.",
+        className: "bg-[#FCE2B7] text-[#2E2C28] border-[#F4B860]",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save belief. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: { limitingBelief: string; upliftingBelief: string } }) => {
+      const res = await apiRequest("PUT", `/api/v1/rewiring-beliefs/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/v1/rewiring-beliefs"] });
+      setShowModal(false);
+      setEditingBelief(null);
+      setFormData({ limiting: "", uplifting: "" });
+      toast({
+        title: "Beautiful progress, Champion!",
+        description: "Your belief is updated.",
+        className: "bg-[#FCE2B7] text-[#2E2C28] border-[#F4B860]",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update belief. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/v1/rewiring-beliefs/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/v1/rewiring-beliefs"] });
+      toast({
+        title: "Belief removed",
+        description: "Your belief has been deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete belief. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleOpenAddModal = () => {
-    setEditingIndex(null);
+    setEditingBelief(null);
     setFormData({ limiting: "", uplifting: "" });
     setShowModal(true);
   };
 
-  const handleOpenEditModal = (index: number) => {
-    setEditingIndex(index);
-    setFormData({ ...beliefs[index] });
+  const handleOpenEditModal = (belief: RewiringBelief) => {
+    setEditingBelief(belief);
+    setFormData({ limiting: belief.limitingBelief, uplifting: belief.upliftingBelief });
     setShowModal(true);
   };
 
@@ -68,15 +118,15 @@ export default function RewiringScreen() {
       return;
     }
 
-    let updatedBeliefs: BeliefPair[];
-
-    if (editingIndex !== null) {
-      // Edit existing belief
-      updatedBeliefs = [...beliefs];
-      updatedBeliefs[editingIndex] = formData;
-      setBeliefs(updatedBeliefs);
+    if (editingBelief) {
+      updateMutation.mutate({
+        id: editingBelief.id,
+        data: {
+          limitingBelief: formData.limiting.trim(),
+          upliftingBelief: formData.uplifting.trim(),
+        },
+      });
     } else {
-      // Add new belief
       if (beliefs.length >= 5) {
         toast({
           title: "Maximum beliefs reached",
@@ -85,39 +135,18 @@ export default function RewiringScreen() {
         });
         return;
       }
-      updatedBeliefs = [...beliefs, formData];
-      setBeliefs(updatedBeliefs);
+      createMutation.mutate({
+        limitingBelief: formData.limiting.trim(),
+        upliftingBelief: formData.uplifting.trim(),
+      });
     }
-
-    // Save immediately with the computed array
-    localStorage.setItem("@app:rewiring_beliefs", JSON.stringify(updatedBeliefs));
-    localStorage.setItem("@app:rewiring_last_update", Date.now().toString());
-
-    setShowModal(false);
-    setFormData({ limiting: "", uplifting: "" });
-
-    toast({
-      title: "Beautiful progress, Champion!",
-      description: editingIndex !== null ? "Your belief is updated." : "Your belief is saved.",
-      className: "bg-[#FCE2B7] text-[#2E2C28] border-[#F4B860]",
-    });
   };
 
-  const handleDeleteBelief = (index: number) => {
-    const updatedBeliefs = beliefs.filter((_, i) => i !== index);
-    
-    // Update state
-    setBeliefs(updatedBeliefs);
-    
-    // Save immediately with the computed array
-    localStorage.setItem("@app:rewiring_beliefs", JSON.stringify(updatedBeliefs));
-    localStorage.setItem("@app:rewiring_last_update", Date.now().toString());
-
-    toast({
-      title: "Belief removed",
-      description: "Your belief has been deleted.",
-    });
+  const handleDeleteBelief = (belief: RewiringBelief) => {
+    deleteMutation.mutate(belief.id);
   };
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: "#FFFDF8" }}>
@@ -171,7 +200,11 @@ export default function RewiringScreen() {
 
         {/* Main Content - Belief Cards */}
         <div className="px-4 py-6 space-y-4">
-          {beliefs.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#F4B860" }} />
+            </div>
+          ) : beliefs.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-sm mb-2" style={{ color: "#726C63" }}>
                 No beliefs yet
@@ -181,9 +214,9 @@ export default function RewiringScreen() {
               </p>
             </div>
           ) : (
-            beliefs.map((belief, index) => (
+            beliefs.map((belief) => (
               <Card
-                key={index}
+                key={belief.id}
                 className="p-5 relative"
                 style={{
                   backgroundColor: "#FFFFFF",
@@ -191,7 +224,7 @@ export default function RewiringScreen() {
                   borderRadius: "1rem",
                   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
                 }}
-                data-testid={`belief-card-${index}`}
+                data-testid={`belief-card-${belief.id}`}
               >
                 {/* Limiting Belief Section */}
                 <div className="mb-4">
@@ -204,9 +237,9 @@ export default function RewiringScreen() {
                   <p
                     className="text-xl font-medium leading-relaxed"
                     style={{ color: "#2E2C28", lineHeight: "1.6" }}
-                    data-testid={`belief-limiting-text-${index}`}
+                    data-testid={`belief-limiting-text-${belief.id}`}
                   >
-                    {belief.limiting}
+                    {belief.limitingBelief}
                   </p>
                 </div>
 
@@ -221,32 +254,38 @@ export default function RewiringScreen() {
                   <p
                     className="text-xl font-medium leading-relaxed"
                     style={{ color: "#2E2C28", lineHeight: "1.6" }}
-                    data-testid={`belief-uplifting-text-${index}`}
+                    data-testid={`belief-uplifting-text-${belief.id}`}
                   >
-                    {belief.uplifting}
+                    {belief.upliftingBelief}
                   </p>
                 </div>
 
                 {/* Action Row: Edit and Delete on same line */}
                 <div className="flex items-center justify-end gap-2 pt-3 border-t" style={{ borderColor: "#F0F0F0" }}>
                   <Button
-                    onClick={() => handleOpenEditModal(index)}
+                    onClick={() => handleOpenEditModal(belief)}
                     size="sm"
                     variant="outline"
                     className="gap-1.5"
-                    data-testid={`button-edit-${index}`}
+                    disabled={deleteMutation.isPending}
+                    data-testid={`button-edit-${belief.id}`}
                   >
                     <Pencil className="w-4 h-4" />
                     Edit
                   </Button>
                   <Button
-                    onClick={() => handleDeleteBelief(index)}
+                    onClick={() => handleDeleteBelief(belief)}
                     size="sm"
                     variant="outline"
                     className="gap-1.5"
-                    data-testid={`button-delete-${index}`}
+                    disabled={deleteMutation.isPending}
+                    data-testid={`button-delete-${belief.id}`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    {deleteMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
                     Delete
                   </Button>
                 </div>
@@ -255,7 +294,7 @@ export default function RewiringScreen() {
           )}
 
           {/* Floating Add Button */}
-          {beliefs.length < 5 && (
+          {!isLoading && beliefs.length < 5 && (
             <div className="flex justify-center pt-4">
               <button
                 onClick={handleOpenAddModal}
@@ -272,7 +311,7 @@ export default function RewiringScreen() {
           )}
 
           {/* Max beliefs message */}
-          {beliefs.length >= 5 && (
+          {!isLoading && beliefs.length >= 5 && (
             <p className="text-center text-sm italic pt-2" style={{ color: "#726C63" }}>
               Max 5 beliefs reached
             </p>
@@ -294,7 +333,7 @@ export default function RewiringScreen() {
               className="text-xl font-semibold"
               style={{ color: "#2E2C28", fontFamily: "Poppins, sans-serif" }}
             >
-              {editingIndex !== null ? "Edit Belief Pair" : "Add New Belief Pair"}
+              {editingBelief ? "Edit Belief Pair" : "Add New Belief Pair"}
             </DialogTitle>
           </DialogHeader>
 
@@ -349,6 +388,7 @@ export default function RewiringScreen() {
             <Button
               onClick={handleSaveModal}
               className="w-full font-semibold"
+              disabled={isPending}
               style={{
                 background: "linear-gradient(90deg, #FFD580, #F8A14D)",
                 color: "#2E2C28",
@@ -356,6 +396,9 @@ export default function RewiringScreen() {
               }}
               data-testid="button-save-modal"
             >
+              {isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
               Save
             </Button>
           </div>

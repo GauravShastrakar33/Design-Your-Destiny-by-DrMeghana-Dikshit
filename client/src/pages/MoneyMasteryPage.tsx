@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Calendar, Brain, CheckCircle, ChevronLeft, ChevronRight, X, BookOpen, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, Brain, CheckCircle, ChevronLeft, ChevronRight, BookOpen, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -10,9 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { RewiringBelief } from "@shared/schema";
 
 interface MoneyEarnings {
-  [date: string]: number; // "2025-10-01": 400
+  [date: string]: number;
 }
 
 interface AbundanceCourse {
@@ -37,14 +38,11 @@ interface AbundanceFeatureResponse {
 export default function MoneyMasteryPage() {
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [hasBeliefs, setHasBeliefs] = useState(false);
-  const [lastUpdatedToday, setLastUpdatedToday] = useState(false);
   const [earnings, setEarnings] = useState<MoneyEarnings>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [earningAmount, setEarningAmount] = useState("");
 
-  // Fetch courses mapped to ABUNDANCE feature
   const { data: abundanceData, isLoading: isLoadingCourses } = useQuery<AbundanceFeatureResponse>({
     queryKey: ["/api/public/v1/features", "ABUNDANCE"],
     queryFn: async () => {
@@ -54,29 +52,13 @@ export default function MoneyMasteryPage() {
     },
   });
 
+  const { data: beliefs = [], isLoading: isLoadingBeliefs } = useQuery<RewiringBelief[]>({
+    queryKey: ["/api/v1/rewiring-beliefs"],
+  });
+
   const mappedCourses = (abundanceData?.courses || []).sort((a, b) => a.position - b.position);
 
   useEffect(() => {
-    // Check if beliefs are saved
-    const saved = localStorage.getItem("@app:rewiring_beliefs");
-    const lastUpdate = localStorage.getItem("@app:rewiring_last_update");
-    
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setHasBeliefs(parsed.length > 0);
-      } catch (error) {
-        setHasBeliefs(false);
-      }
-    }
-
-    if (lastUpdate) {
-      const today = new Date().toDateString();
-      const updateDate = new Date(parseInt(lastUpdate)).toDateString();
-      setLastUpdatedToday(today === updateDate);
-    }
-
-    // Load earnings from localStorage
     const savedEarnings = localStorage.getItem("@app:money_earnings");
     if (savedEarnings) {
       try {
@@ -273,7 +255,7 @@ export default function MoneyMasteryPage() {
                     </span>
                     {hasEarning && (
                       <span className="text-[10px] font-semibold">
-                        ₹{earning}
+                        ${earning}
                       </span>
                     )}
                   </button>
@@ -286,18 +268,18 @@ export default function MoneyMasteryPage() {
               <h3 className="text-sm font-semibold text-foreground mb-2">Monthly Summary</h3>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Total Earnings:</span>
-                <span className="text-lg font-bold text-green-600">₹{summary.total.toFixed(0)}</span>
+                <span className="text-lg font-bold text-green-600">${summary.total.toFixed(0)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Highest Day:</span>
                 <span className="text-sm font-semibold text-foreground">
-                  {summary.highest > 0 ? `₹${summary.highest.toFixed(0)}` : '-'}
+                  {summary.highest > 0 ? `$${summary.highest.toFixed(0)}` : '-'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Average/Day:</span>
                 <span className="text-sm font-semibold text-foreground">
-                  {summary.average > 0 ? `₹${summary.average.toFixed(0)}` : '-'}
+                  {summary.average > 0 ? `$${summary.average.toFixed(0)}` : '-'}
                 </span>
               </div>
             </div>
@@ -314,7 +296,7 @@ export default function MoneyMasteryPage() {
               <div className="space-y-4 py-4">
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
-                    Amount (₹)
+                    Amount ($)
                   </label>
                   <input
                     type="number"
@@ -347,48 +329,112 @@ export default function MoneyMasteryPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Rewiring Belief */}
-          <Card 
-            className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md h-[140px]"
-            onClick={() => setLocation("/rewiring-belief")}
-            data-testid="card-rewiring-belief"
-          >
-            <div className="flex flex-col h-full">
-              <div className="flex items-start gap-3 mb-1 flex-1">
-                <Brain className="w-7 h-7 flex-shrink-0" style={{ color: "#703DFA" }} />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h2 className="text-foreground text-lg font-bold">Rewiring Belief</h2>
-                    {hasBeliefs && (
-                      <CheckCircle className="w-5 h-5" style={{ color: "#703DFA" }} data-testid="check-icon" />
-                    )}
-                  </div>
-                  <p className="text-muted-foreground text-sm">
-                    Transform limiting beliefs into empowering ones
-                  </p>
-                  {lastUpdatedToday && (
-                    <p className="text-muted-foreground text-xs italic mt-1" data-testid="text-updated-today">
-                      Beliefs updated today
-                    </p>
-                  )}
+          {/* Rewiring Belief Cards */}
+          {isLoadingBeliefs ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#703DFA" }} />
+            </div>
+          ) : beliefs.length > 0 ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-5 h-5" style={{ color: "#703DFA" }} />
+                  <h2 className="text-lg font-semibold text-foreground">My Rewired Beliefs</h2>
                 </div>
-              </div>
-              <div className="flex justify-end">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="bg-white text-black border-border"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLocation("/rewiring-belief");
-                  }}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocation("/rewiring-belief")}
+                  data-testid="button-manage-beliefs"
                 >
-                  <span className="mr-1 text-sm">Start Rewiring</span>
-                  <span style={{ color: "#703DFA" }}>→</span>
+                  Manage
                 </Button>
               </div>
+              {beliefs.map((belief) => (
+                <Card
+                  key={belief.id}
+                  className="p-4 bg-white"
+                  style={{
+                    borderRadius: "1rem",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+                  }}
+                  data-testid={`belief-display-card-${belief.id}`}
+                >
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start gap-3">
+                      <div 
+                        className="w-2 h-2 rounded-full mt-2 flex-shrink-0" 
+                        style={{ backgroundColor: "#EF4444" }}
+                      />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                          Limiting
+                        </p>
+                        <p 
+                          className="text-sm text-foreground line-through opacity-60"
+                          data-testid={`display-limiting-${belief.id}`}
+                        >
+                          {belief.limitingBelief}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div 
+                        className="w-2 h-2 rounded-full mt-2 flex-shrink-0" 
+                        style={{ backgroundColor: "#10B981" }}
+                      />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                          Rewired
+                        </p>
+                        <p 
+                          className="text-sm font-medium text-foreground"
+                          data-testid={`display-uplifting-${belief.id}`}
+                        >
+                          {belief.upliftingBelief}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
-          </Card>
+          ) : (
+            /* Rewiring Belief CTA Card - show only when no beliefs exist */
+            <Card 
+              className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md h-[140px]"
+              onClick={() => setLocation("/rewiring-belief")}
+              data-testid="card-rewiring-belief"
+            >
+              <div className="flex flex-col h-full">
+                <div className="flex items-start gap-3 mb-1 flex-1">
+                  <Brain className="w-7 h-7 flex-shrink-0" style={{ color: "#703DFA" }} />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h2 className="text-foreground text-lg font-bold">Rewiring Belief</h2>
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      Transform limiting beliefs into empowering ones
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="bg-white text-black border-border"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocation("/rewiring-belief");
+                    }}
+                  >
+                    <span className="mr-1 text-sm">Start Rewiring</span>
+                    <span style={{ color: "#703DFA" }}>→</span>
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* Mapped CMS Courses */}
           {isLoadingCourses && (
