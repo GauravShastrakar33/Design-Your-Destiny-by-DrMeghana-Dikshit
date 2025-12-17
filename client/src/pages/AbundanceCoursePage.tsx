@@ -63,7 +63,7 @@ export default function AbundanceCoursePage() {
         <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
           <div className="px-4 py-4 flex items-center gap-3">
             <button
-              onClick={() => setLocation("/search")}
+              onClick={() => setLocation("/abundance-mastery")}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
               data-testid="button-back"
             >
@@ -110,7 +110,7 @@ export default function AbundanceCoursePage() {
                   <Card
                     key={module.id}
                     className="p-4 hover-elevate active-elevate-2 cursor-pointer"
-                    onClick={() => setLocation(`/processes/module/${module.id}`)}
+                    onClick={() => setLocation(`/processes/module/${module.id}?from=abundance&courseId=${courseId}`)}
                     data-testid={`module-card-${module.id}`}
                   >
                     <div className="flex items-center gap-3">

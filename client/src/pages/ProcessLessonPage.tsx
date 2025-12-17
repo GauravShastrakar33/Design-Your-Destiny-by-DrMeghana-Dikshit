@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, useSearch } from "wouter";
 import { ArrowLeft, Loader2, Video, Music, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -22,6 +22,23 @@ export default function ProcessLessonPage() {
   const [hasLoggedActivity, setHasLoggedActivity] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const fromAbundance = searchParams.get("from") === "abundance";
+  const courseId = searchParams.get("courseId");
+  const moduleId = searchParams.get("moduleId");
+
+  const handleBack = () => {
+    if (moduleId) {
+      const moduleUrl = fromAbundance && courseId
+        ? `/processes/module/${moduleId}?from=abundance&courseId=${courseId}`
+        : `/processes/module/${moduleId}`;
+      setLocation(moduleUrl);
+    } else {
+      setLocation("/processes");
+    }
+  };
 
   const isAuthenticated = !!localStorage.getItem("@app:user_token");
 
@@ -122,7 +139,7 @@ export default function ProcessLessonPage() {
         <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
           <div className="px-4 py-4 flex items-center gap-3">
             <button
-              onClick={() => window.history.back()}
+              onClick={handleBack}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
               data-testid="button-back"
             >

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, useSearch } from "wouter";
 import { ArrowLeft, Loader2, FileText, Play } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import type { CmsModule, CmsLesson } from "@shared/schema";
@@ -13,6 +13,18 @@ export default function ProcessModulePage() {
   const params = useParams();
   const moduleId = params.moduleId;
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const fromAbundance = searchParams.get("from") === "abundance";
+  const courseId = searchParams.get("courseId");
+
+  const handleBack = () => {
+    if (fromAbundance && courseId) {
+      setLocation(`/abundance-mastery/course/${courseId}`);
+    } else {
+      setLocation("/processes");
+    }
+  };
 
   const { data, isLoading, error } = useQuery<ModuleResponse>({
     queryKey: ["/api/public/v1/modules", moduleId],
@@ -59,7 +71,7 @@ export default function ProcessModulePage() {
         <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
           <div className="px-4 py-4 flex items-center gap-3">
             <button
-              onClick={() => setLocation("/processes")}
+              onClick={handleBack}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
               data-testid="button-back"
             >
@@ -88,7 +100,12 @@ export default function ProcessModulePage() {
                 <Card
                   key={lesson.id}
                   className="p-4 hover-elevate active-elevate-2 cursor-pointer"
-                  onClick={() => setLocation(`/processes/lesson/${lesson.id}`)}
+                  onClick={() => {
+                    const lessonUrl = fromAbundance && courseId
+                      ? `/processes/lesson/${lesson.id}?from=abundance&courseId=${courseId}&moduleId=${moduleId}`
+                      : `/processes/lesson/${lesson.id}?moduleId=${moduleId}`;
+                    setLocation(lessonUrl);
+                  }}
                   data-testid={`lesson-card-${lesson.id}`}
                 >
                   <div className="flex items-center gap-3">
