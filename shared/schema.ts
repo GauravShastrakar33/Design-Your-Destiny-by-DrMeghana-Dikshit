@@ -400,3 +400,22 @@ export const insertDailyQuoteSchema = createInsertSchema(dailyQuotes).omit({
 
 export type InsertDailyQuote = z.infer<typeof insertDailyQuoteSchema>;
 export type DailyQuote = typeof dailyQuotes.$inferSelect;
+
+// Rewiring Beliefs Table - user-specific limiting/uplifting belief pairs
+export const rewiringBeliefs = pgTable("rewiring_beliefs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  limitingBelief: text("limiting_belief").notNull(),
+  upliftingBelief: text("uplifting_belief").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertRewiringBeliefSchema = createInsertSchema(rewiringBeliefs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertRewiringBelief = z.infer<typeof insertRewiringBeliefSchema>;
+export type RewiringBelief = typeof rewiringBeliefs.$inferSelect;

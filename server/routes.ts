@@ -604,6 +604,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== REWIRING BELIEFS ROUTES =====
+
+  // GET /api/v1/rewiring-beliefs - Get all beliefs for authenticated user
+  app.get("/api/v1/rewiring-beliefs", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const beliefs = await storage.getRewiringBeliefsByUserId(req.user.sub);
+      res.json(beliefs);
+    } catch (error) {
+      console.error("Error fetching rewiring beliefs:", error);
+      res.status(500).json({ error: "Failed to fetch beliefs" });
+    }
+  });
+
+  // POST /api/v1/rewiring-beliefs - Create a new belief pair
+  app.post("/api/v1/rewiring-beliefs", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { limitingBelief, upliftingBelief } = req.body;
+
+      if (!limitingBelief || typeof limitingBelief !== 'string' || !limitingBelief.trim()) {
+        return res.status(400).json({ error: "Limiting belief is required" });
+      }
+      if (!upliftingBelief || typeof upliftingBelief !== 'string' || !upliftingBelief.trim()) {
+        return res.status(400).json({ error: "Uplifting belief is required" });
+      }
+
+      const belief = await storage.createRewiringBelief({
+        userId: req.user.sub,
+        limitingBelief: limitingBelief.trim(),
+        upliftingBelief: upliftingBelief.trim(),
+      });
+
+      res.status(201).json(belief);
+    } catch (error) {
+      console.error("Error creating rewiring belief:", error);
+      res.status(500).json({ error: "Failed to create belief" });
+    }
+  });
+
+  // PUT /api/v1/rewiring-beliefs/:id - Update an existing belief (user can only update their own)
+  app.put("/api/v1/rewiring-beliefs/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid belief ID" });
+      }
+
+      const { limitingBelief, upliftingBelief } = req.body;
+      const updates: { limitingBelief?: string; upliftingBelief?: string } = {};
+
+      if (limitingBelief !== undefined) {
+        if (typeof limitingBelief !== 'string' || !limitingBelief.trim()) {
+          return res.status(400).json({ error: "Limiting belief cannot be empty" });
+        }
+        updates.limitingBelief = limitingBelief.trim();
+      }
+
+      if (upliftingBelief !== undefined) {
+        if (typeof upliftingBelief !== 'string' || !upliftingBelief.trim()) {
+          return res.status(400).json({ error: "Uplifting belief cannot be empty" });
+        }
+        updates.upliftingBelief = upliftingBelief.trim();
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: "No updates provided" });
+      }
+
+      const updated = await storage.updateRewiringBelief(id, req.user.sub, updates);
+
+      if (!updated) {
+        return res.status(404).json({ error: "Belief not found or not authorized" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating rewiring belief:", error);
+      res.status(500).json({ error: "Failed to update belief" });
+    }
+  });
+
+  // DELETE /api/v1/rewiring-beliefs/:id - Delete a belief (user can only delete their own)
+  app.delete("/api/v1/rewiring-beliefs/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid belief ID" });
+      }
+
+      const success = await storage.deleteRewiringBelief(id, req.user.sub);
+
+      if (!success) {
+        return res.status(404).json({ error: "Belief not found or not authorized" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting rewiring belief:", error);
+      res.status(500).json({ error: "Failed to delete belief" });
+    }
+  });
+
   // Admin routes: Get all sessions (including inactive)
   app.get("/api/admin/sessions", requireAdmin, async (req, res) => {
     try {

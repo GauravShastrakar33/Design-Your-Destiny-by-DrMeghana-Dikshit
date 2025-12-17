@@ -13,6 +13,7 @@ import {
   type SessionBanner, type InsertSessionBanner,
   type UserStreak, type InsertUserStreak,
   type ActivityLog, type InsertActivityLog, type FeatureType,
+  type RewiringBelief, type InsertRewiringBelief,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -20,7 +21,8 @@ import {
   playlists as playlistsTable, playlistItems as playlistItemsTable,
   sessionBanners as sessionBannersTable,
   userStreaks as userStreaksTable,
-  activityLogs as activityLogsTable
+  activityLogs as activityLogsTable,
+  rewiringBeliefs as rewiringBeliefsTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -1175,6 +1177,54 @@ export class DbStorage implements IStorage {
     result.CHECKLIST.sort((a, b) => b.count - a.count);
 
     return result;
+  }
+
+  // ===== REWIRING BELIEFS =====
+
+  async getRewiringBeliefsByUserId(userId: number): Promise<RewiringBelief[]> {
+    const beliefs = await db
+      .select()
+      .from(rewiringBeliefsTable)
+      .where(eq(rewiringBeliefsTable.userId, userId))
+      .orderBy(desc(rewiringBeliefsTable.createdAt));
+    return beliefs;
+  }
+
+  async getRewiringBeliefById(id: number): Promise<RewiringBelief | undefined> {
+    const [belief] = await db
+      .select()
+      .from(rewiringBeliefsTable)
+      .where(eq(rewiringBeliefsTable.id, id));
+    return belief;
+  }
+
+  async createRewiringBelief(belief: InsertRewiringBelief): Promise<RewiringBelief> {
+    const [newBelief] = await db
+      .insert(rewiringBeliefsTable)
+      .values(belief)
+      .returning();
+    return newBelief;
+  }
+
+  async updateRewiringBelief(
+    id: number,
+    userId: number,
+    updates: Partial<Pick<InsertRewiringBelief, 'limitingBelief' | 'upliftingBelief'>>
+  ): Promise<RewiringBelief | undefined> {
+    const [updated] = await db
+      .update(rewiringBeliefsTable)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(rewiringBeliefsTable.id, id), eq(rewiringBeliefsTable.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async deleteRewiringBelief(id: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(rewiringBeliefsTable)
+      .where(and(eq(rewiringBeliefsTable.id, id), eq(rewiringBeliefsTable.userId, userId)))
+      .returning();
+    return result.length > 0;
   }
 }
 
