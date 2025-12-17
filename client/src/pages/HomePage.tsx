@@ -56,6 +56,11 @@ export default function HomePage() {
     queryKey: ["/api/public/v1/session-banner"],
   });
 
+  // Fetch today's daily quote
+  const { data: quoteData } = useQuery<{ quote: string | null; author: string | null }>({
+    queryKey: ["/api/quotes/today"],
+  });
+
   // Check if user is authenticated
   const isAuthenticated = !!localStorage.getItem("@app:user_token");
 
@@ -369,30 +374,25 @@ export default function HomePage() {
             </button>
           )}
 
-          {/* Motivational Quote Card */}
-          <div
-            className="rounded-2xl p-4 shadow-md relative mt-4"
-            style={{
-              background: "#703DFA",
-            }}
-            data-testid="card-quote"
-          >
-            <div className="text-center mb-3 px-2">
-              <p className="text-white text-lg font-medium mb-2.5 leading-relaxed italic">
-                "The only impossible journey is the one you never begin."
-              </p>
-              <p className="text-white/90 text-sm font-light">— Tony Robbins</p>
+          {/* Daily Quote Card */}
+          {quoteData?.quote && (
+            <div
+              className="rounded-2xl p-4 shadow-md relative mt-4"
+              style={{
+                background: "#703DFA",
+              }}
+              data-testid="card-quote"
+            >
+              <div className="text-center px-2">
+                <p className="text-white text-lg font-medium mb-2.5 leading-relaxed italic">
+                  "{quoteData.quote}"
+                </p>
+                {quoteData.author && (
+                  <p className="text-white/90 text-sm font-light">— {quoteData.author}</p>
+                )}
+              </div>
             </div>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setLocation("/more-quotes")}
-                className="px-3 py-1.5 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-xs font-semibold rounded-full backdrop-blur-sm transition"
-                data-testid="button-more-quotes"
-              >
-                More Quotes →
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 

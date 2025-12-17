@@ -378,3 +378,25 @@ export type ActivityLog = typeof activityLogs.$inferSelect;
 
 export const featureTypeEnum = ["PROCESS", "BREATH", "CHECKLIST"] as const;
 export type FeatureType = typeof featureTypeEnum[number];
+
+// Daily Quotes Table - for displaying one quote per day with round-robin rotation
+export const dailyQuotes = pgTable("daily_quotes", {
+  id: serial("id").primaryKey(),
+  quoteText: text("quote_text").notNull(),
+  author: text("author"),
+  isActive: boolean("is_active").notNull().default(true),
+  displayOrder: integer("display_order").notNull(),
+  lastShownDate: varchar("last_shown_date", { length: 10 }), // YYYY-MM-DD format
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertDailyQuoteSchema = createInsertSchema(dailyQuotes).omit({
+  id: true,
+  lastShownDate: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertDailyQuote = z.infer<typeof insertDailyQuoteSchema>;
+export type DailyQuote = typeof dailyQuotes.$inferSelect;

@@ -16,6 +16,7 @@ import AdminAbundanceMasteryPage from "@/pages/AdminAbundanceMasteryPage";
 import AdminPlaylistMappingPage from "@/pages/AdminPlaylistMappingPage";
 import AdminSessionBannersPage from "@/pages/AdminSessionBannersPage";
 import AdminSessionBannerFormPage from "@/pages/AdminSessionBannerFormPage";
+import AdminQuotesPage from "@/pages/AdminQuotesPage";
 import CourseCreateStep1 from "@/pages/CourseCreateStep1";
 import CourseCreateStep2 from "@/pages/CourseCreateStep2";
 import CourseCreateStep3 from "@/pages/CourseCreateStep3";
@@ -49,6 +50,7 @@ export default function AdminRoutes() {
       <Route path="/admin/session-banner/banners" component={AdminSessionBannersPage} />
       <Route path="/admin/session-banner/banners/new" component={AdminSessionBannerFormPage} />
       <Route path="/admin/session-banner/banners/:id/edit" component={AdminSessionBannerFormPage} />
+      <Route path="/admin/quotes" component={AdminQuotesPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -18,6 +18,8 @@ import {
   programs,
   frontendFeatures,
   featureCourseMap,
+  dailyQuotes,
+  insertDailyQuoteSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -3501,6 +3503,147 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     } catch (error) {
       console.error("Error fetching public session banner:", error);
       res.status(500).json({ error: "Failed to fetch session banner" });
+    }
+  });
+
+  // ===== DAILY QUOTES ROUTES =====
+
+  // Public API: Get today's quote (with round-robin rotation)
+  app.get("/api/quotes/today", async (req, res) => {
+    try {
+      // Get today's date in YYYY-MM-DD format (server date)
+      const today = new Date().toISOString().split("T")[0];
+
+      // Check if any active quote has last_shown_date = today
+      const [todayQuote] = await db
+        .select()
+        .from(dailyQuotes)
+        .where(and(eq(dailyQuotes.isActive, true), eq(dailyQuotes.lastShownDate, today)));
+
+      if (todayQuote) {
+        return res.json({
+          quote: todayQuote.quoteText,
+          author: todayQuote.author || null,
+        });
+      }
+
+      // No quote shown today - select next quote using round-robin logic
+      // Priority: NULL lastShownDate first (ordered by displayOrder), then oldest lastShownDate (ordered by displayOrder)
+      const activeQuotes = await db
+        .select()
+        .from(dailyQuotes)
+        .where(eq(dailyQuotes.isActive, true))
+        .orderBy(
+          sql`CASE WHEN ${dailyQuotes.lastShownDate} IS NULL THEN 0 ELSE 1 END`,
+          sql`${dailyQuotes.lastShownDate} NULLS FIRST`,
+          asc(dailyQuotes.displayOrder)
+        );
+
+      if (activeQuotes.length === 0) {
+        return res.json({ quote: null, author: null });
+      }
+
+      // Select the first quote (next in rotation)
+      const selectedQuote = activeQuotes[0];
+
+      // Update the selected quote with today's date
+      await db
+        .update(dailyQuotes)
+        .set({ lastShownDate: today, updatedAt: new Date() })
+        .where(eq(dailyQuotes.id, selectedQuote.id));
+
+      res.json({
+        quote: selectedQuote.quoteText,
+        author: selectedQuote.author || null,
+      });
+    } catch (error) {
+      console.error("Error fetching today's quote:", error);
+      res.status(500).json({ error: "Failed to fetch quote" });
+    }
+  });
+
+  // Admin API: Get all quotes (active + inactive)
+  app.get("/api/admin/quotes", requireAdmin, async (req, res) => {
+    try {
+      const quotes = await db
+        .select()
+        .from(dailyQuotes)
+        .orderBy(asc(dailyQuotes.displayOrder));
+      res.json(quotes);
+    } catch (error) {
+      console.error("Error fetching quotes:", error);
+      res.status(500).json({ error: "Failed to fetch quotes" });
+    }
+  });
+
+  // Admin API: Create a new quote
+  app.post("/api/admin/quotes", requireAdmin, async (req, res) => {
+    try {
+      const parsed = insertDailyQuoteSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Validation failed", details: parsed.error.errors });
+      }
+
+      const [newQuote] = await db
+        .insert(dailyQuotes)
+        .values(parsed.data)
+        .returning();
+
+      res.status(201).json(newQuote);
+    } catch (error) {
+      console.error("Error creating quote:", error);
+      res.status(500).json({ error: "Failed to create quote" });
+    }
+  });
+
+  // Admin API: Update a quote
+  app.put("/api/admin/quotes/:id", requireAdmin, async (req, res) => {
+    try {
+      const quoteId = parseInt(req.params.id);
+      const { quoteText, author, displayOrder, isActive } = req.body;
+
+      const [updated] = await db
+        .update(dailyQuotes)
+        .set({
+          ...(quoteText !== undefined && { quoteText }),
+          ...(author !== undefined && { author }),
+          ...(displayOrder !== undefined && { displayOrder }),
+          ...(isActive !== undefined && { isActive }),
+          updatedAt: new Date(),
+        })
+        .where(eq(dailyQuotes.id, quoteId))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ error: "Quote not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating quote:", error);
+      res.status(500).json({ error: "Failed to update quote" });
+    }
+  });
+
+  // Admin API: Soft delete a quote (set isActive = false)
+  app.delete("/api/admin/quotes/:id", requireAdmin, async (req, res) => {
+    try {
+      const quoteId = parseInt(req.params.id);
+
+      const [updated] = await db
+        .update(dailyQuotes)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(eq(dailyQuotes.id, quoteId))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ error: "Quote not found" });
+      }
+
+      res.json({ success: true, message: "Quote deactivated" });
+    } catch (error) {
+      console.error("Error deleting quote:", error);
+      res.status(500).json({ error: "Failed to delete quote" });
     }
   });
 

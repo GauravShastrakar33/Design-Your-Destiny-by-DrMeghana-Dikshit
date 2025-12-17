@@ -161,7 +161,24 @@ Preferred communication style: Simple, everyday language.
   - `npx cap open android` - Open Android project in Android Studio
 - **Native Projects**: `ios/` and `android/` folders contain platform-specific code
 
+### Daily Quotes System
+- **Purpose**: Display one inspirational quote per day on HomePage with round-robin rotation
+- **Database Table**: `daily_quotes` with columns (id, quoteText, author, isActive, displayOrder, lastShownDate, createdAt, updatedAt)
+- **Rotation Logic**: 
+  - Shows same quote to all users for the entire day
+  - Quotes with NULL lastShownDate are shown first (ordered by displayOrder)
+  - After all quotes shown, restarts from oldest shown quote
+  - Deterministic: no randomness, consistent order
+- **API Routes**:
+  - `GET /api/quotes/today` - Returns today's quote (public)
+  - `GET /api/admin/quotes` - List all quotes (admin)
+  - `POST /api/admin/quotes` - Create quote (admin)
+  - `PUT /api/admin/quotes/:id` - Update quote (admin)
+  - `DELETE /api/admin/quotes/:id` - Soft delete (sets isActive=false)
+- **Admin Page**: `/admin/quotes` for managing quotes with add/edit/toggle active status
+
 ## Recent Changes
+- **December 2025**: Added Daily Quote feature with round-robin rotation. Displays one quote per day on HomePage, managed via admin panel at `/admin/quotes`. Removed "More Quotes" button.
 - **December 2025**: Added Capacitor integration for mobile app deployment. User app runs on iOS/Android via Capacitor, admin panel remains web-only.
 - **December 2025**: Renamed "Abundance Mastery" to "Daily Abundance" across user-facing pages (HomePage, MoneyMasteryPage, SearchPage).
 - **December 2025**: Added Bulk Upload Students feature in Admin → Students page. Allows uploading CSV files with full_name, email, phone columns. Program is assigned from modal dropdown (not CSV). Default password is User@123. Max 1000 rows per upload. Returns detailed error reporting with row numbers. API: `POST /api/admin/students/bulk-upload` and `GET /api/admin/students/sample-csv`.
