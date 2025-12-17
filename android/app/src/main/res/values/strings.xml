@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dr.M App</string>
+    <string name="title_activity_main">Dr.M App</string>
+    <string name="package_name">com.drm.app</string>
+    <string name="custom_url_scheme">com.drm.app</string>
+</resources>
