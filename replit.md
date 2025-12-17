@@ -148,7 +148,22 @@ Preferred communication style: Simple, everyday language.
   - `/abundance-mastery/course/:id` - Abundance course detail page
 - **Frontend Page**: `/search` with debounced input (300ms), grouped results by type
 
+### Mobile App (Capacitor)
+- **Setup**: Capacitor integrated for iOS and Android builds
+- **Configuration**: `capacitor.config.ts` with webDir pointing to `dist/public`
+- **Platform Separation**: 
+  - Mobile app loads `/` (user routes only)
+  - Admin panel (`/admin`) stays web-only (no navigation to it in user app)
+- **Build Commands**:
+  - `npm run build` - Build web assets
+  - `npx cap sync` - Sync web assets to native projects
+  - `npx cap open ios` - Open iOS project in Xcode
+  - `npx cap open android` - Open Android project in Android Studio
+- **Native Projects**: `ios/` and `android/` folders contain platform-specific code
+
 ## Recent Changes
+- **December 2025**: Added Capacitor integration for mobile app deployment. User app runs on iOS/Android via Capacitor, admin panel remains web-only.
+- **December 2025**: Renamed "Abundance Mastery" to "Daily Abundance" across user-facing pages (HomePage, MoneyMasteryPage, SearchPage).
 - **December 2025**: Added Bulk Upload Students feature in Admin → Students page. Allows uploading CSV files with full_name, email, phone columns. Program is assigned from modal dropdown (not CSV). Default password is User@123. Max 1000 rows per upload. Returns detailed error reporting with row numbers. API: `POST /api/admin/students/bulk-upload` and `GET /api/admin/students/sample-csv`.
 - **December 2025**: PDF files uploaded via admin are now automatically extracted to formatted HTML and displayed inline in Processes/Spiritual Breaths pages instead of showing a PDF download button. Uses pdf2json library (NOT pdf-parse) for better line-by-line preservation. The `convertTextToFormattedHtml` function in server/routes.ts applies:
   - Preserves intentional line breaks within paragraphs using `<br>` tags
