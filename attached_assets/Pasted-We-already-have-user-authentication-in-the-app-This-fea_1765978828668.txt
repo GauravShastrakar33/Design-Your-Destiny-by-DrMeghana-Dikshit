@@ -1,0 +1,91 @@
+We already have user authentication in the app. This feature must be user-specific, not global.
+Please implement the Rewiring Belief feature using the authenticated user_id.
+
+🗄️ Database Design
+Create a table called rewiring_beliefs.
+
+CREATE TABLE rewiring_beliefs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+  limiting_belief TEXT NOT NULL,
+  uplifting_belief TEXT NOT NULL,
+
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+Rules:
+* Every belief pair belongs to one user
+* Users can only access their own beliefs
+
+🔌 API Endpoints (Auth Required)
+All APIs must use the authenticated user from the request context.
+
+1️⃣ Get all rewiring beliefs (user-specific)
+
+GET /api/v1/rewiring-beliefs
+Logic:
+* Read user_id from auth session / middleware
+* Return only beliefs created by this user
+* Order by created_at DESC
+
+SELECT * FROM rewiring_beliefs
+WHERE user_id = :userId
+ORDER BY created_at DESC;
+
+2️⃣ Create a new belief pair
+
+POST /api/v1/rewiring-beliefs
+Body:
+
+{
+  "limitingBelief": "Money doesn't grow on trees",
+  "upliftingBelief": "Money is abundant and flows freely to me"
+}
+Logic:
+* Attach authenticated user_id
+* Save belief pair
+
+3️⃣ Update an existing belief
+
+PUT /api/v1/rewiring-beliefs/:id
+Rules:
+* User can update only their own belief
+* Validate user_id + id
+
+4️⃣ Delete a belief
+
+DELETE /api/v1/rewiring-beliefs/:id
+Rules:
+* User can delete only their own belief
+
+🖥️ Frontend – Rewiring Belief Screen
+Update the Rewiring Belief screen to:
+* Fetch beliefs from GET /api/v1/rewiring-beliefs
+* Remove all localStorage usage
+* Support:
+    * Add belief
+    * Edit belief
+    * Delete belief
+* Re-render list after create/update/delete
+
+🌞 Daily Abundance Page Integration
+On the Daily Abundance page, below the Money Calendar:
+* Fetch the same API: GET /api/v1/rewiring-beliefs
+* Display the user’s belief cards below the calendar
+* User can select/dissect the card they want on daily abundance page, keep remaining in Rewiring Belief feature.
+* Make the card as per the app theme.
+* Highlight the most recently created belief at the top
+⚠️ Do NOT create a new table for Daily Abundance This page must reuse the same rewiring_beliefs data.
+
+🔐 Security & Constraints
+* All APIs must be protected by authentication
+* Enforce user_id filtering at query level
+* No global/shared belief data
+
+✅ Acceptance Criteria
+* Each user sees only their own rewiring beliefs
+* Beliefs created in Rewiring screen automatically appear on Daily Abundance page
+* No duplication of tables or logic
+* Clean, scalable implementation
