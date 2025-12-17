@@ -8,7 +8,8 @@ import {
   GraduationCap, 
   Heart,
   LogOut,
-  BookOpen
+  BookOpen,
+  Quote
 } from "lucide-react";
 import { useAdminSidebar } from "@/contexts/AdminSidebarContext";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -29,6 +30,7 @@ const menuItemsConfig: MenuItemConfig[] = [
   { id: "courses", path: "/admin/courses", label: "Courses", icon: GraduationCap },
   { id: "process", label: "Process Library", icon: BookOpen },
   { id: "project", path: "/admin/project-heart", label: "Project of Heart", icon: Heart },
+  { id: "quotes", path: "/admin/quotes", label: "Daily Quotes", icon: Quote },
 ];
 
 export default function AdminSidebar() {
