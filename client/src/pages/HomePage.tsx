@@ -139,7 +139,7 @@ export default function HomePage() {
       testId: "card-my-playlist",
     },
     {
-      title: "Abundance Mastery",
+      title: "Daily Abundance",
       icon: DollarSign,
       gradient: "bg-gradient-forest",
       path: "/money-mastery",

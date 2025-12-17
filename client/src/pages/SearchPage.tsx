@@ -72,7 +72,7 @@ export default function SearchPage() {
       case "DYD": return "DYD Process";
       case "USM": return "USM Process";
       case "BREATH": return "Spiritual Breaths";
-      case "ABUNDANCE": return "Abundance Mastery";
+      case "ABUNDANCE": return "Daily Abundance";
       default: return feature;
     }
   };
