@@ -13,7 +13,7 @@ import MoneyMasteryPage from "@/pages/MoneyMasteryPage";
 import ProcessChecklistPage from "@/pages/ProcessChecklistPage";
 import MoreQuotesPage from "@/pages/MoreQuotesPage";
 import NotificationsPage from "@/pages/NotificationsPage";
-import AIInsightsPage from "@/pages/AIInsightsPage";
+import ProgressInsightsPage from "@/pages/ProgressInsightsPage";
 import CourseOverviewPage from "@/pages/CourseOverviewPage";
 import RewiringScreen from "@/pages/RewiringScreen";
 import VideoPlayerPage from "@/pages/VideoPlayerPage";
@@ -42,7 +42,7 @@ export default function AppRoutes() {
       <Route path="/process-checklist" component={ProcessChecklistPage} />
       <Route path="/more-quotes" component={MoreQuotesPage} />
       <Route path="/notifications" component={NotificationsPage} />
-      <Route path="/ai-insights" component={AIInsightsPage} />
+      <Route path="/progress-insights" component={ProgressInsightsPage} />
       <Route
         path="/workshops/course/:courseId"
         component={CourseOverviewPage}

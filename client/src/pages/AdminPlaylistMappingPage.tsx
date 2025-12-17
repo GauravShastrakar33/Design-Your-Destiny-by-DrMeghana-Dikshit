@@ -147,10 +147,10 @@ export default function AdminPlaylistMappingPage() {
     <div className="p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">
-          My Processes (Playlist Mapping)
+          My Playlist Mapping
         </h1>
         <p className="text-gray-600 mt-1">
-          Select a CMS course to power the My Processes feature. Users will see this course's modules with their audio lessons to build playlists.
+          Select a CMS course to power the My Playlist feature. Users will see this course's modules with their audio lessons to build playlists.
         </p>
       </div>
 
@@ -163,7 +163,7 @@ export default function AdminPlaylistMappingPage() {
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Course Selection</h3>
             <p className="text-gray-600 text-sm mb-4">
-              Select a CMS course to use for My Processes. Only audio lessons from this course will be available for user playlists.
+              Select a CMS course to use for My Playlist. Only audio lessons from this course will be available for user playlists.
             </p>
 
             <div className="flex items-center gap-4">
@@ -216,7 +216,7 @@ export default function AdminPlaylistMappingPage() {
                 </div>
               </div>
               <p className="text-gray-600 text-sm mb-4">
-                These modules and their audio lessons will be available in the My Processes feature.
+                These modules and their audio lessons will be available in the My Playlist feature.
               </p>
 
               {modulesLoading ? (

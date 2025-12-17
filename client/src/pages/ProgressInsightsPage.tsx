@@ -53,7 +53,6 @@ function getAvailableMonths(): { value: string; label: string }[] {
   
   for (let i = 0; i < 6; i++) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    // Use local date formatting to avoid UTC timezone shift issues
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const value = `${year}-${month}`;
@@ -64,7 +63,7 @@ function getAvailableMonths(): { value: string; label: string }[] {
   return months;
 }
 
-export default function AIInsightsPage() {
+export default function ProgressInsightsPage() {
   const [, setLocation] = useLocation();
   const availableMonths = getAvailableMonths();
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(0);
@@ -120,7 +119,7 @@ export default function AIInsightsPage() {
               >
                 <ArrowLeft className="w-6 h-6 text-gray-600" />
               </button>
-              <h1 className="text-xl font-bold text-gray-600 uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>AI Insights</h1>
+              <h1 className="text-xl font-bold text-gray-600 uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>Progress Insights</h1>
             </div>
           </div>
           <div className="px-4 py-12 text-center">
@@ -143,7 +142,7 @@ export default function AIInsightsPage() {
             >
               <ArrowLeft className="w-6 h-6 text-gray-600" />
             </button>
-            <h1 className="text-xl font-bold text-gray-600 uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>AI Insights</h1>
+            <h1 className="text-xl font-bold text-gray-600 uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>Progress Insights</h1>
           </div>
         </div>
 

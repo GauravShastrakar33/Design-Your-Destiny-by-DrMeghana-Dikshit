@@ -116,18 +116,18 @@ export default function HomePage() {
 
   const actionCards = [
     {
-      title: "Processes",
+      title: "My Playlist",
+      icon: ListMusic,
+      gradient: "bg-gradient-harmony",
+      path: "/playlist",
+      testId: "card-my-playlist",
+    },
+    {
+      title: "All Processes",
       icon: Sparkles,
       gradient: "bg-gradient-ocean",
       path: "/processes",
       testId: "card-processes",
-    },
-    {
-      title: "Spiritual Breaths",
-      icon: Wind,
-      gradient: "bg-gradient-calm",
-      path: "/spiritual-breaths",
-      testId: "card-spiritual-breaths",
     },
     {
       title: "Community Practices",
@@ -137,11 +137,11 @@ export default function HomePage() {
       testId: "card-community-practices",
     },
     {
-      title: "My Processes",
-      icon: ListMusic,
-      gradient: "bg-gradient-harmony",
-      path: "/playlist",
-      testId: "card-my-playlist",
+      title: "Spiritual Breaths",
+      icon: Wind,
+      gradient: "bg-gradient-calm",
+      path: "/spiritual-breaths",
+      testId: "card-spiritual-breaths",
     },
     {
       title: "Daily Abundance",
@@ -348,17 +348,17 @@ export default function HomePage() {
           </div>
           )}
 
-          {/* AI Insights Card - Only show when authenticated */}
+          {/* Progress Insights Card - Only show when authenticated */}
           {isAuthenticated && (
             <button
-              onClick={() => setLocation("/ai-insights")}
+              onClick={() => setLocation("/progress-insights")}
               className="w-full text-left bg-white rounded-2xl p-5 shadow-sm border border-[#232A34]/10 hover-elevate active-elevate-2 mt-4"
-              data-testid="button-ai-insights"
+              data-testid="button-progress-insights"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h3 className="text-black text-sm font-bold tracking-wider uppercase mb-2">
-                    AI INSIGHTS
+                    PROGRESS INSIGHTS
                   </h3>
                   <p className="text-gray-700 text-sm">
                     Receive personalised insights for your streak
