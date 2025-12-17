@@ -67,6 +67,11 @@ const menuItems: MenuItem[] = [
     path: "/admin/project-heart", 
     label: "Project of Heart"
   },
+  { 
+    id: "quotes",
+    path: "/admin/quotes", 
+    label: "Daily Quotes"
+  },
 ];
 
 const AdminSidebarContext = createContext<AdminSidebarContextType | undefined>(undefined);

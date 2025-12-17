@@ -19,6 +19,7 @@ import {
   Wind,
   DollarSign,
   Music,
+  Quote,
 } from "lucide-react";
 
 const menuIcons: Record<string, React.ElementType> = {
@@ -31,6 +32,7 @@ const menuIcons: Record<string, React.ElementType> = {
   courses: GraduationCap,
   process: BookOpen,
   project: Heart,
+  quotes: Quote,
 };
 
 const menuContent: Record<
@@ -113,6 +115,13 @@ const menuContent: Record<
       { path: "/admin/project-heart", label: "Overview", icon: Heart },
       { path: "/admin/project-heart", label: "Submissions", icon: List },
       { path: "/admin/project-heart", label: "Settings", icon: Settings },
+    ],
+  },
+  quotes: {
+    title: "Daily Quotes",
+    items: [
+      { path: "/admin/quotes", label: "All Quotes", icon: List },
+      { path: "/admin/quotes", label: "Add New", icon: Plus },
     ],
   },
 };
