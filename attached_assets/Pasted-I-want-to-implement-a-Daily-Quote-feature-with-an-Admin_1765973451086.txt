@@ -1,0 +1,188 @@
+I want to implement a Daily Quote feature with an Admin panel using a single database table and round-robin daily rotation.
+
+🎯 User App Requirements
+
+On the Home screen:
+
+Display only ONE quote per day
+
+Remove the “More Quotes” button
+
+Quote card should be non-clickable
+
+Same quote should be shown to all users
+
+Quote should not change during the day
+
+Quote should automatically change once per day
+
+🗄️ Database Design (ONE TABLE ONLY)
+
+Create a table called daily_quotes.
+
+Columns:
+
+id (primary key)
+
+quote_text (text, required)
+
+author (text, optional)
+
+is_active (boolean, default true)
+
+display_order (integer, required – used for round-robin order)
+
+last_shown_date (date, nullable – YYYY-MM-DD)
+
+created_at
+
+updated_at
+
+🔁 Daily Quote Rotation Logic (Round Robin)
+
+Logic for fetching today’s quote:
+
+Get today’s date (server date).
+
+Check if any active quote has:
+
+last_shown_date = today
+
+
+If YES → return that quote.
+
+If NO:
+
+Select the next active quote using:
+
+Lowest display_order
+
+Prefer quotes where last_shown_date is NULL
+
+Otherwise pick the quote with the **oldest last_shown_date
+
+Update the selected quote:
+
+last_shown_date = today
+
+
+Return the updated quote.
+
+Rules:
+
+Rotation must be deterministic (no randomness)
+
+Once all quotes are used, rotation restarts from the first
+
+Same quote for all users
+
+🔌 Backend APIs
+1️⃣ Get Today’s Quote (User App)
+
+GET /api/quotes/today
+
+Implements rotation logic
+
+Returns today’s quote
+
+Response:
+
+{
+  "quote": "The only impossible journey is the one you never begin.",
+  "author": "Tony Robbins"
+}
+
+2️⃣ Admin Quote Management APIs
+
+POST /api/admin/quotes
+
+Add a new quote
+
+Requires:
+
+quote_text
+
+optional author
+
+display_order
+
+GET /api/admin/quotes
+
+List all quotes (active + inactive)
+
+PUT /api/admin/quotes/:id
+
+Edit quote text, author, or display order
+
+DELETE /api/admin/quotes/:id
+
+Soft delete (set is_active = false)
+
+🛠 Admin Panel UI
+
+Create an Admin page:
+
+Route: /admin/quotes
+
+Features:
+
+Textarea to add a new quote
+
+Optional author field
+
+Display order input
+
+“Add Quote” button
+
+List of all quotes showing:
+
+Quote text
+
+Author
+
+Display order
+
+Last shown date
+
+Active / Inactive toggle
+
+Edit option
+
+Admin can add unlimited quotes.
+No scheduling or date picking needed.
+
+📱 Frontend Integration (User App)
+
+On Home screen load:
+
+Call GET /api/quotes/today
+
+Render quote inside existing quote card
+
+Remove:
+
+Click handlers
+
+Navigation
+
+“More Quotes” CTA
+
+⚠️ Important Constraints
+
+Quote must not rotate more than once per day
+
+Rotation must survive server restarts
+
+Quote selection must be consistent for all users
+
+Only active quotes participate in rotation
+
+✅ Expected Outcome
+
+Clean daily inspiration for users
+
+Simple admin management
+
+Predictable round-robin behavior
+
+No unnecessary tables or complexity
