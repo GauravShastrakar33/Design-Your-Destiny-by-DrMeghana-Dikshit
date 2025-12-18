@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Bell, Play, Calendar, Clock, X } from "lucide-react";
+import { Search, Bell, Play, Calendar, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -32,15 +32,6 @@ interface Video {
   author?: string;
   description?: string;
   videoId?: string;
-}
-
-interface LastWatchedData {
-  videoId: string;
-  title: string;
-  thumbnail: string;
-  author?: string;
-  progressInSeconds: number;
-  url?: string; // ✅ Add this
 }
 
 // Helper function to convert DB masterclass to UI format
@@ -111,8 +102,6 @@ function CountdownTimer({ startTime }: { startTime: Date }) {
 export default function WorkshopsPage() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<Tab>("upcoming");
-  const [lastWatched, setLastWatched] = useState<LastWatchedData | null>(null);
-  const [showLastWatched, setShowLastWatched] = useState(true);
 
   // Fetch data from database
   const { data: dbMasterclasses = [] } = useQuery<DBMasterclass[]>({ queryKey: ["/api/masterclasses"] });
@@ -126,19 +115,6 @@ export default function WorkshopsPage() {
     { id: "upcoming" as Tab, label: "Upcoming" },
     { id: "latest" as Tab, label: "Latest" },
   ];
-
-  // Load last watched data
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("last-watched");
-      if (saved) {
-        const data: LastWatchedData = JSON.parse(saved);
-        setLastWatched(data);
-      }
-    } catch (error) {
-      console.error("Error loading last watched:", error);
-    }
-  }, []);
 
   const handleJoin = (zoomLink: string) => {
     window.open(zoomLink, "_blank");
@@ -159,31 +135,6 @@ export default function WorkshopsPage() {
 
       setLocation(`/video-player?${params.toString()}`);
     }
-  };
-
-  const handleResumeLastWatched = () => {
-    if (!lastWatched) return;
-
-    const params = new URLSearchParams({
-      videoId: lastWatched.videoId,
-      title: lastWatched.title,
-      thumbnail: lastWatched.thumbnail,
-      author: lastWatched.author || "",
-      url: lastWatched.url || "", // ✅ send video file
-      progress: lastWatched.progressInSeconds.toString(), // ✅ send time
-    });
-
-    setLocation(`/video-player?${params.toString()}`);
-  };
-
-  const handleCloseLastWatched = () => {
-    setShowLastWatched(false);
-  };
-
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -371,66 +322,6 @@ export default function WorkshopsPage() {
 
         </div>
       </div>
-
-      {/* Last Watched Reminder Bar */}
-      {lastWatched && showLastWatched && (
-        <div
-          className="fixed bottom-16 left-0 right-0 bg-white border-t border-[#E5E7EB] shadow-lg z-20"
-          data-testid="last-watched-bar"
-        >
-          <div className="max-w-md mx-auto px-4 py-3">
-            <div className="flex items-center gap-3">
-              {/* Thumbnail */}
-              {lastWatched.thumbnail && (
-                <img
-                  src={lastWatched.thumbnail}
-                  alt={lastWatched.title}
-                  className="w-16 h-10 object-cover rounded flex-shrink-0"
-                  data-testid="last-watched-thumbnail"
-                />
-              )}
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p
-                  className="text-sm font-medium text-gray-900 truncate"
-                  data-testid="last-watched-title"
-                >
-                  {lastWatched.title}
-                </p>
-                <p
-                  className="text-xs text-gray-500"
-                  data-testid="last-watched-time"
-                >
-                  Watched: {formatTime(lastWatched.progressInSeconds)}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {/* ✅ Always purple with white text */}
-                <Button
-                  size="sm"
-                  onClick={handleResumeLastWatched}
-                  className="bg-[#703DFA] border border-[#703DFA] text-white hover:opacity-90 transition"
-                >
-                  <Play className="w-4 h-4 mr-1" fill="white" />
-                  Resume
-                </Button>
-
-                {/* Close Button — purple X */}
-                <button
-                  onClick={handleCloseLastWatched}
-                  className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#703DFA]/10 transition-colors"
-                  data-testid="button-close-last-watched"
-                >
-                  <X className="w-4 h-4 text-[#703DFA]" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
