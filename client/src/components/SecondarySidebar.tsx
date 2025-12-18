@@ -16,7 +16,6 @@ import {
   Plus,
   List,
   Sparkles,
-  Wind,
   DollarSign,
   Music,
   Quote,
