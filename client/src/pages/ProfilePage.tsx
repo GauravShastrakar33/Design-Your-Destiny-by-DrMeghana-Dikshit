@@ -55,8 +55,21 @@ export default function ProfilePage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState("");
 
+  const userToken = localStorage.getItem("@app:user_token");
   const { data: wellnessProfile, isLoading: isLoadingProfile } = useQuery<UserWellnessProfile | { karmicAffirmation: null; prescription: null }>({
     queryKey: ["/api/v1/me/wellness-profile"],
+    queryFn: async () => {
+      const response = await fetch("/api/v1/me/wellness-profile", {
+        headers: {
+          "Authorization": `Bearer ${userToken}`,
+        },
+      });
+      if (!response.ok) {
+        return { karmicAffirmation: null, prescription: null };
+      }
+      return response.json();
+    },
+    enabled: !!userToken,
   });
 
   const prescriptionFromApi = (wellnessProfile?.prescription as PrescriptionData) || {};
