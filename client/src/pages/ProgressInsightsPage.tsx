@@ -1,4 +1,4 @@
-import { ArrowLeft, Music, CheckSquare, Wind, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, Music, ListMusic, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -13,8 +13,7 @@ interface ActivityItem {
 
 interface MonthlyStats {
   PROCESS: ActivityItem[];
-  BREATH: ActivityItem[];
-  CHECKLIST: ActivityItem[];
+  PLAYLIST: ActivityItem[];
   maxCount: number;
 }
 
@@ -102,8 +101,7 @@ export default function ProgressInsightsPage() {
 
   const hasAnyData = monthlyData && (
     monthlyData.PROCESS.length > 0 || 
-    monthlyData.BREATH.length > 0 || 
-    monthlyData.CHECKLIST.length > 0
+    monthlyData.PLAYLIST.length > 0
   );
 
   if (!isAuthenticated) {
@@ -210,37 +208,19 @@ export default function ProgressInsightsPage() {
                 </div>
               )}
 
-              {monthlyData.BREATH.length > 0 && (
+              {monthlyData.PLAYLIST.length > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <Wind className="w-4 h-4 text-cyan-500" />
-                    <h3 className="text-md font-medium text-foreground">Spiritual Breaths</h3>
+                    <ListMusic className="w-4 h-4 text-pink-500" />
+                    <h3 className="text-md font-medium text-foreground">My Playlist</h3>
                   </div>
-                  {monthlyData.BREATH.map((item, idx) => (
+                  {monthlyData.PLAYLIST.map((item, idx) => (
                     <HorizontalBar
                       key={item.lessonId || idx}
                       label={item.lessonName}
                       count={item.count}
                       maxCount={monthlyData.maxCount}
-                      gradient="from-cyan-300 to-cyan-500"
-                    />
-                  ))}
-                </div>
-              )}
-
-              {monthlyData.CHECKLIST.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <CheckSquare className="w-4 h-4 text-green-500" />
-                    <h3 className="text-md font-medium text-foreground">Process Checklist</h3>
-                  </div>
-                  {monthlyData.CHECKLIST.map((item, idx) => (
-                    <HorizontalBar
-                      key={item.lessonId || idx}
-                      label={item.lessonName}
-                      count={item.count}
-                      maxCount={monthlyData.maxCount}
-                      gradient="from-green-300 to-green-500"
+                      gradient="from-pink-300 to-pink-500"
                     />
                   ))}
                 </div>

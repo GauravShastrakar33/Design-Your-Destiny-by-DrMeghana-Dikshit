@@ -137,25 +137,11 @@ export default function HomePage() {
       testId: "card-community-practices",
     },
     {
-      title: "Spiritual Breaths",
-      icon: Wind,
-      gradient: "bg-gradient-calm",
-      path: "/spiritual-breaths",
-      testId: "card-spiritual-breaths",
-    },
-    {
       title: "Daily Abundance",
       icon: DollarSign,
       gradient: "bg-gradient-forest",
       path: "/money-mastery",
       testId: "card-money-mastery",
-    },
-    {
-      title: "My Daily Tracker",
-      icon: CheckSquare,
-      gradient: "bg-gradient-desert",
-      path: "/process-checklist",
-      testId: "card-process-checklist",
     },
   ];
 

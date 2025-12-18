@@ -1108,8 +1108,7 @@ export class DbStorage implements IStorage {
 
   async getMonthlyStats(userId: number, month: string): Promise<{
     PROCESS: { lessonId: number; lessonName: string; count: number }[];
-    BREATH: { lessonId: number; lessonName: string; count: number }[];
-    CHECKLIST: { lessonId: number; lessonName: string; count: number }[];
+    PLAYLIST: { lessonId: number; lessonName: string; count: number }[];
     maxCount: number;
   }> {
     // Validate month format (YYYY-MM)
@@ -1148,8 +1147,7 @@ export class DbStorage implements IStorage {
     // Group by feature type
     const result = {
       PROCESS: [] as { lessonId: number; lessonName: string; count: number }[],
-      BREATH: [] as { lessonId: number; lessonName: string; count: number }[],
-      CHECKLIST: [] as { lessonId: number; lessonName: string; count: number }[],
+      PLAYLIST: [] as { lessonId: number; lessonName: string; count: number }[],
       maxCount: 0,
     };
 
@@ -1166,17 +1164,14 @@ export class DbStorage implements IStorage {
 
       if (activity.featureType === 'PROCESS') {
         result.PROCESS.push(item);
-      } else if (activity.featureType === 'BREATH') {
-        result.BREATH.push(item);
-      } else if (activity.featureType === 'CHECKLIST') {
-        result.CHECKLIST.push(item);
+      } else if (activity.featureType === 'PLAYLIST') {
+        result.PLAYLIST.push(item);
       }
     }
 
     // Sort each array by count descending
     result.PROCESS.sort((a, b) => b.count - a.count);
-    result.BREATH.sort((a, b) => b.count - a.count);
-    result.CHECKLIST.sort((a, b) => b.count - a.count);
+    result.PLAYLIST.sort((a, b) => b.count - a.count);
 
     return result;
   }

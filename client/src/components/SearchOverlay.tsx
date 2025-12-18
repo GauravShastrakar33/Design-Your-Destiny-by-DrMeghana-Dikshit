@@ -86,7 +86,6 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     switch (feature) {
       case "DYD": return "DYD Process";
       case "USM": return "USM Process";
-      case "BREATH": return "Spiritual Breaths";
       case "ABUNDANCE": return "Abundance Mastery";
       default: return feature;
     }

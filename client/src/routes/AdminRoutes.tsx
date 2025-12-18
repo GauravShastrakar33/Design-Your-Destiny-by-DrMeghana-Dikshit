@@ -12,7 +12,6 @@ import AdminsPage from "@/pages/AdminsPage";
 import AdminCoursesPage from "@/pages/AdminCoursesPage";
 import AdminProgramsPage from "@/pages/AdminProgramsPage";
 import AdminProcessesPage from "@/pages/AdminProcessesPage";
-import AdminSpiritualBreathsPage from "@/pages/AdminSpiritualBreathsPage";
 import AdminAbundanceMasteryPage from "@/pages/AdminAbundanceMasteryPage";
 import AdminPlaylistMappingPage from "@/pages/AdminPlaylistMappingPage";
 import AdminSessionBannersPage from "@/pages/AdminSessionBannersPage";
@@ -46,7 +45,6 @@ export default function AdminRoutes() {
       <Route path="/admin/courses/:id" component={CourseBuilderPage} />
       <Route path="/admin/courses/:courseId/lessons/:lessonId" component={LessonDetailPage} />
       <Route path="/admin/processes" component={AdminProcessesPage} />
-      <Route path="/admin/spiritual-breaths" component={AdminSpiritualBreathsPage} />
       <Route path="/admin/abundance-mastery" component={AdminAbundanceMasteryPage} />
       <Route path="/admin/my-processes" component={AdminPlaylistMappingPage} />
       <Route path="/admin/session-banner/banners" component={AdminSessionBannersPage} />

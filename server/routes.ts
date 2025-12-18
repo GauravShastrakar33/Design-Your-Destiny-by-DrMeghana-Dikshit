@@ -559,8 +559,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!lessonName || typeof lessonName !== 'string') {
         return res.status(400).json({ error: "lessonName is required" });
       }
-      if (!featureType || !['PROCESS', 'BREATH', 'CHECKLIST'].includes(featureType)) {
-        return res.status(400).json({ error: "featureType must be PROCESS, BREATH, or CHECKLIST" });
+      if (!featureType || !['PROCESS', 'PLAYLIST'].includes(featureType)) {
+        return res.status(400).json({ error: "featureType must be PROCESS or PLAYLIST" });
       }
 
       // Use provided date or server date
@@ -594,7 +594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const stats = await storage.getMonthlyStats(req.user.sub, month);
       
-      console.log(`[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, BREATH=${stats.BREATH.length}, CHECKLIST=${stats.CHECKLIST.length}`);
+      console.log(`[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, PLAYLIST=${stats.PLAYLIST.length}`);
       
       res.set('Cache-Control', 'no-store');
       res.json(stats);
