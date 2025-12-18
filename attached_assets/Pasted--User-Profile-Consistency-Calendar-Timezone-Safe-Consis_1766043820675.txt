@@ -1,0 +1,131 @@
+### User Profile
+### Consistency Calendar  Timezone-Safe Consistency Calendar (Dynamic History)
+I already have:
+* User authentication
+* A working streak system
+* A backend table that tracks daily app opens
+Each record represents one calendar day the user opened the app.
+
+🧠 SINGLE SOURCE OF TRUTH (VERY IMPORTANT)
+There must be ONLY ONE API in the entire app that writes daily activity:
+
+POST /api/streak/mark-today
+Rules:
+* This API is idempotent
+* Called once per app open
+* NO other feature (streak UI, calendar UI) is allowed to write activity
+Both 7-day streak and Consistency Calendar are READ-ONLY views.
+
+🔒 TIMEZONE SAFETY (DO NOT BREAK)
+* All logic is based on the USER’S LOCAL DATE
+* activity_date is stored as a string YYYY-MM-DD
+* Frontend computes the local date and sends it
+* Backend must never calculate dates using server time, UTC, or timestamps
+❌ Do NOT use NOW(), CURRENT_DATE, toISOString(), or server timezone logic.
+
+🗄️ Existing Table (DO NOT CHANGE)
+* One row per user per calendar day
+* (user_id + activity_date) is UNIQUE
+* Data is stored forever (used later for badges)
+
+🧩 Backend Requirements
+1️⃣ Keep existing write API (NO CHANGE)
+
+POST /api/streak/mark-today
+Behavior:
+* Accept activityDate from frontend
+* Insert if not exists
+* Do nothing if already exists (idempotent)
+
+2️⃣ Add Read-Only Consistency Calendar API
+
+GET /api/consistency/month?year=YYYY&month=MM
+Behavior:
+* Generate all dates for the requested month
+* Fetch activity rows matching activity_date
+* Mark each date as active: true | false
+* Include future dates (marked inactive)
+* Use date strings only, no timestamps
+Example response:
+
+{
+  "year": 2025,
+  "month": 1,
+  "days": [
+    { "date": "2025-01-01", "active": true },
+    { "date": "2025-01-02", "active": false }
+  ]
+}
+
+3️⃣ Add History Range API (IMPORTANT)
+
+GET /api/consistency/range
+Behavior:
+* Determine the earliest activity_date for the user
+* Return start month and current month
+Example:
+
+{
+  "startMonth": "2025-01",
+  "currentMonth": "2025-03"
+}
+Rules:
+* Do NOT hardcode “last 12 months”
+* Navigation must be bounded by real user data
+* History grows naturally as the user continues using the app
+
+🖥️ Frontend Requirements
+Calendar View
+* Show only one month at a time
+* Default view = current month (user local)
+* Month navigation is bounded by:
+    * startMonth (earliest activity)
+    * currentMonth
+* Do NOT allow navigation before the user started
+* Load data month-by-month
+* Calendar is read-only (no POST calls)
+
+🎨 Visual Design (STRICT)
+* App theme is purple
+* Use single warm yellow / amber for active days
+* Use light grey for inactive days
+* Use muted grey for future dates
+* ❌ Do NOT use red or green anywhere
+Visual mapping:
+* Opened app → yellow filled circle
+* Not opened → grey circle
+* Future date → muted grey
+* Today → subtle outline or glow
+
+🔥 Flame (Momentum) Logic
+* Flame represents momentum, not attendance
+* Show 🔥 ONLY when current streak ≥ 7 days
+* Flame appears only on active days
+* If a day is missed, flame disappears immediately
+* Yellow dot still appears for active days
+
+showFlame = currentStreak >= 7
+❌ Do NOT show flame:
+* For single-day opens
+* For historical streaks that are no longer active
+
+🧠 UX Psychology Rules (DO NOT BREAK)
+* Missed days must feel neutral, not punishing
+* Do NOT emphasize old missed days
+* Never show months before the user started
+* Calendar is motivational, not evaluative
+* Optimize for emotional safety & long-term retention
+
+⚙️ Constraints
+* Do NOT create new tracking tables
+* Do NOT introduce additional write APIs
+* Do NOT modify existing streak logic
+* Do NOT use server or UTC date logic
+* Keep implementation clean and minimal
+
+🎯 Product Intent
+This is a wellness / habit app, not a task tracker.
+* Yellow = presence
+* 🔥 = momentum (after 7 days)
+* Grey = neutral absence
+Build exactly as specified.

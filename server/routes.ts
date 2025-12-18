@@ -541,6 +541,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== CONSISTENCY CALENDAR ROUTES =====
+
+  // Get monthly consistency data (read-only)
+  app.get("/api/v1/consistency/month", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const yearParam = req.query.year as string;
+      const monthParam = req.query.month as string;
+
+      if (!yearParam || !monthParam) {
+        return res.status(400).json({ error: "year and month query parameters are required" });
+      }
+
+      const year = parseInt(yearParam, 10);
+      const month = parseInt(monthParam, 10);
+
+      if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+        return res.status(400).json({ error: "Invalid year or month" });
+      }
+
+      const days = await storage.getConsistencyMonth(req.user.sub, year, month);
+      
+      res.json({ year, month, days });
+    } catch (error) {
+      console.error("Error fetching consistency month:", error);
+      res.status(500).json({ error: "Failed to fetch consistency data" });
+    }
+  });
+
+  // Get consistency range (earliest activity to current month)
+  app.get("/api/v1/consistency/range", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const todayDate = req.query.today as string;
+      if (!todayDate || !/^\d{4}-\d{2}-\d{2}$/.test(todayDate)) {
+        return res.status(400).json({ error: "today query parameter required (YYYY-MM-DD)" });
+      }
+
+      const currentMonth = todayDate.slice(0, 7);
+      const rangeData = await storage.getConsistencyRange(req.user.sub);
+      const currentStreak = await storage.getCurrentStreak(req.user.sub, todayDate);
+
+      res.json({
+        startMonth: rangeData.startMonth,
+        currentMonth,
+        currentStreak
+      });
+    } catch (error) {
+      console.error("Error fetching consistency range:", error);
+      res.status(500).json({ error: "Failed to fetch consistency range" });
+    }
+  });
+
   // ===== ACTIVITY LOGGING ROUTES (AI INSIGHTS) =====
 
   // Log user activity (practice/breath/checklist)

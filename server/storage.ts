@@ -1058,6 +1058,68 @@ export class DbStorage implements IStorage {
     return records.map(r => r.activityDate);
   }
 
+  async getConsistencyMonth(userId: number, year: number, month: number): Promise<{ date: string; active: boolean }[]> {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const allDates: string[] = [];
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      allDates.push(dateStr);
+    }
+
+    const activeDates = await this.getUserStreakDates(userId, allDates);
+    const activeDateSet = new Set(activeDates);
+
+    return allDates.map(date => ({
+      date,
+      active: activeDateSet.has(date)
+    }));
+  }
+
+  async getConsistencyRange(userId: number): Promise<{ startMonth: string | null; currentMonth: string }> {
+    const [earliest] = await db
+      .select({ activityDate: userStreaksTable.activityDate })
+      .from(userStreaksTable)
+      .where(eq(userStreaksTable.userId, userId))
+      .orderBy(asc(userStreaksTable.activityDate))
+      .limit(1);
+
+    const startMonth = earliest ? earliest.activityDate.slice(0, 7) : null;
+    
+    return { startMonth, currentMonth: "current" };
+  }
+
+  async getCurrentStreak(userId: number, todayDate: string): Promise<number> {
+    const allRecords = await db
+      .select({ activityDate: userStreaksTable.activityDate })
+      .from(userStreaksTable)
+      .where(eq(userStreaksTable.userId, userId))
+      .orderBy(desc(userStreaksTable.activityDate));
+
+    if (allRecords.length === 0) return 0;
+
+    const activeDates = new Set(allRecords.map(r => r.activityDate));
+    
+    let streak = 0;
+    let checkDate = new Date(todayDate + 'T12:00:00');
+    
+    if (!activeDates.has(todayDate)) {
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    while (true) {
+      const dateStr = checkDate.toISOString().split('T')[0];
+      if (activeDates.has(dateStr)) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  }
+
   // ===== ACTIVITY LOGS (AI INSIGHTS) =====
 
   async logActivity(
