@@ -3764,6 +3764,67 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
+  // ===== USER WELLNESS PROFILE APIs =====
+
+  // Admin API: Get wellness profile for a user
+  app.get("/admin/v1/users/:userId/wellness-profile", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      const profile = await storage.getWellnessProfileByUserId(userId);
+      res.json(profile || { userId, karmicAffirmation: null, prescription: null });
+    } catch (error) {
+      console.error("Error fetching wellness profile:", error);
+      res.status(500).json({ error: "Failed to fetch wellness profile" });
+    }
+  });
+
+  // Admin API: Create or update wellness profile for a user
+  app.post("/admin/v1/users/:userId/wellness-profile", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      // Verify user exists
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const { karmicAffirmation, prescription } = req.body;
+
+      const profile = await storage.upsertWellnessProfile(userId, {
+        karmicAffirmation: karmicAffirmation ?? null,
+        prescription: prescription ?? null,
+      });
+
+      res.json(profile);
+    } catch (error) {
+      console.error("Error saving wellness profile:", error);
+      res.status(500).json({ error: "Failed to save wellness profile" });
+    }
+  });
+
+  // User API: Get own wellness profile (read-only)
+  app.get("/api/v1/me/wellness-profile", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const profile = await storage.getWellnessProfileByUserId(req.user.sub);
+      res.json(profile || { karmicAffirmation: null, prescription: null });
+    } catch (error) {
+      console.error("Error fetching user wellness profile:", error);
+      res.status(500).json({ error: "Failed to fetch wellness profile" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

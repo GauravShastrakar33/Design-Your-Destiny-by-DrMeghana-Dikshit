@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -419,3 +419,22 @@ export const insertRewiringBeliefSchema = createInsertSchema(rewiringBeliefs).om
 
 export type InsertRewiringBelief = z.infer<typeof insertRewiringBeliefSchema>;
 export type RewiringBelief = typeof rewiringBeliefs.$inferSelect;
+
+// User Wellness Profile Table - admin-assigned karmic affirmation and prescription
+export const userWellnessProfiles = pgTable("user_wellness_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  karmicAffirmation: text("karmic_affirmation"),
+  prescription: jsonb("prescription"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertUserWellnessProfileSchema = createInsertSchema(userWellnessProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserWellnessProfile = z.infer<typeof insertUserWellnessProfileSchema>;
+export type UserWellnessProfile = typeof userWellnessProfiles.$inferSelect;

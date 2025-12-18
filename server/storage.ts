@@ -14,6 +14,7 @@ import {
   type UserStreak, type InsertUserStreak,
   type ActivityLog, type InsertActivityLog, type FeatureType,
   type RewiringBelief, type InsertRewiringBelief,
+  type UserWellnessProfile, type InsertUserWellnessProfile,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -22,7 +23,8 @@ import {
   sessionBanners as sessionBannersTable,
   userStreaks as userStreaksTable,
   activityLogs as activityLogsTable,
-  rewiringBeliefs as rewiringBeliefsTable
+  rewiringBeliefs as rewiringBeliefsTable,
+  userWellnessProfiles as userWellnessProfilesTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -1225,6 +1227,46 @@ export class DbStorage implements IStorage {
       .where(and(eq(rewiringBeliefsTable.id, id), eq(rewiringBeliefsTable.userId, userId)))
       .returning();
     return result.length > 0;
+  }
+
+  // ===== USER WELLNESS PROFILES =====
+
+  async getWellnessProfileByUserId(userId: number): Promise<UserWellnessProfile | undefined> {
+    const [profile] = await db
+      .select()
+      .from(userWellnessProfilesTable)
+      .where(eq(userWellnessProfilesTable.userId, userId));
+    return profile;
+  }
+
+  async upsertWellnessProfile(
+    userId: number,
+    data: { karmicAffirmation?: string | null; prescription?: unknown }
+  ): Promise<UserWellnessProfile> {
+    const existing = await this.getWellnessProfileByUserId(userId);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(userWellnessProfilesTable)
+        .set({
+          karmicAffirmation: data.karmicAffirmation,
+          prescription: data.prescription,
+          updatedAt: new Date(),
+        })
+        .where(eq(userWellnessProfilesTable.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(userWellnessProfilesTable)
+        .values({
+          userId,
+          karmicAffirmation: data.karmicAffirmation,
+          prescription: data.prescription,
+        })
+        .returning();
+      return created;
+    }
   }
 }
 

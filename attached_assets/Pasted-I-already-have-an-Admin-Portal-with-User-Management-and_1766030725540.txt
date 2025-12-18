@@ -1,0 +1,130 @@
+I already have an Admin Portal with User Management and a Students list page. When the admin clicks on a user name in the Students table, it should navigate to a User Details page.
+
+🔹 EXISTING CONTEXT (IMPORTANT)
+* Admin portal already exists
+* User Management → Students list already exists
+* Users table already exists
+* Authentication & role-based access already exists
+* Do NOT rebuild user management
+* Extend the existing system only
+
+🔹 NEW FEATURE TO BUILD
+
+1️⃣ Admin User Details Page
+Route
+
+/admin/students/:userId
+Navigation
+* Clicking a user name in the Students list should navigate to this page
+
+2️⃣ Database Design
+Create a new table:
+
+user_wellness_profile
+Columns:
+* id (primary key)
+* user_id (foreign key → users.id, UNIQUE)
+* karmic_affirmation (TEXT, nullable)
+* prescription (JSON / JSONB, nullable)
+* created_at
+* updated_at
+Rules:
+* One row per user
+* prescription must be flexible and nullable
+* Do NOT enforce required JSON keys
+
+3️⃣ Admin APIs (Protected)
+Create admin-only APIs:
+Get wellness profile
+GET /admin/users/:userId/wellness-profile
+
+Create or update wellness profile
+POST /admin/users/:userId/wellness-profile
+Behavior:
+* If profile exists → update
+* If profile does not exist → create
+* Only admin users can access these endpoints
+
+4️⃣ Admin User Details Page UI
+A. Basic User Info (Read-Only)
+* Name
+* Email
+* Phone
+* Program
+* Status
+
+B. Karmic Affirmation (Editable)
+* Large textarea
+* Admin writes personalized karmic affirmation
+* Save button persists to backend
+
+C. My Prescription (Editable, Structured & OPTIONAL)
+Prescription must be stored as flexible JSON.
+
+❗ IMPORTANT CLARIFICATION (VERY IMPORTANT)
+* Morning, Afternoon, and Evening are OPTIONAL keys
+* Admin is NOT required to fill all sections
+* Backend must accept partial or empty JSON
+* Missing keys simply mean no practices for that time
+* Do NOT force empty arrays for missing sections
+
+Example Valid Prescription JSON
+
+{
+  "morning": ["Vibration Elevation", "Neuro-coupling"],
+  "evening": ["WCA 3", "Happiness Code 1"]
+}
+
+UI Behavior
+* Show sections: Morning / Afternoon / Evening
+* Each section allows:
+    * Add item
+    * Remove item
+* If admin does not add items to a section:
+    * Do not store that key in JSON
+* Save button persists structured JSON
+
+5️⃣ User-Side API (Read-Only)
+Create user API:
+GET /api/me/wellness-profile
+
+Returns:
+* karmicAffirmation
+* prescription (as stored JSON)
+User must not be able to edit this data.
+
+6️⃣ User Profile Page (Frontend)
+Update existing User Profile page to:
+* Fetch data from /api/me/wellness-profile
+* Render:
+    * My Karmic Affirmation
+    * My Prescription
+* Show only prescription sections that exist and have items
+* Hide sections that are missing or empty
+Empty State
+If no data exists:
+“Your personalized practices will appear here.”
+
+7️⃣ Permissions
+Role	View	Edit
+Admin	✅	✅
+User	✅	❌
+8️⃣ Non-Goals (Do NOT Build)
+* No notifications
+* No version history
+* No analytics
+* No redesign of existing admin user management
+* No frontend editing for users
+
+9️⃣ Acceptance Criteria
+* Clicking user name opens admin user details page
+* Admin can save affirmation & prescription
+* Prescription supports partial sections
+* Data persists correctly per user
+* User profile renders admin-assigned content
+* Works independently for multiple users
+
+This is an extension to the existing system, not a rewrite. Follow existing folder structure, API patterns, and role checks.
+
+🧠 Product Note (Implicit Intent)
+This content is guidance-driven, not self-editable, and must feel personalized and authoritative.
