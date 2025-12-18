@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { UserWellnessProfile } from "@shared/schema";
+import ConsistencyCalendar from "@/components/ConsistencyCalendar";
 
 interface PrescriptionData {
   morning?: string[];
@@ -487,89 +488,21 @@ export default function ProfilePage() {
 
       {/* Other Cards Container */}
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        {/* Streak Tracker */}
-        <Card className="bg-white border shadow-sm rounded-xl">
-          <CardContent className="p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
-                Your Consistency Map 📈
-              </h3>
-              <button
-                onClick={toggleStreakVisibility}
-                className="p-1 hover:bg-gray-100 rounded-md transition"
-              >
-                {streakVisible ? (
-                  <Eye className="w-5 h-5 text-gray-500" />
-                ) : (
-                  <EyeOff className="w-5 h-5 text-gray-500" />
-                )}
-              </button>
-            </div>
-
-            {streakVisible && (
-              <>
-                {/* Legend */}
-                <div className="flex justify-end gap-4 text-xs mb-4">
-                  <div className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                    <span className="text-gray-600">Streak</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                    <span className="text-gray-600">Missed</span>
-                  </div>
-                </div>
-
-                {/* Calendar */}
-                <div
-                  className="overflow-x-auto scrollbar-hide"
-                  data-testid="streak-calendar"
-                >
-                  <div className="flex gap-6 pb-4">
-                    {Object.entries(daysByMonth).map(([month, days]) => (
-                      <div key={month} className="flex-shrink-0">
-                        <h4 className="text-sm font-medium text-foreground mb-2">
-                          {monthNames[parseInt(month)]}
-                        </h4>
-                        <div className="grid grid-cols-7 gap-1">
-                          {days.map((day) => {
-                            const dayNum = new Date(day.date).getDate();
-                            return (
-                              <div
-                                key={day.date}
-                                className={`w-8 h-8 rounded flex items-center justify-center text-xs font-medium ${
-                                  day.status === "streak"
-                                    ? "bg-green-500 text-white"
-                                    : day.status === "missed"
-                                      ? "bg-red-500 text-white"
-                                      : "bg-muted text-muted-foreground"
-                                }`}
-                                data-testid={`day-${day.date}`}
-                              >
-                                {dayNum}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Best Streak Section */}
-                <div className="mt-4 text-left">
-                  <p className="text-sm text-gray-500 tracking-wide">
-                    BEST STREAK ----&gt;{" "}
-                    <span className="text-green-600 font-semibold ml-3">
-                      {bestStreak} Days
-                    </span>
-                  </p>
-                </div>
-              </>
+        {/* Consistency Calendar */}
+        <div className="relative">
+          <button
+            onClick={toggleStreakVisibility}
+            className="absolute top-4 right-4 z-10 p-1 hover:bg-gray-100 rounded-md transition"
+            data-testid="button-toggle-calendar-visibility"
+          >
+            {streakVisible ? (
+              <Eye className="w-5 h-5 text-gray-500" />
+            ) : (
+              <EyeOff className="w-5 h-5 text-gray-500" />
             )}
-          </CardContent>
-        </Card>
+          </button>
+          <ConsistencyCalendar visible={streakVisible} />
+        </div>
 
         {/* My Prescription Card */}
         <div
