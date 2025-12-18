@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import {
   ChevronRight,
   ChevronDown,
@@ -21,8 +22,17 @@ import {
   Edit2,
   Check,
   X,
+  Sun,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import type { UserWellnessProfile } from "@shared/schema";
+
+interface PrescriptionData {
+  morning?: string[];
+  afternoon?: string[];
+  evening?: string[];
+}
 
 interface StreakDay {
   date: string;
@@ -44,6 +54,13 @@ export default function ProfilePage() {
   const [userName, setUserName] = useState("UserName");
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState("");
+
+  const { data: wellnessProfile, isLoading: isLoadingProfile } = useQuery<UserWellnessProfile | { karmicAffirmation: null; prescription: null }>({
+    queryKey: ["/api/v1/me/wellness-profile"],
+  });
+
+  const prescriptionFromApi = (wellnessProfile?.prescription as PrescriptionData) || {};
+  const hasPrescription = prescriptionFromApi.morning?.length || prescriptionFromApi.afternoon?.length || prescriptionFromApi.evening?.length;
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -432,14 +449,25 @@ export default function ProfilePage() {
               My Karmic Affirmation
             </p>
 
-            <p
-              className="text-foreground font-['Playfair_Display'] text-base sm:text-lg leading-normal tracking-wide"
-              data-testid="text-affirmation"
-            >
-              I trust the universe to guide me toward my highest purpose. Every
-              challenge is an opportunity for growth, and I embrace it with
-              grace and courage.
-            </p>
+            {isLoadingProfile ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : wellnessProfile?.karmicAffirmation ? (
+              <p
+                className="text-foreground font-['Playfair_Display'] text-base sm:text-lg leading-normal tracking-wide"
+                data-testid="text-affirmation"
+              >
+                {wellnessProfile.karmicAffirmation}
+              </p>
+            ) : (
+              <p
+                className="text-muted-foreground italic text-sm text-center"
+                data-testid="text-affirmation-empty"
+              >
+                Your personalized affirmation will appear here.
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -562,28 +590,45 @@ export default function ProfilePage() {
 
           {prescriptionExpanded && (
             <div className="px-5 pb-5 space-y-3">
-              <div className="flex items-center gap-3">
-                <Sunrise className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">Morning: </span>
-                  Vibration Elevation • Neuro-coupling • WCA 1 & 2 • Birth Story
-                  + Late Birth
+              {isLoadingProfile ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : !hasPrescription ? (
+                <p className="text-muted-foreground italic text-sm text-center py-2" data-testid="text-prescription-empty">
+                  Your personalized practices will appear here.
                 </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Leaf className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">Afternoon: </span>{" "}
-                  Journaling{" "}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Moon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">Evening: </span>
-                  WCA 3 • Anxiety Code 1 • Happiness Code 1
-                </p>
-              </div>
+              ) : (
+                <>
+                  {prescriptionFromApi.morning && prescriptionFromApi.morning.length > 0 && (
+                    <div className="flex items-start gap-3" data-testid="prescription-morning">
+                      <Sunrise className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-foreground">
+                        <span className="font-semibold">Morning: </span>
+                        {prescriptionFromApi.morning.join(" • ")}
+                      </p>
+                    </div>
+                  )}
+                  {prescriptionFromApi.afternoon && prescriptionFromApi.afternoon.length > 0 && (
+                    <div className="flex items-start gap-3" data-testid="prescription-afternoon">
+                      <Sun className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-foreground">
+                        <span className="font-semibold">Afternoon: </span>
+                        {prescriptionFromApi.afternoon.join(" • ")}
+                      </p>
+                    </div>
+                  )}
+                  {prescriptionFromApi.evening && prescriptionFromApi.evening.length > 0 && (
+                    <div className="flex items-start gap-3" data-testid="prescription-evening">
+                      <Moon className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-foreground">
+                        <span className="font-semibold">Evening: </span>
+                        {prescriptionFromApi.evening.join(" • ")}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

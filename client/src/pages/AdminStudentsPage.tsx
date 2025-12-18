@@ -448,9 +448,13 @@ export default function AdminStudentsPage() {
                       data-testid={`row-student-${student.id}`}
                     >
                       <td className="py-3 px-4">
-                        <span className="font-medium text-gray-900" data-testid={`text-student-name-${student.id}`}>
+                        <button
+                          onClick={() => setLocation(`/admin/students/${student.id}`)}
+                          className="font-medium text-primary hover:underline text-left"
+                          data-testid={`link-student-name-${student.id}`}
+                        >
                           {student.name}
-                        </span>
+                        </button>
                       </td>
                       <td className="py-3 px-4 text-gray-600">{student.email}</td>
                       <td className="py-3 px-4 text-gray-600">{student.phone || "-"}</td>
