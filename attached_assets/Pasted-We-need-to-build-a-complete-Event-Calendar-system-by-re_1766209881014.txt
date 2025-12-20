@@ -1,0 +1,373 @@
+We need to build a complete Event Calendar system by refactoring the existing Workshops / Masterclasses feature.
+
+====================================================
+GLOBAL REFACTOR (MANDATORY)
+====================================================
+
+USER APP:
+- Rename “Workshops” / “Masterclasses” to **Event Calendar**
+- Rename `WorkshopsPage` → `EventCalendarPage`
+- Update routes, navigation labels, imports, and internal naming consistently
+- Event Calendar contains ONLY:
+  - Upcoming
+  - Latest
+- UI must be CARD-BASED with thumbnails 
+
+ADMIN PANEL:
+- Create a new section called **Event Management**
+
+====================================================
+DATABASE — EVENTS TABLE
+====================================================
+
+Create an `events` table with:
+
+- id (uuid or serial, primary key)
+- title
+- description
+- coach_name (optional)
+- thumbnail_url (stored in R2)
+- start_datetime
+- end_datetime
+- join_url
+- recording_url
+- recording_passcode
+- show_recording (boolean, default false)
+- recording_expiry_date
+- required_program_code (varchar, e.g. "DYD", "USM")
+- status ("DRAFT" | "UPCOMING" | "COMPLETED" | "CANCELLED")
+- created_at
+- updated_at
+
+IMPORTANT:
+- Use `required_program_code` for access control
+- DO NOT use program_id for access control
+- Program CODE is the permanent identity
+
+====================================================
+EVENT LIFECYCLE
+====================================================
+
+Stored statuses:
+DRAFT → UPCOMING → COMPLETED
+          ↘
+           CANCELLED
+
+LIVE is NOT stored.
+LIVE is derived when:
+start_datetime <= current_time <= end_datetime
+
+====================================================
+USER — EVENT CALENDAR
+====================================================
+
+Has two segmented buttons
+
+--------------------------------
+1️⃣ UPCOMING 
+--------------------------------
+- Displayed as thumbnail cards
+- Each card shows:
+  - Thumbnail
+  - Event title
+  - Coach name
+  - Date & time
+  - LIVE badge (only while event is live)
+  - JOIN button (only while event is live)
+
+Rules:
+- Join button MUST NOT appear before start_datetime
+- LIVE badge MUST appear only between start_datetime and end_datetime
+- Cancelled events MUST NOT appear to users
+
+--------------------------------
+2️⃣ LATEST 
+--------------------------------
+- Displayed as thumbnail cards
+- Each card shows:
+  - Thumbnail
+  - Event title
+  - Coach name
+  - “Recording available till <date>”
+
+Behavior:
+- Clicking the card opens a Recording Access page/modal
+
+Recording Access Page:
+Section A:
+▶ Open Recording
+- Opens Zoom recording link in a new tab
+
+Section B:
+Recording Passcode
+- Passcode shown in plain text (visible)
+- Copy button provided
+
+Notes:
+- DO NOT embed Zoom
+- DO NOT auto-fill Zoom forms
+- Recording passcode must be readable for elderly users
+- Copy button copies passcode to clipboard
+
+====================================================
+ADMIN PANEL — EVENT MANAGEMENT
+====================================================
+
+Admin Sidebar:
+Event Management
+ ├── Upcoming Events
+ ├── Latest Events
+ └── All Events
+
+All views use the SAME `events` table (filtered views only).
+
+----------------------------------------------------
+Admin → Upcoming Events
+----------------------------------------------------
+Filter:
+- status = UPCOMING
+
+Actions:
+- Create Event
+- Edit
+- Cancel
+
+----------------------------------------------------
+Admin → Latest Events (DECISION ZONE)
+----------------------------------------------------
+Filter:
+- status = COMPLETED
+- AND (
+    show_recording = true
+    OR recording_url IS NULL
+  )
+- CANCELLED events must NEVER appear
+
+Purpose:
+- Force admin to decide what to do after event completion
+
+Per-event UI:
+
+1️⃣ Recording decision pending:
+Condition:
+- recording_url IS NULL
+- show_recording = false
+
+Show TWO CTAs:
+- **Add Recording**
+- **Skip Recording**
+
+2️⃣ Recording published:
+Condition:
+- show_recording = true
+
+After Admin adds: - Recording URL
+- Recording Passcode
+- Recording Expiry Date
+Show:
+- “Recording available till <date>”
+
+Admin → Latest must NOT show recordings after recording_expiry_date (grace period is user-only).
+
+----------------------------------------------------
+SKIP RECORDING — CONFIRMATION MODAL (MANDATORY)
+----------------------------------------------------
+
+Skip Recording must NEVER be one-click.
+
+On clicking “Skip Recording”:
+- Show confirmation modal
+- Do NOT update data until confirmed
+
+Modal:
+Title: Skip Recording for this Event?
+Message:
+This event will not have a recording and will not appear in Latest for users.
+You can still add a recording later from All Events.
+
+Buttons:
+- Primary: Go Back
+- Secondary: Skip Recording
+
+On confirm:
+- show_recording = false
+- recording_url = NULL
+- recording_passcode = NULL
+- Event is REMOVED from Admin → Latest
+- Event remains in Admin → All Events
+- Event NEVER appears in User → Latest
+
+----------------------------------------------------
+Admin → All Events
+----------------------------------------------------
+Shows ALL events:
+- DRAFT, UPCOMING, COMPLETED, CANCELLED
+
+Features:
+- Filter by Month, Year, Status - COMPLETED, CANCELLED
+- Permanent system record
+- Events are NEVER auto-deleted
+
+Admin must be able to later add a recording to a COMPLETED event from All Events, even if Skip Recording was previously selected.
+
+====================================================
+SINGLE EVENT FORM
+====================================================
+
+When creating/editing DRAFT or UPCOMING:
+
+Show:
+- Title
+- Description
+- Coach name (optional)
+- Required Program (dropdown)
+- Start & End datetime
+- Join URL
+- Thumbnail upload (R2)
+
+Hide:
+- Recording URL
+- Recording Passcode
+- Recording Expiry Date
+
+====================================================
+EVENT COMPLETION FLOW
+====================================================
+
+When:
+current_time > end_datetime
+
+System:
+- status → COMPLETED
+- Removed from Upcoming
+
+Admin:
+- Event appears in Admin → Latest
+- Admin MUST choose:
+  - Add Recording
+  - Skip Recording
+
+
+====================================================
+UI VISUAL SUMMARY (ADMIN PANEL)
+====================================================
+
+Admin → Upcoming Events
+
+1. Create Event button
+   - Opens the Event Form
+   - Recording-related fields are HIDDEN
+
+2. Upcoming Events list 
+   - Displays all events with status = UPCOMING
+   - Actions available per event:
+     - Edit
+     - Cancel
+
+----------------------------------------------------
+After Event Ends
+----------------------------------------------------
+Condition:
+- current_time > end_datetime
+
+System behavior:
+- Event status → COMPLETED
+- Event is REMOVED from Admin → Upcoming Events
+- Event becomes eligible to appear in Admin → Latest Events
+
+----------------------------------------------------
+Admin → Latest Events
+----------------------------------------------------
+
+Purpose:
+- Manage recordings for recently completed events
+
+Displays events with:
+- status = COMPLETED
+- AND within their recording lifecycle
+
+UI behavior:
+- If recording NOT added yet:
+  - Show 2 CTA on event card:
+     “Event is completed, 
+    1. Add Recording”
+    2. Skip Recording
+
+- If recording IS added:
+  - Show text:
+    “Recording available till <date>”
+
+Notes:
+- Events remain here ONLY until recording expiry
+- After expiry, they are removed from Latest automatically
+
+----------------------------------------------------
+Admin → All Events
+----------------------------------------------------
+
+- Displays ALL events, regardless of state:
+  - DRAFT
+  - UPCOMING
+  - COMPLETED
+  - CANCELLED
+
+- Shows event status clearly
+- Provides filter options:
+  - Month (based on start_datetime)
+  - Year
+  - Status (Completed / Cancelled)
+
+- Acts as the permanent source of truth
+- Events are NEVER auto-deleted here
+
+====================================================
+PROGRAM ACCESS CONTROL (FUTURE READY)
+====================================================
+
+Rules:
+- DYD users see ALL events
+- USM users see ONLY USM events
+- required_program_code = minimum program required
+
+Admin dropdown:
+SELECT code, name FROM programs WHERE is_active = true ORDER BY name;
+
+====================================================
+BACKEND APIs
+====================================================
+
+ADMIN:
+- POST   /admin/events
+- PUT    /admin/events/:id
+- DELETE /admin/events/:id  → sets status = CANCELLED
+- GET    /admin/events      → supports filters
+
+USER:
+- GET /api/events/upcoming
+- GET /api/events/latest
+- GET /api/events/:id
+
+Sorting:
+- Upcoming → start_datetime ASC
+- Latest → start_datetime DESC
+
+====================================================
+IMPORTANT CONSTRAINTS
+====================================================
+
+- Do NOT duplicate events
+- Do NOT rely on program_id
+- Do NOT hardcode DYD logic
+- All visibility is derived at query time
+
+====================================================
+DELIVERABLES
+====================================================
+
+- Event Calendar (user)
+- Event Management (admin)
+- Backend APIs
+- DB schema
+- R2 integration
+
+Proceed carefully. This is a production refactor.
