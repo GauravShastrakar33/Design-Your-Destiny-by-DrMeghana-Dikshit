@@ -26,12 +26,12 @@ export default function BottomNav() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location === item.path;
-            
+
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
               >
                 <button className="flex flex-col items-center justify-center min-w-[60px] py-1 hover-elevate active-elevate-2 rounded-lg px-2">
                   {item.label === "Dr.M" ? (
@@ -45,14 +45,18 @@ export default function BottomNav() {
                   ) : (
                     <Icon
                       className={`w-6 h-6 ${
-                        isActive ? "text-[#703DFA]" : "text-[#703DFA] opacity-50"
+                        isActive
+                          ? "text-[#703DFA]"
+                          : "text-[#703DFA] opacity-50"
                       }`}
                       fill={isActive ? "currentColor" : "none"}
                     />
                   )}
                   <span
                     className={`text-xs mt-1 ${
-                      isActive ? "font-semibold text-gray-900" : "font-medium text-gray-600"
+                      isActive
+                        ? "font-semibold text-gray-900"
+                        : "font-medium text-gray-600"
                     }`}
                   >
                     {item.label}

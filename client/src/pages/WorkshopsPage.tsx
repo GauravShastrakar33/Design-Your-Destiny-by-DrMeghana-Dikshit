@@ -4,7 +4,10 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { Masterclass as DBMasterclass, WorkshopVideo as DBWorkshopVideo } from "@shared/schema";
+import type {
+  Masterclass as DBMasterclass,
+  WorkshopVideo as DBWorkshopVideo,
+} from "@shared/schema";
 import rightDecisionThumbnail from "@assets/right-decision-thumbnail.png";
 
 type Tab = "upcoming" | "latest";
@@ -104,8 +107,12 @@ export default function WorkshopsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("upcoming");
 
   // Fetch data from database
-  const { data: dbMasterclasses = [] } = useQuery<DBMasterclass[]>({ queryKey: ["/api/masterclasses"] });
-  const { data: dbWorkshopVideos = [] } = useQuery<DBWorkshopVideo[]>({ queryKey: ["/api/workshop-videos"] });
+  const { data: dbMasterclasses = [] } = useQuery<DBMasterclass[]>({
+    queryKey: ["/api/masterclasses"],
+  });
+  const { data: dbWorkshopVideos = [] } = useQuery<DBWorkshopVideo[]>({
+    queryKey: ["/api/workshop-videos"],
+  });
 
   // Convert and filter data
   const upcomingMasterclasses = dbMasterclasses.map(convertMasterclass);
@@ -147,7 +154,7 @@ export default function WorkshopsPage() {
               className="text-xl font-bold text-gray-500 tracking-wider"
               style={{ fontFamily: "Montserrat, sans-serif" }}
             >
-              MASTERCLASSES
+              Masterclasses
             </h1>
             <div className="flex items-center gap-2">
               <button
@@ -319,7 +326,6 @@ export default function WorkshopsPage() {
               ))}
             </div>
           )}
-
         </div>
       </div>
     </div>

@@ -1,0 +1,79 @@
+We already have an existing `programs` table. 
+I need you to MODIFY it (not recreate it) to make it future-ready for access control and Events.
+
+====================================================
+CURRENT TABLE (EXISTS)
+====================================================
+programs
+- id (serial, primary key)
+- code (varchar, unique)
+- name (varchar)
+
+====================================================
+GOAL
+====================================================
+- Program `code` must act as a permanent business identity (USM, DYD, etc.)
+- Programs must support soft delete / archive
+- Programs must NOT break Events or access control if deleted & recreated
+- Existing data must remain intact
+
+====================================================
+REQUIRED CHANGES (MANDATORY)
+====================================================
+
+1️⃣ ADD the following columns to the existing `programs` table:
+- is_active (boolean, default true, not null)
+- deleted_at (timestamp, nullable)
+- created_at (timestamp, default now, not null)
+- updated_at (timestamp, default now, not null)
+
+2️⃣ DO NOT remove or rename:
+- id
+- code
+- name
+
+3️⃣ ENSURE:
+- `code` remains globally UNIQUE (even for soft-deleted rows)
+- `code` is treated as a permanent identity
+
+====================================================
+BUSINESS RULES (IMPORTANT)
+====================================================
+
+- Program `code` can be edited ONLY if the program is not used anywhere.
+- A program is considered "used" if:
+  - It exists in `user_programs`
+  - OR it is referenced by any Event (future table)
+
+- If a program is used:
+  - Code must be READ-ONLY
+  - Program must NOT be hard deleted
+  - Only soft delete is allowed
+
+====================================================
+SOFT DELETE BEHAVIOR
+====================================================
+When admin deletes a program:
+- Set is_active = false
+- Set deleted_at = NOW()
+
+When admin reactivates a program:
+- Set is_active = true
+- Set deleted_at = NULL
+
+DO NOT hard delete used programs.
+
+====================================================
+IMPORTANT DESIGN NOTE
+====================================================
+- Program IDs may change, but program CODES must never be reused.
+- Access control and Events will rely on program.code, not program.id.
+
+====================================================
+DELIVERABLES
+====================================================
+- SQL / migration to alter the existing programs table
+- Updated Drizzle schema for `programs`
+- Ensure no existing data is lost
+
+Proceed safely. Do NOT drop or recreate the table.
