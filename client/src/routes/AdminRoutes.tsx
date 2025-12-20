@@ -17,6 +17,8 @@ import AdminPlaylistMappingPage from "@/pages/AdminPlaylistMappingPage";
 import AdminSessionBannersPage from "@/pages/AdminSessionBannersPage";
 import AdminSessionBannerFormPage from "@/pages/AdminSessionBannerFormPage";
 import AdminQuotesPage from "@/pages/AdminQuotesPage";
+import AdminEventsPage from "@/pages/AdminEventsPage";
+import AdminEventFormPage from "@/pages/AdminEventFormPage";
 import CourseCreateStep1 from "@/pages/CourseCreateStep1";
 import CourseCreateStep2 from "@/pages/CourseCreateStep2";
 import CourseCreateStep3 from "@/pages/CourseCreateStep3";
@@ -51,6 +53,9 @@ export default function AdminRoutes() {
       <Route path="/admin/session-banner/banners/new" component={AdminSessionBannerFormPage} />
       <Route path="/admin/session-banner/banners/:id/edit" component={AdminSessionBannerFormPage} />
       <Route path="/admin/quotes" component={AdminQuotesPage} />
+      <Route path="/admin/events" component={AdminEventsPage} />
+      <Route path="/admin/events/new" component={AdminEventFormPage} />
+      <Route path="/admin/events/:id/edit" component={AdminEventFormPage} />
       <Route component={NotFound} />
     </Switch>
   );

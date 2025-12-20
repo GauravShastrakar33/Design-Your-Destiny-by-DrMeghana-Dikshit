@@ -19,12 +19,15 @@ import {
   DollarSign,
   Music,
   Quote,
+  Calendar,
+  Video,
 } from "lucide-react";
 
 const menuIcons: Record<string, React.ElementType> = {
   dashboard: LayoutDashboard,
   users: Users,
   banner: Image,
+  events: Calendar,
   sessions: UsersRound,
   articles: FileText,
   workshops: GraduationCap,
@@ -61,6 +64,13 @@ const menuContent: Record<
     items: [
       { path: "/admin/session-banner/banners", label: "All Banners", icon: List },
       { path: "/admin/session-banner/banners/new", label: "Add New", icon: Plus },
+    ],
+  },
+  events: {
+    title: "Event Calendar",
+    items: [
+      { path: "/admin/events", label: "All Events", icon: List },
+      { path: "/admin/events/new", label: "Create Event", icon: Plus },
     ],
   },
   sessions: {

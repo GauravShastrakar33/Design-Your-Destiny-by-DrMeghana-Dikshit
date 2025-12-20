@@ -34,6 +34,11 @@ const menuItems: MenuItem[] = [
     label: "Session Banner"
   },
   { 
+    id: "events",
+    path: "/admin/events", 
+    label: "Event Calendar"
+  },
+  { 
     id: "sessions",
     path: "/admin/sessions", 
     label: "Community Practices"

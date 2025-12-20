@@ -9,7 +9,8 @@ import {
   Heart,
   LogOut,
   BookOpen,
-  Quote
+  Quote,
+  Calendar
 } from "lucide-react";
 import { useAdminSidebar } from "@/contexts/AdminSidebarContext";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -25,6 +26,7 @@ const menuItemsConfig: MenuItemConfig[] = [
   { id: "dashboard", path: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { id: "users", label: "User Management", icon: Users },
   { id: "banner", path: "/admin/session-banner/banners", label: "Session Banner", icon: Image },
+  { id: "events", path: "/admin/events", label: "Event Calendar", icon: Calendar },
   { id: "sessions", path: "/admin/sessions", label: "Community Practices", icon: UsersRound },
   { id: "articles", path: "/admin/articles", label: "Articles", icon: FileText },
   { id: "courses", path: "/admin/courses", label: "Courses", icon: GraduationCap },
