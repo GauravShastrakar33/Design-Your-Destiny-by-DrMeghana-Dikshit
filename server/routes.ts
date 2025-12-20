@@ -20,6 +20,8 @@ import {
   featureCourseMap,
   dailyQuotes,
   insertDailyQuoteSchema,
+  events as eventsTable,
+  insertEventSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -3881,6 +3883,336 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     } catch (error) {
       console.error("Error fetching user wellness profile:", error);
       res.status(500).json({ error: "Failed to fetch wellness profile" });
+    }
+  });
+
+  // ===== EVENT CALENDAR APIs =====
+
+  // Admin API: Get all events with filters
+  app.get("/api/admin/v1/events", requireAdmin, async (req, res) => {
+    try {
+      const { status, month, year } = req.query;
+      const filters: { status?: string; month?: number; year?: number } = {};
+      
+      if (status) filters.status = String(status);
+      if (month) filters.month = parseInt(String(month));
+      if (year) filters.year = parseInt(String(year));
+
+      const events = await storage.getAllEvents(filters);
+      
+      // Generate signed thumbnail URLs
+      const eventsWithSignedUrls = await Promise.all(
+        events.map(async (event) => {
+          let thumbnailSignedUrl: string | null = null;
+          if (event.thumbnailUrl) {
+            const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          return { ...event, thumbnailSignedUrl };
+        })
+      );
+
+      res.json(eventsWithSignedUrls);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+
+  // Admin API: Get upcoming events (for decision zone)
+  app.get("/api/admin/v1/events/upcoming", requireAdmin, async (req, res) => {
+    try {
+      const events = await storage.getAllEvents({ status: "UPCOMING" });
+      
+      const eventsWithSignedUrls = await Promise.all(
+        events.map(async (event) => {
+          let thumbnailSignedUrl: string | null = null;
+          if (event.thumbnailUrl) {
+            const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          return { ...event, thumbnailSignedUrl };
+        })
+      );
+
+      res.json(eventsWithSignedUrls);
+    } catch (error) {
+      console.error("Error fetching upcoming events:", error);
+      res.status(500).json({ error: "Failed to fetch upcoming events" });
+    }
+  });
+
+  // Admin API: Get latest events (completed, decision zone)
+  app.get("/api/admin/v1/events/latest", requireAdmin, async (req, res) => {
+    try {
+      // Get completed events that need recording decision or have recording published
+      const allCompleted = await storage.getAllEvents({ status: "COMPLETED" });
+      
+      // Filter: show_recording = true OR recording_url IS NULL (needs decision)
+      const latestEvents = allCompleted.filter(event => 
+        event.showRecording === true || event.recordingUrl === null
+      );
+
+      const eventsWithSignedUrls = await Promise.all(
+        latestEvents.map(async (event) => {
+          let thumbnailSignedUrl: string | null = null;
+          if (event.thumbnailUrl) {
+            const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          return { ...event, thumbnailSignedUrl };
+        })
+      );
+
+      res.json(eventsWithSignedUrls);
+    } catch (error) {
+      console.error("Error fetching latest events:", error);
+      res.status(500).json({ error: "Failed to fetch latest events" });
+    }
+  });
+
+  // Admin API: Get single event
+  app.get("/api/admin/v1/events/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.getEventById(id);
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      let thumbnailSignedUrl: string | null = null;
+      if (event.thumbnailUrl) {
+        const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+        if (signedResult.success && signedResult.url) {
+          thumbnailSignedUrl = signedResult.url;
+        }
+      }
+
+      res.json({ ...event, thumbnailSignedUrl });
+    } catch (error) {
+      console.error("Error fetching event:", error);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+
+  // Admin API: Get upload URL for event thumbnail (R2)
+  app.get("/api/admin/v1/events/upload-url", requireAdmin, async (req, res) => {
+    try {
+      const { filename, contentType } = req.query as { filename: string; contentType: string };
+      if (!filename || !contentType) {
+        return res.status(400).json({ error: "filename and contentType are required" });
+      }
+
+      const key = `events/${Date.now()}-${filename}`;
+      const result = await getSignedPutUrl(key, contentType);
+      
+      if (!result.success) {
+        console.error("R2 upload URL error:", result.error);
+        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
+      }
+
+      res.json({ key: result.key, signedUrl: result.uploadUrl });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  // Admin API: Create event
+  app.post("/api/admin/v1/events", requireAdmin, async (req, res) => {
+    try {
+      const parsed = insertEventSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Validation failed", details: parsed.error.errors });
+      }
+
+      const event = await storage.createEvent(parsed.data);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ error: "Failed to create event" });
+    }
+  });
+
+  // Admin API: Update event
+  app.put("/api/admin/v1/events/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.updateEvent(id, req.body);
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      res.json(event);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ error: "Failed to update event" });
+    }
+  });
+
+  // Admin API: Cancel event (soft delete)
+  app.delete("/api/admin/v1/events/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.cancelEvent(id);
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      res.json({ success: true, message: "Event cancelled" });
+    } catch (error) {
+      console.error("Error cancelling event:", error);
+      res.status(500).json({ error: "Failed to cancel event" });
+    }
+  });
+
+  // Admin API: Skip recording for an event
+  app.post("/api/admin/v1/events/:id/skip-recording", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.updateEvent(id, {
+        showRecording: false,
+        recordingUrl: null,
+        recordingPasscode: null,
+        recordingExpiryDate: null,
+      });
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      res.json({ success: true, message: "Recording skipped" });
+    } catch (error) {
+      console.error("Error skipping recording:", error);
+      res.status(500).json({ error: "Failed to skip recording" });
+    }
+  });
+
+  // Admin API: Add recording to an event
+  app.post("/api/admin/v1/events/:id/add-recording", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { recordingUrl, recordingPasscode, recordingExpiryDate } = req.body;
+
+      if (!recordingUrl || !recordingPasscode || !recordingExpiryDate) {
+        return res.status(400).json({ error: "recordingUrl, recordingPasscode, and recordingExpiryDate are required" });
+      }
+
+      const event = await storage.updateEvent(id, {
+        recordingUrl,
+        recordingPasscode,
+        recordingExpiryDate,
+        showRecording: true,
+      });
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      res.json(event);
+    } catch (error) {
+      console.error("Error adding recording:", error);
+      res.status(500).json({ error: "Failed to add recording" });
+    }
+  });
+
+  // ===== PUBLIC EVENT APIs (User App) =====
+
+  // User API: Get upcoming events
+  app.get("/api/events/upcoming", async (req, res) => {
+    try {
+      const events = await storage.getUpcomingEvents();
+      
+      const eventsWithSignedUrls = await Promise.all(
+        events.map(async (event) => {
+          let thumbnailSignedUrl: string | null = null;
+          if (event.thumbnailUrl) {
+            const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          
+          // Derive LIVE status
+          const now = new Date();
+          const isLive = event.startDatetime <= now && now <= event.endDatetime;
+          
+          return { ...event, thumbnailSignedUrl, isLive };
+        })
+      );
+
+      res.json(eventsWithSignedUrls);
+    } catch (error) {
+      console.error("Error fetching upcoming events:", error);
+      res.status(500).json({ error: "Failed to fetch upcoming events" });
+    }
+  });
+
+  // User API: Get latest events (recordings)
+  app.get("/api/events/latest", async (req, res) => {
+    try {
+      const events = await storage.getLatestEvents();
+      
+      const eventsWithSignedUrls = await Promise.all(
+        events.map(async (event) => {
+          let thumbnailSignedUrl: string | null = null;
+          if (event.thumbnailUrl) {
+            const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          return { ...event, thumbnailSignedUrl };
+        })
+      );
+
+      res.json(eventsWithSignedUrls);
+    } catch (error) {
+      console.error("Error fetching latest events:", error);
+      res.status(500).json({ error: "Failed to fetch latest events" });
+    }
+  });
+
+  // User API: Get single event (for recording access)
+  app.get("/api/events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.getEventById(id);
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      // Don't expose cancelled events to users
+      if (event.status === "CANCELLED") {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      let thumbnailSignedUrl: string | null = null;
+      if (event.thumbnailUrl) {
+        const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+        if (signedResult.success && signedResult.url) {
+          thumbnailSignedUrl = signedResult.url;
+        }
+      }
+
+      // Derive LIVE status
+      const now = new Date();
+      const isLive = event.startDatetime <= now && now <= event.endDatetime;
+
+      res.json({ ...event, thumbnailSignedUrl, isLive });
+    } catch (error) {
+      console.error("Error fetching event:", error);
+      res.status(500).json({ error: "Failed to fetch event" });
     }
   });
 
