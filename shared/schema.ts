@@ -89,10 +89,17 @@ export const programs = pgTable("programs", {
   id: serial("id").primaryKey(),
   code: varchar("code", { length: 10 }).notNull().unique(),
   name: varchar("name", { length: 150 }).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  deletedAt: timestamp("deleted_at", { mode: "date" }),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertProgramSchema = createInsertSchema(programs).omit({
   id: true,
+  deletedAt: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export type InsertProgram = z.infer<typeof insertProgramSchema>;
