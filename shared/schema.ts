@@ -89,6 +89,7 @@ export const programs = pgTable("programs", {
   id: serial("id").primaryKey(),
   code: varchar("code", { length: 10 }).notNull().unique(),
   name: varchar("name", { length: 150 }).notNull(),
+  level: integer("level").notNull(),
   isActive: boolean("is_active").notNull().default(true),
   deletedAt: timestamp("deleted_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
