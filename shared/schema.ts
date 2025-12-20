@@ -445,3 +445,36 @@ export const insertUserWellnessProfileSchema = createInsertSchema(userWellnessPr
 
 export type InsertUserWellnessProfile = z.infer<typeof insertUserWellnessProfileSchema>;
 export type UserWellnessProfile = typeof userWellnessProfiles.$inferSelect;
+
+// Event status enum for type safety
+export const eventStatusEnum = z.enum(["DRAFT", "UPCOMING", "COMPLETED", "CANCELLED"]);
+export type EventStatus = z.infer<typeof eventStatusEnum>;
+
+// Events Table - for Event Calendar system
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  coachName: varchar("coach_name", { length: 150 }),
+  thumbnailUrl: text("thumbnail_url"),
+  startDatetime: timestamp("start_datetime", { mode: "date" }).notNull(),
+  endDatetime: timestamp("end_datetime", { mode: "date" }).notNull(),
+  joinUrl: text("join_url"),
+  recordingUrl: text("recording_url"),
+  recordingPasscode: varchar("recording_passcode", { length: 50 }),
+  showRecording: boolean("show_recording").notNull().default(false),
+  recordingExpiryDate: date("recording_expiry_date", { mode: "string" }),
+  requiredProgramCode: varchar("required_program_code", { length: 10 }),
+  status: varchar("status", { length: 20 }).notNull().default("DRAFT"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type Event = typeof events.$inferSelect;

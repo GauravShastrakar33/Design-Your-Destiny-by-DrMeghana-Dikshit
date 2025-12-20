@@ -15,6 +15,7 @@ import {
   type ActivityLog, type InsertActivityLog, type FeatureType,
   type RewiringBelief, type InsertRewiringBelief,
   type UserWellnessProfile, type InsertUserWellnessProfile,
+  type Event, type InsertEvent, type EventStatus,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -24,7 +25,8 @@ import {
   userStreaks as userStreaksTable,
   activityLogs as activityLogsTable,
   rewiringBeliefs as rewiringBeliefsTable,
-  userWellnessProfiles as userWellnessProfilesTable
+  userWellnessProfiles as userWellnessProfilesTable,
+  events as eventsTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -69,6 +71,15 @@ export interface IStorage {
   getUserPrograms(userId: number): Promise<string[]>;
   assignUserProgram(userId: number, programId: number): Promise<void>;
   clearUserPrograms(userId: number): Promise<void>;
+
+  // Event methods
+  getAllEvents(filters?: { status?: string; month?: number; year?: number }): Promise<Event[]>;
+  getEventById(id: number): Promise<Event | undefined>;
+  getUpcomingEvents(): Promise<Event[]>;
+  getLatestEvents(): Promise<Event[]>;
+  createEvent(event: InsertEvent): Promise<Event>;
+  updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event | undefined>;
+  cancelEvent(id: number): Promise<Event | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -301,6 +312,35 @@ export class MemStorage implements IStorage {
   }
 
   async reorderFeatureCourseMappings(featureId: number, courseIds: number[]): Promise<void> {
+  }
+
+  // Event methods (stub implementations for MemStorage)
+  async getAllEvents(filters?: { status?: string; month?: number; year?: number }): Promise<Event[]> {
+    return [];
+  }
+
+  async getEventById(id: number): Promise<Event | undefined> {
+    return undefined;
+  }
+
+  async getUpcomingEvents(): Promise<Event[]> {
+    return [];
+  }
+
+  async getLatestEvents(): Promise<Event[]> {
+    return [];
+  }
+
+  async createEvent(event: InsertEvent): Promise<Event> {
+    throw new Error("Not implemented");
+  }
+
+  async updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event | undefined> {
+    return undefined;
+  }
+
+  async cancelEvent(id: number): Promise<Event | undefined> {
+    return undefined;
   }
 }
 
@@ -1324,6 +1364,114 @@ export class DbStorage implements IStorage {
         .returning();
       return created;
     }
+  }
+
+  // ===== EVENTS =====
+
+  async getAllEvents(filters?: { status?: string; month?: number; year?: number }): Promise<Event[]> {
+    const conditions: any[] = [];
+    
+    if (filters?.status) {
+      conditions.push(eq(eventsTable.status, filters.status));
+    }
+    
+    if (filters?.month && filters?.year) {
+      const startOfMonth = new Date(filters.year, filters.month - 1, 1);
+      const endOfMonth = new Date(filters.year, filters.month, 0, 23, 59, 59);
+      conditions.push(
+        and(
+          sql`${eventsTable.startDatetime} >= ${startOfMonth}`,
+          sql`${eventsTable.startDatetime} <= ${endOfMonth}`
+        )
+      );
+    } else if (filters?.year) {
+      const startOfYear = new Date(filters.year, 0, 1);
+      const endOfYear = new Date(filters.year, 11, 31, 23, 59, 59);
+      conditions.push(
+        and(
+          sql`${eventsTable.startDatetime} >= ${startOfYear}`,
+          sql`${eventsTable.startDatetime} <= ${endOfYear}`
+        )
+      );
+    }
+
+    const events = await db
+      .select()
+      .from(eventsTable)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(eventsTable.startDatetime));
+    
+    return events;
+  }
+
+  async getEventById(id: number): Promise<Event | undefined> {
+    const [event] = await db
+      .select()
+      .from(eventsTable)
+      .where(eq(eventsTable.id, id));
+    return event;
+  }
+
+  async getUpcomingEvents(): Promise<Event[]> {
+    const now = new Date();
+    const events = await db
+      .select()
+      .from(eventsTable)
+      .where(
+        and(
+          eq(eventsTable.status, "UPCOMING"),
+          sql`${eventsTable.endDatetime} >= ${now}`
+        )
+      )
+      .orderBy(asc(eventsTable.startDatetime));
+    return events;
+  }
+
+  async getLatestEvents(): Promise<Event[]> {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    
+    const events = await db
+      .select()
+      .from(eventsTable)
+      .where(
+        and(
+          eq(eventsTable.status, "COMPLETED"),
+          eq(eventsTable.showRecording, true),
+          or(
+            sql`${eventsTable.recordingExpiryDate} IS NULL`,
+            sql`${eventsTable.recordingExpiryDate} >= ${todayStr}`
+          )
+        )
+      )
+      .orderBy(desc(eventsTable.startDatetime));
+    return events;
+  }
+
+  async createEvent(event: InsertEvent): Promise<Event> {
+    const [newEvent] = await db
+      .insert(eventsTable)
+      .values(event)
+      .returning();
+    return newEvent;
+  }
+
+  async updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event | undefined> {
+    const [updated] = await db
+      .update(eventsTable)
+      .set({ ...event, updatedAt: new Date() })
+      .where(eq(eventsTable.id, id))
+      .returning();
+    return updated;
+  }
+
+  async cancelEvent(id: number): Promise<Event | undefined> {
+    const [cancelled] = await db
+      .update(eventsTable)
+      .set({ status: "CANCELLED", updatedAt: new Date() })
+      .where(eq(eventsTable.id, id))
+      .returning();
+    return cancelled;
   }
 }
 
