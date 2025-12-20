@@ -1,4 +1,4 @@
-import { Home, BookOpen, Bot, Heart, User } from "lucide-react";
+import { Home, Calendar, Bot, Heart, User } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import chatIcon from "@assets/chat icon_1763078697186.png";
 
@@ -10,7 +10,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: "/", label: "Home", icon: Home },
-  { path: "/workshops", label: "Workshops", icon: BookOpen },
+  { path: "/events", label: "Events", icon: Calendar },
   { path: "/drm", label: "Dr.M", icon: Bot },
   { path: "/heart", label: "Project", icon: Heart },
   { path: "/profile", label: "Profile", icon: User },

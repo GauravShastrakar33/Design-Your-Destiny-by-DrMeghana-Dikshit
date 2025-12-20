@@ -4,7 +4,7 @@ import ProcessesPage from "@/pages/ProcessesPage";
 import DesignYourPracticePage from "@/pages/DesignYourPracticePage";
 import CommunityPracticesPage from "@/pages/CommunityPracticesPage";
 import SpiritualBreathsPage from "@/pages/SpiritualBreathsPage";
-import WorkshopsPage from "@/pages/WorkshopsPage";
+import EventCalendarPage from "@/pages/EventCalendarPage";
 import MyPracticePlaylistPage from "@/pages/MyPracticePlaylistPage";
 import ProjectOfHeartPage from "@/pages/ProjectOfHeartPage";
 import ProfilePage from "@/pages/ProfilePage";
@@ -33,7 +33,8 @@ export default function AppRoutes() {
       <Route path="/design-practice" component={DesignYourPracticePage} />
       <Route path="/community-practices" component={CommunityPracticesPage} />
       <Route path="/spiritual-breaths" component={SpiritualBreathsPage} />
-      <Route path="/workshops" component={WorkshopsPage} />
+      <Route path="/workshops" component={EventCalendarPage} />
+      <Route path="/events" component={EventCalendarPage} />
       <Route path="/playlist" component={MyPracticePlaylistPage} />
       <Route path="/heart" component={ProjectOfHeartPage} />
       <Route path="/profile" component={ProfilePage} />
