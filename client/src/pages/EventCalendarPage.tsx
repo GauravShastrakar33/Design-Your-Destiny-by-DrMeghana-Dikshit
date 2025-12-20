@@ -13,14 +13,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { format, isAfter, isBefore } from "date-fns";
+import { format, isAfter } from "date-fns";
 import type { Event } from "@shared/schema";
 
 type Tab = "upcoming" | "latest";
 
 type EventWithSignedUrl = Event & { 
   thumbnailSignedUrl?: string | null;
-  isLive?: boolean;
 };
 
 function CountdownTimer({ startTime }: { startTime: Date }) {
@@ -90,12 +89,15 @@ export default function EventCalendarPage() {
   };
 
   const isEventLive = (event: EventWithSignedUrl): boolean => {
-    if (event.isLive !== undefined) return event.isLive;
     const now = new Date();
     const start = new Date(event.startDatetime);
     const end = new Date(event.endDatetime);
     return now >= start && now <= end;
   };
+
+  const eventsWithRecordings = latestEvents.filter(
+    (event) => event.showRecording === true && event.recordingUrl
+  );
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -262,13 +264,13 @@ export default function EventCalendarPage() {
             <div className="space-y-4">
               {latestLoading ? (
                 <div className="text-center py-8 text-muted-foreground">Loading...</div>
-              ) : latestEvents.length === 0 ? (
+              ) : eventsWithRecordings.length === 0 ? (
                 <Card className="p-8 text-center">
                   <Video className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">No recordings available yet</p>
                 </Card>
               ) : (
-                latestEvents.map((event) => (
+                eventsWithRecordings.map((event) => (
                   <Card
                     key={event.id}
                     className="overflow-hidden cursor-pointer hover-elevate active-elevate-2"

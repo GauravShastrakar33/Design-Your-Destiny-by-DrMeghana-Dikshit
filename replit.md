@@ -27,6 +27,15 @@ Core pages include Home, Courses, Profile, Progress Insights, Project of Heart, 
 
 **Progress Insights**: Tracks only PROCESS and PLAYLIST activity types (Spiritual Breaths and Process Checklist features have been removed).
 
+**Event Calendar**: The Events page (accessible via bottom navigation) displays live sessions and recordings. Key characteristics:
+- **Upcoming Tab**: Shows events with status UPCOMING or currently LIVE (derived from start/end datetimes)
+- **Latest Tab**: Shows completed events with recordings (only when showRecording=true AND recordingUrl exists)
+- **Live Status**: Calculated at runtime from startDatetime/endDatetime, not stored in database
+- **Recording Access**: Modal dialog shows passcode with copy functionality and expiry date
+- **Access Control**: Events can require specific program codes (requiredProgramCode field)
+- **Admin Management**: Full CRUD at /admin/events with thumbnail upload to R2
+- **Decision Zone**: Admin Latest tab shows completed events needing recording decisions (no recordingUrl set)
+
 ### System Design Choices
 The architecture emphasizes RESTful APIs with distinct public and admin endpoints. React Query is used for efficient data fetching and caching. Components are designed for modularity and extensibility. The database schema is structured to manage various content types, including articles, categories, CMS elements (courses, modules, lessons), programs, and feature mappings with foreign key constraints.
 
