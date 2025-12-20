@@ -101,11 +101,6 @@ const menuContent: Record<
     title: "Courses",
     items: [
       { path: "/admin/courses", label: "All Courses", icon: List },
-      {
-        path: "/admin/courses/create/step1",
-        label: "Create Course",
-        icon: Plus,
-      },
       { path: "/admin/programs", label: "Programs", icon: BookOpen },
     ],
   },
