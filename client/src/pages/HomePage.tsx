@@ -288,7 +288,8 @@ export default function HomePage() {
           {/* Masterclasses Card */}
           <button
             onClick={() => setLocation("/masterclasses")}
-            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-4 shadow-sm hover:shadow-md active:scale-[0.98] transition"
+            className="w-full rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition"
+            style={{ background: "#703DFA" }}
             data-testid="card-masterclasses"
           >
             <div className="flex items-center justify-between">
@@ -296,10 +297,7 @@ export default function HomePage() {
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                   <GraduationCap className="w-5 h-5 text-white" strokeWidth={2} />
                 </div>
-                <div className="text-left">
-                  <h3 className="text-base font-bold text-white">Masterclasses</h3>
-                  <p className="text-xs text-white/80">Expert-led sessions</p>
-                </div>
+                <h3 className="text-base font-bold text-white">Masterclasses</h3>
               </div>
               <ChevronRight className="w-5 h-5 text-white/80" />
             </div>
