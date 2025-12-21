@@ -476,6 +476,11 @@ export const insertEventSchema = createInsertSchema(events).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  startDatetime: z.coerce.date(),
+  endDatetime: z.coerce.date(),
+  // recordingExpiryDate is mode: "string" in DB, so keep as string (YYYY-MM-DD format)
+  recordingExpiryDate: z.string().nullable().optional(),
 });
 
 export type InsertEvent = z.infer<typeof insertEventSchema>;
