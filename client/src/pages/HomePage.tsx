@@ -16,6 +16,7 @@ import {
   VolumeX,
   Flame,
   ChevronRight,
+  GraduationCap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import ActionCard from "@/components/ActionCard";
@@ -283,6 +284,26 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+
+          {/* Masterclasses Card */}
+          <button
+            onClick={() => setLocation("/masterclasses")}
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-4 shadow-sm hover:shadow-md active:scale-[0.98] transition"
+            data-testid="card-masterclasses"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <GraduationCap className="w-5 h-5 text-white" strokeWidth={2} />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-base font-bold text-white">Masterclasses</h3>
+                  <p className="text-xs text-white/80">Expert-led sessions</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-white/80" />
+            </div>
+          </button>
 
           {/* 7-Day Streak Tracker - Only show when authenticated */}
           {isAuthenticated && (
