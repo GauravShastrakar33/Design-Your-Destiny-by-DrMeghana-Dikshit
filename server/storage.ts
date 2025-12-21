@@ -1368,7 +1368,23 @@ export class DbStorage implements IStorage {
 
   // ===== EVENTS =====
 
+  // Auto-transition UPCOMING events to COMPLETED when endDatetime has passed
+  private async autoCompleteEvents(): Promise<void> {
+    const now = new Date();
+    await db
+      .update(eventsTable)
+      .set({ status: "COMPLETED", updatedAt: now })
+      .where(
+        and(
+          eq(eventsTable.status, "UPCOMING"),
+          sql`${eventsTable.endDatetime} < ${now}`
+        )
+      );
+  }
+
   async getAllEvents(filters?: { status?: string; month?: number; year?: number }): Promise<Event[]> {
+    // Auto-complete events that have ended
+    await this.autoCompleteEvents();
     const conditions: any[] = [];
     
     if (filters?.status) {
@@ -1428,6 +1444,9 @@ export class DbStorage implements IStorage {
   }
 
   async getLatestEvents(): Promise<Event[]> {
+    // Auto-complete events that have ended
+    await this.autoCompleteEvents();
+    
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
     
