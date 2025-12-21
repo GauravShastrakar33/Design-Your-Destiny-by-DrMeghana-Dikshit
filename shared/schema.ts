@@ -464,6 +464,7 @@ export const events = pgTable("events", {
   recordingUrl: text("recording_url"),
   recordingPasscode: varchar("recording_passcode", { length: 50 }),
   showRecording: boolean("show_recording").notNull().default(false),
+  recordingSkipped: boolean("recording_skipped").notNull().default(false),
   recordingExpiryDate: date("recording_expiry_date", { mode: "string" }),
   requiredProgramCode: varchar("required_program_code", { length: 10 }).notNull().default("USB"),
   requiredProgramLevel: integer("required_program_level").notNull().default(1),

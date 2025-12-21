@@ -4082,6 +4082,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const id = parseInt(req.params.id);
       const event = await storage.updateEvent(id, {
         showRecording: false,
+        recordingSkipped: true,
         recordingUrl: null,
         recordingPasscode: null,
         recordingExpiryDate: null,
@@ -4113,6 +4114,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         recordingPasscode,
         recordingExpiryDate,
         showRecording: true,
+        recordingSkipped: false,
       });
       
       if (!event) {
