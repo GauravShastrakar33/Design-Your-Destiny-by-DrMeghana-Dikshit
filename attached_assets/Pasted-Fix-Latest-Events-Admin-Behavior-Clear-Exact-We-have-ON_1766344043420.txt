@@ -1,0 +1,193 @@
+Fix “Latest Events” Admin Behavior (Clear & Exact)
+
+We have ONE events table.
+Upcoming and Latest are filtered views, not separate entities.
+
+1️⃣ EVENT CREATION (UNCHANGED)
+
+When creating an event (Upcoming):
+
+Visible fields
+
+Title
+
+Description
+
+Coach / Host Name
+
+Thumbnail upload
+
+Start Date & Time
+
+End Date & Time
+
+Meeting / Join URL
+
+Required Program
+
+Status
+
+Hidden fields
+
+Recording URL
+
+Recording Passcode
+
+Recording Expiry Date
+
+These fields must remain hidden during creation.
+
+2️⃣ ADMIN → LATEST EVENTS (DECISION ZONE)
+
+Latest Events is the post-event decision state.
+
+Filter
+
+Show events where:
+
+status = COMPLETED
+
+recording_expiry_date IS NULL OR current_time <= recording_expiry_date
+
+CANCELLED events must NEVER appear
+
+3️⃣ RECORDING DECISION PENDING (MOST IMPORTANT FIX)
+Condition
+
+recording_url IS NULL
+
+show_recording = false
+
+CURRENT PROBLEM
+
+Each card incorrectly shows:
+
+“USM only” → ❌
+
+Edit / Join / Cancel buttons → ❌
+
+REQUIRED CHANGES
+Card content
+
+Show program code only (e.g. DYD, USM)
+
+Do NOT show the word “only”
+
+REMOVE these buttons
+
+Edit
+
+Join
+
+Cancel
+
+SHOW ONLY TWO CTAs
+
+✅ Add Recording
+
+❌ Skip Recording
+
+No other actions should appear.
+
+4️⃣ ADD RECORDING FLOW (EDIT SAME ROW)
+
+When admin clicks Add Recording:
+
+Show input fields:
+
+Recording URL
+
+Recording Passcode
+
+Recording Expiry Date
+
+On save:
+
+show_recording = true
+
+Updated card state (Recording Published)
+
+Condition:
+
+show_recording = true
+
+Card should now show:
+
+“Recording available till <expiry date>”
+
+Rules:
+
+❌ Do NOT show “Skip Recording” anymore
+
+❌ Do NOT show Edit / Join / Cancel
+
+This is still the same event row, just updated.
+
+5️⃣ ADMIN → LATEST VISIBILITY RULE
+
+Admin → Latest must NOT show events after recording_expiry_date
+
+Grace period applies ONLY to users, not admin
+
+Expired recordings:
+
+Disappear from Admin → Latest
+
+Still exist in Admin → All Events
+
+6️⃣ SKIP RECORDING — CONFIRMATION MODAL (MANDATORY)
+
+Skip Recording must NEVER be instant.
+
+On clicking “Skip Recording”
+
+Show confirmation modal
+
+Do NOT update anything until confirmed
+
+Modal
+
+Title
+Skip Recording for this Event?
+
+Message
+This event will not have a recording and will not appear in Latest for users.
+You can still add a recording later from All Events.
+
+Buttons
+
+Primary: Go Back
+
+Secondary: Skip Recording
+
+On confirm
+
+Backend updates:
+
+show_recording = false
+
+recording_url = NULL
+
+recording_passcode = NULL
+
+UI behavior:
+
+Event is removed from Admin → Latest
+
+Event remains in Admin → All Events
+
+Event NEVER appears in User → Latest
+
+This action must remain reversible from All Events.
+
+7️⃣ KEY CONSTRAINTS (DO NOT BREAK)
+
+Single events table only
+
+Latest is a state, not a new record
+
+No duplicate events
+
+No hardcoded program logic
+
+UI state must be derived from DB fields only
