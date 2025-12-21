@@ -2649,7 +2649,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     },
   );
 
-  // Reorder courses for ABUNDANCE feature
+  // Reorder courses for ABUNDANCE and MASTERCLASS features
   app.patch(
     "/admin/v1/frontend-mapping/features/:code/courses/reorder",
     requireAdmin,
@@ -2658,10 +2658,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const { code } = req.params;
         const { courseIds } = req.body;
 
-        if (code !== "ABUNDANCE") {
+        const allowedCodes = ["ABUNDANCE", "MASTERCLASS"];
+        if (!allowedCodes.includes(code)) {
           return res
             .status(400)
-            .json({ error: "Reorder only allowed for ABUNDANCE feature" });
+            .json({ error: "Reorder only allowed for ABUNDANCE and MASTERCLASS features" });
         }
 
         if (!Array.isArray(courseIds)) {

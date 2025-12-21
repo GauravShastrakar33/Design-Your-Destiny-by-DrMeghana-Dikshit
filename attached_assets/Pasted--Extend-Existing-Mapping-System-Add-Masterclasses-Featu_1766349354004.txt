@@ -1,0 +1,91 @@
+🚀 Extend Existing Mapping System — Add Masterclasses Feature
+
+Context:
+This project already has:
+- CMS (courses, modules, lessons, lesson_files)
+- Mapping layer (frontend_features + feature_course_map)
+- Admin mapping pages for Processes, Spiritual Breaths, Abundance Mastery
+- Public API: GET /public/v1/features/:code
+- User app home screen has a Masterclasses card (currently placeholder)
+
+Goal:
+Enable admin to control which CMS courses appear in the Masterclasses section of the user app.
+
+🎯 Feature Definition
+
+Feature Code: MASTERCLASS  
+Display Mode: courses  
+Mapping Rule: Admin selects MANY CMS courses (ordered)
+
+Do NOT:
+- Use program_code
+- Modify CMS tables
+- Add lesson/module-level mapping
+
+🧱 Backend Changes (Drizzle)
+
+1️⃣ frontend_features  
+Seed a new row:
+- code: MASTERCLASS
+- display_name: Masterclasses
+- display_mode: courses
+
+2️⃣ feature_course_map  
+Reuse existing table:
+- Allow multiple courses
+- Allow reorder
+- Same behavior as ABUNDANCE (but without built-ins)
+
+🔌 Admin API (reuse existing endpoints)
+
+Support feature code MASTERCLASS in:
+- GET    /admin/v1/frontend-mapping/features
+- GET    /admin/v1/frontend-mapping/features/MASTERCLASS/courses
+- POST   /admin/v1/frontend-mapping/features/MASTERCLASS/courses
+- PATCH  /admin/v1/frontend-mapping/features/MASTERCLASS/courses/reorder
+- DELETE /admin/v1/frontend-mapping/features/MASTERCLASS/courses/:courseId
+
+🌍 Public API
+
+Use existing endpoint:
+GET /public/v1/features/MASTERCLASS
+
+Return:
+- Ordered list of mapped CMS courses
+
+🖥️ Admin Panel (React)
+
+Add a new submenu:
+Process Library → Masterclasses
+
+Create page:
+client/src/pages/Masterclasses/index.tsx
+
+UI requirements:
+- Header: Masterclasses
+- Helper text: “Select CMS courses to show under Masterclasses in the app.”
+- Dropdown to add CMS course
+- List of added courses
+- Drag & drop reorder
+- Remove course
+
+Reuse same UI patterns/components used in Abundance Mastery mapping.
+
+📁 Files
+
+Backend:
+- server/db/schema/mapping.ts (seed MASTERCLASS)
+- server/controllers/frontendMappingController.ts (support MASTERCLASS)
+- server/routes/admin/frontend-mapping/index.ts
+
+Frontend (Admin):
+- client/src/pages/Masterclasses/index.tsx
+- Add route + sidebar entry
+
+🧪 Acceptance Criteria
+
+- Admin can add/remove/reorder CMS courses under Masterclasses
+- User app fetches courses via /public/v1/features/MASTERCLASS
+- Masterclasses card shows only admin-selected courses
+- No CMS schema changes
+- No program_code usage
