@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Search, Bell, Calendar, Clock, Video, Copy, ExternalLink, Lock } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Search, Bell, Calendar, Clock, Video, Copy, ExternalLink } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { format, isAfter } from "date-fns";
+import { format } from "date-fns";
 import type { Event } from "@shared/schema";
 
 type Tab = "upcoming" | "latest";
@@ -61,6 +61,15 @@ export default function EventCalendarPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>("upcoming");
   const [selectedEvent, setSelectedEvent] = useState<EventWithSignedUrl | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Auto-update current time every 30 seconds to check for live events (critical for mobile app)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   const { data: upcomingEvents = [], isLoading: upcomingLoading } = useQuery<EventWithSignedUrl[]>({
     queryKey: ["/api/events/upcoming"],
@@ -88,12 +97,12 @@ export default function EventCalendarPage() {
     setSelectedEvent(event);
   };
 
-  const isEventLive = (event: EventWithSignedUrl): boolean => {
-    const now = new Date();
+  // Use currentTime state to check if event is live (auto-updates via timer)
+  const isEventLive = useCallback((event: EventWithSignedUrl): boolean => {
     const start = new Date(event.startDatetime);
     const end = new Date(event.endDatetime);
-    return now >= start && now <= end;
-  };
+    return currentTime >= start && currentTime <= end;
+  }, [currentTime]);
 
   const eventsWithRecordings = latestEvents.filter(
     (event) => event.showRecording === true && event.recordingUrl
@@ -193,17 +202,11 @@ export default function EventCalendarPage() {
                             LIVE
                           </div>
                         )}
-                        {event.requiredProgramCode && (
-                          <Badge className="absolute top-3 left-3 bg-black/50 text-white">
-                            <Lock className="w-3 h-3 mr-1" />
-                            {event.requiredProgramCode}
-                          </Badge>
-                        )}
                       </div>
 
                       {/* Info Section */}
                       <div className="p-3 space-y-1.5">
-                        {/* Calendar + Date and Timing on Same Line */}
+                        {/* Calendar + Date and Start/End Times */}
                         <div className="flex items-center gap-3 text-gray-600">
                           <div className="flex items-center gap-1.5">
                             <Calendar
@@ -216,7 +219,7 @@ export default function EventCalendarPage() {
                           </div>
                           <span className="flex items-center gap-1 text-xs">
                             <Clock className="w-3 h-3" />
-                            {format(new Date(event.startDatetime), "h:mm a")}
+                            {format(new Date(event.startDatetime), "h:mm a")} - {format(new Date(event.endDatetime), "h:mm a")}
                           </span>
                         </div>
 
@@ -233,14 +236,14 @@ export default function EventCalendarPage() {
                             )}
                           </div>
 
-                          {/* JOIN Button (only for live sessions or upcoming with joinUrl) */}
-                          {event.joinUrl && (live || isAfter(new Date(event.startDatetime), new Date())) && (
+                          {/* JOIN Button (only shown when event is live) */}
+                          {live && event.joinUrl && (
                             <Button
                               onClick={() => handleJoin(event.joinUrl!)}
                               className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium text-sm whitespace-nowrap shrink-0"
                               data-testid={`button-join-${event.id}`}
                             >
-                              {live ? "JOIN" : "Set Reminder"}
+                              JOIN
                             </Button>
                           )}
                         </div>
