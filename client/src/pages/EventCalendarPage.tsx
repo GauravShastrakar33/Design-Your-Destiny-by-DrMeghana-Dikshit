@@ -104,6 +104,11 @@ export default function EventCalendarPage() {
     return currentTime >= start && currentTime <= end;
   }, [currentTime]);
 
+  // Filter upcoming events client-side to hide ended events (in case backend hasn't updated yet)
+  const visibleUpcomingEvents = upcomingEvents.filter(
+    (event) => new Date(event.endDatetime) > currentTime
+  );
+
   const eventsWithRecordings = latestEvents.filter(
     (event) => event.showRecording === true && event.recordingUrl
   );
@@ -169,13 +174,13 @@ export default function EventCalendarPage() {
             <div className="space-y-5">
               {upcomingLoading ? (
                 <div className="text-center py-8 text-muted-foreground">Loading...</div>
-              ) : upcomingEvents.length === 0 ? (
+              ) : visibleUpcomingEvents.length === 0 ? (
                 <Card className="p-8 text-center">
                   <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">No upcoming events scheduled</p>
                 </Card>
               ) : (
-                upcomingEvents.map((event) => {
+                visibleUpcomingEvents.map((event) => {
                   const live = isEventLive(event);
                   return (
                     <div
@@ -248,8 +253,8 @@ export default function EventCalendarPage() {
                           )}
                         </div>
 
-                        {/* Countdown for non-live events */}
-                        {!live && (
+                        {/* Countdown for events that haven't started yet */}
+                        {!live && new Date(event.startDatetime) > currentTime && (
                           <div className="text-xs text-muted-foreground">
                             Starts in <CountdownTimer startTime={new Date(event.startDatetime)} />
                           </div>
