@@ -118,6 +118,8 @@ export default function AdminEventsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/latest"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/upcoming"] });
       toast({ title: "Event cancelled successfully" });
     },
     onError: () => {
@@ -138,6 +140,7 @@ export default function AdminEventsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/latest"] });
       toast({ title: "Recording skipped" });
       setSkipConfirmEvent(null);
     },
@@ -161,6 +164,7 @@ export default function AdminEventsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/latest"] });
       toast({ title: "Recording added successfully" });
       setRecordingDialogEvent(null);
       setRecordingUrl("");
