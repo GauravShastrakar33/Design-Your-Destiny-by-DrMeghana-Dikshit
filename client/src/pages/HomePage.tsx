@@ -358,7 +358,7 @@ export default function HomePage() {
           {isAuthenticated && (
             <button
               onClick={() => setLocation("/progress-insights")}
-              className="w-full text-left bg-white rounded-2xl p-4 shadow-sm border border-[#232A34]/10 hover-elevate active-elevate-2 mt-4"
+              className="w-full text-left bg-white rounded-2xl py-5 px-4 shadow-sm border border-[#232A34]/10 hover-elevate active-elevate-2 mt-4"
               data-testid="button-progress-insights"
             >
               <div className="flex items-center gap-3">
@@ -366,7 +366,7 @@ export default function HomePage() {
                   <TrendingUp className="w-5 h-5 text-[#703DFA]" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-black text-sm font-bold tracking-wider uppercase">
+                  <h3 className="text-black text-sm font-bold tracking-wider uppercase mb-1">
                     PROGRESS INSIGHTS
                   </h3>
                   <p className="text-gray-600 text-xs whitespace-nowrap">
