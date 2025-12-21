@@ -2731,8 +2731,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       if (feature.displayMode === "courses") {
-        // ABUNDANCE - return built-ins + mapped courses
-        const builtIns = [
+        // ABUNDANCE has built-ins, MASTERCLASS doesn't
+        const builtIns = code === "ABUNDANCE" ? [
           {
             id: "builtin-money-calendar",
             title: "Money Calendar",
@@ -2743,7 +2743,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             title: "Rewiring Belief",
             isBuiltIn: true,
           },
-        ];
+        ] : [];
 
         const mappedCourses = await Promise.all(
           mappings.map(async (m) => {
