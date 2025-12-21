@@ -297,16 +297,18 @@ export default function EventCalendarPage() {
                           <Video className="w-7 h-7 text-white" />
                         </div>
                       </div>
-                      {event.recordingExpiryDate && (
-                        <Badge className="absolute top-3 right-3 bg-amber-500 text-white">
-                          Expires {format(new Date(event.recordingExpiryDate), "MMM d")}
-                        </Badge>
-                      )}
                     </div>
                     <div className="p-3 bg-white">
-                      <h3 className="font-semibold text-foreground mb-1">
-                        {event.title}
-                      </h3>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="font-semibold text-foreground flex-1">
+                          {event.title}
+                        </h3>
+                        {event.recordingExpiryDate && (
+                          <Badge className="bg-amber-500 text-white shrink-0 text-xs">
+                            Expires {format(new Date(event.recordingExpiryDate), "MMM d")}
+                          </Badge>
+                        )}
+                      </div>
                       {event.coachName && (
                         <p className="text-sm text-muted-foreground mb-1">
                           by {event.coachName}
