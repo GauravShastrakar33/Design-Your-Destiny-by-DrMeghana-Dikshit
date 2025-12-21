@@ -477,8 +477,12 @@ export default function AdminEventFormPage() {
                     <SelectContent>
                       <SelectItem value="DRAFT">Draft</SelectItem>
                       <SelectItem value="UPCOMING">Upcoming (Published)</SelectItem>
-                      <SelectItem value="COMPLETED">Completed</SelectItem>
-                      <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                      {isEditing && (
+                        <>
+                          <SelectItem value="COMPLETED">Completed</SelectItem>
+                          <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormDescription>

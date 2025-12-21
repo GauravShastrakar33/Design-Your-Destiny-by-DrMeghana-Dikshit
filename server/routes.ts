@@ -3977,6 +3977,30 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
+  // Admin API: Get upload URL for event thumbnail (R2)
+  // NOTE: This must be BEFORE the /:id route to prevent "upload-url" being parsed as an ID
+  app.get("/api/admin/v1/events/upload-url", requireAdmin, async (req, res) => {
+    try {
+      const { filename, contentType } = req.query as { filename: string; contentType: string };
+      if (!filename || !contentType) {
+        return res.status(400).json({ error: "filename and contentType are required" });
+      }
+
+      const key = `events/${Date.now()}-${filename}`;
+      const result = await getSignedPutUrl(key, contentType);
+      
+      if (!result.success) {
+        console.error("R2 upload URL error:", result.error);
+        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
+      }
+
+      res.json({ key: result.key, signedUrl: result.uploadUrl });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
   // Admin API: Get single event
   app.get("/api/admin/v1/events/:id", requireAdmin, async (req, res) => {
     try {
@@ -3999,29 +4023,6 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     } catch (error) {
       console.error("Error fetching event:", error);
       res.status(500).json({ error: "Failed to fetch event" });
-    }
-  });
-
-  // Admin API: Get upload URL for event thumbnail (R2)
-  app.get("/api/admin/v1/events/upload-url", requireAdmin, async (req, res) => {
-    try {
-      const { filename, contentType } = req.query as { filename: string; contentType: string };
-      if (!filename || !contentType) {
-        return res.status(400).json({ error: "filename and contentType are required" });
-      }
-
-      const key = `events/${Date.now()}-${filename}`;
-      const result = await getSignedPutUrl(key, contentType);
-      
-      if (!result.success) {
-        console.error("R2 upload URL error:", result.error);
-        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
-      }
-
-      res.json({ key: result.key, signedUrl: result.uploadUrl });
-    } catch (error) {
-      console.error("Error generating upload URL:", error);
-      res.status(500).json({ error: "Failed to generate upload URL" });
     }
   });
 
