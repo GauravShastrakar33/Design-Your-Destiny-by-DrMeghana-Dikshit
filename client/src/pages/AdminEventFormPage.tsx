@@ -38,7 +38,8 @@ const eventFormSchema = z.object({
   startDatetime: z.string().min(1, "Start date/time is required"),
   endDatetime: z.string().min(1, "End date/time is required"),
   joinUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-  requiredProgramCode: z.string().optional(),
+  requiredProgramCode: z.string().min(1, "Program is required"),
+  requiredProgramLevel: z.number().min(1),
   status: z.enum(["DRAFT", "UPCOMING", "COMPLETED", "CANCELLED"]),
 });
 
@@ -73,7 +74,8 @@ export default function AdminEventFormPage() {
       startDatetime: "",
       endDatetime: "",
       joinUrl: "",
-      requiredProgramCode: "",
+      requiredProgramCode: "USB",
+      requiredProgramLevel: 1,
       status: "DRAFT",
     },
   });
@@ -118,7 +120,8 @@ export default function AdminEventFormPage() {
         startDatetime: startDt.toISOString().slice(0, 16),
         endDatetime: endDt.toISOString().slice(0, 16),
         joinUrl: event.joinUrl || "",
-        requiredProgramCode: event.requiredProgramCode || "",
+        requiredProgramCode: event.requiredProgramCode || "USB",
+        requiredProgramLevel: event.requiredProgramLevel || 1,
         status: event.status as any,
       });
       
@@ -141,7 +144,8 @@ export default function AdminEventFormPage() {
           startDatetime: new Date(data.startDatetime).toISOString(),
           endDatetime: new Date(data.endDatetime).toISOString(),
           joinUrl: data.joinUrl || null,
-          requiredProgramCode: data.requiredProgramCode || null,
+          requiredProgramCode: data.requiredProgramCode,
+          requiredProgramLevel: data.requiredProgramLevel,
         }),
       });
       if (!response.ok) throw new Error("Failed to create event");
@@ -170,7 +174,8 @@ export default function AdminEventFormPage() {
           startDatetime: new Date(data.startDatetime).toISOString(),
           endDatetime: new Date(data.endDatetime).toISOString(),
           joinUrl: data.joinUrl || null,
-          requiredProgramCode: data.requiredProgramCode || null,
+          requiredProgramCode: data.requiredProgramCode,
+          requiredProgramLevel: data.requiredProgramLevel,
         }),
       });
       if (!response.ok) throw new Error("Failed to update event");
@@ -424,27 +429,33 @@ export default function AdminEventFormPage() {
               name="requiredProgramCode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Required Program (Optional)</FormLabel>
+                  <FormLabel>Required Program</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
+                    value={field.value}
+                    onValueChange={(code) => {
+                      const program = programs.find(p => p.code === code);
+                      if (!program) return;
+                      form.setValue("requiredProgramCode", program.code);
+                      form.setValue("requiredProgramLevel", program.level);
+                    }}
                   >
                     <FormControl>
                       <SelectTrigger data-testid="select-program">
-                        <SelectValue placeholder="Open to all users" />
+                        <SelectValue />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Open to all users</SelectItem>
-                      {programs.map((program) => (
-                        <SelectItem key={program.id} value={program.code}>
-                          {program.name} ({program.code})
-                        </SelectItem>
-                      ))}
+                      {[...programs]
+                        .sort((a, b) => b.level - a.level)
+                        .map((program) => (
+                          <SelectItem key={program.code} value={program.code}>
+                            {program.code} — {program.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Restrict access to users enrolled in a specific program
+                    Select minimum program level required to access this event
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

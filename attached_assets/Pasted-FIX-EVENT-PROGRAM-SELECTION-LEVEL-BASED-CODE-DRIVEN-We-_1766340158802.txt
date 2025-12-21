@@ -1,0 +1,112 @@
+FIX EVENT PROGRAM SELECTION (LEVEL-BASED, CODE-DRIVEN)
+We already have:
+* A programs table with fields: code, name, level, is_active
+* An Event Management system in the Admin Panel
+* An Event creation / edit form
+Now we need to fix program selection in the Event form using the program level architecture, and remove the current bug caused by empty Select values.
+==================================================== GOAL (VERY IMPORTANT)
+* Admin must select a Program (DYD / USM / USC / USB) in the Event form
+* Admin must NEVER select a level manually
+* System must automatically derive requiredProgramLevel from the selected program
+* Event access control must rely ONLY on requiredProgramLevel
+* The Event form must be auto-populated on open (no empty state)
+==================================================== DATABASE (NO CHANGES)
+Assume the existing programs table already has:
+* code (e.g. "DYD")
+* name (e.g. "Design Your Destiny")
+* level (number, e.g. 4)
+* is_active = true
+Events already have:
+* required_program_level (number)
+* required_program_code (string, optional metadata)
+==================================================== ADMIN EVENT FORM — REQUIRED CHANGES
+1️⃣ LOAD PROGRAMS FOR DROPDOWN
+In the Admin Event form:
+* Fetch all active programs from DB
+* Sort them by level DESC
+Query logic:
+
+SELECT code, name, level
+FROM programs
+WHERE is_active = true
+ORDER BY level DESC;
+
+2️⃣ PROGRAM DROPDOWN (CODE-BASED UI)
+Replace the existing program Select with a Program dropdown.
+Admin sees:
+* Program code + name
+* Example:
+    * DYD — Design Your Destiny
+    * USM — Ultimate Success Mastery
+    * USC — Ultimate Success Coach
+    * USB — Ultimate Success Builder
+Admin does NOT see levels.
+
+3️⃣ AUTO-MAP PROGRAM → LEVEL (CRITICAL)
+When admin selects a program:
+* requiredProgramCode is set to selected program.code
+* requiredProgramLevel is set automatically to program.level
+Admin never enters level manually.
+
+4️⃣ DEFAULT VALUE (NO EMPTY STATE)
+When admin clicks Add Event:
+Default values MUST be:
+
+requiredProgramCode = "USB"
+requiredProgramLevel = 1
+Reason:
+* USB is lowest level
+* Accessible to all users
+* Prevents empty Select (Radix crash)
+
+5️⃣ EXACT SELECT IMPLEMENTATION (MANDATORY)
+Use this logic in the Event form:
+
+<Select
+  value={form.requiredProgramCode}
+  onValueChange={(code) => {
+    const program = programs.find(p => p.code === code);
+    if (!program) return;
+
+    form.setValue("requiredProgramCode", program.code);
+    form.setValue("requiredProgramLevel", program.level);
+  }}
+>
+  <SelectTrigger>
+    <SelectValue />
+  </SelectTrigger>
+
+  <SelectContent>
+    {programs.map(program => (
+      <SelectItem key={program.code} value={program.code}>
+        {program.code} — {program.name}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+✔ No empty values ✔ No sentinel hacks ✔ No Radix crash ✔ Admin-friendly ✔ Future-proof
+
+6️⃣ EDIT EVENT BEHAVIOR
+When editing an existing event:
+* Dropdown must preselect requiredProgramCode
+* requiredProgramLevel must remain unchanged unless program changes
+
+7️⃣ BACKEND ACCESS CONTROL (REFERENCE)
+Access rule (DO NOT change now, just ensure compatibility):
+
+userLevel = max(user.programs.level);
+
+canAccessEvent = userLevel >= event.required_program_level;
+==================================================== IMPORTANT CONSTRAINTS
+* ❌ Do NOT allow empty Select values
+* ❌ Do NOT let admin select level manually
+* ❌ Do NOT hardcode DYD / USM logic
+* ❌ Do NOT compare program codes in access logic
+* ✔ Program dropdown is part of Event form (not separate entity)
+==================================================== DELIVERABLES
+* Fixed Event creation form
+* Program dropdown driven by DB programs
+* Automatic program → level mapping
+* No Radix Select crash
+* Clean, scalable access control
+Proceed carefully. This fix must replace the existing broken program Select implementation.
