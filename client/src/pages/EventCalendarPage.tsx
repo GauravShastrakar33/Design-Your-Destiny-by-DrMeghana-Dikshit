@@ -73,10 +73,16 @@ export default function EventCalendarPage() {
 
   const { data: upcomingEvents = [], isLoading: upcomingLoading } = useQuery<EventWithSignedUrl[]>({
     queryKey: ["/api/events/upcoming"],
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const { data: latestEvents = [], isLoading: latestLoading } = useQuery<EventWithSignedUrl[]>({
     queryKey: ["/api/events/latest"],
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const tabs = [
