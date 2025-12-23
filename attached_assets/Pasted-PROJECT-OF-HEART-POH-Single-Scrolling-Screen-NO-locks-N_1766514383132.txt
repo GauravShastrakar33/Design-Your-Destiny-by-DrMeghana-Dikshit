@@ -1,0 +1,175 @@
+PROJECT OF HEART (POH)
+Single Scrolling Screen (NO locks · NO tabs · NO forced flows)
+
+🟢 SECTION 0: HEART CHAKRA CONTEXT (SOFT HEADER)
+
+[ Heart Chakra Card ]
+------------------------------------------------
+[ HeartChakraIcon ]
+
+Heart Chakra — Anahata
+
+Center of Love, Balance, and Purpose.
+Your Project of Heart aligns with the bridge
+between who you were and who you're rising to be.
+
+Rules
+* Uses existing icon from components/icons/HeartChakraIcon.tsx
+* Non-interactive
+* Soft background (light green / neutral)
+* Smaller than POH title
+* Shown only for Active POH
+* Acts as meaning primer, not a feature
+
+🔝 SECTION 1: ACTIVE PROJECT OF HEART (HERO)
+
+[ Project of Heart ]
+------------------------------------------------
+Become technically strong & AI-fluent
+by building real products
+
+Why this matters to my heart:
+I want freedom from dependence, fear of exposure,
+and restarting my life again.
+Rules
+* Largest text on the screen
+* Highest visual weight
+* Defines identity for this phase of life, not tasks
+
+🖼️ SECTION 2: VISION BOARD (OPTIONAL, SOFT)
+
+[ Vision ]
+-----------------------------------------------
+[ Image 1 ]   [ Image 2 ]   [ Image 3 ]
+Rules
+* Optional
+* No captions
+* Emotion > instruction
+* Never mandatory
+
+🪜 SECTION 3: MILESTONES (MAX 5)
+
+[ Milestones — Freedoms I’m Earning ]
+-----------------------------------------------
+☐ I can start building without guidance
+☐ I can modify existing code confidently
+☐ I trust my technical decisions
+☐ I can explain my work calmly
+☐ My skills compound instead of resetting
+Rules
+* Only Active POH has milestones
+* No dates by default
+* Checkbox represents inner freedom, not task completion
+
+⚡ SECTION 4: TOP 3 ACTIONS TOWARDS MY POH
+
+TOP 3 ACTIONS FOR MY POH
+-----------------------------------------------
+• Work on one real feature (45 min)
+• Read & understand existing code (30 min)
+• Ship something small
+Rules
+* Max 3 actions
+* Repeatable
+* Editable anytime
+* Actions come after meaning & direction, not before
+
+🧘 SECTION 5: RATE YOURSELF TODAY (CORE REFLECTION)
+
+[ Rate Yourself Today ]
+-----------------------------------------------
+Do you want to acknowledge taking action on your POH today?
+
+0 ───────── 5 ───────── 10
+
+⭐ I want to acknowledge myself for this - button
+
+There is no right score. This is for self-awareness, not judgement.
+Rules
+* Slider from 0 → 10
+* One rating per user per day
+* User may update rating the same day
+* ❌ No streaks
+* ❌ No rewards
+* ❌ No averages shown
+* This is reflection, not performance scoring
+
+🌱 SECTION 6: NEXT PROJECT OF HEART (MUTED)
+
+[ Next Project of Heart ]
+-----------------------------------------------
+Build and run a real business
+
+This comes after I complete my current
+Project of Heart.
+Rules
+* Appears only below self-rating
+* Muted color, smaller text
+* No milestones
+* No actions
+* No “Start” CTA
+* Optional: edit text only
+* Purpose = hope without pressure
+
+🌌 SECTION 7: SOMEDAY PROJECT OF HEART (VERY MUTED)
+
+[ Someday ]
+-----------------------------------------------
+Build long-term wealth & freedom through assets
+Rules
+* Title only
+* Greyed / background feel
+* No interaction
+* Pure identity continuity
+
+🗂️ SECTION 8: HISTORY ACCESS (ICON / LINK)
+
+[ View Past Projects → ]
+Rules
+* Navigates to a separate screen
+* No previews
+* No stats on main POH screen
+
+📄 SEPARATE SCREEN: POH HISTORY
+Header
+
+[ Project of Heart History ]
+You don’t restart your life.
+You build it in phases.
+For each past POH
+
+-----------------------------------------------
+[ POH TITLE ]
+Status: Completed / Closed Early
+
+✔ Milestones achieved:
+• I trusted my decisions
+• I could explain my work calmly
+
+Reflection:
+“What did this project change in me?”
+-----------------------------------------------
+Rules
+* Show only achieved milestones
+* No missed actions
+* No daily ratings
+* No streaks
+* Reflection > metrics
+
+🧠 FINAL PSYCHOLOGICAL FLOW (LOCKED)
+
+Meaning (Heart Chakra)
+  ↓
+Identity (Active POH)
+  ↓
+Emotion (Vision)
+  ↓
+Direction (Milestones)
+  ↓
+Action (Top 3 Actions)
+  ↓
+Reflection (Self-rating slider)
+  ↓
+Hope (Next POH)
+  ↓
+Continuity (Someday + History)

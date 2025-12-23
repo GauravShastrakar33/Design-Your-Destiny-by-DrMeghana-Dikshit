@@ -23,12 +23,17 @@ interface ConsistencyCalendarProps {
   visible?: boolean;
 }
 
-export default function ConsistencyCalendar({ visible = true }: ConsistencyCalendarProps) {
+export default function ConsistencyCalendar({
+  visible = true,
+}: ConsistencyCalendarProps) {
+  // 🔥 DEV ONLY — remove after UI check
+  // const FORCE_TEST_FLAME = true;
+
   const userToken = localStorage.getItem("@app:user_token");
-  
+
   const getTodayDate = () => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   };
 
   const todayDate = useMemo(() => getTodayDate(), []);
@@ -40,9 +45,12 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
   const { data: rangeData, isLoading: isRangeLoading } = useQuery<RangeData>({
     queryKey: ["/api/v1/consistency/range", todayDate],
     queryFn: async () => {
-      const response = await fetch(`/api/v1/consistency/range?today=${todayDate}`, {
-        headers: { "Authorization": `Bearer ${userToken}` },
-      });
+      const response = await fetch(
+        `/api/v1/consistency/range?today=${todayDate}`,
+        {
+          headers: { Authorization: `Bearer ${userToken}` },
+        },
+      );
       if (!response.ok) throw new Error("Failed to fetch range");
       return response.json();
     },
@@ -52,9 +60,12 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
   const { data: monthData, isLoading: isMonthLoading } = useQuery<MonthData>({
     queryKey: ["/api/v1/consistency/month", viewYear, viewMonth],
     queryFn: async () => {
-      const response = await fetch(`/api/v1/consistency/month?year=${viewYear}&month=${viewMonth}`, {
-        headers: { "Authorization": `Bearer ${userToken}` },
-      });
+      const response = await fetch(
+        `/api/v1/consistency/month?year=${viewYear}&month=${viewMonth}`,
+        {
+          headers: { Authorization: `Bearer ${userToken}` },
+        },
+      );
       if (!response.ok) throw new Error("Failed to fetch month data");
       return response.json();
     },
@@ -62,11 +73,15 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
   });
 
   const currentStreak = rangeData?.currentStreak || 0;
+  //replace above line with following two lines
+  // const apiStreak = rangeData?.currentStreak || 0;
+  // const currentStreak = FORCE_TEST_FLAME ? 7 : apiStreak;
+
   const showFlame = currentStreak >= 7;
   const startMonth = rangeData?.startMonth || null;
   const currentMonth = rangeData?.currentMonth || todayMonth;
 
-  const viewMonthStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}`;
+  const viewMonthStr = `${viewYear}-${String(viewMonth).padStart(2, "0")}`;
   const canGoBack = startMonth ? viewMonthStr > startMonth : false;
   const canGoForward = viewMonthStr < currentMonth;
 
@@ -91,8 +106,18 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
   };
 
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -102,17 +127,17 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
 
   const calendarDays = useMemo(() => {
     const days: (ConsistencyDay | null)[] = [];
-    
+
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(null);
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const dayData = monthData?.days.find(d => d.date === dateStr);
+      const dateStr = `${viewYear}-${String(viewMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dayData = monthData?.days.find((d) => d.date === dateStr);
       days.push({
         date: dateStr,
-        active: dayData?.active || false
+        active: dayData?.active || false,
       });
     }
 
@@ -124,15 +149,23 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
   const isLoading = isRangeLoading || isMonthLoading;
 
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm" data-testid="consistency-calendar">
+    <div
+      className="bg-white rounded-2xl p-4 shadow-sm"
+      data-testid="consistency-calendar"
+    >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
           Your Consistency Calendar
         </h3>
         {showFlame && (
-          <div className="flex items-center gap-1 text-amber-500" data-testid="streak-flame-indicator">
+          <div
+            className="flex items-center gap-1 text-amber-500"
+            data-testid="streak-flame-indicator"
+          >
             <Flame className="w-4 h-4" />
-            <span className="text-xs font-medium">{currentStreak} day streak</span>
+            <span className="text-xs font-medium">
+              {currentStreak} day streak
+            </span>
           </div>
         )}
       </div>
@@ -142,20 +175,27 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
           onClick={handlePrevMonth}
           disabled={!canGoBack}
           className={`p-2 rounded-lg transition ${
-            canGoBack ? "hover:bg-gray-100 text-gray-700" : "text-gray-300 cursor-not-allowed"
+            canGoBack
+              ? "hover:bg-gray-100 text-gray-700"
+              : "text-gray-300 cursor-not-allowed"
           }`}
           data-testid="button-prev-month"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <span className="text-sm font-medium text-gray-800" data-testid="text-current-month">
+        <span
+          className="text-sm font-medium text-gray-800"
+          data-testid="text-current-month"
+        >
           {monthNames[viewMonth - 1]} {viewYear}
         </span>
         <button
           onClick={handleNextMonth}
           disabled={!canGoForward}
           className={`p-2 rounded-lg transition ${
-            canGoForward ? "hover:bg-gray-100 text-gray-700" : "text-gray-300 cursor-not-allowed"
+            canGoForward
+              ? "hover:bg-gray-100 text-gray-700"
+              : "text-gray-300 cursor-not-allowed"
           }`}
           data-testid="button-next-month"
         >
@@ -182,7 +222,10 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
         <>
           <div className="grid grid-cols-7 gap-1 mb-2">
             {dayNames.map((day) => (
-              <div key={day} className="text-center text-xs text-gray-500 font-medium py-1">
+              <div
+                key={day}
+                className="text-center text-xs text-gray-500 font-medium py-1"
+              >
                 {day}
               </div>
             ))}
@@ -200,7 +243,7 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
 
               let bgColor = "bg-gray-200";
               let textColor = "text-gray-600";
-              
+
               if (isFuture) {
                 bgColor = "bg-gray-100";
                 textColor = "text-gray-300";
@@ -209,7 +252,7 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
                 textColor = "text-amber-900";
               }
 
-              const dayNum = parseInt(day.date.split('-')[2], 10);
+              const dayNum = parseInt(day.date.split("-")[2], 10);
 
               return (
                 <div
@@ -219,7 +262,9 @@ export default function ConsistencyCalendar({ visible = true }: ConsistencyCalen
                   }`}
                   data-testid={`day-${day.date}`}
                 >
-                  <span className={`text-xs font-medium ${textColor}`}>{dayNum}</span>
+                  <span className={`text-xs font-medium ${textColor}`}>
+                    {dayNum}
+                  </span>
                   {showFlame && isActive && !isFuture && (
                     <Flame className="absolute -top-1 -right-1 w-3 h-3 text-orange-500" />
                   )}

@@ -1,1338 +1,539 @@
 import { useState, useEffect } from "react";
-import {
-  Heart,
-  Target,
-  Sparkles,
-  Upload,
-  Calendar,
-  Star,
-  Award,
-  ArrowLeft,
-  Pencil,
-} from "lucide-react";
 import { useLocation } from "wouter";
-import { Card } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import HeartChakraIcon from "@/components/icons/HeartChakraIcon";
+import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card } from "@/components/ui/card";
+import { 
+  ChevronLeft, 
+  Image as ImageIcon, 
+  Plus, 
+  History, 
+  Sparkles,
+  Star,
+  Edit3,
+  Check,
+  X
+} from "lucide-react";
 
-interface Vision {
-  title: string;
-  description: string;
-  imageUrl?: string;
-  images?: string[]; // Array of up to 4 image URLs
-  createdDate: string;
-}
-
-interface WeekReflection {
-  actions: string;
-  learnings: string;
-  wins: string;
-  nextStep: string;
-}
-
-interface CycleData {
-  weeks: {
-    [weekKey: string]: WeekReflection;
-  };
-  completed: boolean;
-}
+const POH_STORAGE_KEY = "@app:poh_ui_data";
 
 interface POHData {
-  vision: Vision | null;
-  cycles: {
-    [cycleKey: string]: CycleData;
+  activePOH: {
+    title: string;
+    why: string;
   };
-  stars: number;
-  selfEvaluation: {
-    completed: boolean;
-    responses: {
-      [questionKey: string]: string;
-    };
-  } | null;
+  visionImages: string[];
+  milestones: { text: string; completed: boolean }[];
+  actions: string[];
+  todayRating: number | null;
+  todayAcknowledged: boolean;
+  todayAcknowledgement: string;
+  nextPOH: string;
+  somedayPOH: string;
 }
 
-const SELF_EVALUATION_QUESTIONS = [
-  "What was my Project of Heart?",
-  "What tangible results was I looking for?",
-  "What were my challenges?",
-  "What actionable steps did I take?",
-  "What results did I get?",
-  "What are my learnings?",
-  "What are my wins?",
-  "What have I achieved?",
-];
+const defaultPOHData: POHData = {
+  activePOH: {
+    title: "Become technically strong & AI-fluent by building real products",
+    why: "I want freedom from dependence, fear of exposure, and restarting my life again."
+  },
+  visionImages: [],
+  milestones: [
+    { text: "I can start building without guidance", completed: false },
+    { text: "I can modify existing code confidently", completed: false },
+    { text: "I trust my technical decisions", completed: false },
+    { text: "I can explain my work calmly", completed: false },
+    { text: "My skills compound instead of resetting", completed: false }
+  ],
+  actions: [
+    "Work on one real feature (45 min)",
+    "Read & understand existing code (30 min)",
+    "Ship something small"
+  ],
+  todayRating: null,
+  todayAcknowledged: false,
+  todayAcknowledgement: "",
+  nextPOH: "Build and run a real business",
+  somedayPOH: "Build long-term wealth & freedom through assets"
+};
 
 export default function ProjectOfHeartPage() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("vision");
-  const [pohData, setPohData] = useState<POHData>({
-    vision: null,
-    cycles: {},
-    stars: 0,
-    selfEvaluation: null,
-  });
-
-  // Vision state
-  const [visionForm, setVisionForm] = useState({ title: "", description: "" });
-  const [showVisionDialog, setShowVisionDialog] = useState(false);
-
-  // Journey Planner state
-  const [selectedCycle, setSelectedCycle] = useState(1);
-  const [selectedWeek, setSelectedWeek] = useState(1);
-  const [weekForm, setWeekForm] = useState<WeekReflection>({
-    actions: "",
-    learnings: "",
-    wins: "",
-    nextStep: "",
-  });
-
-  // Self Evaluation state
-  const [showEvalDialog, setShowEvalDialog] = useState(false);
-  const [evalForm, setEvalForm] = useState<{ [key: string]: string }>({});
-
-  // Journey Action state
-  const [showJourneyModal, setShowJourneyModal] = useState(false);
-  const [showCongratulationsPopup, setShowCongratulationsPopup] =
-    useState(false);
-  const [weeklyAction, setWeeklyAction] = useState("");
-  const [savedWeeklyAction, setSavedWeeklyAction] = useState<string | null>(
-    null,
-  );
+  const [pohData, setPOHData] = useState<POHData>(defaultPOHData);
+  const [sliderValue, setSliderValue] = useState<number>(5);
+  const [editingAction, setEditingAction] = useState<number | null>(null);
+  const [editActionText, setEditActionText] = useState("");
+  const [showAcknowledgeInput, setShowAcknowledgeInput] = useState(false);
+  const [acknowledgementText, setAcknowledgementText] = useState("");
 
   useEffect(() => {
-    const saved = localStorage.getItem("@app:poh_data");
+    const saved = localStorage.getItem(POH_STORAGE_KEY);
     if (saved) {
       try {
-        setPohData(JSON.parse(saved));
-      } catch (error) {
-        console.error("Error loading POH data:", error);
+        const parsed = JSON.parse(saved);
+        setPOHData({ ...defaultPOHData, ...parsed });
+        if (parsed.todayRating !== null) {
+          setSliderValue(parsed.todayRating);
+        }
+      } catch (e) {
+        console.error("Failed to parse POH data", e);
       }
-    }
-
-    const savedAction = localStorage.getItem("@app:weekly_action");
-    if (savedAction) {
-      setSavedWeeklyAction(savedAction);
     }
   }, []);
 
   const savePOHData = (newData: POHData) => {
-    setPohData(newData);
-    localStorage.setItem("@app:poh_data", JSON.stringify(newData));
+    setPOHData(newData);
+    localStorage.setItem(POH_STORAGE_KEY, JSON.stringify(newData));
   };
 
-  const handleSetVision = () => {
-    if (!visionForm.title.trim() || !visionForm.description.trim()) {
-      toast({
-        title: "Please complete all fields",
-        description: "Both title and description are required",
-        variant: "destructive",
-      });
-      return;
+  const toggleMilestone = (index: number) => {
+    const newMilestones = [...pohData.milestones];
+    newMilestones[index].completed = !newMilestones[index].completed;
+    savePOHData({ ...pohData, milestones: newMilestones });
+  };
+
+  const startEditAction = (index: number) => {
+    setEditingAction(index);
+    setEditActionText(pohData.actions[index]);
+  };
+
+  const saveAction = () => {
+    if (editingAction !== null && editActionText.trim()) {
+      const newActions = [...pohData.actions];
+      newActions[editingAction] = editActionText.trim();
+      savePOHData({ ...pohData, actions: newActions });
     }
+    setEditingAction(null);
+    setEditActionText("");
+  };
 
-    const vision: Vision = {
-      title: visionForm.title,
-      description: visionForm.description,
-      createdDate: new Date().toISOString().split("T")[0],
-    };
+  const handleSliderChange = (value: number[]) => {
+    setSliderValue(value[0]);
+  };
 
-    const newStars = pohData.vision ? pohData.stars : pohData.stars + 1;
-
-    savePOHData({
-      ...pohData,
-      vision,
-      stars: newStars,
-    });
-
-    if (!pohData.vision) {
-      toast({
-        title: "Vision Set! ⭐",
-        description: "Your heart's vision is the seed of transformation.",
-        className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]",
+  const handleAcknowledge = () => {
+    if (showAcknowledgeInput) {
+      savePOHData({
+        ...pohData,
+        todayRating: sliderValue,
+        todayAcknowledged: true,
+        todayAcknowledgement: acknowledgementText.trim()
       });
+      setShowAcknowledgeInput(false);
     } else {
-      toast({
-        title: "Vision Updated",
-        description: "Your vision has been updated successfully.",
-      });
+      setShowAcknowledgeInput(true);
     }
-
-    setShowVisionDialog(false);
   };
-
-  const handleSaveWeekReflection = () => {
-    if (
-      !weekForm.actions.trim() ||
-      !weekForm.learnings.trim() ||
-      !weekForm.wins.trim()
-    ) {
-      toast({
-        title: "Please complete all required fields",
-        description: "Actions, learnings, and wins are required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const cycleKey = `cycle${selectedCycle}`;
-    const weekKey = `week${selectedWeek}`;
-
-    const updatedCycles = {
-      ...pohData.cycles,
-      [cycleKey]: {
-        weeks: {
-          ...(pohData.cycles[cycleKey]?.weeks || {}),
-          [weekKey]: weekForm,
-        },
-        completed: false,
-      },
-    };
-
-    // Check if all 4 weeks are completed for this cycle
-    const allWeeksCompleted = [1, 2, 3, 4].every(
-      (w) => updatedCycles[cycleKey]?.weeks[`week${w}`],
-    );
-
-    let newStars = pohData.stars;
-    if (allWeeksCompleted && !pohData.cycles[cycleKey]?.completed) {
-      updatedCycles[cycleKey].completed = true;
-
-      // Award stars based on which cycle is completed
-      let starsToAward = selectedCycle === 1 ? 1 : 2; // Cycle 1: +1 star, Cycles 2&3: +2 stars
-      newStars += starsToAward;
-
-      toast({
-        title: `Cycle Completed! ${"🌟".repeat(starsToAward)}`,
-        description:
-          "Each week, your heart expands through awareness and action.",
-        className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]",
-      });
-    } else {
-      toast({
-        title: "Reflection Saved 💚",
-        description: "Your weekly reflection has been saved.",
-      });
-    }
-
-    savePOHData({
-      ...pohData,
-      cycles: updatedCycles,
-      stars: newStars,
-    });
-
-    setWeekForm({ actions: "", learnings: "", wins: "", nextStep: "" });
-  };
-
-  const handleSaveSelfEvaluation = () => {
-    const allAnswered = SELF_EVALUATION_QUESTIONS.every((q) =>
-      evalForm[q]?.trim(),
-    );
-
-    if (!allAnswered) {
-      toast({
-        title: "Please answer all questions",
-        description: "All fields are required for the self-evaluation",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    savePOHData({
-      ...pohData,
-      selfEvaluation: {
-        completed: true,
-        responses: evalForm,
-      },
-    });
-
-    toast({
-      title: "Reflection Complete 🏅",
-      description: "Your self-evaluation has been saved.",
-      className: "bg-gradient-to-r from-[#FAD0C4] via-[#FFD1BA] to-[#A8E6CF]",
-    });
-
-    setShowEvalDialog(false);
-  };
-
-  const handleSubmitWeeklyAction = () => {
-    if (!weeklyAction.trim()) {
-      toast({
-        title: "Please enter your action",
-        description: "Describe what you'll do this week",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    localStorage.setItem("@app:weekly_action", weeklyAction);
-    setSavedWeeklyAction(weeklyAction);
-    setShowJourneyModal(false);
-    setShowCongratulationsPopup(true);
-    setWeeklyAction("");
-
-    setTimeout(() => {
-      setShowCongratulationsPopup(false);
-    }, 3000);
-  };
-
-  // Load week reflection when selection changes
-  useEffect(() => {
-    const cycleKey = `cycle${selectedCycle}`;
-    const weekKey = `week${selectedWeek}`;
-    const saved = pohData.cycles[cycleKey]?.weeks[weekKey];
-    if (saved) {
-      setWeekForm(saved);
-    } else {
-      setWeekForm({ actions: "", learnings: "", wins: "", nextStep: "" });
-    }
-  }, [selectedCycle, selectedWeek, pohData.cycles]);
-
-  const progressPercentage = (pohData.stars / 6) * 100;
 
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
-            <button
-              onClick={() => setLocation("/")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <div className="flex-1 text-center">
-              <h1
-                className="text-base font-semibold text-gray-500"
-                style={{ fontFamily: "Montserrat" }}
-              >
-                PROJECT OF HEART
-              </h1>
-            </div>
-            <div className="w-10"></div>
-          </div>
-        </div>
-
-        <div className="px-4 py-2">
-          {/* Star Progress */}
-          <Card
-            className="mb-3 p-4 shadow-md bg-white"
-            style={{
-              borderRadius: "1rem",
-            }}
+    <div className="min-h-screen pb-24" style={{ backgroundColor: "#F8F9FA" }}>
+      {/* Header */}
+      <div className="bg-white border-b py-4 px-4 sticky top-0 z-50">
+        <div className="flex items-center max-w-md mx-auto">
+          <button
+            onClick={() => setLocation("/")}
+            className="p-2 rounded-lg hover:bg-gray-100"
+            data-testid="button-back"
           >
-            {/* Two-Column Layout: Chakra Info + Star Count */}
-            <div className="flex gap-2 mb-4">
-              {/* LEFT SIDE (70%) - Heart Chakra Info */}
-              <div className="flex-[6]">
-                <div className="flex items-center gap-3 mb-2">
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{
-                      background:
-                        "radial-gradient(circle, #00C853 0%, transparent 70%)",
-                    }}
-                  >
-                    <svg
-                      className="w-12 h-12"
-                      viewBox="0 0 200 200"
-                      fill="none"
-                    >
-                      {/* 12 Symmetrically Rotated Lotus Petals */}
-                      <g
-                        stroke="#5FB77D"
-                        strokeWidth="3.5"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        {/* Each petal is rotated 30 degrees from the previous one */}
-                        <g transform="rotate(0 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(30 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(60 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(90 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(120 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(150 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(180 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(210 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(240 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(270 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(300 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                        <g transform="rotate(330 100 100)">
-                          <path d="M 100 20 Q 92 24 88 34 Q 94 29 100 32 Q 106 29 112 34 Q 108 24 100 20" />
-                        </g>
-                      </g>
-
-                      {/* Central Circle */}
-                      <circle
-                        cx="100"
-                        cy="100"
-                        r="45"
-                        stroke="#5FB77D"
-                        strokeWidth="3.5"
-                        fill="none"
-                      />
-
-                      {/* Star of David - Two Overlapping Triangles */}
-                      <g
-                        stroke="#5FB77D"
-                        strokeWidth="4"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        {/* Upward Triangle */}
-                        <path d="M 100 70 L 125 120 L 75 120 Z" />
-                        {/* Downward Triangle */}
-                        <path d="M 100 130 L 75 80 L 125 80 Z" />
-                      </g>
-                    </svg>
-                  </div>
-                  <h4
-                    className="font-bold text-base"
-                    style={{ color: "#3D3D3D" }}
-                  >
-                    Heart Chakra – Anahata
-                  </h4>
-                </div>
-                <p
-                  className="text-xs leading-relaxed"
-                  style={{ color: "#6B7280" }}
-                >
-                  Center of Love, Balance, and Purpose.
-                  <br />
-                  Your Project of Heart aligns with the bridge between who you
-                  were and who you're rising to be.
-                </p>
-              </div>
-
-              {/* RIGHT SIDE (30%) - Progress Ring Around Star */}
-              <div className="flex-[4] flex flex-col items-center justify-center gap-3">
-                {/* Circular Progress with Star in Center */}
-                <div className="relative w-24 h-24">
-                  <svg className="w-24 h-24 transform -rotate-90">
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="42"
-                      stroke="#F9C5BD"
-                      strokeWidth="6"
-                      fill="none"
-                      opacity="0.2"
-                    />
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="42"
-                      stroke="#FDE68A"
-                      strokeWidth="6"
-                      fill="none"
-                      strokeDasharray={`${2 * Math.PI * 42}`}
-                      strokeDashoffset={`${2 * Math.PI * 42 * (1 - Math.min(progressPercentage, 100) / 100)}`}
-                      strokeLinecap="round"
-                      className="transition-all duration-500"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Star
-                      className="w-12 h-12"
-                      style={{ color: "#FDE68A" }}
-                      fill="currentColor"
-                    />
-                  </div>
-                </div>
-
-                {/* Star Count Container */}
-                <div
-                  className="relative flex items-center px-4 py-1.5 rounded-lg"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #E8D5F8 0%, #D4C5F9 100%)",
-                    minWidth: "80px",
-                  }}
-                >
-                  <div
-                    className="absolute -left-3 w-10 h-10 rounded-full flex items-center justify-center"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%)",
-                      border: "3px solid white",
-                    }}
-                  >
-                    <Star
-                      className="w-5 h-5"
-                      style={{ color: "#FFFFFF" }}
-                      fill="currentColor"
-                    />
-                  </div>
-                  <p
-                    className="text-base font-bold ml-6"
-                    style={{ color: "#703DFA" }}
-                    data-testid="text-stars-count"
-                  >
-                    {pohData.stars}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Star Milestones */}
-            <div className="space-y-1.5 text-xs" style={{ color: "#6B7280" }}>
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5">
-                  {pohData.stars >= 1 ? (
-                    <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: "#703DFA" }}
-                    >
-                      <svg
-                        className="w-2.5 h-2.5"
-                        viewBox="0 0 12 12"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                      >
-                        <path
-                          d="M2 6 L5 9 L10 3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
-                  ) : (
-                    <div
-                      className="w-4 h-4 rounded-full border-2"
-                      style={{ borderColor: "#D1D5DB" }}
-                    ></div>
-                  )}
-                </div>
-                <span className="font-medium" style={{ color: "#3D3D3D" }}>
-                  ⭐ Set Project of Heart — Your first star begins here.
-                </span>
-              </div>
-
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5">
-                  {pohData.stars >= 2 ? (
-                    <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: "#703DFA" }}
-                    >
-                      <svg
-                        className="w-2.5 h-2.5"
-                        viewBox="0 0 12 12"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                      >
-                        <path
-                          d="M2 6 L5 9 L10 3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
-                  ) : (
-                    <div
-                      className="w-4 h-4 rounded-full border-2"
-                      style={{ borderColor: "#D1D5DB" }}
-                    ></div>
-                  )}
-                </div>
-                <span className="font-medium" style={{ color: "#3D3D3D" }}>
-                  ⭐⭐ Cycle 1 — You took the first step.
-                </span>
-              </div>
-
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5">
-                  {pohData.stars >= 4 ? (
-                    <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: "#703DFA" }}
-                    >
-                      <svg
-                        className="w-2.5 h-2.5"
-                        viewBox="0 0 12 12"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                      >
-                        <path
-                          d="M2 6 L5 9 L10 3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
-                  ) : (
-                    <div
-                      className="w-4 h-4 rounded-full border-2"
-                      style={{ borderColor: "#D1D5DB" }}
-                    ></div>
-                  )}
-                </div>
-                <span className="font-medium" style={{ color: "#3D3D3D" }}>
-                  ⭐⭐⭐⭐ Cycle 2 — You stayed consistent.
-                </span>
-              </div>
-
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5">
-                  {pohData.stars >= 6 ? (
-                    <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: "#703DFA" }}
-                    >
-                      <svg
-                        className="w-2.5 h-2.5"
-                        viewBox="0 0 12 12"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                      >
-                        <path
-                          d="M2 6 L5 9 L10 3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
-                  ) : (
-                    <div
-                      className="w-4 h-4 rounded-full border-2"
-                      style={{ borderColor: "#D1D5DB" }}
-                    ></div>
-                  )}
-                </div>
-                <span className="font-medium" style={{ color: "#3D3D3D" }}>
-                  ⭐⭐⭐⭐⭐⭐ Cycle 3 — You grew stronger.
-                </span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Main Content Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 mb-2 bg-white h-auto p-1 rounded-md">
-              <TabsTrigger
-                value="vision"
-                data-testid="tab-vision"
-                className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
-              >
-                Vision
-              </TabsTrigger>
-              <TabsTrigger
-                value="journey"
-                data-testid="tab-journey"
-                className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
-              >
-                Journey
-              </TabsTrigger>
-              <TabsTrigger
-                value="reflect"
-                data-testid="tab-reflect"
-                className="data-[state=active]:bg-[#703DFA] data-[state=active]:text-white rounded-md"
-              >
-                Reflect
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Vision Board Tab */}
-            <TabsContent value="vision">
-              <Card
-                className="p-4 shadow-md bg-white"
-                style={{
-                  borderRadius: "1rem",
-                }}
-              >
-                {!pohData.vision ? (
-                  <div className="text-center py-8">
-                    <div
-                      className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
-                      style={{
-                        background: "linear-gradient(135deg, #703DFA, #FFFFFF)",
-                      }}
-                    >
-                      <Heart
-                        className="w-10 h-10 text-white"
-                        fill="currentColor"
-                      />
-                    </div>
-                    <h3
-                      className="text-xl font-semibold mb-2"
-                      style={{
-                        color: "#3D3D3D",
-                        fontFamily: "Playfair Display, serif",
-                      }}
-                    >
-                      Define Your Heart's Purpose
-                    </h3>
-                    <p className="text-sm mb-6" style={{ color: "#6B7280" }}>
-                      A serene, heart-centered space to define your Project of
-                      Heart
-                    </p>
-                    <Button
-                      onClick={() => setShowVisionDialog(true)}
-                      className="font-semibold border-0"
-                      style={{
-                        backgroundColor: "#E5AC19",
-                        color: "#0D131F",
-                      }}
-                      data-testid="button-set-vision"
-                    >
-                      Set Your Vision
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="flex items-start justify-between mb-2">
-                      <h3
-                        className="text-xl font-semibold"
-                        style={{
-                          color: "#3D3D3D",
-                          fontFamily: "Playfair Display, serif",
-                        }}
-                      >
-                        Your Vision
-                      </h3>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setVisionForm({
-                            title: pohData.vision!.title,
-                            description: pohData.vision!.description,
-                          });
-                          setShowVisionDialog(true);
-                        }}
-                        data-testid="button-edit-vision"
-                      >
-                        <Pencil
-                          className="w-4 h-4"
-                          style={{ color: "#703DFA" }}
-                        />
-                      </Button>
-                    </div>
-
-                    <div
-                      className="p-4 rounded-lg mb-2"
-                      style={{ backgroundColor: "#F9F5FF" }}
-                    >
-                      <p
-                        className="font-semibold mb-2"
-                        style={{ color: "#3D3D3D" }}
-                        data-testid="text-vision-title"
-                      >
-                        {pohData.vision.title}
-                      </p>
-                      <p
-                        className="text-sm"
-                        style={{ color: "#6B7280" }}
-                        data-testid="text-vision-description"
-                      >
-                        {pohData.vision.description}
-                      </p>
-                    </div>
-
-                    {/* Image Gallery - Vision Board Style */}
-                    <div className="mb-2">
-                      <div className="flex space-x-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-2">
-                        <div
-                          className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
-                          style={{ backgroundImage: "url('/Vision1.png')" }}
-                          data-testid="image-vision-1"
-                        />
-                        <div
-                          className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
-                          style={{ backgroundImage: "url('/Vision2.png')" }}
-                          data-testid="image-vision-2"
-                        />
-                        <div
-                          className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg bg-cover bg-center snap-start"
-                          style={{ backgroundImage: "url('/Vision3.png')" }}
-                          data-testid="image-vision-3"
-                        />
-                        <div
-                          className="flex-shrink-0 w-64 h-64 rounded-2xl shadow-lg flex items-center justify-center snap-start"
-                          style={{
-                            background:
-                              "linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)",
-                          }}
-                          data-testid="image-placeholder-4"
-                        >
-                          <Upload
-                            className="w-12 h-12 opacity-40"
-                            style={{ color: "#9CA3AF" }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      className="p-4 rounded-lg text-center italic"
-                      style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}
-                    >
-                      <p className="text-sm">
-                        "Your heart's vision is the seed of transformation."
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </Card>
-            </TabsContent>
-
-            {/* Journey Planner Tab */}
-            <TabsContent value="journey">
-              {/* Start Your Journey - CTA or Action Card */}
-              {!savedWeeklyAction ? (
-                <Button
-                  onClick={() => setShowJourneyModal(true)}
-                  size="sm"
-                  className="w-8/12 mx-auto mb-4 font-semibold shadow-md border-0 block py-4 text-base"
-                  style={{
-                    backgroundColor: "#E5AC19",
-                    color: "#0D131F",
-                    borderRadius: "2rem",
-                  }}
-                  data-testid="button-start-journey"
-                >
-                  Start Your Journey
-                </Button>
-              ) : (
-                <Card
-                  className="p-6 shadow-md mb-4 bg-white"
-                  style={{
-                    borderRadius: "1rem",
-                  }}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Target
-                        className="w-6 h-6"
-                        style={{ color: "#A8E6CF" }}
-                      />
-                      <h3
-                        className="text-lg font-semibold"
-                        style={{ color: "#3D3D3D" }}
-                      >
-                        This Week's Action
-                      </h3>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSavedWeeklyAction(null);
-                        localStorage.removeItem("@app:weekly_action");
-                      }}
-                      data-testid="button-edit-action"
-                    >
-                      Edit
-                    </Button>
-                  </div>
-                  <div
-                    className="p-4 rounded-lg"
-                    style={{ backgroundColor: "rgba(255, 255, 255, 0.6)" }}
-                  >
-                    <p
-                      className="text-base"
-                      style={{ color: "#3D3D3D" }}
-                      data-testid="text-weekly-action"
-                    >
-                      {savedWeeklyAction}
-                    </p>
-                  </div>
-                  <p
-                    className="text-xs mt-3 text-center"
-                    style={{ color: "#6B7280" }}
-                  >
-                    Choose yourself, every single day.
-                  </p>
-                </Card>
-              )}
-
-              <Card
-                className="p-6 shadow-md bg-white"
-                style={{
-                  borderRadius: "1rem",
-                }}
-              >
-                <div className="mb-6">
-                  <h3
-                    className="text-xl font-semibold mb-2"
-                    style={{
-                      color: "#3D3D3D",
-                      fontFamily: "Playfair Display, serif",
-                    }}
-                  >
-                    Cycles of Growth
-                  </h3>
-                  <p className="text-sm mb-4" style={{ color: "#6B7280" }}>
-                    Each week, your heart expands through awareness and action.
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div>
-                      <Label className="text-xs" style={{ color: "#6B7280" }}>
-                        Cycle
-                      </Label>
-                      <Select
-                        value={String(selectedCycle)}
-                        onValueChange={(v) => setSelectedCycle(parseInt(v))}
-                      >
-                        <SelectTrigger data-testid="select-cycle">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">Cycle 1</SelectItem>
-                          <SelectItem value="2">Cycle 2</SelectItem>
-                          <SelectItem value="3">Cycle 3</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs" style={{ color: "#6B7280" }}>
-                        Week
-                      </Label>
-                      <Select
-                        value={String(selectedWeek)}
-                        onValueChange={(v) => setSelectedWeek(parseInt(v))}
-                      >
-                        <SelectTrigger data-testid="select-week">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">Week 1</SelectItem>
-                          <SelectItem value="2">Week 2</SelectItem>
-                          <SelectItem value="3">Week 3</SelectItem>
-                          <SelectItem value="4">Week 4</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <Label
-                        htmlFor="actions"
-                        className="text-xs"
-                        style={{ color: "#6B7280" }}
-                      >
-                        Actions Taken *
-                      </Label>
-                      <Textarea
-                        id="actions"
-                        value={weekForm.actions}
-                        onChange={(e) =>
-                          setWeekForm({ ...weekForm, actions: e.target.value })
-                        }
-                        placeholder="What actions did you take this week?"
-                        className="mt-1"
-                        rows={3}
-                        data-testid="input-actions"
-                      />
-                    </div>
-
-                    <div>
-                      <Label
-                        htmlFor="learnings"
-                        className="text-xs"
-                        style={{ color: "#6B7280" }}
-                      >
-                        Learnings *
-                      </Label>
-                      <Textarea
-                        id="learnings"
-                        value={weekForm.learnings}
-                        onChange={(e) =>
-                          setWeekForm({
-                            ...weekForm,
-                            learnings: e.target.value,
-                          })
-                        }
-                        placeholder="What did you learn?"
-                        className="mt-1"
-                        rows={3}
-                        data-testid="input-learnings"
-                      />
-                    </div>
-
-                    <div>
-                      <Label
-                        htmlFor="wins"
-                        className="text-xs"
-                        style={{ color: "#6B7280" }}
-                      >
-                        Wins *
-                      </Label>
-                      <Textarea
-                        id="wins"
-                        value={weekForm.wins}
-                        onChange={(e) =>
-                          setWeekForm({ ...weekForm, wins: e.target.value })
-                        }
-                        placeholder="What were your wins?"
-                        className="mt-1"
-                        rows={3}
-                        data-testid="input-wins"
-                      />
-                    </div>
-
-                    <div>
-                      <Label
-                        htmlFor="nextStep"
-                        className="text-xs"
-                        style={{ color: "#6B7280" }}
-                      >
-                        Next Step (Optional)
-                      </Label>
-                      <Textarea
-                        id="nextStep"
-                        value={weekForm.nextStep}
-                        onChange={(e) =>
-                          setWeekForm({ ...weekForm, nextStep: e.target.value })
-                        }
-                        placeholder="What's your next step?"
-                        className="mt-1"
-                        rows={2}
-                        data-testid="input-next-step"
-                      />
-                    </div>
-
-                    <Button
-                      onClick={handleSaveWeekReflection}
-                      className="w-full font-semibold border-0"
-                      style={{
-                        backgroundColor: "#703DFA",
-                        color: "white",
-                      }}
-                      data-testid="button-save-week"
-                    >
-                      Save Reflection
-                    </Button>
-                  </div>
-
-                  <div
-                    className="mt-6 p-3 rounded-lg text-center"
-                    style={{ backgroundColor: "#F0F9FF" }}
-                  >
-                    <p className="text-xs" style={{ color: "#6B7280" }}>
-                      💚 Reflect with your heart every Sunday
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-
-            {/* Self Evaluation Tab */}
-            <TabsContent value="reflect">
-              <Card
-                className="p-6 shadow-md bg-white"
-                style={{
-                  borderRadius: "1rem",
-                }}
-              >
-                <div className="text-center">
-                  <div
-                    className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                    style={{
-                      background: "linear-gradient(135deg, #FDE68A, #F9C5BD)",
-                    }}
-                  >
-                    <Award className="w-8 h-8 text-white" />
-                  </div>
-                  <h3
-                    className="text-xl font-semibold mb-2"
-                    style={{
-                      color: "#3D3D3D",
-                      fontFamily: "Playfair Display, serif",
-                    }}
-                  >
-                    Self-Evaluation
-                  </h3>
-                  <p className="text-sm mb-6" style={{ color: "#6B7280" }}>
-                    Optional deep reflection on your journey
-                  </p>
-
-                  {pohData.selfEvaluation?.completed ? (
-                    <div
-                      className="p-4 rounded-lg"
-                      style={{ backgroundColor: "#F0FDF4" }}
-                    >
-                      <Award className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
-                      <p
-                        className="font-semibold mb-1"
-                        style={{ color: "#3D3D3D" }}
-                      >
-                        Reflection Complete!
-                      </p>
-                      <p className="text-sm" style={{ color: "#6B7280" }}>
-                        You've earned a Golden Star 🏅
-                      </p>
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={() => {
-                        setEvalForm(pohData.selfEvaluation?.responses || {});
-                        setShowEvalDialog(true);
-                      }}
-                      className="font-semibold border-0"
-                      style={{
-                        backgroundColor: "#E5AC19",
-                        color: "#0D131F",
-                      }}
-                      data-testid="button-start-evaluation"
-                    >
-                      Begin Self-Evaluation
-                    </Button>
-                  )}
-
-                  <div
-                    className="mt-6 p-4 rounded-lg italic text-center"
-                    style={{ backgroundColor: "#703DFA", color: "white" }}
-                  >
-                    <p className="text-xs leading-relaxed">
-                      "When we start, we are one person; months later, we are
-                      someone new. Reflection opens new doors and visions."
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-          </Tabs>
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <div className="flex-1 text-center">
+            <h1 className="text-xs font-semibold tracking-widest text-gray-400">
+              PROJECT OF HEART
+            </h1>
+          </div>
+          <button
+            onClick={() => setLocation("/project-of-heart/history")}
+            className="p-2 rounded-lg hover:bg-gray-100"
+            data-testid="button-history"
+          >
+            <History className="w-5 h-5 text-gray-500" />
+          </button>
         </div>
       </div>
 
-      {/* Vision Dialog */}
-      <Dialog open={showVisionDialog} onOpenChange={setShowVisionDialog}>
-        <DialogContent style={{ backgroundColor: "white" }}>
-          <DialogHeader>
-            <DialogTitle style={{ fontFamily: "Playfair Display, serif" }}>
-              {pohData.vision ? "Edit Your Vision" : "Set Your Vision"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="vision-title">
-                What is your Project of Heart? *
-              </Label>
-              <Input
-                id="vision-title"
-                value={visionForm.title}
-                onChange={(e) =>
-                  setVisionForm({ ...visionForm, title: e.target.value })
-                }
-                placeholder="e.g., Launch my wellness coaching business"
-                className="mt-2 focus-visible:ring-2 focus-visible:ring-[#703DFA]"
-                style={{ backgroundColor: "#F3F3F3" }}
-                data-testid="input-vision-title"
-              />
-            </div>
-            <div>
-              <Label htmlFor="vision-description">
-                Why does this matter to you? *
-              </Label>
-              <Textarea
-                id="vision-description"
-                value={visionForm.description}
-                onChange={(e) =>
-                  setVisionForm({ ...visionForm, description: e.target.value })
-                }
-                placeholder="Describe your deeper purpose..."
-                className="mt-2 focus-visible:ring-2 focus-visible:ring-[#703DFA]"
-                style={{ backgroundColor: "#F3F3F3" }}
-                rows={4}
-                data-testid="input-vision-description"
-              />
-            </div>
-            <Button
-              onClick={handleSetVision}
-              className="w-full font-semibold border-0"
-              style={{
-                backgroundColor: "#E5AC19",
-                color: "#0D131F",
-              }}
-              data-testid="button-save-vision"
-            >
-              {pohData.vision ? "Update Vision" : "Set Vision & Earn ⭐"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Self Evaluation Dialog */}
-      <Dialog open={showEvalDialog} onOpenChange={setShowEvalDialog}>
-        <DialogContent
-          className="max-w-2xl max-h-[80vh] overflow-y-auto"
-          style={{ backgroundColor: "white" }}
+      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+        {/* SECTION 0: Heart Chakra Context */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
         >
-          <DialogHeader>
-            <DialogTitle style={{ fontFamily: "Playfair Display, serif" }}>
-              Self-Evaluation 🪞
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {SELF_EVALUATION_QUESTIONS.map((question, index) => (
-              <div key={index}>
-                <Label
-                  className="text-sm font-medium"
-                  style={{ color: "#3D3D3D" }}
-                >
-                  {index + 1}. {question}
-                </Label>
-                <Textarea
-                  value={evalForm[question] || ""}
-                  onChange={(e) =>
-                    setEvalForm({ ...evalForm, [question]: e.target.value })
-                  }
-                  placeholder="Your reflection..."
-                  className="mt-2 focus-visible:ring-2 focus-visible:ring-[#703DFA]"
-                  style={{ backgroundColor: "#F3F3F3" }}
-                  rows={3}
-                  data-testid={`input-eval-${index}`}
-                />
-              </div>
-            ))}
-            <Button
-              onClick={handleSaveSelfEvaluation}
-              className="w-full font-semibold border-0"
-              style={{
-                backgroundColor: "#E5AC19",
-                color: "#0D131F",
-              }}
-              data-testid="button-save-evaluation"
-            >
-              Complete Reflection 🏅
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Journey Question Modal */}
-      <Dialog open={showJourneyModal} onOpenChange={setShowJourneyModal}>
-        <DialogContent style={{ backgroundColor: "white" }}>
-          <DialogHeader>
-            <DialogTitle
-              style={{
-                fontFamily: "Playfair Display, serif",
-                color: "#3D3D3D",
-              }}
-            >
-              Your Weekly Commitment
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label
-                htmlFor="weekly-action"
-                className="text-base font-medium"
-                style={{ color: "#3D3D3D" }}
+          <Card 
+            className="p-4 border-0"
+            style={{ backgroundColor: "rgba(95, 183, 125, 0.08)" }}
+            data-testid="card-heart-chakra"
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{
+                  background: "radial-gradient(circle, rgba(95, 183, 125, 0.3) 0%, transparent 70%)",
+                }}
               >
-                What actions will you take this week toward your vision?
-              </Label>
-              <Textarea
-                id="weekly-action"
-                value={weeklyAction}
-                onChange={(e) => setWeeklyAction(e.target.value)}
-                placeholder="I will..."
-                className="mt-3 focus-visible:!ring-2 focus-visible:!ring-[#703DFA]"
-                style={{ backgroundColor: "#F3F3F3" }}
-                rows={4}
-                data-testid="input-weekly-action"
-              />
+                <HeartChakraIcon className="w-10 h-10" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold" style={{ color: "#5FB77D" }}>
+                  Heart Chakra — Anahata
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                  Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between who you were and who you're rising to be.
+                </p>
+              </div>
             </div>
-            <Button
-              onClick={handleSubmitWeeklyAction}
-              className="w-full font-semibold border-0"
-              style={{
-                backgroundColor: "#E5AC19",
-                color: "#0D131F",
-              }}
-              data-testid="button-submit-action"
-            >
-              Commit to Action
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </Card>
+        </motion.div>
 
-      {/* Congratulations Popup */}
-      <Dialog
-        open={showCongratulationsPopup}
-        onOpenChange={setShowCongratulationsPopup}
-      >
-        <DialogContent
-          className="text-center"
-          style={{
-            background:
-              "linear-gradient(135deg, #FAD0C4 0%, #FFD1BA 50%, #A8E6CF 100%)",
-            border: "none",
-          }}
+        {/* SECTION 1: Active Project of Heart (Hero) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <div className="py-6">
-            <div
-              className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center animate-pulse"
-              style={{ background: "rgba(255, 255, 255, 0.4)" }}
-            >
-              <Award className="w-12 h-12" style={{ color: "#3D3D3D" }} />
+          <Card className="p-5 border-0 shadow-sm" data-testid="card-active-poh">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4" style={{ color: "#E5AC19" }} />
+              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                Active Project of Heart
+              </span>
             </div>
-            <h2
-              className="text-2xl font-bold mb-3"
-              style={{
-                color: "#3D3D3D",
-                fontFamily: "Playfair Display, serif",
-              }}
+            <h2 
+              className="text-xl font-bold leading-tight mb-4"
+              style={{ color: "#2D2D2D" }}
+              data-testid="text-active-poh-title"
             >
-              Congratulation Champion!
+              {pohData.activePOH.title}
             </h2>
-            <p className="text-lg" style={{ color: "#3D3D3D" }}>
-              Choose yourself, every single day.
+            <div 
+              className="border-l-2 pl-3 py-1"
+              style={{ borderColor: "#E5AC19" }}
+            >
+              <p className="text-xs text-gray-400 mb-1">Why this matters to my heart:</p>
+              <p className="text-sm text-gray-600 italic" data-testid="text-active-poh-why">
+                {pohData.activePOH.why}
+              </p>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* SECTION 2: Vision Board */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+        >
+          <Card className="p-4 border-0 shadow-sm" data-testid="card-vision-board">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                Vision
+              </span>
+              <span className="text-xs text-gray-400">Optional</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[0, 1, 2].map((index) => (
+                <div
+                  key={index}
+                  className="aspect-square rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                  style={{ backgroundColor: "rgba(112, 61, 250, 0.05)" }}
+                  data-testid={`button-vision-image-${index}`}
+                >
+                  {pohData.visionImages[index] ? (
+                    <img
+                      src={pohData.visionImages[index]}
+                      alt={`Vision ${index + 1}`}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-1">
+                      <ImageIcon className="w-5 h-5 text-gray-300" />
+                      <Plus className="w-3 h-3 text-gray-300" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* SECTION 3: Milestones */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          <Card className="p-4 border-0 shadow-sm" data-testid="card-milestones">
+            <div className="flex items-center gap-2 mb-4">
+              <Star className="w-4 h-4" style={{ color: "#5FB77D" }} />
+              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                Milestones — Freedoms I'm Earning
+              </span>
+            </div>
+            <div className="space-y-3">
+              {pohData.milestones.map((milestone, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-3 group"
+                  data-testid={`milestone-${index}`}
+                >
+                  <Checkbox
+                    checked={milestone.completed}
+                    onCheckedChange={() => toggleMilestone(index)}
+                    className="mt-0.5 border-gray-300 data-[state=checked]:bg-[#5FB77D] data-[state=checked]:border-[#5FB77D]"
+                    data-testid={`checkbox-milestone-${index}`}
+                  />
+                  <span
+                    className={`text-sm leading-relaxed transition-colors ${
+                      milestone.completed
+                        ? "text-gray-400 line-through"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {milestone.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* SECTION 4: Top 3 Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+        >
+          <Card className="p-4 border-0 shadow-sm" data-testid="card-actions">
+            <div className="flex items-center gap-2 mb-4">
+              <div 
+                className="w-4 h-4 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "#703DFA" }}
+              >
+                <span className="text-white text-xs font-bold">3</span>
+              </div>
+              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                Top 3 Actions for My POH
+              </span>
+            </div>
+            <div className="space-y-3">
+              {pohData.actions.map((action, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 group"
+                  data-testid={`action-${index}`}
+                >
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: "#703DFA" }}
+                  />
+                  {editingAction === index ? (
+                    <div className="flex-1 flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editActionText}
+                        onChange={(e) => setEditActionText(e.target.value)}
+                        className="flex-1 text-sm px-2 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        autoFocus
+                        data-testid={`input-action-${index}`}
+                      />
+                      <button
+                        onClick={saveAction}
+                        className="p-1 hover:bg-gray-100 rounded"
+                        data-testid={`button-save-action-${index}`}
+                      >
+                        <Check className="w-4 h-4 text-green-600" />
+                      </button>
+                      <button
+                        onClick={() => setEditingAction(null)}
+                        className="p-1 hover:bg-gray-100 rounded"
+                        data-testid={`button-cancel-action-${index}`}
+                      >
+                        <X className="w-4 h-4 text-gray-400" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-sm text-gray-700 flex-1">
+                        {action}
+                      </span>
+                      <button
+                        onClick={() => startEditAction(index)}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-opacity"
+                        data-testid={`button-edit-action-${index}`}
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-gray-400" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* SECTION 5: Rate Yourself Today */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
+          <Card 
+            className="p-5 border-0 shadow-sm"
+            style={{ 
+              background: pohData.todayAcknowledged 
+                ? "linear-gradient(135deg, rgba(229, 172, 25, 0.08) 0%, rgba(95, 183, 125, 0.08) 100%)"
+                : "white"
+            }}
+            data-testid="card-self-rating"
+          >
+            <h3 className="text-sm font-semibold text-gray-700 mb-1">
+              Rate Yourself Today
+            </h3>
+            <p className="text-xs text-gray-400 mb-5">
+              Do you want to acknowledge taking action on your POH today?
+            </p>
+
+            {pohData.todayAcknowledged ? (
+              <div className="text-center py-4">
+                <div 
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-3"
+                  style={{ backgroundColor: "rgba(229, 172, 25, 0.15)" }}
+                >
+                  <Star className="w-4 h-4" style={{ color: "#E5AC19" }} fill="#E5AC19" />
+                  <span className="text-sm font-medium" style={{ color: "#B8860B" }}>
+                    You rated yourself {pohData.todayRating}/10 today
+                  </span>
+                </div>
+                {pohData.todayAcknowledgement && (
+                  <p className="text-sm text-gray-600 italic mt-2">
+                    "{pohData.todayAcknowledgement}"
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="px-2 mb-6">
+                  <Slider
+                    value={[sliderValue]}
+                    onValueChange={handleSliderChange}
+                    max={10}
+                    step={1}
+                    className="w-full"
+                    data-testid="slider-rating"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <span className="text-xs text-gray-400">0</span>
+                    <span 
+                      className="text-lg font-bold"
+                      style={{ color: "#703DFA" }}
+                      data-testid="text-rating-value"
+                    >
+                      {sliderValue}
+                    </span>
+                    <span className="text-xs text-gray-400">10</span>
+                  </div>
+                </div>
+
+                {showAcknowledgeInput && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="mb-4"
+                  >
+                    <textarea
+                      value={acknowledgementText}
+                      onChange={(e) => setAcknowledgementText(e.target.value)}
+                      placeholder="I want to acknowledge myself for..."
+                      className="w-full text-sm px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none"
+                      rows={2}
+                      data-testid="input-acknowledgement"
+                    />
+                  </motion.div>
+                )}
+
+                <Button
+                  onClick={handleAcknowledge}
+                  className="w-full gap-2"
+                  style={{ 
+                    backgroundColor: "#E5AC19",
+                    color: "white"
+                  }}
+                  data-testid="button-acknowledge"
+                >
+                  <Star className="w-4 h-4" />
+                  {showAcknowledgeInput ? "Save Acknowledgement" : "I want to acknowledge myself for this"}
+                </Button>
+
+                <p className="text-xs text-gray-400 text-center mt-3">
+                  There is no right score. This is for self-awareness, not judgement.
+                </p>
+              </>
+            )}
+          </Card>
+        </motion.div>
+
+        {/* SECTION 6: Next Project of Heart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.35 }}
+        >
+          <Card 
+            className="p-4 border-0"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.02)" }}
+            data-testid="card-next-poh"
+          >
+            <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+              Next Project of Heart
+            </span>
+            <h3 className="text-base font-medium text-gray-500 mt-2" data-testid="text-next-poh">
+              {pohData.nextPOH}
+            </h3>
+            <p className="text-xs text-gray-400 mt-2">
+              This comes after I complete my current Project of Heart.
+            </p>
+          </Card>
+        </motion.div>
+
+        {/* SECTION 7: Someday Project of Heart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+        >
+          <div 
+            className="px-4 py-3 rounded-lg"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.03)" }}
+            data-testid="card-someday-poh"
+          >
+            <span className="text-xs font-medium tracking-wide text-gray-300 uppercase">
+              Someday
+            </span>
+            <p className="text-sm text-gray-400 mt-1" data-testid="text-someday-poh">
+              {pohData.somedayPOH}
             </p>
           </div>
-        </DialogContent>
-      </Dialog>
+        </motion.div>
+
+        {/* SECTION 8: History Link */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.45 }}
+        >
+          <button
+            onClick={() => setLocation("/project-of-heart/history")}
+            className="w-full flex items-center justify-center gap-2 py-3 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            data-testid="button-view-history"
+          >
+            <History className="w-4 h-4" />
+            <span>View Past Projects</span>
+          </button>
+        </motion.div>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import SpiritualBreathsPage from "@/pages/SpiritualBreathsPage";
 import EventCalendarPage from "@/pages/EventCalendarPage";
 import MyPracticePlaylistPage from "@/pages/MyPracticePlaylistPage";
 import ProjectOfHeartPage from "@/pages/ProjectOfHeartPage";
+import ProjectOfHeartHistoryPage from "@/pages/ProjectOfHeartHistoryPage";
 import ProfilePage from "@/pages/ProfilePage";
 import DrMPage from "@/pages/DrMPage";
 import MoneyMasteryPage from "@/pages/MoneyMasteryPage";
@@ -38,6 +39,8 @@ export default function AppRoutes() {
       <Route path="/events" component={EventCalendarPage} />
       <Route path="/playlist" component={MyPracticePlaylistPage} />
       <Route path="/heart" component={ProjectOfHeartPage} />
+      <Route path="/project-of-heart" component={ProjectOfHeartPage} />
+      <Route path="/project-of-heart/history" component={ProjectOfHeartHistoryPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/drm" component={DrMPage} />
       <Route path="/money-mastery" component={MoneyMasteryPage} />

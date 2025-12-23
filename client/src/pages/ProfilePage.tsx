@@ -35,20 +35,8 @@ interface PrescriptionData {
   evening?: string[];
 }
 
-interface StreakDay {
-  date: string;
-  status: "streak" | "missed" | "neutral";
-}
-
-interface StreakData {
-  [date: string]: "streak" | "missed";
-}
-
 export default function ProfilePage() {
   const [, setLocation] = useLocation();
-  const [streakVisible, setStreakVisible] = useState(true);
-  const [startDate, setStartDate] = useState("");
-  const [streakData, setStreakData] = useState<StreakData>({});
   const [accountExpanded, setAccountExpanded] = useState(false);
   const [prescriptionExpanded, setPrescriptionExpanded] = useState(false);
   const [settingsExpanded, setSettingsExpanded] = useState(false);
@@ -57,12 +45,14 @@ export default function ProfilePage() {
   const [tempName, setTempName] = useState("");
 
   const userToken = localStorage.getItem("@app:user_token");
-  const { data: wellnessProfile, isLoading: isLoadingProfile } = useQuery<UserWellnessProfile | { karmicAffirmation: null; prescription: null }>({
+  const { data: wellnessProfile, isLoading: isLoadingProfile } = useQuery<
+    UserWellnessProfile | { karmicAffirmation: null; prescription: null }
+  >({
     queryKey: ["/api/v1/me/wellness-profile"],
     queryFn: async () => {
       const response = await fetch("/api/v1/me/wellness-profile", {
         headers: {
-          "Authorization": `Bearer ${userToken}`,
+          Authorization: `Bearer ${userToken}`,
         },
       });
       if (!response.ok) {
@@ -73,64 +63,18 @@ export default function ProfilePage() {
     enabled: !!userToken,
   });
 
-  const prescriptionFromApi = (wellnessProfile?.prescription as PrescriptionData) || {};
-  const hasPrescription = prescriptionFromApi.morning?.length || prescriptionFromApi.afternoon?.length || prescriptionFromApi.evening?.length;
+  const prescriptionFromApi =
+    (wellnessProfile?.prescription as PrescriptionData) || {};
+  const hasPrescription =
+    prescriptionFromApi.morning?.length ||
+    prescriptionFromApi.afternoon?.length ||
+    prescriptionFromApi.evening?.length;
 
   // Load from localStorage on mount
   useEffect(() => {
-    const savedStartDate = localStorage.getItem("streakStartDate");
-    const savedStreakVisible = localStorage.getItem("streakVisible");
-    const savedStreakData = localStorage.getItem("streakData");
     const savedUserName = localStorage.getItem("@app:userName");
-
-    setStartDate(savedStartDate || "2025-01-01");
-    setStreakVisible(
-      savedStreakVisible === null ? true : savedStreakVisible === "true",
-    );
-    setStreakData(
-      savedStreakData
-        ? JSON.parse(savedStreakData)
-        : generateInitialStreakData(),
-    );
     setUserName(savedUserName || "UserName");
   }, []);
-
-  // Generate initial streak data (deterministic based on date)
-  const generateInitialStreakData = (): StreakData => {
-    const data: StreakData = {};
-    const today = new Date();
-    const year = 2025;
-
-    for (let month = 0; month < 12; month++) {
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
-        const dateStr = date.toISOString().split("T")[0];
-
-        if (date < today) {
-          // Use date as seed for consistent pattern
-          // More green (streak) than red (missed)
-          const seed = (year * 10000 + month * 100 + day) % 100;
-          if (seed > 20) {
-            data[dateStr] = "streak";
-          } else if (seed > 5) {
-            data[dateStr] = "missed";
-          }
-        } else if (date.toDateString() === today.toDateString()) {
-          data[dateStr] = "streak";
-        }
-      }
-    }
-
-    localStorage.setItem("streakData", JSON.stringify(data));
-    return data;
-  };
-
-  const toggleStreakVisibility = () => {
-    const newValue = !streakVisible;
-    setStreakVisible(newValue);
-    localStorage.setItem("streakVisible", String(newValue));
-  };
 
   const handleResetPOH = () => {
     if (
@@ -192,206 +136,6 @@ export default function ProfilePage() {
     }
     return (words[0][0] + words[words.length - 1][0]).toUpperCase();
   };
-
-  // Generate calendar days using persisted streak data and start date
-  const generateCalendarDays = (): StreakDay[] => {
-    const days: StreakDay[] = [];
-    const today = new Date();
-    const year = 2025;
-    const streakStartDate = new Date(startDate);
-
-    for (let month = 0; month < 12; month++) {
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
-        const dateStr = date.toISOString().split("T")[0];
-
-        let status: "streak" | "missed" | "neutral" = "neutral";
-
-        // Only consider dates after start date
-        if (date >= streakStartDate && date <= today) {
-          status = streakData[dateStr] || "neutral";
-        } else if (date > today) {
-          status = "neutral";
-        }
-
-        days.push({ date: dateStr, status });
-      }
-    }
-
-    return days;
-  };
-
-  const calendarDays = generateCalendarDays();
-
-  // Calculate streaks based on persisted data and start date
-  const calculateStreaks = () => {
-    let currentStreak = 0;
-    let bestStreak = 0;
-    let tempStreak = 0;
-
-    const today = new Date().toISOString().split("T")[0];
-    const streakStartDate = new Date(startDate);
-    const sortedDays = [...calendarDays]
-      .filter((day) => new Date(day.date) >= streakStartDate)
-      .reverse();
-
-    let foundCurrent = false;
-
-    for (const day of sortedDays) {
-      if (day.date > today) continue;
-
-      if (day.status === "streak") {
-        tempStreak++;
-        if (!foundCurrent) {
-          currentStreak = tempStreak;
-        }
-      } else if (day.status === "missed") {
-        foundCurrent = true;
-        if (tempStreak > bestStreak) {
-          bestStreak = tempStreak;
-        }
-        tempStreak = 0;
-      }
-    }
-
-    if (tempStreak > bestStreak) {
-      bestStreak = tempStreak;
-    }
-
-    return { currentStreak, bestStreak };
-  };
-
-  const streaks = calculateStreaks();
-  // Override with specified values
-  const currentStreak = 9;
-  const bestStreak = 45;
-
-  // Group days by month
-  const daysByMonth = calendarDays.reduce(
-    (acc, day) => {
-      const month = new Date(day.date).getMonth();
-      if (!acc[month]) acc[month] = [];
-      acc[month].push(day);
-      return acc;
-    },
-    {} as Record<number, StreakDay[]>,
-  );
-
-  // ✅ Sort each month by actual day number (fixes 31 appearing first)
-  for (const month in daysByMonth) {
-    daysByMonth[month].sort((a, b) => {
-      return new Date(a.date).getDate() - new Date(b.date).getDate();
-    });
-  }
-
-  const hardcodedGreenDates = [
-    // October 2025
-    "2025-10-01",
-    "2025-10-02",
-    "2025-10-03",
-    "2025-10-04",
-    "2025-10-05",
-    "2025-10-06",
-    "2025-10-07",
-    "2025-10-08",
-    "2025-10-09",
-    "2025-10-10",
-    "2025-10-11",
-    "2025-10-12",
-    "2025-10-13",
-    "2025-10-14",
-    "2025-10-15",
-    "2025-10-16",
-    "2025-10-17",
-    "2025-10-18",
-    "2025-10-19",
-    "2025-10-20",
-    "2025-10-21",
-    "2025-10-22",
-    "2025-10-23",
-    "2025-10-24",
-    "2025-10-25",
-    "2025-10-26",
-    "2025-10-27",
-    "2025-10-28",
-    "2025-10-29",
-    "2025-10-30",
-    "2025-10-31",
-
-    // November 2025
-    "2025-11-01",
-    "2025-11-02",
-    "2025-11-03",
-    "2025-11-04",
-    "2025-11-05",
-    "2025-11-06",
-    "2025-11-07",
-    "2025-11-08",
-    "2025-11-09",
-    "2025-11-10",
-    "2025-11-11",
-    "2025-11-12",
-    "2025-11-13",
-    "2025-11-14",
-  ];
-
-  // 🎯 Apply final hardcoded + mixed + future logic
-  for (const [month, days] of Object.entries(daysByMonth)) {
-    days.forEach((day) => {
-      const isFuture = new Date(day.date) > new Date("2025-11-14"); // today
-
-      // 2️⃣ YOUR 25-DAY STREAK (OCT 1 → NOV 14)
-      if (hardcodedGreenDates.includes(day.date)) {
-        day.status = "streak";
-        return;
-      }
-
-      // 3️⃣ All future dates → GREY
-      if (isFuture) {
-        day.status = "neutral";
-        return;
-      }
-
-      // 4️⃣ PRE-STREAK MIX LOGIC
-      const seed = parseInt(day.date.replaceAll("-", ""));
-
-      if (day.date.endsWith("-31")) {
-        day.status = "neutral"; // or "missed"
-        return;
-      }
-
-      if (seed % 3 === 0 || seed % 7 === 0) {
-        day.status = "streak"; // green
-      } else {
-        day.status = "missed"; // red
-      }
-    });
-  }
-
-  // 🚨 FINAL SAFETY OVERRIDE — NOTHING CAN OVERRIDE THIS
-  for (const m in daysByMonth) {
-    daysByMonth[m].forEach((day) => {
-      if (day.date === "2025-12-31") {
-        day.status = "neutral"; // FORCE GREY
-      }
-    });
-  }
-
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: "#F3F3F3" }}>
@@ -490,18 +234,7 @@ export default function ProfilePage() {
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         {/* Consistency Calendar */}
         <div className="relative">
-          <button
-            onClick={toggleStreakVisibility}
-            className="absolute top-4 right-4 z-10 p-1 hover:bg-gray-100 rounded-md transition"
-            data-testid="button-toggle-calendar-visibility"
-          >
-            {streakVisible ? (
-              <Eye className="w-5 h-5 text-gray-500" />
-            ) : (
-              <EyeOff className="w-5 h-5 text-gray-500" />
-            )}
-          </button>
-          <ConsistencyCalendar visible={streakVisible} />
+          <ConsistencyCalendar />
         </div>
 
         {/* My Prescription Card */}
@@ -541,38 +274,53 @@ export default function ProfilePage() {
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>
               ) : !hasPrescription ? (
-                <p className="text-muted-foreground italic text-sm text-center py-2" data-testid="text-prescription-empty">
+                <p
+                  className="text-muted-foreground italic text-sm text-center py-2"
+                  data-testid="text-prescription-empty"
+                >
                   Your personalized practices will appear here.
                 </p>
               ) : (
                 <>
-                  {prescriptionFromApi.morning && prescriptionFromApi.morning.length > 0 && (
-                    <div className="flex items-start gap-3" data-testid="prescription-morning">
-                      <Sunrise className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-foreground">
-                        <span className="font-semibold">Morning: </span>
-                        {prescriptionFromApi.morning.join(" • ")}
-                      </p>
-                    </div>
-                  )}
-                  {prescriptionFromApi.afternoon && prescriptionFromApi.afternoon.length > 0 && (
-                    <div className="flex items-start gap-3" data-testid="prescription-afternoon">
-                      <Sun className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-foreground">
-                        <span className="font-semibold">Afternoon: </span>
-                        {prescriptionFromApi.afternoon.join(" • ")}
-                      </p>
-                    </div>
-                  )}
-                  {prescriptionFromApi.evening && prescriptionFromApi.evening.length > 0 && (
-                    <div className="flex items-start gap-3" data-testid="prescription-evening">
-                      <Moon className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-foreground">
-                        <span className="font-semibold">Evening: </span>
-                        {prescriptionFromApi.evening.join(" • ")}
-                      </p>
-                    </div>
-                  )}
+                  {prescriptionFromApi.morning &&
+                    prescriptionFromApi.morning.length > 0 && (
+                      <div
+                        className="flex items-start gap-3"
+                        data-testid="prescription-morning"
+                      >
+                        <Sunrise className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-foreground">
+                          <span className="font-semibold">Morning: </span>
+                          {prescriptionFromApi.morning.join(" • ")}
+                        </p>
+                      </div>
+                    )}
+                  {prescriptionFromApi.afternoon &&
+                    prescriptionFromApi.afternoon.length > 0 && (
+                      <div
+                        className="flex items-start gap-3"
+                        data-testid="prescription-afternoon"
+                      >
+                        <Sun className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-foreground">
+                          <span className="font-semibold">Afternoon: </span>
+                          {prescriptionFromApi.afternoon.join(" • ")}
+                        </p>
+                      </div>
+                    )}
+                  {prescriptionFromApi.evening &&
+                    prescriptionFromApi.evening.length > 0 && (
+                      <div
+                        className="flex items-start gap-3"
+                        data-testid="prescription-evening"
+                      >
+                        <Moon className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-foreground">
+                          <span className="font-semibold">Evening: </span>
+                          {prescriptionFromApi.evening.join(" • ")}
+                        </p>
+                      </div>
+                    )}
                 </>
               )}
             </div>
