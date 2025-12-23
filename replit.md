@@ -23,7 +23,25 @@ Core pages include Home, Courses, Profile, Progress Insights, Project of Heart, 
 - Displays a flame icon (🔥) when current streak >= 7 consecutive days
 - Today is highlighted with a purple ring
 - All dates stored as timezone-safe YYYY-MM-DD strings
-- Read-only visualization of data from `POST /api/v1/streak/mark-today` (single source of truth)
+- Fully API-driven via `/api/v1/consistency/range` and `/api/v1/consistency/month`
+- Read-only UI with no localStorage writes; data sourced from backend APIs only
+
+**Project of Heart (POH)**: A psychology-driven single-scrolling page following a meaning-to-reflection flow:
+- **Routes**: `/heart` and `/project-of-heart` (main page), `/project-of-heart/history` (history page)
+- **Sections** (in order):
+  1. Heart Chakra context header (soft green background, uses HeartChakraIcon.tsx)
+  2. Active POH hero (largest text, highest visual weight, identity-defining)
+  3. Vision Board (3 optional image placeholders, emotion > instruction)
+  4. Milestones (max 5 checkboxes representing inner freedoms, not tasks)
+  5. Top 3 Actions (editable, repeatable daily actions)
+  6. Self-rating slider (0-10) with acknowledgement capture (reflection, not performance)
+  7. Next POH (muted, hope without pressure)
+  8. Someday POH (very muted, identity continuity)
+  9. History link (navigates to separate history page)
+- **History Page**: Shows past projects with status (Completed/Closed Early), achieved milestones, and reflections
+- **Current State**: UI-only with localStorage persistence (`@app:poh_ui_data`); no backend APIs yet
+- **Color Scheme**: Purple (#703DFA), Green (#5FB77D), Gold (#E5AC19 for acknowledgement accents)
+- **Psychological Flow**: Meaning → Identity → Emotion → Direction → Action → Reflection → Hope → Continuity
 
 **Progress Insights**: Tracks only PROCESS and PLAYLIST activity types (Spiritual Breaths and Process Checklist features have been removed).
 
