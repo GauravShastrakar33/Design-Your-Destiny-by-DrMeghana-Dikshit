@@ -819,7 +819,7 @@ export default function ProjectOfHeartPage() {
                       fontWeight: 600,
                       letterSpacing: "0.8px",
                       textTransform: "uppercase",
-                      color: "#4B5563",
+                      color: "#5B5FEF",
                       marginTop: "20px",
                       marginBottom: "10px"
                     }}
@@ -848,7 +848,7 @@ export default function ProjectOfHeartPage() {
                       fontWeight: 600,
                       letterSpacing: "0.8px",
                       textTransform: "uppercase",
-                      color: "#4B5563",
+                      color: "#4C4F9D",
                       display: "block",
                       marginTop: "20px",
                       marginBottom: "10px"
@@ -912,7 +912,7 @@ export default function ProjectOfHeartPage() {
                     fontWeight: 600,
                     letterSpacing: "0.8px",
                     textTransform: "uppercase",
-                    color: "#4B5563",
+                    color: "#B89B5E",
                     marginTop: "20px",
                     marginBottom: "10px"
                   }}
