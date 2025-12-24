@@ -819,7 +819,7 @@ export default function ProjectOfHeartPage() {
                       fontWeight: 600,
                       letterSpacing: "0.8px",
                       textTransform: "uppercase",
-                      color: "#5B5FEF",
+                      color: "#4d7c6f",
                       marginTop: "20px",
                       marginBottom: "10px"
                     }}
