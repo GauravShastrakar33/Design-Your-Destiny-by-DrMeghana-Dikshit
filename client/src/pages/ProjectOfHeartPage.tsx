@@ -791,7 +791,7 @@ export default function ProjectOfHeartPage() {
                 <div className="mb-4">
                   <span className="text-xs font-medium tracking-widest text-gray-400 uppercase">Visions</span>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="flex justify-between gap-3">
                   {[0, 1, 2].map((index) => {
                     const hasImage = pohState.active?.vision_images?.[index];
                     const isUploading = uploadingVisionIndex === index;
@@ -799,20 +799,15 @@ export default function ProjectOfHeartPage() {
                     return (
                       <div
                         key={index}
-                        className="cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                        className="flex-1 aspect-square cursor-pointer transition-all duration-200 hover:scale-[1.02] flex items-center justify-center p-3"
                         onClick={() => handleVisionSlotClick(index)}
                         data-testid={`button-vision-image-${index}`}
                         style={{
-                          width: "152px",
-                          height: "152px",
-                          borderRadius: "18px",
+                          maxWidth: "110px",
+                          borderRadius: "16px",
                           backgroundColor: hasImage ? "#FAFAFA" : "#F8F8F8",
                           border: hasImage ? "1px solid rgba(0,0,0,0.06)" : "2px dashed rgba(0,0,0,0.12)",
                           boxShadow: hasImage ? "0 2px 8px rgba(0,0,0,0.04)" : "none",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          padding: "12px",
                         }}
                       >
                         {isUploading ? (
