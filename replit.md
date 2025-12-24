@@ -28,16 +28,29 @@ Core pages include Home, Courses, Profile, Progress Insights, Project of Heart, 
 
 **Project of Heart (POH)**: A psychology-driven single-scrolling page following a meaning-to-reflection flow:
 - **Routes**: `/heart` and `/project-of-heart` (main page), `/project-of-heart/history` (history page)
-- **Sections** (in order):
-  1. Heart Chakra context header (soft green background, uses HeartChakraIcon.tsx)
-  2. Active POH hero (largest text, highest visual weight, identity-defining)
-  3. Vision Board (3 optional image placeholders, emotion > instruction)
-  4. Milestones (max 5 checkboxes representing inner freedoms, not tasks)
-  5. Top 3 Actions (editable, repeatable daily actions)
-  6. Self-rating slider (0-10) with acknowledgement capture (reflection, not performance)
-  7. Next POH (muted, hope without pressure)
-  8. Someday POH (very muted, identity continuity)
-  9. History link (navigates to separate history page)
+- **UI Flow**:
+  1. **Start Screen**: When no active POH, shows Heart Chakra context + explanation + "Create My Project of Heart" CTA
+  2. **Creation Flow**: Step-by-step (Category → Title → Why) with animated transitions
+  3. **Main Screen** (when active POH exists):
+     - Heart Chakra context header
+     - Active POH Card (identity + vision images + milestones combined)
+     - Actions + Daily Rating Card
+     - Next POH Card (read-only)
+     - North Star Card (read-only, renamed from "Horizon")
+     - Re-align buttons and View Past Projects link
+- **Modals**:
+  - Milestone Creation Modal (max 5 milestones)
+  - Milestone Achievement Confirmation ("It's ready to be marked")
+  - Complete/Close POH Modal (with min 20 char reflection)
+  - Create Next POH Modal (title + category)
+  - Create North Star Modal (title + category)
+  - Re-align Modal (conditional editing based on POH type)
+- **Interactive Features**:
+  - Vision images: Click to upload/replace (R2 storage)
+  - Milestones: Click to achieve with animation
+  - Actions: Inline editable with save on blur
+  - Daily Rating: Slider 0-10 with API save on release
+- **UI Terminology**: "Horizon" displayed as "North Star" (backend still uses status="horizon")
 - **History Page**: Shows past projects with status (Completed/Closed Early), achieved milestones, and reflections
 - **Color Scheme**: Purple (#703DFA), Green (#5FB77D), Gold (#E5AC19 for acknowledgement accents)
 - **Psychological Flow**: Meaning → Identity → Emotion → Direction → Action → Reflection → Hope → Continuity
