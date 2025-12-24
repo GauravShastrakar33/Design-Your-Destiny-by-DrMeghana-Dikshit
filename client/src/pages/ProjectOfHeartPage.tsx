@@ -900,6 +900,13 @@ export default function ProjectOfHeartPage() {
               >
                 Complete / Close Project
               </Button>
+
+              {/* Re-align Link - bottom right */}
+              <div className="flex justify-end mt-3">
+                <button onClick={() => openRealignFor("active")} className="text-sm text-purple-500 hover:text-purple-600" data-testid="button-realign-active">
+                  Re-align →
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -993,13 +1000,6 @@ export default function ProjectOfHeartPage() {
               </div>
               {ratingError && <p className="text-xs text-red-500 mt-2">{ratingError}</p>}
               <p className="text-xs text-gray-400 mt-3">A moment of awareness, practiced daily, shapes how you show up.</p>
-
-              {/* Re-align Link - bottom right of Active POH card */}
-              <div className="flex justify-end mt-4">
-                <button onClick={() => openRealignFor("active")} className="text-sm text-purple-500 hover:text-purple-600" data-testid="button-realign-active">
-                  Re-align →
-                </button>
-              </div>
             </div>
           </motion.div>
         )}
