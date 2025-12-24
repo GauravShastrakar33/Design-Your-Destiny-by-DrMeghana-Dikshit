@@ -742,14 +742,12 @@ export default function ProjectOfHeartPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <Card className="p-4 border-0" style={{ backgroundColor: "white" }} data-testid="card-heart-chakra">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: "radial-gradient(circle, rgba(34, 139, 34, 0.25) 0%, transparent 70%)" }}>
-                <div style={{ filter: "saturate(1.4) brightness(0.9)" }}>
-                  <HeartChakraIcon className="w-10 h-10" />
-                </div>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: "radial-gradient(circle, rgba(95, 183, 125, 0.3) 0%, transparent 70%)" }}>
+                <HeartChakraIcon className="w-13 h-13" />
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-semibold leading-tight" style={{ color: "#2E8B57" }}>Heart Chakra — Anahata</h3>
+                <h3 className="text-sm font-semibold leading-tight" style={{ color: "#5FB77D" }}>Heart Chakra — Anahata</h3>
                 <p className="text-xs text-gray-500 mt-1 leading-snug">
                   Center of Love, Balance, and Purpose.
                 </p>
