@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import heartChakraPng from "@assets/generated_images/heart_chakra_anahata_symbol.png";
+
 type HeartChakraIconProps = {
   className?: string;
 };
@@ -5,6 +8,25 @@ type HeartChakraIconProps = {
 export default function HeartChakraIcon({
   className = "w-12 h-12",
 }: HeartChakraIconProps) {
+  const [isSafari, setIsSafari] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const isSafariBrowser = ua.includes("safari") && !ua.includes("chrome") && !ua.includes("chromium");
+    setIsSafari(isSafariBrowser);
+  }, []);
+
+  if (isSafari) {
+    return (
+      <img 
+        src={heartChakraPng} 
+        alt="Heart Chakra" 
+        className={className}
+        style={{ objectFit: "contain" }}
+      />
+    );
+  }
+
   return (
     <svg 
       className={className} 
@@ -13,14 +35,6 @@ export default function HeartChakraIcon({
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"
       shapeRendering="geometricPrecision"
-      style={{ 
-        isolation: "isolate",
-        willChange: "auto",
-        transform: "translateZ(0)",
-        backfaceVisibility: "hidden",
-        WebkitBackfaceVisibility: "hidden",
-        imageRendering: "crisp-edges",
-      }}
     >
       {/* 12 Lotus Petals */}
       <g
