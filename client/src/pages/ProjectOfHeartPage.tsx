@@ -814,8 +814,15 @@ export default function ProjectOfHeartPage() {
               {pohState.active.why && (
                 <div className="mb-6">
                   <p 
-                    className="mb-2"
-                    style={{ fontSize: "12px", color: "#9CA3AF", letterSpacing: "0.02em" }}
+                    style={{ 
+                      fontSize: "13px", 
+                      fontWeight: 600,
+                      letterSpacing: "0.8px",
+                      textTransform: "uppercase",
+                      color: "#4B5563",
+                      marginTop: "20px",
+                      marginBottom: "10px"
+                    }}
                   >
                     Why this matters to my heart
                   </p>
@@ -834,8 +841,21 @@ export default function ProjectOfHeartPage() {
 
               {/* Vision Section */}
               <div className="mb-8 px-2">
-                <div className="mb-4">
-                  <span className="text-xs font-medium tracking-widest text-gray-400 uppercase">Visions</span>
+                <div>
+                  <span 
+                    style={{ 
+                      fontSize: "13px", 
+                      fontWeight: 600,
+                      letterSpacing: "0.8px",
+                      textTransform: "uppercase",
+                      color: "#4B5563",
+                      display: "block",
+                      marginTop: "20px",
+                      marginBottom: "10px"
+                    }}
+                  >
+                    Visions
+                  </span>
                 </div>
                 <div className="flex gap-6 overflow-x-auto pb-2 px-1" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                   {[0, 1, 2].map((index) => {
@@ -886,7 +906,19 @@ export default function ProjectOfHeartPage() {
 
               {/* Milestones Section */}
               <div className="mb-6">
-                <p className="text-xs font-medium tracking-wide text-gray-400 uppercase mb-4">Milestones</p>
+                <p 
+                  style={{ 
+                    fontSize: "13px", 
+                    fontWeight: 600,
+                    letterSpacing: "0.8px",
+                    textTransform: "uppercase",
+                    color: "#4B5563",
+                    marginTop: "20px",
+                    marginBottom: "10px"
+                  }}
+                >
+                  Milestones
+                </p>
                 
                 {(!pohState.active.milestones || pohState.active.milestones.length === 0) ? (
                   <Button
