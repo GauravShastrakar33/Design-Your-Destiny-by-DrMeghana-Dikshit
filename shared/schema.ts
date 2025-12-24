@@ -486,3 +486,99 @@ export const insertEventSchema = createInsertSchema(events).omit({
 
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
+
+// Project of Heart (POH) Tables
+export const pohCategoryEnum = z.enum(["career", "health", "relationships", "wealth"]);
+export type POHCategory = z.infer<typeof pohCategoryEnum>;
+
+export const pohStatusEnum = z.enum(["active", "next", "horizon", "completed", "closed_early"]);
+export type POHStatus = z.infer<typeof pohStatusEnum>;
+
+export const projectOfHearts = pgTable("project_of_hearts", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text("title").notNull(),
+  why: text("why").notNull(),
+  category: varchar("category", { length: 32 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(),
+  startedAt: date("started_at", { mode: "string" }),
+  endedAt: date("ended_at", { mode: "string" }),
+  closingReflection: text("closing_reflection"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertProjectOfHeartSchema = createInsertSchema(projectOfHearts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  title: z.string().min(1).max(120),
+  why: z.string().min(1).max(500),
+  category: pohCategoryEnum,
+  status: pohStatusEnum,
+});
+
+export type InsertProjectOfHeart = z.infer<typeof insertProjectOfHeartSchema>;
+export type ProjectOfHeart = typeof projectOfHearts.$inferSelect;
+
+export const pohDailyRatings = pgTable("poh_daily_ratings", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  pohId: varchar("poh_id", { length: 36 }).notNull().references(() => projectOfHearts.id, { onDelete: 'cascade' }),
+  localDate: date("local_date", { mode: "string" }).notNull(),
+  rating: integer("rating").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+}, (table) => [
+  unique("one_rating_per_day").on(table.userId, table.localDate),
+]);
+
+export const insertPohDailyRatingSchema = createInsertSchema(pohDailyRatings).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  rating: z.number().int().min(0).max(10),
+});
+
+export type InsertPohDailyRating = z.infer<typeof insertPohDailyRatingSchema>;
+export type PohDailyRating = typeof pohDailyRatings.$inferSelect;
+
+export const pohActions = pgTable("poh_actions", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  pohId: varchar("poh_id", { length: 36 }).notNull().references(() => projectOfHearts.id, { onDelete: 'cascade' }),
+  text: text("text").notNull(),
+  orderIndex: integer("order_index").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertPohActionSchema = createInsertSchema(pohActions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPohAction = z.infer<typeof insertPohActionSchema>;
+export type PohAction = typeof pohActions.$inferSelect;
+
+export const pohMilestones = pgTable("poh_milestones", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  pohId: varchar("poh_id", { length: 36 }).notNull().references(() => projectOfHearts.id, { onDelete: 'cascade' }),
+  text: text("text").notNull(),
+  achieved: boolean("achieved").notNull().default(false),
+  achievedAt: date("achieved_at", { mode: "string" }),
+  orderIndex: integer("order_index").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertPohMilestoneSchema = createInsertSchema(pohMilestones).omit({
+  id: true,
+  achieved: true,
+  achievedAt: true,
+  createdAt: true,
+}).extend({
+  text: z.string().min(1).max(200),
+});
+
+export type InsertPohMilestone = z.infer<typeof insertPohMilestoneSchema>;
+export type PohMilestone = typeof pohMilestones.$inferSelect;
