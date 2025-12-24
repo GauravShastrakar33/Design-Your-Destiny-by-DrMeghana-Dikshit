@@ -1,68 +1,78 @@
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { ChevronLeft, Check, Quote } from "lucide-react";
+import { ChevronLeft, Check, Quote, Loader2 } from "lucide-react";
 import HeartChakraIcon from "@/components/icons/HeartChakraIcon";
 
-interface PastPOH {
-  id: number;
+interface HistoryPOH {
+  id: string;
   title: string;
+  category: string;
   status: "completed" | "closed_early";
-  milestones: { text: string; achieved: boolean }[];
-  reflection: string;
-  period?: string;
+  started_at: string | null;
+  ended_at: string | null;
+  closing_reflection: string | null;
+  milestones: string[];
 }
-
-const pastProjects: PastPOH[] = [
-  {
-    id: 1,
-    title: "Learn to trust my creative instincts",
-    status: "completed",
-    milestones: [
-      { text: "I can share ideas without fear of judgment", achieved: true },
-      { text: "I listen to my inner voice first", achieved: true },
-      { text: "I celebrate small creative wins", achieved: true },
-      { text: "I don't seek validation before starting", achieved: true },
-      { text: "I trust my unique perspective", achieved: false },
-    ],
-    reflection: "This project taught me that creativity isn't about perfection—it's about showing up. I learned to value my ideas before anyone else validated them.",
-    period: "Jan - Mar 2024"
-  },
-  {
-    id: 2,
-    title: "Build a consistent morning practice",
-    status: "completed",
-    milestones: [
-      { text: "I wake up before my alarm", achieved: true },
-      { text: "I meditate before checking my phone", achieved: true },
-      { text: "I journal without forcing insights", achieved: true },
-      { text: "I move my body gently each morning", achieved: false },
-      { text: "I protect my morning from others' demands", achieved: true },
-    ],
-    reflection: "Mornings became sacred. Not every practice stuck, but the intention to start each day mindfully became part of who I am.",
-    period: "Oct - Dec 2023"
-  },
-  {
-    id: 3,
-    title: "Heal my relationship with money",
-    status: "closed_early",
-    milestones: [
-      { text: "I look at my bank account without anxiety", achieved: true },
-      { text: "I see money as energy, not security", achieved: false },
-      { text: "I give generously without attachment", achieved: false },
-      { text: "I receive money with gratitude", achieved: true },
-      { text: "I trust that I will always have enough", achieved: false },
-    ],
-    reflection: "I closed this project early because I realized I needed to work on self-worth first. Money was just a mirror reflecting deeper beliefs.",
-    period: "Jun - Aug 2023"
-  }
-];
 
 export default function ProjectOfHeartHistoryPage() {
   const [, setLocation] = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [historyProjects, setHistoryProjects] = useState<HistoryPOH[]>([]);
 
-  const achievedCount = (milestones: PastPOH["milestones"]) =>
-    milestones.filter((m) => m.achieved).length;
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("@app:user_token");
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch("/api/poh/history", {
+          headers: getAuthHeaders(),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setHistoryProjects(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch POH history:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, []);
+
+  const formatPeriod = (startedAt: string | null, endedAt: string | null) => {
+    if (!startedAt && !endedAt) return null;
+    
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    };
+    
+    if (startedAt && endedAt) {
+      return `${formatDate(startedAt)} - ${formatDate(endedAt)}`;
+    }
+    if (endedAt) {
+      return formatDate(endedAt);
+    }
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F8F9FA" }}>
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: "#F8F9FA" }}>
@@ -113,7 +123,7 @@ export default function ProjectOfHeartHistoryPage() {
         </motion.div>
 
         {/* Past Projects */}
-        {pastProjects.map((project, index) => (
+        {historyProjects.map((project, index) => (
           <motion.div
             key={project.id}
             initial={{ opacity: 0, y: 20 }}
@@ -124,7 +134,7 @@ export default function ProjectOfHeartHistoryPage() {
               className="p-5 border-0 shadow-sm overflow-hidden"
               data-testid={`card-past-poh-${project.id}`}
             >
-              {/* Status Badge */}
+              {/* Status Badge & Period */}
               <div className="flex items-center justify-between mb-3">
                 <span
                   className={`text-xs font-medium px-2.5 py-1 rounded-full ${
@@ -135,10 +145,20 @@ export default function ProjectOfHeartHistoryPage() {
                 >
                   {project.status === "completed" ? "Completed" : "Closed Early"}
                 </span>
-                {project.period && (
-                  <span className="text-xs text-gray-400">{project.period}</span>
+                {formatPeriod(project.started_at, project.ended_at) && (
+                  <span className="text-xs text-gray-400">
+                    {formatPeriod(project.started_at, project.ended_at)}
+                  </span>
                 )}
               </div>
+
+              {/* Category */}
+              <span 
+                className="text-xs px-2 py-0.5 rounded-full mb-2 inline-block capitalize"
+                style={{ backgroundColor: "rgba(112, 61, 250, 0.1)", color: "#703DFA" }}
+              >
+                {project.category}
+              </span>
 
               {/* Title */}
               <h3 
@@ -149,17 +169,16 @@ export default function ProjectOfHeartHistoryPage() {
               </h3>
 
               {/* Achieved Milestones */}
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Check className="w-3.5 h-3.5" style={{ color: "#5FB77D" }} />
-                  <span className="text-xs font-medium text-gray-500">
-                    Milestones achieved ({achievedCount(project.milestones)}/{project.milestones.length})
-                  </span>
-                </div>
-                <div className="space-y-1.5 pl-5">
-                  {project.milestones
-                    .filter((m) => m.achieved)
-                    .map((milestone, mIndex) => (
+              {project.milestones.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Check className="w-3.5 h-3.5" style={{ color: "#5FB77D" }} />
+                    <span className="text-xs font-medium text-gray-500">
+                      Milestones achieved ({project.milestones.length})
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 pl-5">
+                    {project.milestones.map((milestone, mIndex) => (
                       <div
                         key={mIndex}
                         className="flex items-start gap-2"
@@ -169,48 +188,56 @@ export default function ProjectOfHeartHistoryPage() {
                           style={{ backgroundColor: "#5FB77D" }}
                         />
                         <span className="text-sm text-gray-600">
-                          {milestone.text}
+                          {milestone}
                         </span>
                       </div>
                     ))}
-                </div>
-              </div>
-
-              {/* Reflection */}
-              <div 
-                className="p-3 rounded-lg"
-                style={{ backgroundColor: "rgba(229, 172, 25, 0.06)" }}
-              >
-                <div className="flex items-start gap-2">
-                  <Quote 
-                    className="w-4 h-4 mt-0.5 flex-shrink-0" 
-                    style={{ color: "#E5AC19" }}
-                  />
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 mb-1">
-                      Reflection
-                    </p>
-                    <p 
-                      className="text-sm text-gray-600 italic leading-relaxed"
-                      data-testid={`text-past-poh-reflection-${project.id}`}
-                    >
-                      "{project.reflection}"
-                    </p>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Reflection */}
+              {project.closing_reflection && (
+                <div 
+                  className="p-3 rounded-lg"
+                  style={{ backgroundColor: "rgba(229, 172, 25, 0.06)" }}
+                >
+                  <div className="flex items-start gap-2">
+                    <Quote 
+                      className="w-4 h-4 mt-0.5 flex-shrink-0" 
+                      style={{ color: "#E5AC19" }}
+                    />
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 mb-1">
+                        Reflection
+                      </p>
+                      <p 
+                        className="text-sm text-gray-600 italic leading-relaxed"
+                        data-testid={`text-past-poh-reflection-${project.id}`}
+                      >
+                        "{project.closing_reflection}"
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Card>
           </motion.div>
         ))}
 
-        {/* Empty State (if needed in future) */}
-        {pastProjects.length === 0 && (
-          <div className="text-center py-12">
+        {/* Empty State */}
+        {historyProjects.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="text-center py-12"
+          >
             <p className="text-gray-400">
               No past projects yet.<br />
               Your journey is just beginning.
             </p>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
