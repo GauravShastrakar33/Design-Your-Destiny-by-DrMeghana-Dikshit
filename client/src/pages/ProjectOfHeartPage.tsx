@@ -792,7 +792,7 @@ export default function ProjectOfHeartPage() {
                   <span className="text-xs font-medium tracking-widest text-gray-400 uppercase">Visions</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  {[0, 1, 2, 3].map((index) => {
+                  {[0, 1, 2].map((index) => {
                     const hasImage = pohState.active?.vision_images?.[index];
                     const isUploading = uploadingVisionIndex === index;
                     
