@@ -269,7 +269,7 @@ export default function ProjectOfHeartPage() {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify({ reflection: reflection.trim() }),
+        body: JSON.stringify({ closing_reflection: reflection.trim() }),
       });
       
       if (response.ok) {
@@ -518,23 +518,103 @@ export default function ProjectOfHeartPage() {
   // Completion animation overlay
   if (showCompletionAnimation) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F8F9FA" }}>
+      <div className="min-h-screen flex flex-col items-center justify-center px-8" style={{ backgroundColor: "#F8F9FA" }}>
+        {/* Background glow */}
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1.5, opacity: 0.3 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          className="absolute w-64 h-64 rounded-full"
+          style={{ 
+            background: completeMode === "complete" 
+              ? "radial-gradient(circle, rgba(95, 183, 125, 0.4) 0%, transparent 70%)"
+              : "radial-gradient(circle, rgba(229, 172, 25, 0.4) 0%, transparent 70%)"
+          }}
+        />
+        
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, type: "spring" }}
-          className="text-center"
+          transition={{ duration: 0.6, type: "spring", bounce: 0.4 }}
+          className="text-center relative z-10"
         >
+          {/* Heart Chakra Icon with pulse */}
           <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, ease: "easeInOut" }}
+            initial={{ scale: 0.8 }}
+            animate={{ scale: [0.8, 1.1, 1] }}
+            transition={{ duration: 0.8, times: [0, 0.5, 1] }}
+            className="mb-6"
           >
-            <Sparkles className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <div 
+              className="w-24 h-24 rounded-full flex items-center justify-center mx-auto"
+              style={{ 
+                background: completeMode === "complete"
+                  ? "linear-gradient(135deg, rgba(95, 183, 125, 0.2) 0%, rgba(95, 183, 125, 0.4) 100%)"
+                  : "linear-gradient(135deg, rgba(229, 172, 25, 0.2) 0%, rgba(229, 172, 25, 0.4) 100%)"
+              }}
+            >
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <HeartChakraIcon className="w-14 h-14" />
+              </motion.div>
+            </div>
           </motion.div>
-          <h2 className="text-2xl font-bold text-gray-800">
+          
+          {/* Sparkles animation */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="mb-4"
+          >
+            <Sparkles className="w-8 h-8 mx-auto" style={{ color: completeMode === "complete" ? "#5FB77D" : "#E5AC19" }} />
+          </motion.div>
+          
+          {/* Title */}
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="text-2xl font-bold mb-2"
+            style={{ color: completeMode === "complete" ? "#5FB77D" : "#E5AC19" }}
+          >
             {completeMode === "complete" ? "Project Completed!" : "Project Closed"}
-          </h2>
-          <p className="text-gray-500 mt-2">Your journey continues...</p>
+          </motion.h2>
+          
+          {/* Subtitle */}
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="text-gray-500 mb-6"
+          >
+            A chapter closes. Your journey continues.
+          </motion.p>
+          
+          {/* Encouraging message */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+            className="p-4 rounded-2xl mx-auto max-w-xs"
+            style={{ backgroundColor: "white", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
+          >
+            <p className="text-sm text-gray-600 italic leading-relaxed">
+              "Every ending is a beginning in disguise. What you've learned lives on within you."
+            </p>
+          </motion.div>
+          
+          {/* Loading indicator for transition */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.5 }}
+            className="mt-8"
+          >
+            <p className="text-xs text-gray-400">Preparing your next chapter...</p>
+          </motion.div>
         </motion.div>
       </div>
     );
