@@ -1,0 +1,332 @@
+We are building a feature Project of Heart (POH).
+* UI has already been designed and implemented as a non-interactive view-only page.
+* Do NOT change UI.
+* Do NOT add frontend interactions yet.
+
+Task I am giving you:
+1. Database tables (schema)
+2. Backend API list and rules
+Your task is to:
+* Implement the database tables exactly as specified
+* Implement all backend APIs with full validation and constraints
+* Enforce all business rules at the backend level
+* user authentication already exists (user_id comes from auth middleware)
+
+
+🗂️ DATABASE TABLES (CREATE EXACTLY THESE)
+
+
+1. CREATE TABLE project_of_hearts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  user_id UUID NOT NULL
+    REFERENCES users(id) ON DELETE CASCADE,
+
+  title TEXT NOT NULL
+    CHECK (char_length(title) <= 120),
+
+  why TEXT NOT NULL
+    CHECK (char_length(why) <= 500),
+
+  category VARCHAR(32) NOT NULL
+    CHECK (category IN (
+      'career',
+      'health',
+      'relationships',
+      'wealth'
+    )),
+
+  status VARCHAR(20) NOT NULL
+    CHECK (status IN (
+      'active',
+      'next',
+      'horizon',
+      'completed',
+      'closed_early'
+    )),
+
+  started_at DATE,
+  ended_at DATE,
+
+  closing_reflection TEXT,
+
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
+);
+
+
+2.
+CREATE TABLE poh_daily_ratings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  user_id UUID NOT NULL
+    REFERENCES users(id) ON DELETE CASCADE,
+
+  poh_id UUID NOT NULL
+    REFERENCES project_of_hearts(id) ON DELETE CASCADE,
+
+  local_date DATE NOT NULL,
+
+  rating INT NOT NULL
+    CHECK (rating BETWEEN 0 AND 10),
+
+  created_at TIMESTAMP DEFAULT now(),
+
+  CONSTRAINT one_rating_per_day
+    UNIQUE (user_id, local_date)
+);
+
+
+3. poh_actions
+(Top 3 actions — daily direction)
+
+CREATE TABLE poh_actions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  poh_id UUID NOT NULL REFERENCES project_of_hearts(id) ON DELETE CASCADE,
+
+  text TEXT NOT NULL,
+
+  order_index INT NOT NULL,
+
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
+);
+
+4. CREATE TABLE poh_milestones (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  poh_id UUID NOT NULL
+    REFERENCES project_of_hearts(id) ON DELETE CASCADE,
+
+  text TEXT NOT NULL
+    CHECK (char_length(text) <= 200),
+
+  achieved BOOLEAN NOT NULL DEFAULT false,
+  achieved_at DATE,
+
+  order_index INT NOT NULL,
+
+  created_at TIMESTAMP DEFAULT now()
+);
+
+
+
+
+
+
+BACKEND API BEHAVIOR
+GLOBAL BACKEND RULES
+* All APIs are user-scoped
+* user_id always comes from auth middleware (JWT/session)
+* Backend enforces rules even if frontend fails
+* Dates are USER LOCAL DATE (passed from frontend)
+* Never calculate dates using server timezone
+
+
+1. FETCH CURRENT POH STATE
+GET /api/poh/current
+Backend logic
+1. Fetch POHs for user
+2. Identify:
+    * ACTIVE
+    * NEXT
+    * HORIZON
+3. If no ACTIVE exists → return null for active 
+Response JSON
+{
+  "active": {
+    "id": "uuid",
+    "title": "string",
+    "why": "string",
+    "category": "career",
+    "started_at": "YYYY-MM-DD",
+    "milestones": [
+      {
+        "id": "uuid",
+        "text": "string",
+        "achieved": true,
+        "achieved_at": "YYYY-MM-DD"
+      }
+    ],
+    "actions": [
+      { "id": "uuid", "text": "string", "order": 1 }
+    ],
+  },
+  "next": {
+    "id": "uuid",
+    "title": "string",
+    "category": "career"
+  },
+  "horizon": {
+    "id": "uuid",
+    "title": "string",
+    "category": "wealth"
+  }
+}
+Rules
+* Return all milestones achieved + in progress
+
+
+2. CREATE PROJECT OF HEART
+POST /api/poh
+Payload
+
+{
+  "title": "string",
+  "why": "string",
+  "category": "career"
+}
+
+Backend rules
+* Validate:
+    * title ≤ 120 chars
+    * why ≤ 500 chars
+* Check if ACTIVE exists:
+    * If none → create as ACTIVE
+    * If ACTIVE exists → create as NEXT
+    * If NEXT exists → create as HORIZON
+    * If all exist → reject
+
+
+3. UPDATE POH TEXT
+PUT /api/poh/:id
+Allowed updates
+
+{
+  "title": "string",
+  "why": "string",
+  "category": "career"
+}
+
+Rules
+* Validate length again  1️⃣ What can be edited for NEXT / HORIZON status POH. Allowed via: PUT /api/poh/:id Allowed fields: {   "title": "string",   "category": "career | health | relationships | wealth" }   
+4. ADD MILESTONE
+POST /api/poh/:id/milestones
+Payload
+
+{
+  "text": "string"
+}
+Backend rules
+* POH must be ACTIVE
+* Max 5 milestones per POH
+* Validate text length (≤ 120 chars)    
+5.ACHIEVE MILESTONE
+POST /api/poh/milestone/:id/achieve
+Backend logic
+* Confirm milestone belongs to ACTIVE POH
+* Set:
+    * achieved = true
+    * achieved_at = today
+* ❌ Cannot undo
+* ❌ Cannot edit after achieved
+
+
+6.Update milestone
+PUT /api/poh/milestone/:id
+Backend must check:
+
+IF achieved = true
+  → reject with 403
+Response:
+
+{
+  "error": "MILESTONE_LOCKED",
+  "message": "Achieved milestones cannot be edited."
+}
+
+
+
+7. UPDATE ACTIONS (TOP 3)
+PUT /api/poh/:id/actions
+Payload
+
+{
+  "actions": [
+    "string",
+    "string",
+    "string"
+  ]
+}
+Rules
+* Max 3 actions 
+* No history kept
+* All 3 Editable anytime
+
+
+8.SAVE DAILY RATING
+POST /api/poh/rate
+Payload
+{
+  "poh_id": "uuid",
+  "rating": 0,
+  "local_date": "YYYY-MM-DD"
+}
+Backend rules
+* POH must be ACTIVE
+* One rating per user per local_date
+* Allow update if same date
+* Lock after day passes
+
+
+9.COMPLETE POH
+POST /api/poh/:id/complete
+Payload
+
+{
+  "closing_reflection": "string"
+}
+Backend logic
+* Reflection required (≥ 20 chars)
+* Set:
+    * status → completed
+    * ended_at → today
+* Promote:
+    * NEXT → ACTIVE (started_at = today)
+    * HORIZON → NEXT
+
+
+10. CLOSE POH EARLY
+POST /api/poh/:id/close
+Same as complete, except:
+* status → closed_early
+
+
+11. POH HISTORY
+GET /api/poh/history
+Backend rules
+* Return only:
+    * completed
+    * closed_early
+
+Response JSON
+
+[
+  {
+    "id": "uuid",
+    "title": "string",
+    "category": "career",
+    "status": "completed",
+    "started_at": "YYYY-MM-DD",
+    "ended_at": "YYYY-MM-DD",
+    "closing_reflection": "string",
+    "milestones": [
+      "string",
+      "string"
+    ]
+  }
+]
+
+Rules
+Return only Achieved Milestones, NO incomplete milestones.
+
+
+
+
+
+
+
+
+
+

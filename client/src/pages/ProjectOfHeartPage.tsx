@@ -6,16 +6,16 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { 
-  ChevronLeft, 
-  Image as ImageIcon, 
-  Plus, 
-  History, 
+import {
+  ChevronLeft,
+  Image as ImageIcon,
+  Plus,
+  History,
   Sparkles,
   Star,
   Edit3,
   Check,
-  X
+  X,
 } from "lucide-react";
 
 const POH_STORAGE_KEY = "@app:poh_ui_data";
@@ -38,7 +38,7 @@ interface POHData {
 const defaultPOHData: POHData = {
   activePOH: {
     title: "Become technically strong & AI-fluent by building real products",
-    why: "I want freedom from dependence, fear of exposure, and restarting my life again."
+    why: "I want freedom from dependence, fear of exposure, and restarting my life again.",
   },
   visionImages: [],
   milestones: [
@@ -46,18 +46,18 @@ const defaultPOHData: POHData = {
     { text: "I can modify existing code confidently", completed: false },
     { text: "I trust my technical decisions", completed: false },
     { text: "I can explain my work calmly", completed: false },
-    { text: "My skills compound instead of resetting", completed: false }
+    { text: "My skills compound instead of resetting", completed: false },
   ],
   actions: [
     "Work on one real feature (45 min)",
     "Read & understand existing code (30 min)",
-    "Ship something small"
+    "Ship something small",
   ],
   todayRating: null,
   todayAcknowledged: false,
   todayAcknowledgement: "",
   nextPOH: "Build and run a real business",
-  somedayPOH: "Build long-term wealth & freedom through assets"
+  somedayPOH: "Build long-term wealth & freedom through assets",
 };
 
 export default function ProjectOfHeartPage() {
@@ -120,7 +120,7 @@ export default function ProjectOfHeartPage() {
         ...pohData,
         todayRating: sliderValue,
         todayAcknowledged: true,
-        todayAcknowledgement: acknowledgementText.trim()
+        todayAcknowledgement: acknowledgementText.trim(),
       });
       setShowAcknowledgeInput(false);
     } else {
@@ -141,17 +141,13 @@ export default function ProjectOfHeartPage() {
             <ChevronLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div className="flex-1 text-center">
-            <h1 className="text-xs font-semibold tracking-widest text-gray-400">
+            <h1
+              className="text-xl font-bold text-gray-500 tracking-wider"
+              style={{ fontFamily: "Montserrat, sans-serif" }}
+            >
               PROJECT OF HEART
             </h1>
           </div>
-          <button
-            onClick={() => setLocation("/project-of-heart/history")}
-            className="p-2 rounded-lg hover:bg-gray-100"
-            data-testid="button-history"
-          >
-            <History className="w-5 h-5 text-gray-500" />
-          </button>
         </div>
       </div>
 
@@ -162,163 +158,208 @@ export default function ProjectOfHeartPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <Card 
-            className="p-4 border-0"
-            style={{ backgroundColor: "rgba(95, 183, 125, 0.08)" }}
+          <Card
+            className="p-5 border-0"
+            style={{ backgroundColor: "white" }}
             data-testid="card-heart-chakra"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-4">
+              {/* Icon */}
               <div
-                className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+                className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{
-                  background: "radial-gradient(circle, rgba(95, 183, 125, 0.3) 0%, transparent 70%)",
+                  background:
+                    "radial-gradient(circle, rgba(95, 183, 125, 0.3) 0%, transparent 70%)",
                 }}
               >
-                <HeartChakraIcon className="w-10 h-10" />
+                <HeartChakraIcon className="w-13 h-13" />
+                {/* if w-13 is not supported, use inline style below */}
+                {/* <HeartChakraIcon style={{ width: 52, height: 52 }} /> */}
               </div>
+
+              {/* Text */}
               <div>
-                <h3 className="text-sm font-semibold" style={{ color: "#5FB77D" }}>
+                <h3
+                  className="text-base font-semibold"
+                  style={{ color: "#5FB77D" }}
+                >
                   Heart Chakra — Anahata
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                  Center of Love, Balance, and Purpose. Your Project of Heart aligns with the bridge between who you were and who you're rising to be.
+                <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                  Center of Love, Balance, and Purpose. Your Project of Heart
+                  aligns with the bridge between who you were and who you're
+                  rising to be.
                 </p>
               </div>
             </div>
           </Card>
         </motion.div>
 
-        {/* SECTION 1: Active Project of Heart (Hero) */}
+        {/* IDENTITY CARD: Active Project of Heart + Vision + Milestones */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
+          className="px-0"
         >
-          <Card className="p-5 border-0 shadow-sm" data-testid="card-active-poh">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4" style={{ color: "#E5AC19" }} />
-              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
-                Active Project of Heart
+          <div
+            className="rounded-2xl px-5 py-6"
+            style={{
+              backgroundColor: "white",
+              boxShadow: "0 6px 28px rgba(0,0,0,0.06)",
+            }}
+          >
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-lg font-medium tracking-wide text-gray-400 uppercase">
+                My Project of Heart
+              </span>
+
+              {/* ACTIVE badge */}
+              <span
+                className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: "rgba(95,183,125,0.15)",
+                  color: "#5FB77D",
+                }}
+              >
+                ACTIVE
               </span>
             </div>
-            <h2 
+
+            {/* Category */}
+            <div className="mb-2">
+              <span
+                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: "rgba(112, 61, 250, 0.08)",
+                  color: "#703DFA",
+                }}
+              >
+                CAREER
+              </span>
+            </div>
+
+            {/* Title */}
+            <h2
               className="text-xl font-bold leading-tight mb-4"
               style={{ color: "#2D2D2D" }}
               data-testid="text-active-poh-title"
             >
               {pohData.activePOH.title}
             </h2>
-            <div 
-              className="border-l-2 pl-3 py-1"
-              style={{ borderColor: "#E5AC19" }}
-            >
-              <p className="text-xs text-gray-400 mb-1">Why this matters to my heart:</p>
-              <p className="text-sm text-gray-600 italic" data-testid="text-active-poh-why">
+
+            {/* Why */}
+            <div className="mb-6">
+              <p className="text-xs text-gray-400 mb-2">
+                Why this matters to my heart
+              </p>
+              <p className="text-sm text-gray-600 italic leading-relaxed">
                 {pohData.activePOH.why}
               </p>
             </div>
-          </Card>
-        </motion.div>
 
-        {/* SECTION 2: Vision Board */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-        >
-          <Card className="p-4 border-0 shadow-sm" data-testid="card-vision-board">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
-                Vision
-              </span>
-              <span className="text-xs text-gray-400">Optional</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[0, 1, 2].map((index) => (
-                <div
-                  key={index}
-                  className="aspect-square rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-                  style={{ backgroundColor: "rgba(112, 61, 250, 0.05)" }}
-                  data-testid={`button-vision-image-${index}`}
-                >
-                  {pohData.visionImages[index] ? (
-                    <img
-                      src={pohData.visionImages[index]}
-                      alt={`Vision ${index + 1}`}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center gap-1">
-                      <ImageIcon className="w-5 h-5 text-gray-300" />
-                      <Plus className="w-3 h-3 text-gray-300" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Card>
-        </motion.div>
+            {/* Vision (optional, inline) */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                  Visions
+                </span>
+              </div>
 
-        {/* SECTION 3: Milestones */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <Card className="p-4 border-0 shadow-sm" data-testid="card-milestones">
-            <div className="flex items-center gap-2 mb-4">
-              <Star className="w-4 h-4" style={{ color: "#5FB77D" }} />
-              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
-                Milestones — Freedoms I'm Earning
-              </span>
-            </div>
-            <div className="space-y-3">
-              {pohData.milestones.map((milestone, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-3 group"
-                  data-testid={`milestone-${index}`}
-                >
-                  <Checkbox
-                    checked={milestone.completed}
-                    onCheckedChange={() => toggleMilestone(index)}
-                    className="mt-0.5 border-gray-300 data-[state=checked]:bg-[#5FB77D] data-[state=checked]:border-[#5FB77D]"
-                    data-testid={`checkbox-milestone-${index}`}
-                  />
-                  <span
-                    className={`text-sm leading-relaxed transition-colors ${
-                      milestone.completed
-                        ? "text-gray-400 line-through"
-                        : "text-gray-700"
-                    }`}
+              <div className="grid grid-cols-3 gap-2">
+                {[0, 1, 2].map((index) => (
+                  <div
+                    key={index}
+                    className="aspect-square rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: "rgba(112, 61, 250, 0.05)" }}
+                    data-testid={`button-vision-image-${index}`}
                   >
-                    {milestone.text}
-                  </span>
-                </div>
-              ))}
+                    {pohData.visionImages[index] ? (
+                      <img
+                        src={pohData.visionImages[index]}
+                        alt={`Vision ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1">
+                        <ImageIcon className="w-5 h-5 text-gray-300" />
+                        <Plus className="w-3 h-3 text-gray-300" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </Card>
+
+            {/* Milestones */}
+            <div>
+              <p className="text-xs font-medium tracking-wide text-gray-400 uppercase mb-4">
+                Milestones
+              </p>
+
+              <div className="space-y-4">
+                {pohData.milestones.map((milestone, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 cursor-pointer"
+                    onClick={() =>
+                      !milestone.completed && markMilestoneAchieved(index)
+                    }
+                    data-testid={`milestone-${index}`}
+                  >
+                    <span
+                      className="text-lg leading-none mt-0.5"
+                      style={{
+                        color: milestone.completed ? "#5FB77D" : "#CFCFCF",
+                      }}
+                    >
+                      {milestone.completed ? "●" : "○"}
+                    </span>
+
+                    <span
+                      className={`text-sm leading-relaxed ${
+                        milestone.completed ? "text-gray-500" : "text-gray-700"
+                      }`}
+                    >
+                      {milestone.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </motion.div>
 
-        {/* SECTION 4: Top 3 Actions */}
+        {/* SECTION 4 + 5: Actions + Daily Reflection */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.25 }}
         >
-          <Card className="p-4 border-0 shadow-sm" data-testid="card-actions">
+          <div
+            className="rounded-2xl px-5 py-6"
+            style={{
+              backgroundColor: "white",
+              boxShadow: "0 6px 28px rgba(0,0,0,0.06)",
+            }}
+            data-testid="card-actions-rating"
+          >
+            {/* ACTIONS HEADER */}
             <div className="flex items-center gap-2 mb-4">
-              <div 
+              <div
                 className="w-4 h-4 rounded-full flex items-center justify-center"
                 style={{ backgroundColor: "#703DFA" }}
               >
                 <span className="text-white text-xs font-bold">3</span>
               </div>
-              <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
-                Top 3 Actions for My POH
+              <span className="text-lg font-medium tracking-wide text-gray-400 uppercase">
+                Today’s Actions
               </span>
             </div>
-            <div className="space-y-3">
+
+            {/* ACTION LIST */}
+            <div className="space-y-3 mb-8">
               {pohData.actions.map((action, index) => (
                 <div
                   key={index}
@@ -327,8 +368,9 @@ export default function ProjectOfHeartPage() {
                 >
                   <div
                     className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: "#703DFA" }}
+                    style={{ backgroundColor: "rgba(112, 61, 250, 0.8)" }}
                   />
+
                   {editingAction === index ? (
                     <div className="flex-1 flex items-center gap-2">
                       <input
@@ -337,19 +379,13 @@ export default function ProjectOfHeartPage() {
                         onChange={(e) => setEditActionText(e.target.value)}
                         className="flex-1 text-sm px-2 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
                         autoFocus
-                        data-testid={`input-action-${index}`}
                       />
-                      <button
-                        onClick={saveAction}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        data-testid={`button-save-action-${index}`}
-                      >
+                      <button onClick={saveAction} className="p-1">
                         <Check className="w-4 h-4 text-green-600" />
                       </button>
                       <button
                         onClick={() => setEditingAction(null)}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        data-testid={`button-cancel-action-${index}`}
+                        className="p-1"
                       >
                         <X className="w-4 h-4 text-gray-400" />
                       </button>
@@ -361,8 +397,7 @@ export default function ProjectOfHeartPage() {
                       </span>
                       <button
                         onClick={() => startEditAction(index)}
-                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-opacity"
-                        data-testid={`button-edit-action-${index}`}
+                        className="opacity-0 group-hover:opacity-100 p-1"
                       >
                         <Edit3 className="w-3.5 h-3.5 text-gray-400" />
                       </button>
@@ -371,148 +406,135 @@ export default function ProjectOfHeartPage() {
                 </div>
               ))}
             </div>
-          </Card>
-        </motion.div>
 
-        {/* SECTION 5: Rate Yourself Today */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-        >
-          <Card 
-            className="p-5 border-0 shadow-sm"
-            style={{ 
-              background: pohData.todayAcknowledged 
-                ? "linear-gradient(135deg, rgba(229, 172, 25, 0.08) 0%, rgba(95, 183, 125, 0.08) 100%)"
-                : "white"
-            }}
-            data-testid="card-self-rating"
-          >
-            <h3 className="text-sm font-semibold text-gray-700 mb-1">
-              Rate Yourself Today
-            </h3>
-            <p className="text-xs text-gray-400 mb-5">
-              Do you want to acknowledge taking action on your POH today?
+            {/* DIVIDER */}
+            <div className="h-px bg-gray-100 my-6" />
+
+            {/* DAILY RATING */}
+            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+              How aligned were my actions with my intention today?
+            </h4>
+
+            <Slider
+              value={[sliderValue]}
+              onValueChange={(v) => {
+                setSliderValue(v[0]);
+                savePOHData({
+                  ...pohData,
+                  todayRating: v[0],
+                  todayAcknowledged: true,
+                });
+              }}
+              max={10}
+              step={1}
+              className="w-full"
+            />
+
+            <div className="flex justify-between mt-2">
+              <span className="text-xs text-gray-400">0</span>
+              <span className="text-sm font-medium text-gray-500">
+                {sliderValue}
+              </span>
+              <span className="text-xs text-gray-400">10</span>
+            </div>
+
+            <p className="text-xs text-gray-400 mt-3">
+              Awareness, practiced daily, changes how you show up.
             </p>
-
-            {pohData.todayAcknowledged ? (
-              <div className="text-center py-4">
-                <div 
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-3"
-                  style={{ backgroundColor: "rgba(229, 172, 25, 0.15)" }}
-                >
-                  <Star className="w-4 h-4" style={{ color: "#E5AC19" }} fill="#E5AC19" />
-                  <span className="text-sm font-medium" style={{ color: "#B8860B" }}>
-                    You rated yourself {pohData.todayRating}/10 today
-                  </span>
-                </div>
-                {pohData.todayAcknowledgement && (
-                  <p className="text-sm text-gray-600 italic mt-2">
-                    "{pohData.todayAcknowledgement}"
-                  </p>
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="px-2 mb-6">
-                  <Slider
-                    value={[sliderValue]}
-                    onValueChange={handleSliderChange}
-                    max={10}
-                    step={1}
-                    className="w-full"
-                    data-testid="slider-rating"
-                  />
-                  <div className="flex justify-between mt-2">
-                    <span className="text-xs text-gray-400">0</span>
-                    <span 
-                      className="text-lg font-bold"
-                      style={{ color: "#703DFA" }}
-                      data-testid="text-rating-value"
-                    >
-                      {sliderValue}
-                    </span>
-                    <span className="text-xs text-gray-400">10</span>
-                  </div>
-                </div>
-
-                {showAcknowledgeInput && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="mb-4"
-                  >
-                    <textarea
-                      value={acknowledgementText}
-                      onChange={(e) => setAcknowledgementText(e.target.value)}
-                      placeholder="I want to acknowledge myself for..."
-                      className="w-full text-sm px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none"
-                      rows={2}
-                      data-testid="input-acknowledgement"
-                    />
-                  </motion.div>
-                )}
-
-                <Button
-                  onClick={handleAcknowledge}
-                  className="w-full gap-2"
-                  style={{ 
-                    backgroundColor: "#E5AC19",
-                    color: "white"
-                  }}
-                  data-testid="button-acknowledge"
-                >
-                  <Star className="w-4 h-4" />
-                  {showAcknowledgeInput ? "Save Acknowledgement" : "I want to acknowledge myself for this"}
-                </Button>
-
-                <p className="text-xs text-gray-400 text-center mt-3">
-                  There is no right score. This is for self-awareness, not judgement.
-                </p>
-              </>
-            )}
-          </Card>
+          </div>
         </motion.div>
 
-        {/* SECTION 6: Next Project of Heart */}
+        {/* SECTION 6: Next */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.35 }}
         >
-          <Card 
-            className="p-4 border-0"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0.02)" }}
+          <div
+            className="rounded-2xl px-4 py-4"
+            style={{ backgroundColor: "rgba(255, 255, 255, 0.92)" }}
             data-testid="card-next-poh"
           >
-            <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
-              Next Project of Heart
-            </span>
-            <h3 className="text-base font-medium text-gray-500 mt-2" data-testid="text-next-poh">
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-3">
+              {/* Category */}
+              <span
+                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: "rgba(112, 61, 250, 0.08)",
+                  color: "#703DFA",
+                }}
+              >
+                CAREER
+              </span>
+
+              {/* NEXT badge */}
+              <span
+                className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: "rgba(88, 101, 242, 0.14)",
+                  color: "#5865F2",
+                }}
+              >
+                NEXT
+              </span>
+            </div>
+
+            {/* POH text */}
+            <p
+              className="text-base font-medium text-gray-600 leading-relaxed"
+              data-testid="text-next-poh"
+            >
               {pohData.nextPOH}
-            </h3>
+            </p>
+
             <p className="text-xs text-gray-400 mt-2">
               This comes after I complete my current Project of Heart.
             </p>
-          </Card>
+          </div>
         </motion.div>
 
-        {/* SECTION 7: Someday Project of Heart */}
+        {/* SECTION 7: On the Horizon */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.4 }}
         >
-          <div 
-            className="px-4 py-3 rounded-lg"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0.03)" }}
-            data-testid="card-someday-poh"
+          <div
+            className="rounded-2xl px-4 py-4"
+            style={{ backgroundColor: "rgba(255, 255, 255, 0.85)" }}
+            data-testid="card-horizon-poh"
           >
-            <span className="text-xs font-medium tracking-wide text-gray-300 uppercase">
-              Someday
-            </span>
-            <p className="text-sm text-gray-400 mt-1" data-testid="text-someday-poh">
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-3">
+              {/* Category */}
+              <span
+                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: "rgba(112, 61, 250, 0.08)",
+                  color: "#703DFA",
+                }}
+              >
+                WEALTH
+              </span>
+
+              {/* ON THE HORIZON badge */}
+              <span
+                className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: "rgba(245, 235, 200, 0.6)",
+                  color: "#8A7F5A",
+                }}
+              >
+                ON THE HORIZON
+              </span>
+            </div>
+
+            {/* POH text */}
+            <p
+              className="text-sm text-gray-400 leading-relaxed"
+              data-testid="text-someday-poh"
+            >
               {pohData.somedayPOH}
             </p>
           </div>
