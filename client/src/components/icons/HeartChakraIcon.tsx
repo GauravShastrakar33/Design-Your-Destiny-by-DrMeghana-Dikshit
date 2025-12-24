@@ -13,6 +13,14 @@ export default function HeartChakraIcon({
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"
       shapeRendering="geometricPrecision"
+      style={{ 
+        isolation: "isolate",
+        willChange: "auto",
+        transform: "translateZ(0)",
+        backfaceVisibility: "hidden",
+        WebkitBackfaceVisibility: "hidden",
+        imageRendering: "crisp-edges",
+      }}
     >
       {/* 12 Lotus Petals */}
       <g
