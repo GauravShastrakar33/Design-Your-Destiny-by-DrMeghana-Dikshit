@@ -117,8 +117,6 @@ const menuContent: Record<
     title: "Project of Heart",
     items: [
       { path: "/admin/project-heart", label: "Overview", icon: Heart },
-      { path: "/admin/project-heart", label: "Submissions", icon: List },
-      { path: "/admin/project-heart", label: "Settings", icon: Settings },
     ],
   },
   quotes: {
