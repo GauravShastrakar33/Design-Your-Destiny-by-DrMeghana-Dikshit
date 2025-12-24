@@ -762,30 +762,73 @@ export default function ProjectOfHeartPage() {
         {/* ACTIVE POH CARD */}
         {pohState.active && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
-            <div className="rounded-2xl px-5 py-6" style={{ backgroundColor: "white", boxShadow: "0 6px 28px rgba(0,0,0,0.06)" }}>
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-medium tracking-wide text-gray-400 uppercase">My Project of Heart</span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(95,183,125,0.15)", color: "#5FB77D" }}>ACTIVE</span>
-              </div>
+            <div 
+              className="relative overflow-hidden"
+              style={{ 
+                backgroundColor: "white", 
+                borderRadius: "16px",
+                padding: "20px",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.04)"
+              }}
+            >
+              {/* Subtle left accent line */}
+              <div 
+                className="absolute left-0 top-4 bottom-4"
+                style={{ 
+                  width: "3px",
+                  backgroundColor: "rgba(0,0,0,0.06)",
+                  borderRadius: "0 2px 2px 0"
+                }}
+              />
 
-              {/* Category */}
-              <div className="mb-2">
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(112, 61, 250, 0.08)", color: "#703DFA" }}>
+              {/* Header Row - Category Left, Status Right */}
+              <div className="flex items-center justify-between mb-4">
+                <span 
+                  className="text-xs font-medium px-3 py-1 rounded-full"
+                  style={{ backgroundColor: "rgba(112, 61, 250, 0.08)", color: "#703DFA" }}
+                >
                   {CATEGORY_LABELS[pohState.active.category as Category] || pohState.active.category.toUpperCase()}
+                </span>
+                <span 
+                  className="text-xs font-medium px-3 py-1 rounded-full"
+                  style={{ backgroundColor: "rgba(95,183,125,0.12)", color: "#5FB77D" }}
+                >
+                  ACTIVE
                 </span>
               </div>
 
               {/* Title */}
-              <h2 className="text-xl font-bold leading-tight mb-4" style={{ color: "#2D2D2D" }} data-testid="text-active-poh-title">
+              <h2 
+                className="font-semibold leading-relaxed mb-5"
+                style={{ 
+                  fontSize: "18px",
+                  lineHeight: "26px",
+                  color: "#3D3D3D"
+                }} 
+                data-testid="text-active-poh-title"
+              >
                 {pohState.active.title}
               </h2>
 
               {/* Why */}
               {pohState.active.why && (
                 <div className="mb-6">
-                  <p className="text-xs text-gray-400 mb-2">Why this matters to my heart</p>
-                  <p className="text-sm text-gray-600 italic leading-relaxed">{pohState.active.why}</p>
+                  <p 
+                    className="mb-2"
+                    style={{ fontSize: "12px", color: "#9CA3AF", letterSpacing: "0.02em" }}
+                  >
+                    Why this matters to my heart
+                  </p>
+                  <p 
+                    className="italic"
+                    style={{ 
+                      fontSize: "14px",
+                      lineHeight: "22px",
+                      color: "#6B7280"
+                    }}
+                  >
+                    {pohState.active.why}
+                  </p>
                 </div>
               )}
 
