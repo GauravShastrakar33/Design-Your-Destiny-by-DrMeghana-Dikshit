@@ -865,17 +865,15 @@ export default function ProjectOfHeartPage() {
                     return (
                       <div
                         key={index}
-                        className="flex-shrink-0 cursor-pointer transition-all duration-200 hover:scale-[1.02] flex items-center justify-center"
+                        className="flex-shrink-0 cursor-pointer transition-all duration-200 hover:scale-[1.02] flex items-center justify-center overflow-hidden"
                         onClick={() => handleVisionSlotClick(index)}
                         data-testid={`button-vision-image-${index}`}
                         style={{
                           width: "140px",
                           height: "140px",
-                          borderRadius: "18px",
-                          backgroundColor: hasImage ? "#FAFAFA" : "#F8F8F8",
-                          border: hasImage ? "1px solid rgba(0,0,0,0.06)" : "2px dashed rgba(0,0,0,0.12)",
-                          boxShadow: hasImage ? "0 2px 8px rgba(0,0,0,0.04)" : "none",
-                          padding: "12px",
+                          borderRadius: "16px",
+                          backgroundColor: hasImage ? "transparent" : "#F8F8F8",
+                          border: hasImage ? "none" : "2px dashed rgba(0,0,0,0.12)",
                         }}
                       >
                         {isUploading ? (
@@ -885,10 +883,10 @@ export default function ProjectOfHeartPage() {
                             src={pohState.active!.vision_images![index]} 
                             alt={`Vision ${index + 1}`} 
                             style={{
-                              maxWidth: "80%",
-                              maxHeight: "80%",
-                              objectFit: "contain",
-                              borderRadius: "8px",
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              borderRadius: "16px",
                             }}
                           />
                         ) : (
