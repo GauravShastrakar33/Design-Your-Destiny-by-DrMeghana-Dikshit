@@ -4244,10 +4244,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const nextPOH = userPOHs.find(p => p.status === "next");
       const horizonPOH = userPOHs.find(p => p.status === "horizon");
 
+      // Build ACTIVE POH response with full details (milestones, actions, today's rating)
       let activeResponse = null;
       if (activePOH) {
         const milestones = await storage.getPOHMilestones(activePOH.id);
         const actions = await storage.getPOHActions(activePOH.id);
+        const today = new Date().toISOString().split('T')[0];
+        const todayRating = await storage.getPOHRatingByDate(userId, today);
         
         activeResponse = {
           id: activePOH.id,
@@ -4266,57 +4269,34 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             id: a.id,
             text: a.text,
             order: a.orderIndex
-          }))
+          })),
+          today_rating: todayRating ? todayRating.rating : null
         };
       }
 
-      // Build next POH response with milestones/actions
+      // Build NEXT POH response with empty arrays for milestones/actions (placeholder only)
       let nextResponse = null;
       if (nextPOH) {
-        const nextMilestones = await storage.getPOHMilestones(nextPOH.id);
-        const nextActions = await storage.getPOHActions(nextPOH.id);
         nextResponse = {
           id: nextPOH.id,
           title: nextPOH.title,
           why: nextPOH.why,
           category: nextPOH.category,
-          milestones: nextMilestones.map(m => ({
-            id: m.id,
-            text: m.text,
-            achieved: m.achieved,
-            achieved_at: m.achievedAt,
-            order_index: m.orderIndex
-          })),
-          actions: nextActions.map(a => ({
-            id: a.id,
-            text: a.text,
-            order: a.orderIndex
-          }))
+          milestones: [],
+          actions: []
         };
       }
 
-      // Build horizon POH response with milestones/actions
+      // Build HORIZON POH response with empty arrays for milestones/actions (placeholder only)
       let horizonResponse = null;
       if (horizonPOH) {
-        const horizonMilestones = await storage.getPOHMilestones(horizonPOH.id);
-        const horizonActions = await storage.getPOHActions(horizonPOH.id);
         horizonResponse = {
           id: horizonPOH.id,
           title: horizonPOH.title,
           why: horizonPOH.why,
           category: horizonPOH.category,
-          milestones: horizonMilestones.map(m => ({
-            id: m.id,
-            text: m.text,
-            achieved: m.achieved,
-            achieved_at: m.achievedAt,
-            order_index: m.orderIndex
-          })),
-          actions: horizonActions.map(a => ({
-            id: a.id,
-            text: a.text,
-            order: a.orderIndex
-          }))
+          milestones: [],
+          actions: []
         };
       }
 
