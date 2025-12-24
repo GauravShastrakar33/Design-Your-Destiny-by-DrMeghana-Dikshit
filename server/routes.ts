@@ -28,6 +28,7 @@ import {
   pohMilestones,
   pohCategoryEnum,
   pohStatusEnum,
+  users,
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -97,7 +98,7 @@ async function extractTextWithPdf2json(buffer: Buffer): Promise<string> {
 }
 
 import { db } from "./db";
-import { eq, asc, and, ilike, or, sql } from "drizzle-orm";
+import { eq, asc, and, ilike, or, sql, count, countDistinct, gte, desc, lt, avg, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { authenticateJWT, type AuthPayload } from "./middleware/auth";
@@ -4927,6 +4928,244 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         });
       }
       res.status(500).json({ error: "Failed to upload vision image" });
+    }
+  });
+
+  // ===== ADMIN PROJECT OF HEART ROUTES =====
+  // Observational only - aggregate data, no individual user data
+  
+  // 1. Usage - Are users creating Projects of Heart?
+  app.get("/admin/api/poh/usage", requireAdmin, async (req, res) => {
+    try {
+      // Total users count
+      const totalUsersResult = await db.select({ count: count() }).from(users);
+      const totalUsers = Number(totalUsersResult[0]?.count) || 0;
+      
+      // Users with any POH (distinct user_id)
+      const usersWithPohResult = await db.select({ 
+        count: countDistinct(projectOfHearts.userId) 
+      }).from(projectOfHearts);
+      const usersWithPoh = Number(usersWithPohResult[0]?.count) || 0;
+      
+      // Count by status
+      const activeResult = await db.select({ count: count() })
+        .from(projectOfHearts)
+        .where(eq(projectOfHearts.status, "active"));
+      const active = Number(activeResult[0]?.count) || 0;
+      
+      const nextResult = await db.select({ count: count() })
+        .from(projectOfHearts)
+        .where(eq(projectOfHearts.status, "next"));
+      const next = Number(nextResult[0]?.count) || 0;
+      
+      const northStarResult = await db.select({ count: count() })
+        .from(projectOfHearts)
+        .where(eq(projectOfHearts.status, "horizon"));
+      const northStar = Number(northStarResult[0]?.count) || 0;
+      
+      res.json({
+        total_users: totalUsers,
+        users_with_poh: usersWithPoh,
+        active,
+        next,
+        north_star: northStar
+      });
+    } catch (error: any) {
+      console.error("Error fetching POH usage:", error);
+      res.status(500).json({ error: "Failed to fetch usage data" });
+    }
+  });
+  
+  // 2. Daily Check-ins - Are users reflecting daily?
+  app.get("/admin/api/poh/daily-checkins", requireAdmin, async (req, res) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Today's check-ins
+      const todayResult = await db.select({ 
+        count: countDistinct(pohDailyRatings.userId) 
+      })
+        .from(pohDailyRatings)
+        .where(eq(pohDailyRatings.localDate, today));
+      const todayCheckedIn = Number(todayResult[0]?.count) || 0;
+      
+      // Active users count (for percentage)
+      const activeUsersResult = await db.select({ 
+        count: countDistinct(projectOfHearts.userId) 
+      })
+        .from(projectOfHearts)
+        .where(eq(projectOfHearts.status, "active"));
+      const activeUsers = Number(activeUsersResult[0]?.count) || 0;
+      
+      const percentOfActive = activeUsers > 0 
+        ? Math.round((todayCheckedIn / activeUsers) * 100) 
+        : 0;
+      
+      // Last 30 days check-ins
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+      
+      const last30DaysResult = await db.select({
+        date: pohDailyRatings.localDate,
+        count: countDistinct(pohDailyRatings.userId)
+      })
+        .from(pohDailyRatings)
+        .where(gte(pohDailyRatings.localDate, thirtyDaysAgoStr))
+        .groupBy(pohDailyRatings.localDate)
+        .orderBy(asc(pohDailyRatings.localDate));
+      
+      // Fill in missing dates with 0
+      const dateMap = new Map(last30DaysResult.map(r => [r.date, Number(r.count)]));
+      const last30Days = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        last30Days.push({
+          date: dateStr,
+          users_checked_in: dateMap.get(dateStr) || 0
+        });
+      }
+      
+      res.json({
+        today: {
+          date: today,
+          users_checked_in: todayCheckedIn,
+          percent_of_active_users: percentOfActive
+        },
+        last_30_days: last30Days
+      });
+    } catch (error: any) {
+      console.error("Error fetching daily check-ins:", error);
+      res.status(500).json({ error: "Failed to fetch check-in data" });
+    }
+  });
+  
+  // 3. Progress Signals - Are milestones being achieved?
+  app.get("/admin/api/poh/progress-signals", requireAdmin, async (req, res) => {
+    try {
+      const today = new Date();
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+      
+      // Milestones achieved in last 7 days
+      const achieved7Result = await db.select({ count: count() })
+        .from(pohMilestones)
+        .where(and(
+          eq(pohMilestones.achieved, true),
+          gte(pohMilestones.achievedAt, sevenDaysAgoStr)
+        ));
+      const milestonesAchieved7 = Number(achieved7Result[0]?.count) || 0;
+      
+      // Milestones achieved in last 30 days
+      const achieved30Result = await db.select({ count: count() })
+        .from(pohMilestones)
+        .where(and(
+          eq(pohMilestones.achieved, true),
+          gte(pohMilestones.achievedAt, thirtyDaysAgoStr)
+        ));
+      const milestonesAchieved30 = Number(achieved30Result[0]?.count) || 0;
+      
+      // Average days to first milestone
+      // Join milestones with POH to get started_at, find first achieved milestone
+      const firstMilestonesResult = await db.execute(sql`
+        SELECT AVG(days_to_first)::float as avg_days FROM (
+          SELECT 
+            p.id as poh_id,
+            MIN(m.achieved_at::date - p.started_at::date) as days_to_first
+          FROM project_of_hearts p
+          JOIN poh_milestones m ON m.poh_id = p.id
+          WHERE m.achieved = true AND p.started_at IS NOT NULL AND m.achieved_at IS NOT NULL
+          GROUP BY p.id
+        ) sub
+      `);
+      const avgDaysToFirst = Math.round((firstMilestonesResult.rows[0] as any)?.avg_days || 0);
+      
+      res.json({
+        milestones_achieved_7_days: Number(milestonesAchieved7),
+        milestones_achieved_30_days: Number(milestonesAchieved30),
+        avg_days_to_first_milestone: Number(avgDaysToFirst) || 0
+      });
+    } catch (error: any) {
+      console.error("Error fetching progress signals:", error);
+      res.status(500).json({ error: "Failed to fetch progress signals" });
+    }
+  });
+  
+  // 4. Drop-offs - Where do users disengage?
+  app.get("/admin/api/poh/drop-offs", requireAdmin, async (req, res) => {
+    try {
+      // Closed early count
+      const closedEarlyResult = await db.select({ count: count() })
+        .from(projectOfHearts)
+        .where(eq(projectOfHearts.status, "closed_early"));
+      const closedEarly = Number(closedEarlyResult[0]?.count) || 0;
+      
+      // Active with no achieved milestones
+      const activeNoMilestonesResult = await db.execute(sql`
+        SELECT COUNT(DISTINCT p.id) as count
+        FROM project_of_hearts p
+        LEFT JOIN poh_milestones m ON m.poh_id = p.id AND m.achieved = true
+        WHERE p.status = 'active' AND m.id IS NULL
+      `);
+      const activeNoMilestones = parseInt((activeNoMilestonesResult.rows[0] as any)?.count || '0');
+      
+      // Average active duration (for closed_early and completed)
+      const avgDurationResult = await db.execute(sql`
+        SELECT AVG(ended_at::date - started_at::date)::float as avg_days
+        FROM project_of_hearts
+        WHERE ended_at IS NOT NULL AND started_at IS NOT NULL
+          AND status IN ('completed', 'closed_early')
+      `);
+      const avgDuration = Math.round((avgDurationResult.rows[0] as any)?.avg_days || 0);
+      
+      res.json({
+        closed_early: Number(closedEarly),
+        active_with_no_milestones: Number(activeNoMilestones),
+        avg_active_duration_days: Number(avgDuration) || 0
+      });
+    } catch (error: any) {
+      console.error("Error fetching drop-offs:", error);
+      res.status(500).json({ error: "Failed to fetch drop-off data" });
+    }
+  });
+  
+  // 5. Life Areas - Which life categories are users focusing on?
+  app.get("/admin/api/poh/life-areas", requireAdmin, async (req, res) => {
+    try {
+      // Count by category (prefer active, but include all)
+      const categoryResult = await db.select({
+        category: projectOfHearts.category,
+        count: count()
+      })
+        .from(projectOfHearts)
+        .where(eq(projectOfHearts.status, "active"))
+        .groupBy(projectOfHearts.category);
+      
+      // Build response object with all categories
+      const categories: Record<string, number> = {
+        career: 0,
+        health: 0,
+        relationships: 0,
+        wealth: 0
+      };
+      
+      categoryResult.forEach(r => {
+        if (r.category in categories) {
+          categories[r.category] = Number(r.count) || 0;
+        }
+      });
+      
+      res.json(categories);
+    } catch (error: any) {
+      console.error("Error fetching life areas:", error);
+      res.status(500).json({ error: "Failed to fetch life areas" });
     }
   });
 

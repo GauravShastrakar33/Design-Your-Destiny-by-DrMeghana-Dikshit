@@ -1,0 +1,287 @@
+🛠️ ADMIN PANEL — PROJECT OF HEART
+IMPLEMENTATION PROMPT (BACKEND + UI)
+
+We already have:
+
+A Project of Heart section in the admin portal (currently empty)
+
+Existing database tables (do NOT modify schemas)
+
+User-side POH fully implemented
+
+JWT-based admin auth already in place
+
+Your task is to add admin-only functionality to the existing Project of Heart admin screen.
+
+🎯 ADMIN SCOPE (LOCKED — DO NOT EXPAND)
+
+Build only the following 5 admin views:
+
+Usage
+
+Daily Check-ins
+
+Progress Signals
+
+Drop-offs
+
+Life Areas
+
+⚠️ Important:
+
+No scoring
+
+No rankings
+
+No leaderboards
+
+No user comparisons
+
+No editing user data
+
+This admin view is observational only.
+
+🧱 DATABASE CONSTRAINTS (IMPORTANT)
+
+Do NOT create or modify any tables
+
+Use existing tables only:
+
+users
+
+project_of_hearts
+
+poh_daily_ratings
+
+poh_milestones
+
+🔌 BACKEND — ADMIN APIs TO IMPLEMENT
+
+All routes:
+
+Must be admin-protected
+
+Read-only
+
+Aggregate data only
+
+Base path:
+
+/admin/api/poh
+
+1️⃣ USAGE
+
+Are users creating Projects of Heart?
+
+GET /admin/api/poh/usage
+
+Return
+
+{
+  "total_users": number,
+  "users_with_poh": number,
+  "active": number,
+  "next": number,
+  "north_star": number
+}
+
+
+Rules:
+
+north_star = status "horizon" (display as North Star)
+
+Count distinct users
+
+2️⃣ DAILY CHECK-INS
+
+Are users reflecting daily?
+
+GET /admin/api/poh/daily-checkins
+
+Return
+
+{
+  "today": {
+    "date": "YYYY-MM-DD",
+    "users_checked_in": number,
+    "percent_of_active_users": number
+  },
+  "last_7_days": [
+    { "date": "YYYY-MM-DD", "users_checked_in": number }
+  ]
+}
+
+
+Rules:
+
+Use poh_daily_ratings
+
+Count distinct user_id
+
+Do NOT calculate averages
+
+Do NOT expose individual ratings
+
+3️⃣ PROGRESS SIGNALS
+
+Are milestones being achieved?
+
+GET /admin/api/poh/progress-signals
+
+Return
+
+{
+  "milestones_achieved_7_days": number,
+  "milestones_achieved_30_days": number,
+  "avg_days_to_first_milestone": number
+}
+
+
+Rules:
+
+Use poh_milestones
+
+Only achieved = true
+
+Join with project_of_hearts.started_at
+
+4️⃣ DROP-OFFS
+
+Where do users disengage?
+
+GET /admin/api/poh/drop-offs
+
+Return
+
+{
+  "closed_early": number,
+  "active_with_no_milestones": number,
+  "avg_active_duration_days": number
+}
+
+
+Rules:
+
+closed_early = POHs with status closed_early
+
+active_with_no_milestones = active POHs with zero achieved milestones
+
+Duration = ended_at - started_at
+
+5️⃣ LIFE AREAS
+
+Which life categories are users focusing on?
+
+GET /admin/api/poh/life-areas
+
+Return
+
+{
+  "career": number,
+  "health": number,
+  "relationships": number,
+  "wealth": number
+}
+
+
+Rules:
+
+Prefer status = active
+
+Optionally include North Star
+
+No per-user data
+
+🖥️ FRONTEND — ADMIN UI IMPLEMENTATION
+Location
+
+Use the existing empty “Project of Heart” admin screen
+
+Do NOT create new routes
+
+Layout Structure
+
+Top:
+Title
+
+Project of Heart — Overview
+
+Subtext (small, muted):
+
+This view shows engagement patterns, not individual performance.
+
+Section Layout (5 Cards or Tabs)
+
+Render five clean cards or tabs, one for each view:
+
+1. Usage
+
+Simple stat cards
+
+Counts only
+
+2. Daily Check-ins
+
+Line chart (7-day)
+
+Show participation count only
+
+No rating values
+
+3. Progress Signals
+
+Numeric stats
+
+No user lists
+
+4. Drop-offs
+
+Counts + short explanatory labels
+
+No names
+
+5. Life Areas
+
+Pie or bar chart
+
+Category distribution
+
+🚫 UI RESTRICTIONS (VERY IMPORTANT)
+
+Do NOT:
+
+Show user names
+
+Show POH titles
+
+Show milestone text
+
+Show individual timelines
+
+Add filters for “top” users
+
+Add export / CSV
+
+This screen is pattern-level only.
+
+🧠 ADMIN PHILOSOPHY (DO NOT BREAK)
+
+Admin observes system health
+
+Users own meaning and progress
+
+This is not a performance dashboard
+
+If unsure — leave it out.
+
+✅ DEFINITION OF DONE
+
+Admin POH screen shows 5 sections
+
+Each section pulls from its API
+
+No schema changes
+
+No write actions
+
+Clean, calm UI
