@@ -787,7 +787,7 @@ export default function ProjectOfHeartPage() {
               )}
 
               {/* Vision Section */}
-              <div className="mb-8 px-4">
+              <div className="mb-8 px-2">
                 <div className="mb-4">
                   <span className="text-xs font-medium tracking-widest text-gray-400 uppercase">Visions</span>
                 </div>
