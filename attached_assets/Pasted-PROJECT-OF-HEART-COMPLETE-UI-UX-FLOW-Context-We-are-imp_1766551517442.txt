@@ -1,0 +1,283 @@
+PROJECT OF HEART (COMPLETE UI / UX FLOW)
+Context
+We are implementing the complete user-side UI & UX flow for a feature called Project of Heart (POH).
+* Backend APIs are already implemented and must be used as-is
+* Database schema is finalized
+* Vision image upload via Cloudflare R2 is implemented
+* Current UI exists but is partially non-interactive
+Your task is to:
+* Make the UI fully interactive
+* Wire all interactions to existing APIs
+* Respect all backend rules and constraints
+* Preserve the current visual design and layout
+⚠️ Do NOT redesign UI. ⚠️ Do NOT change backend APIs.
+
+🌍 GLOBAL UI RULES
+* Single scrolling screen
+* No tabs
+* No locks
+* Calm, grounded interactions
+* Minimal animations only where explicitly stated
+
+🟢 STATE HANDLING (VERY IMPORTANT)
+If user has NO ACTIVE POH
+Show Start Screen:
+* Heart Chakra context
+* Copy explaining Project of Heart
+* Single CTA: “Create My Project of Heart”
+Creation flow:
+1. Select category (career / health / relationships / wealth / other) when user selects other he will write his own category.
+2. Enter POH title (identity-based, max 120 chars) - Prompt - For this phase of my life, this one thing matters most.
+3. Enter “Why this matters” (max 500 chars)
+4. Submit → create ACTIVE POH
+5. Seamless transition into main POH screen
+
+With  Above - Heart Chakra Context  below  - My Project of Heart Card
+
+
+🟢 ACTIVE POH MAIN SCREEN — INTERACTIONS
+
+My Project of Heart Card = (Active POH + Vision + Milestones is one card)
+
+Now Main POH Screen shows 
+
+———————————————————————
+1️⃣ Active POH (Identity Section) 
+
+MY PROJECT OF HEART         ACTIVE
+Category
+
+Title - set by user 
+Why this matters to my heart
+Set by user
+
+Vision
+
+2️⃣ Vision Section (Optional)
+* 3 fixed slots
+* 0–3 images allowed
+* Click empty slot → image picker
+* Click existing image → replace image
+* Upload via /api/poh/:id/vision
+* Show loading state per slot
+* No captions
+* No delete button
+
+3️⃣ Milestones (ACTIVE POH ONLY)
+[Create Milestones] - button 
+When user clicks on it open a modal 
+Modal - user can create max 5 milestones - (1,2,3,4,5 anything is accepted)
+When he creates milestones 
+Display:
+* List of milestones
+* ○ = not achieved
+* ● = achieved
+* Order remains fixed
+
+
+Editing milestones
+* Editable only if:
+    * POH is ACTIVE
+    * milestone not achieved
+* Achieved milestones show no edit option
+
+⭐ MILESTONE ACCOMPLISHMENT (IMPORTANT)
+When user clicks an unachieved milestone:
+1. Show confirmation modal: ————————————————————— This milestone reflects a shift in you. Mark it when it feels true.  [Not yet]       [It’s ready to be marked]     ————————————————————— 
+2. On click  [It’s ready to be marked]   confirm:
+    * Call /api/poh/milestone/:id/achieve
+    * Trigger accomplishment animation 
+Accomplishment Animation Requirements
+* Subtle but emotionally rewarding
+* Suggested behavior:
+    * ○ smoothly morphs to Milestone icon
+    * Soft glow or pulse around the milestone
+    * Brief scale-up (1.05x → normal)
+* Duration: ~600–800ms
+
+
+After milestone accomplished keep the order and list same
+——————————————————-
+
+🔄 COMPLETE / CLOSE ACTIVE POH - button
+Trigger:
+* Button at bottom of Active POH card section - below milestones
+Flow:
+1. Modal with options:
+    * Complete Project
+    * Close Early
+2. Require reflection textarea (min 20 chars)
+3. Submit:
+    * Call /api/poh/:id/complete or /close
+    * Backend handles promotion
+4. Give a good animation for completion of POH
+5. Then switch NEXT POH to main POH and NORTH STAR to NEXT POH
+
+——————————————————-
+(Action + Slider) - are one card
+
+4️⃣ My Top 3 Actions Today (Daily Direction)
+* Exactly 3 actions always visible
+* Inline editable text
+* Save on blur
+* Replace via /api/poh/:id/actions
+* No completion state
+* No history
+* No animation
+
+5️⃣ Daily Rating (Reflection)
+UI:
+
+* Label: “How aligned were my actions with my intention today?” Slider (0–10)
+Helper text:
+“A moment of awareness, practiced daily, shapes how you show up.”
+
+Rules:
+* Visible only for ACTIVE POH
+* One rating per local day
+* Same-day adjustment allowed
+* Lock after day ends
+* Show today’s rating value after save
+* Do NOT show past ratings
+API:
+* /api/poh/rate
+
+——————————————————-
+                   [Re-align →] - button 
+                   [Create NEXT POH] - button 
+
+When user clicks on  ->  [Create NEXT POH] 
+Open a modal 
+What direction feels right after this phase?
+Textbox - where user can write title 
+CATEGORY - dropdown with other option to create user’s own category
+
+🟡 NEXT POH (Read-only)
+* Show title and category badge
+* NEXT badge - top right of card
+* No milestones
+* No actions
+* No rating
+
+After this 
+Again show :
+
+				  [Re-align →] - button 
+                   [Create NORTH STAR] - button 
+
+When clicked on NORTH STAR button 
+Open a modal 
+This guides you, even when you’re not actively working on it.
+Textbox - where user can write title 
+CATEGORY - dropdown with other option to create user’s own category
+
+🌅 NORTH STAR (Read-only)
+* Show title and category badge
+* NORTH STAR badge - top right of card
+* No milestones
+* No actions
+* No rating
+
+					[Re-align →] - button 
+
+When user click on Re-align button
+
+🪟 RE-ALIGN MODAL — STRUCTURE
+
+Modal Title
+Re-align your direction
+
+Subtext
+Something feels misaligned?
+
+OPTIONS (CONDITIONAL)
+Show only if POH exists:
+* 🟢 Active Project of Heart
+* 🔵 Next Project
+* 🌕 NORTH STAR
+If user has:
+* Only Active → only one option appears
+* Active + Next → two options
+* All three → all options
+No empty placeholders.
+
+🔐 RULES PER OPTION (IMPORTANT)
+
+🟢 ACTIVE POH
+* Can edit title
+*  Can edit “Why”
+* Can edit category
+* Can edit Milestones
+
+🔵 NEXT POH
+* ✅ Edit title
+* ✅ Edit category
+
+🌕 NORTH STAR
+* ✅ Edit title
+* ✅ Edit category  🔄 UI TERMINOLOGY UPDATE — IMPORTANT CONTEXT
+* I’ve updated the user-facing terminology for the Project of Heart feature.
+* Change summary
+* The concept previously referred to as “Horizon / On the Horizon” should now be displayed to users as “North Star”.
+* This is a UI / copy change only.
+* Backend logic, enums, tables, and API status values remain unchanged (status = "horizon").
+* 
+* ✅ WHAT TO UPDATE (UI ONLY)
+* Please update all visible UI text, labels, badges, headings, and modal copy as follows:
+Old UI Text	New UI Text
+Horizon	North Star
+On the Horizon	North Star
+Create Horizon POH	Create North Star
+Save to Horizon	Save as North Star
+Horizon Project	North Star Project
+Horizon (badge)	NORTH STAR (badge)
+* 🧠 INTENT (IMPORTANT)
+* “North Star” represents a long-term guiding direction, not something to act on immediately.
+* UI language should:
+* Feel timeless
+* Remove urgency
+* Avoid “near future” or “someday” phrasing
+
+———————————————————————————————————————————————
+
+												Below Re-align -> 
+						View past Projects 	
+When clicked it takes to - POH HISTORY SCREEN 
+
+📜 POH HISTORY SCREEN
+Separate screen.
+Display per POH:
+* Title
+* Category
+* Status
+* Date range
+* Achieved milestones only
+* Closing reflection
+Do NOT show:
+* Daily ratings
+* Actions
+* Missed milestones
+
+🔒 UI GUARDS (MANDATORY)
+Disable or block UI actions when backend rejects:
+* Editing achieved milestones
+* Adding milestones beyond limit
+* Rating on past date
+* Uploading vision images for non-active POH
+Show simple inline error text only.
+
+🚫 DO NOT ADD
+* Streaks
+* Rewards
+* Charts
+* Progress bars
+* Social sharing
+* Templates
+* Auto-generated content
+
+✅ FINAL EXPECTATION
+After this implementation:
+* POH feels intentional and alive
+* Milestone achievement feels meaningful
+* UI reflects backend truth at all times
+* Experience stays calm, grounded, and human
