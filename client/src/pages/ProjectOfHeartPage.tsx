@@ -131,7 +131,7 @@ export default function ProjectOfHeartPage() {
   const [savingMilestone, setSavingMilestone] = useState(false);
 
   const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("auth_token");
+    const token = localStorage.getItem("@app:user_token");
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (token) {
       headers.Authorization = `Bearer ${token}`;
@@ -390,7 +390,7 @@ export default function ProjectOfHeartPage() {
       formData.append("image", file);
       formData.append("index", String(index));
 
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("@app:user_token");
       const response = await fetch(`/api/poh/${pohState.active.id}/vision`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
