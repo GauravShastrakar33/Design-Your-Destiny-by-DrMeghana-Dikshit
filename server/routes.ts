@@ -4529,6 +4529,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(404).json({ error: "Milestone not found" });
       }
 
+      // Can only edit milestones on ACTIVE POH
+      if (poh.status !== "active") {
+        return res.status(403).json({ 
+          error: "POH_NOT_ACTIVE",
+          message: "Can only edit milestones on active POH"
+        });
+      }
+
       // Cannot edit achieved milestone
       if (milestone.achieved) {
         return res.status(403).json({ 
@@ -4620,6 +4628,15 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Validate date format
       if (!local_date || !/^\d{4}-\d{2}-\d{2}$/.test(local_date)) {
         return res.status(400).json({ error: "Invalid date format. Use YYYY-MM-DD" });
+      }
+
+      // Can only rate today - no backdating allowed
+      const today = new Date().toISOString().split('T')[0];
+      if (local_date !== today) {
+        return res.status(403).json({ 
+          error: "RATING_DATE_LOCKED",
+          message: "Can only submit or update rating for today"
+        });
       }
 
       // Check if rating exists for this date
