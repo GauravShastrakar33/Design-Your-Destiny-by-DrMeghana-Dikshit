@@ -1,0 +1,121 @@
+PROJECT OF HEART (VISION IMAGES)
+Context
+We are building a feature called Project of Heart (POH).
+* Backend APIs and database already exist
+* Cloudflare R2 integration is already configured
+* UI for Vision section already exists (3 image slots)
+* Vision images are identity anchors, not general uploads
+Your task is to fully implement the Vision Image upload flow:
+* backend
+* database wiring
+* API
+* frontend upload handling
+
+
+🧱 DATABASE CHANGE (REQUIRED)
+Add a column to the existing project_of_hearts table:
+
+ALTER TABLE project_of_hearts
+ADD COLUMN vision_images TEXT[] DEFAULT '{}';
+Rules:
+* Array length max = 3
+* Only ACTIVE POH can have vision images
+
+🔌 BACKEND API — VISION UPLOAD
+Endpoint
+
+POST /api/poh/:id/vision
+Request
+* multipart/form-data
+* Fields:
+    * image → image file
+    * index → number (0, 1, or 2)
+
+Backend Validation Rules (MANDATORY)
+On every request:
+1. POH exists
+2. POH belongs to authenticated user
+3. POH.status === active
+4. index ∈ [0,1,2]
+5. Image type allowed:
+    * image/jpeg
+    * image/png
+    * image/webp
+6. Image size ≤ 5MB
+If any fail → return 400 or 403.
+
+☁️ CLOUDFLARE R2 STORAGE
+File path strategy (IMPORTANT)
+Use deterministic paths so replacement is automatic:
+
+poh-visions/{user_id}/{poh_id}/vision-{index}.jpg
+Example:
+
+poh-visions/u123/p456/vision-1.jpg
+Rules:
+* Uploading to same index replaces existing image
+* No delete logic required
+* No orphan files allowed
+
+Upload Logic
+* Upload file buffer to R2
+* Set correct Content-Type
+* Generate public (or CDN) URL
+* Do NOT store binary in database
+
+🗃️ DATABASE UPDATE LOGIC (UPDATED)
+When saving vision images:
+1. Fetch existing vision_images
+2. Ensure array length = 3 internally (pad with nulls)
+3. Replace only the provided index
+4. Persist array
+Example:
+
+// Before
+["url-1"]
+
+// Upload index = 2
+["url-1", null, "url-3"]
+
+
+
+📱 FRONTEND WIRING (NO UI CHANGES)
+Interaction Rules
+* Clicking empty slot → open image picker
+* Clicking existing image → replace image
+* No captions
+* No delete button
+* No confirmation modal
+
+Image Picking
+* Web: <input type="file" accept="image/*" />
+* Mobile (Capacitor): use Camera / Gallery picker
+Local files are temporary only. Do NOT persist images on device filesystem.
+
+Upload Flow (Frontend)
+1. User selects image
+2. Show loading state on that slot only
+3. Call POST /api/poh/:id/vision
+4. Receive updated vision_images
+5. Update UI
+6. Done
+No progress bar No success animation No toast
+
+🔒 HARD CONSTRAINTS
+Reject uploads if:
+* POH is NEXT or HORIZON
+* POH is completed / closed
+* More than 3 images attempted
+* Index is invalid
+Return clear error codes:
+* VISION_UPLOAD_NOT_ALLOWED
+* INVALID_IMAGE
+* INVALID_INDEX
+
+Vision images are OPTIONAL
+* User may upload 0, 1, 2, or 3 images
+* No minimum required
+* UI must work even if only one image exists
+
+
+

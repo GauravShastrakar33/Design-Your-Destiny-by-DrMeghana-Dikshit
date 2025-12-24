@@ -93,7 +93,7 @@ export interface IStorage {
   getUserPOHs(userId: number): Promise<ProjectOfHeart[]>;
   getPOHById(pohId: string): Promise<ProjectOfHeart | undefined>;
   createPOH(data: { userId: number; title: string; why: string; category: string; status: string; startedAt: string | null }): Promise<ProjectOfHeart>;
-  updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string }>): Promise<ProjectOfHeart>;
+  updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string; visionImages: (string | null)[] }>): Promise<ProjectOfHeart>;
   completePOH(pohId: string, data: { status: string; endedAt: string; closingReflection: string }): Promise<void>;
   promotePOHs(userId: number, today: string): Promise<void>;
   getPOHHistory(userId: number): Promise<ProjectOfHeart[]>;
@@ -380,7 +380,7 @@ export class MemStorage implements IStorage {
   async getUserPOHs(userId: number): Promise<ProjectOfHeart[]> { return []; }
   async getPOHById(pohId: string): Promise<ProjectOfHeart | undefined> { return undefined; }
   async createPOH(data: { userId: number; title: string; why: string; category: string; status: string; startedAt: string | null }): Promise<ProjectOfHeart> { throw new Error("Not implemented in MemStorage"); }
-  async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string }>): Promise<ProjectOfHeart> { throw new Error("Not implemented in MemStorage"); }
+  async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string; visionImages: (string | null)[] }>): Promise<ProjectOfHeart> { throw new Error("Not implemented in MemStorage"); }
   async completePOH(pohId: string, data: { status: string; endedAt: string; closingReflection: string }): Promise<void> {}
   async promotePOHs(userId: number, today: string): Promise<void> {}
   async getPOHHistory(userId: number): Promise<ProjectOfHeart[]> { return []; }
@@ -1578,7 +1578,7 @@ export class DbStorage implements IStorage {
     return newPOH;
   }
 
-  async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string }>): Promise<ProjectOfHeart> {
+  async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string; visionImages: (string | null)[] }>): Promise<ProjectOfHeart> {
     const [updated] = await db
       .update(projectOfHeartsTable)
       .set({ ...updates, updatedAt: new Date() })

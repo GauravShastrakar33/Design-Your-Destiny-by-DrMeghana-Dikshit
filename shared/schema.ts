@@ -504,6 +504,7 @@ export const projectOfHearts = pgTable("project_of_hearts", {
   startedAt: date("started_at", { mode: "string" }),
   endedAt: date("ended_at", { mode: "string" }),
   closingReflection: text("closing_reflection"),
+  visionImages: text("vision_images").array().default([]),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });

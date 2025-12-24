@@ -42,6 +42,7 @@ import {
   generateCourseThumnailKey,
   generateLessonFileKey,
   downloadR2Object,
+  uploadBufferToR2,
 } from "./r2Upload";
 // pdf2json for extracting text with preserved line breaks
 import PDFParser from "pdf2json";
@@ -4790,6 +4791,110 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     } catch (error) {
       console.error("Error fetching POH history:", error);
       res.status(500).json({ error: "Failed to fetch POH history" });
+    }
+  });
+
+  // Configure multer for POH vision image uploads (memory storage)
+  const uploadPOHVision = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('INVALID_IMAGE'));
+      }
+    }
+  });
+
+  // 12. POST /api/poh/:id/vision - Upload vision image
+  app.post("/api/poh/:id/vision", authenticateJWT, uploadPOHVision.single('image'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const indexStr = req.body.index;
+
+      // Validate index
+      const index = parseInt(indexStr, 10);
+      if (isNaN(index) || index < 0 || index > 2) {
+        return res.status(400).json({ 
+          error: "INVALID_INDEX",
+          message: "Index must be 0, 1, or 2"
+        });
+      }
+
+      // Verify POH ownership and status
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+
+      if (poh.status !== "active") {
+        return res.status(403).json({ 
+          error: "VISION_UPLOAD_NOT_ALLOWED",
+          message: "Can only upload vision images to active POH"
+        });
+      }
+
+      // Check if file was uploaded
+      if (!req.file) {
+        return res.status(400).json({ 
+          error: "INVALID_IMAGE",
+          message: "No image file provided"
+        });
+      }
+
+      // Determine file extension
+      const extMap: { [key: string]: string } = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp'
+      };
+      const ext = extMap[req.file.mimetype] || 'jpg';
+
+      // Deterministic path: poh-visions/{user_id}/{poh_id}/vision-{index}.{ext}
+      const key = `poh-visions/${userId}/${pohId}/vision-${index}.${ext}`;
+
+      // Upload to R2
+      const uploadResult = await uploadBufferToR2(req.file.buffer, key, req.file.mimetype);
+      if (!uploadResult.success) {
+        console.error("R2 upload failed:", uploadResult.error);
+        return res.status(500).json({ error: "Failed to upload image" });
+      }
+
+      // Update vision_images array in database
+      const currentImages = poh.visionImages || [];
+      const newImages = [...currentImages];
+      
+      // Ensure array has at least 3 slots (pad with nulls)
+      while (newImages.length < 3) {
+        newImages.push(null as any);
+      }
+      
+      // Replace the image at the specified index
+      newImages[index] = uploadResult.url!;
+
+      await storage.updatePOH(pohId, { visionImages: newImages });
+
+      res.json({ 
+        success: true, 
+        vision_images: newImages,
+        uploaded_index: index
+      });
+    } catch (error: any) {
+      console.error("Error uploading vision image:", error);
+      if (error.message === 'INVALID_IMAGE') {
+        return res.status(400).json({ 
+          error: "INVALID_IMAGE",
+          message: "Only JPEG, PNG, and WebP images are allowed"
+        });
+      }
+      res.status(500).json({ error: "Failed to upload vision image" });
     }
   });
 
