@@ -5046,22 +5046,16 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.get("/admin/api/poh/progress-signals", requireAdmin, async (req, res) => {
     try {
       const today = new Date();
-      const sevenDaysAgo = new Date(today);
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const thirtyDaysAgo = new Date(today);
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
       
-      // Milestones achieved in last 7 days
-      const achieved7Result = await db.select({ count: count() })
-        .from(pohMilestones)
-        .where(and(
-          eq(pohMilestones.achieved, true),
-          gte(pohMilestones.achievedAt, sevenDaysAgoStr)
-        ));
-      const milestonesAchieved7 = Number(achieved7Result[0]?.count) || 0;
+      // Completed POH count
+      const completedPohResult = await db.select({ count: count() })
+        .from(projectOfHearts)
+        .where(eq(projectOfHearts.status, "completed"));
+      const completedPoh = Number(completedPohResult[0]?.count) || 0;
       
       // Milestones achieved in last 30 days
       const achieved30Result = await db.select({ count: count() })
@@ -5088,7 +5082,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const avgDaysToFirst = Math.round((firstMilestonesResult.rows[0] as any)?.avg_days || 0);
       
       res.json({
-        milestones_achieved_7_days: Number(milestonesAchieved7),
+        completed_poh: Number(completedPoh),
         milestones_achieved_30_days: Number(milestonesAchieved30),
         avg_days_to_first_milestone: Number(avgDaysToFirst) || 0
       });
