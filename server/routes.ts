@@ -4851,12 +4851,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const pohId = req.params.id;
       const indexStr = req.body.index;
 
-      // Validate index
+      // Validate index (4 vision slots: 0, 1, 2, 3)
       const index = parseInt(indexStr, 10);
-      if (isNaN(index) || index < 0 || index > 2) {
+      if (isNaN(index) || index < 0 || index > 3) {
         return res.status(400).json({ 
           error: "INVALID_INDEX",
-          message: "Index must be 0, 1, or 2"
+          message: "Index must be 0, 1, 2, or 3"
         });
       }
 
