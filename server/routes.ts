@@ -4259,6 +4259,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           why: activePOH.why,
           category: activePOH.category,
           started_at: activePOH.startedAt,
+          vision_images: activePOH.visionImages || [],
           milestones: milestones.map(m => ({
             id: m.id,
             text: m.text,

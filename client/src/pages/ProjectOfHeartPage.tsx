@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import HeartChakraIcon from "@/components/icons/HeartChakraIcon";
@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import {
   ChevronLeft,
   Image as ImageIcon,
@@ -68,6 +69,10 @@ export default function ProjectOfHeartPage() {
   const [editActionText, setEditActionText] = useState("");
   const [showAcknowledgeInput, setShowAcknowledgeInput] = useState(false);
   const [acknowledgementText, setAcknowledgementText] = useState("");
+  const [uploadingVisionIndex, setUploadingVisionIndex] = useState<number | null>(null);
+  const [activePOHId, setActivePOHId] = useState<string | null>(null);
+  const visionInputRef = useRef<HTMLInputElement>(null);
+  const pendingVisionIndex = useRef<number | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem(POH_STORAGE_KEY);
@@ -82,6 +87,34 @@ export default function ProjectOfHeartPage() {
         console.error("Failed to parse POH data", e);
       }
     }
+
+    const fetchActivePOH = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) return;
+        
+        const response = await fetch("/api/poh/current", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.active) {
+            setActivePOHId(data.active.id);
+            if (data.active.vision_images) {
+              setPOHData((prev) => ({ 
+                ...prev, 
+                visionImages: data.active.vision_images || [] 
+              }));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching active POH:", err);
+      }
+    };
+
+    fetchActivePOH();
   }, []);
 
   const savePOHData = (newData: POHData) => {
@@ -125,6 +158,68 @@ export default function ProjectOfHeartPage() {
       setShowAcknowledgeInput(false);
     } else {
       setShowAcknowledgeInput(true);
+    }
+  };
+
+  const handleVisionSlotClick = (index: number) => {
+    if (uploadingVisionIndex !== null) return;
+    pendingVisionIndex.current = index;
+    visionInputRef.current?.click();
+  };
+
+  const handleVisionFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || pendingVisionIndex.current === null) return;
+
+    const index = pendingVisionIndex.current;
+    pendingVisionIndex.current = null;
+    
+    if (e.target) e.target.value = "";
+
+    if (!activePOHId) {
+      console.error("No active POH ID");
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      console.error("Invalid image type");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      console.error("Image too large (max 5MB)");
+      return;
+    }
+
+    setUploadingVisionIndex(index);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("index", String(index));
+
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`/api/poh/${activePOHId}/vision`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        console.error("Upload failed:", data.error);
+        return;
+      }
+
+      const data = await response.json();
+      const newVisionImages = data.vision_images || [];
+      setPOHData((prev) => ({ ...prev, visionImages: newVisionImages }));
+      savePOHData({ ...pohData, visionImages: newVisionImages });
+    } catch (err) {
+      console.error("Vision upload error:", err);
+    } finally {
+      setUploadingVisionIndex(null);
     }
   };
 
@@ -271,11 +366,14 @@ export default function ProjectOfHeartPage() {
                 {[0, 1, 2].map((index) => (
                   <div
                     key={index}
-                    className="aspect-square rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    className="aspect-square rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative overflow-hidden"
                     style={{ backgroundColor: "rgba(112, 61, 250, 0.05)" }}
+                    onClick={() => handleVisionSlotClick(index)}
                     data-testid={`button-vision-image-${index}`}
                   >
-                    {pohData.visionImages[index] ? (
+                    {uploadingVisionIndex === index ? (
+                      <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+                    ) : pohData.visionImages[index] ? (
                       <img
                         src={pohData.visionImages[index]}
                         alt={`Vision ${index + 1}`}
@@ -290,6 +388,13 @@ export default function ProjectOfHeartPage() {
                   </div>
                 ))}
               </div>
+              <input
+                ref={visionInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleVisionFileChange}
+              />
             </div>
 
             {/* Milestones */}
