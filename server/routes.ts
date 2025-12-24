@@ -4253,13 +4253,44 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const today = new Date().toISOString().split('T')[0];
         const todayRating = await storage.getPOHRatingByDate(userId, today);
         
+        // Generate signed URLs for vision images
+        const visionImages = activePOH.visionImages || [];
+        const signedVisionImages: (string | null)[] = [];
+        for (const img of visionImages) {
+          if (img && img !== 'NULL') {
+            try {
+              // Extract key from stored URL - handle both direct R2 URLs and custom domains
+              // Format 1: https://account.r2.cloudflarestorage.com/key
+              // Format 2: https://custom-domain.com/key
+              let key: string;
+              if (img.includes('.r2.cloudflarestorage.com/')) {
+                key = img.split('.r2.cloudflarestorage.com/')[1];
+              } else if (img.startsWith('http')) {
+                // Custom domain - extract path after domain
+                const url = new URL(img);
+                key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+              } else {
+                // Already just a key
+                key = img;
+              }
+              const signedResult = await getSignedGetUrl(key, 3600); // 1 hour TTL
+              signedVisionImages.push(signedResult.success ? signedResult.url! : null);
+            } catch (err) {
+              console.error("Error generating signed URL for vision image:", err);
+              signedVisionImages.push(null);
+            }
+          } else {
+            signedVisionImages.push(null);
+          }
+        }
+        
         activeResponse = {
           id: activePOH.id,
           title: activePOH.title,
           why: activePOH.why,
           category: activePOH.category,
           started_at: activePOH.startedAt,
-          vision_images: activePOH.visionImages || [],
+          vision_images: signedVisionImages,
           milestones: milestones.map(m => ({
             id: m.id,
             text: m.text,

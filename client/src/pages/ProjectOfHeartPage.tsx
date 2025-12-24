@@ -791,27 +791,43 @@ export default function ProjectOfHeartPage() {
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">Visions</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {[0, 1, 2].map((index) => (
+                <div className="flex gap-3">
+                  {/* Two larger image slots */}
+                  {[0, 1].map((index) => (
                     <div
                       key={index}
-                      className="aspect-square rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative overflow-hidden"
+                      className="flex-1 aspect-[4/3] rounded-xl flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative overflow-hidden"
                       style={{ backgroundColor: "rgba(112, 61, 250, 0.05)" }}
                       onClick={() => handleVisionSlotClick(index)}
                       data-testid={`button-vision-image-${index}`}
                     >
                       {uploadingVisionIndex === index ? (
-                        <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+                        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
                       ) : pohState.active?.vision_images?.[index] ? (
-                        <img src={pohState.active.vision_images[index]} alt={`Vision ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
+                        <img src={pohState.active.vision_images[index]} alt={`Vision ${index + 1}`} className="w-full h-full object-cover rounded-xl" />
                       ) : (
-                        <div className="flex flex-col items-center gap-1">
-                          <ImageIcon className="w-5 h-5 text-gray-300" />
-                          <Plus className="w-3 h-3 text-gray-300" />
+                        <div className="flex flex-col items-center gap-2">
+                          <ImageIcon className="w-8 h-8 text-gray-300" />
+                          <span className="text-xs text-gray-400">Add vision</span>
                         </div>
                       )}
                     </div>
                   ))}
+                  {/* Third slot - just add button */}
+                  <div
+                    className="w-14 flex items-center justify-center rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: "rgba(112, 61, 250, 0.08)" }}
+                    onClick={() => handleVisionSlotClick(2)}
+                    data-testid="button-vision-image-2"
+                  >
+                    {uploadingVisionIndex === 2 ? (
+                      <Loader2 className="w-5 h-5 text-purple-500 animate-spin" />
+                    ) : pohState.active?.vision_images?.[2] ? (
+                      <img src={pohState.active.vision_images[2]} alt="Vision 3" className="w-full h-full object-cover rounded-xl" />
+                    ) : (
+                      <Plus className="w-6 h-6 text-purple-400" />
+                    )}
+                  </div>
                 </div>
                 <input ref={visionInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleVisionFileChange} />
               </div>
