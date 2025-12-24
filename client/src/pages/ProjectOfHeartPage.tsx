@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import HeartChakraIcon from "@/components/icons/HeartChakraIcon";
+import heartChakraPng from "@assets/generated_images/heart_chakra_anahata_symbol.png";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -70,6 +71,21 @@ export default function ProjectOfHeartPage() {
   const [, setLocation] = useLocation();
   const [loading, setLoading] = useState(true);
   const [pohState, setPOHState] = useState<POHState>({ active: null, next: null, horizon: null });
+  
+  // Safari detection for PNG fallback (Safari blurs SVG in animated containers)
+  const isSafari = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent.toLowerCase();
+    return ua.includes("safari") && !ua.includes("chrome") && !ua.includes("chromium");
+  }, []);
+  
+  // Render Heart Chakra - PNG for Safari, SVG for others
+  const renderHeartChakra = (className: string) => {
+    if (isSafari) {
+      return <img src={heartChakraPng} alt="Heart Chakra" className={className} style={{ objectFit: "contain" }} />;
+    }
+    return <HeartChakraIcon className={className} />;
+  };
   
   // Creation flow state
   const [showCreationFlow, setShowCreationFlow] = useState(false);
@@ -557,7 +573,7 @@ export default function ProjectOfHeartPage() {
                 animate={{ rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <HeartChakraIcon className="w-14 h-14" />
+                {renderHeartChakra("w-14 h-14")}
               </motion.div>
             </div>
           </motion.div>
@@ -645,7 +661,7 @@ export default function ProjectOfHeartPage() {
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ background: "radial-gradient(circle, rgba(95, 183, 125, 0.3) 0%, transparent 70%)" }}>
-                  <HeartChakraIcon className="w-13 h-13" />
+                  {renderHeartChakra("w-13 h-13")}
                 </div>
                 <div>
                   <h3 className="text-base font-semibold" style={{ color: "#5FB77D" }}>Heart Chakra — Anahata</h3>
@@ -824,7 +840,7 @@ export default function ProjectOfHeartPage() {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{ background: "radial-gradient(circle, rgba(95, 183, 125, 0.3) 0%, transparent 70%)" }}>
-                <HeartChakraIcon className="w-13 h-13" />
+                {renderHeartChakra("w-13 h-13")}
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-semibold leading-tight" style={{ color: "#5FB77D" }}>Heart Chakra — Anahata</h3>

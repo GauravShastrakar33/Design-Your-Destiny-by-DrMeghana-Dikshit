@@ -1,6 +1,3 @@
-import { useEffect, useState } from "react";
-import heartChakraPng from "@assets/generated_images/heart_chakra_anahata_symbol.png";
-
 type HeartChakraIconProps = {
   className?: string;
 };
@@ -8,34 +5,8 @@ type HeartChakraIconProps = {
 export default function HeartChakraIcon({
   className = "w-12 h-12",
 }: HeartChakraIconProps) {
-  const [isSafari, setIsSafari] = useState(false);
-
-  useEffect(() => {
-    const ua = navigator.userAgent.toLowerCase();
-    const isSafariBrowser = ua.includes("safari") && !ua.includes("chrome") && !ua.includes("chromium");
-    setIsSafari(isSafariBrowser);
-  }, []);
-
-  if (isSafari) {
-    return (
-      <img 
-        src={heartChakraPng} 
-        alt="Heart Chakra" 
-        className={className}
-        style={{ objectFit: "contain" }}
-      />
-    );
-  }
-
   return (
-    <svg 
-      className={className} 
-      viewBox="0 0 200 200" 
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      preserveAspectRatio="xMidYMid meet"
-      shapeRendering="geometricPrecision"
-    >
+    <svg className={className} viewBox="0 0 200 200" fill="none">
       {/* 12 Lotus Petals */}
       <g
         stroke="#5FB77D"
@@ -43,14 +14,10 @@ export default function HeartChakraIcon({
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
       >
         {[...Array(12)].map((_, i) => (
           <g key={i} transform={`rotate(${i * 30} 100 100)`}>
-            <path 
-              d="M 100 18 Q 92 24 88 36 Q 94 30 100 34 Q 106 30 112 36 Q 108 24 100 18" 
-              vectorEffect="non-scaling-stroke"
-            />
+            <path d="M 100 18 Q 92 24 88 36 Q 94 30 100 34 Q 106 30 112 36 Q 108 24 100 18" />
           </g>
         ))}
       </g>
@@ -63,7 +30,6 @@ export default function HeartChakraIcon({
         stroke="#5FB77D"
         strokeWidth="3.5"
         fill="none"
-        vectorEffect="non-scaling-stroke"
       />
 
       {/* Star of David — Slightly Larger, Still Balanced */}
@@ -73,19 +39,12 @@ export default function HeartChakraIcon({
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
       >
         {/* Upward triangle */}
-        <path 
-          d="M 100 52 L 140 124 L 60 124 Z" 
-          vectorEffect="non-scaling-stroke"
-        />
+        <path d="M 100 52 L 140 124 L 60 124 Z" />
 
         {/* Downward triangle */}
-        <path 
-          d="M 100 148 L 60 76 L 140 76 Z" 
-          vectorEffect="non-scaling-stroke"
-        />
+        <path d="M 100 148 L 60 76 L 140 76 Z" />
       </g>
     </svg>
   );
