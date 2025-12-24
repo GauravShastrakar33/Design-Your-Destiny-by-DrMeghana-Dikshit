@@ -298,7 +298,7 @@ export default function AdminProjectHeartPage() {
           <section data-testid="section-life-areas">
             <SectionHeader 
               title="Life Areas" 
-              description="Which life categories are users focusing on?" 
+              description="Which life categories are users focusing on? — ACTIVE POH" 
             />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card className="p-5 border border-gray-200">
