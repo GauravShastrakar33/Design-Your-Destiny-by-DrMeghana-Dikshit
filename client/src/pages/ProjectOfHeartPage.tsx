@@ -992,44 +992,24 @@ export default function ProjectOfHeartPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.25 }}>
             <div className="rounded-2xl px-5 py-6" style={{ backgroundColor: "white", boxShadow: "0 6px 28px rgba(0,0,0,0.06)" }} data-testid="card-actions-rating">
               {/* Actions Header */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "#703DFA" }}>
-                  <span className="text-white text-xs font-bold">3</span>
-                </div>
-                <span className="text-lg font-medium tracking-wide text-gray-400 uppercase">My Top 3 Actions Today</span>
-              </div>
+              <p 
+                style={{ 
+                  fontSize: "13px", 
+                  fontWeight: 600,
+                  letterSpacing: "0.8px",
+                  textTransform: "uppercase",
+                  color: "#703DFA",
+                  marginBottom: "12px"
+                }}
+              >
+                My Top 3 Actions Today
+              </p>
 
-              {/* Action List */}
+              {/* Action List - Always show 3 slots */}
               <div className="space-y-3 mb-8">
-                {(pohState.active.actions && pohState.active.actions.length > 0) ? (
-                  pohState.active.actions.map((action, index) => (
-                    <div key={action.id} className="flex items-center gap-3 group" data-testid={`action-${index}`}>
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: "rgba(112, 61, 250, 0.8)" }} />
-                      {editingAction === index ? (
-                        <div className="flex-1 flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={editActionText}
-                            onChange={(e) => setEditActionText(e.target.value)}
-                            className="flex-1 text-sm px-2 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
-                            autoFocus
-                            onBlur={saveAction}
-                            onKeyDown={(e) => e.key === "Enter" && saveAction()}
-                          />
-                          {savingActions && <Loader2 className="w-4 h-4 animate-spin" />}
-                        </div>
-                      ) : (
-                        <>
-                          <span className="text-sm text-gray-700 flex-1">{action.text}</span>
-                          <button onClick={() => { setEditingAction(index); setEditActionText(action.text); }} className="opacity-0 group-hover:opacity-100 p-1">
-                            <Edit3 className="w-3.5 h-3.5 text-gray-400" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  [0, 1, 2].map((index) => (
+                {[0, 1, 2].map((index) => {
+                  const existingAction = pohState.active?.actions?.[index];
+                  return (
                     <div key={index} className="flex items-center gap-3 group" data-testid={`action-${index}`}>
                       <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: "rgba(112, 61, 250, 0.8)" }} />
                       {editingAction === index ? (
@@ -1041,41 +1021,51 @@ export default function ProjectOfHeartPage() {
                             placeholder="Enter action..."
                             className="flex-1 text-sm px-2 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
                             autoFocus
+                            onBlur={saveAction}
+                            onKeyDown={(e) => e.key === "Enter" && saveAction()}
                           />
-                          <button onClick={saveAction}><Check className="w-4 h-4 text-green-600" /></button>
-                          <button onClick={() => setEditingAction(null)}><X className="w-4 h-4 text-gray-400" /></button>
+                          {savingActions && <Loader2 className="w-4 h-4 animate-spin" />}
                         </div>
+                      ) : existingAction ? (
+                        <>
+                          <span className="text-sm text-gray-700 flex-1">{existingAction.text}</span>
+                          <button onClick={() => { setEditingAction(index); setEditActionText(existingAction.text); }} className="opacity-0 group-hover:opacity-100 p-1">
+                            <Edit3 className="w-3.5 h-3.5 text-gray-400" />
+                          </button>
+                        </>
                       ) : (
                         <button onClick={() => { setEditingAction(index); setEditActionText(""); }} className="text-sm text-gray-400 hover:text-gray-600">
                           + Add action
                         </button>
                       )}
                     </div>
-                  ))
-                )}
+                  );
+                })}
               </div>
 
               {/* Divider */}
               <div className="h-px bg-gray-100 my-6" />
 
               {/* Daily Rating */}
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">How aligned were my actions with my intention today?</h4>
-              <Slider
-                value={[sliderValue]}
-                onValueChange={(v) => setSliderValue(v[0])}
-                onValueCommit={(v) => saveRating(v[0])}
-                max={10}
-                step={1}
-                className="w-full"
-                disabled={savingRating}
-              />
-              <div className="flex justify-between mt-2">
+              <h4 className="text-sm font-semibold text-gray-700 mb-4">How aligned were my actions with my intention today?</h4>
+              <div className="py-2">
+                <Slider
+                  value={[sliderValue]}
+                  onValueChange={(v) => setSliderValue(v[0])}
+                  onValueCommit={(v) => saveRating(v[0])}
+                  max={10}
+                  step={1}
+                  className="w-full"
+                  disabled={savingRating}
+                />
+              </div>
+              <div className="flex justify-between mt-3">
                 <span className="text-xs text-gray-400">0</span>
                 <span className="text-sm font-medium text-gray-500">{sliderValue} {savingRating && <Loader2 className="w-3 h-3 inline animate-spin ml-1" />}</span>
                 <span className="text-xs text-gray-400">10</span>
               </div>
               {ratingError && <p className="text-xs text-red-500 mt-2">{ratingError}</p>}
-              <p className="text-xs text-gray-400 mt-3">A moment of awareness, practiced daily, shapes how you show up.</p>
+              <p className="text-sm text-gray-500 mt-4">A moment of awareness, practiced daily, shapes how you show up.</p>
             </div>
           </motion.div>
         )}
