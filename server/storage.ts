@@ -16,6 +16,10 @@ import {
   type RewiringBelief, type InsertRewiringBelief,
   type UserWellnessProfile, type InsertUserWellnessProfile,
   type Event, type InsertEvent, type EventStatus,
+  type ProjectOfHeart, type InsertProjectOfHeart,
+  type PohDailyRating, type InsertPohDailyRating,
+  type PohAction, type InsertPohAction,
+  type PohMilestone, type InsertPohMilestone,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -26,7 +30,11 @@ import {
   activityLogs as activityLogsTable,
   rewiringBeliefs as rewiringBeliefsTable,
   userWellnessProfiles as userWellnessProfilesTable,
-  events as eventsTable
+  events as eventsTable,
+  projectOfHearts as projectOfHeartsTable,
+  pohDailyRatings as pohDailyRatingsTable,
+  pohActions as pohActionsTable,
+  pohMilestones as pohMilestonesTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -80,6 +88,31 @@ export interface IStorage {
   createEvent(event: InsertEvent): Promise<Event>;
   updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event | undefined>;
   cancelEvent(id: number): Promise<Event | undefined>;
+
+  // POH (Project of Heart) methods
+  getUserPOHs(userId: number): Promise<ProjectOfHeart[]>;
+  getPOHById(pohId: string): Promise<ProjectOfHeart | undefined>;
+  createPOH(data: { userId: number; title: string; why: string; category: string; status: string; startedAt: string | null }): Promise<ProjectOfHeart>;
+  updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string }>): Promise<ProjectOfHeart>;
+  completePOH(pohId: string, data: { status: string; endedAt: string; closingReflection: string }): Promise<void>;
+  promotePOHs(userId: number, today: string): Promise<void>;
+  getPOHHistory(userId: number): Promise<ProjectOfHeart[]>;
+
+  // POH Milestone methods
+  getPOHMilestones(pohId: string): Promise<PohMilestone[]>;
+  getPOHMilestoneById(milestoneId: string): Promise<PohMilestone | undefined>;
+  createPOHMilestone(data: { pohId: string; text: string; orderIndex: number }): Promise<PohMilestone>;
+  updatePOHMilestone(milestoneId: string, updates: { text: string }): Promise<PohMilestone>;
+  achievePOHMilestone(milestoneId: string, achievedAt: string): Promise<PohMilestone>;
+
+  // POH Action methods
+  getPOHActions(pohId: string): Promise<PohAction[]>;
+  replacePOHActions(pohId: string, actions: string[]): Promise<void>;
+
+  // POH Rating methods
+  getPOHRatingByDate(userId: number, localDate: string): Promise<PohDailyRating | undefined>;
+  createPOHRating(data: { userId: number; pohId: string; localDate: string; rating: number }): Promise<PohDailyRating>;
+  updatePOHRating(ratingId: string, rating: number): Promise<PohDailyRating>;
 }
 
 export class MemStorage implements IStorage {
@@ -342,6 +375,25 @@ export class MemStorage implements IStorage {
   async cancelEvent(id: number): Promise<Event | undefined> {
     return undefined;
   }
+
+  // POH stub implementations (MemStorage not used in production)
+  async getUserPOHs(userId: number): Promise<ProjectOfHeart[]> { return []; }
+  async getPOHById(pohId: string): Promise<ProjectOfHeart | undefined> { return undefined; }
+  async createPOH(data: { userId: number; title: string; why: string; category: string; status: string; startedAt: string | null }): Promise<ProjectOfHeart> { throw new Error("Not implemented in MemStorage"); }
+  async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string }>): Promise<ProjectOfHeart> { throw new Error("Not implemented in MemStorage"); }
+  async completePOH(pohId: string, data: { status: string; endedAt: string; closingReflection: string }): Promise<void> {}
+  async promotePOHs(userId: number, today: string): Promise<void> {}
+  async getPOHHistory(userId: number): Promise<ProjectOfHeart[]> { return []; }
+  async getPOHMilestones(pohId: string): Promise<PohMilestone[]> { return []; }
+  async getPOHMilestoneById(milestoneId: string): Promise<PohMilestone | undefined> { return undefined; }
+  async createPOHMilestone(data: { pohId: string; text: string; orderIndex: number }): Promise<PohMilestone> { throw new Error("Not implemented in MemStorage"); }
+  async updatePOHMilestone(milestoneId: string, updates: { text: string }): Promise<PohMilestone> { throw new Error("Not implemented in MemStorage"); }
+  async achievePOHMilestone(milestoneId: string, achievedAt: string): Promise<PohMilestone> { throw new Error("Not implemented in MemStorage"); }
+  async getPOHActions(pohId: string): Promise<PohAction[]> { return []; }
+  async replacePOHActions(pohId: string, actions: string[]): Promise<void> {}
+  async getPOHRatingByDate(userId: number, localDate: string): Promise<PohDailyRating | undefined> { return undefined; }
+  async createPOHRating(data: { userId: number; pohId: string; localDate: string; rating: number }): Promise<PohDailyRating> { throw new Error("Not implemented in MemStorage"); }
+  async updatePOHRating(ratingId: string, rating: number): Promise<PohDailyRating> { throw new Error("Not implemented in MemStorage"); }
 }
 
 export class DbStorage implements IStorage {
@@ -1491,6 +1543,202 @@ export class DbStorage implements IStorage {
       .where(eq(eventsTable.id, id))
       .returning();
     return cancelled;
+  }
+
+  // ===== POH (Project of Heart) Methods =====
+
+  async getUserPOHs(userId: number): Promise<ProjectOfHeart[]> {
+    return db
+      .select()
+      .from(projectOfHeartsTable)
+      .where(eq(projectOfHeartsTable.userId, userId))
+      .orderBy(asc(projectOfHeartsTable.createdAt));
+  }
+
+  async getPOHById(pohId: string): Promise<ProjectOfHeart | undefined> {
+    const [poh] = await db
+      .select()
+      .from(projectOfHeartsTable)
+      .where(eq(projectOfHeartsTable.id, pohId));
+    return poh;
+  }
+
+  async createPOH(data: { userId: number; title: string; why: string; category: string; status: string; startedAt: string | null }): Promise<ProjectOfHeart> {
+    const [newPOH] = await db
+      .insert(projectOfHeartsTable)
+      .values({
+        userId: data.userId,
+        title: data.title,
+        why: data.why,
+        category: data.category,
+        status: data.status,
+        startedAt: data.startedAt
+      })
+      .returning();
+    return newPOH;
+  }
+
+  async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string }>): Promise<ProjectOfHeart> {
+    const [updated] = await db
+      .update(projectOfHeartsTable)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(projectOfHeartsTable.id, pohId))
+      .returning();
+    return updated;
+  }
+
+  async completePOH(pohId: string, data: { status: string; endedAt: string; closingReflection: string }): Promise<void> {
+    await db
+      .update(projectOfHeartsTable)
+      .set({
+        status: data.status,
+        endedAt: data.endedAt,
+        closingReflection: data.closingReflection,
+        updatedAt: new Date()
+      })
+      .where(eq(projectOfHeartsTable.id, pohId));
+  }
+
+  async promotePOHs(userId: number, today: string): Promise<void> {
+    // Get all user POHs
+    const userPOHs = await this.getUserPOHs(userId);
+    
+    // Find NEXT and HORIZON
+    const nextPOH = userPOHs.find(p => p.status === "next");
+    const horizonPOH = userPOHs.find(p => p.status === "horizon");
+
+    // Promote NEXT -> ACTIVE
+    if (nextPOH) {
+      await db
+        .update(projectOfHeartsTable)
+        .set({ status: "active", startedAt: today, updatedAt: new Date() })
+        .where(eq(projectOfHeartsTable.id, nextPOH.id));
+    }
+
+    // Promote HORIZON -> NEXT
+    if (horizonPOH) {
+      await db
+        .update(projectOfHeartsTable)
+        .set({ status: "next", updatedAt: new Date() })
+        .where(eq(projectOfHeartsTable.id, horizonPOH.id));
+    }
+  }
+
+  async getPOHHistory(userId: number): Promise<ProjectOfHeart[]> {
+    return db
+      .select()
+      .from(projectOfHeartsTable)
+      .where(
+        and(
+          eq(projectOfHeartsTable.userId, userId),
+          or(
+            eq(projectOfHeartsTable.status, "completed"),
+            eq(projectOfHeartsTable.status, "closed_early")
+          )
+        )
+      )
+      .orderBy(desc(projectOfHeartsTable.endedAt));
+  }
+
+  // POH Milestone methods
+  async getPOHMilestones(pohId: string): Promise<PohMilestone[]> {
+    return db
+      .select()
+      .from(pohMilestonesTable)
+      .where(eq(pohMilestonesTable.pohId, pohId))
+      .orderBy(asc(pohMilestonesTable.orderIndex));
+  }
+
+  async getPOHMilestoneById(milestoneId: string): Promise<PohMilestone | undefined> {
+    const [milestone] = await db
+      .select()
+      .from(pohMilestonesTable)
+      .where(eq(pohMilestonesTable.id, milestoneId));
+    return milestone;
+  }
+
+  async createPOHMilestone(data: { pohId: string; text: string; orderIndex: number }): Promise<PohMilestone> {
+    const [milestone] = await db
+      .insert(pohMilestonesTable)
+      .values(data)
+      .returning();
+    return milestone;
+  }
+
+  async updatePOHMilestone(milestoneId: string, updates: { text: string }): Promise<PohMilestone> {
+    const [updated] = await db
+      .update(pohMilestonesTable)
+      .set(updates)
+      .where(eq(pohMilestonesTable.id, milestoneId))
+      .returning();
+    return updated;
+  }
+
+  async achievePOHMilestone(milestoneId: string, achievedAt: string): Promise<PohMilestone> {
+    const [updated] = await db
+      .update(pohMilestonesTable)
+      .set({ achieved: true, achievedAt })
+      .where(eq(pohMilestonesTable.id, milestoneId))
+      .returning();
+    return updated;
+  }
+
+  // POH Action methods
+  async getPOHActions(pohId: string): Promise<PohAction[]> {
+    return db
+      .select()
+      .from(pohActionsTable)
+      .where(eq(pohActionsTable.pohId, pohId))
+      .orderBy(asc(pohActionsTable.orderIndex));
+  }
+
+  async replacePOHActions(pohId: string, actions: string[]): Promise<void> {
+    // Delete all existing actions for this POH
+    await db
+      .delete(pohActionsTable)
+      .where(eq(pohActionsTable.pohId, pohId));
+
+    // Insert new actions
+    if (actions.length > 0) {
+      await db
+        .insert(pohActionsTable)
+        .values(actions.map((text, index) => ({
+          pohId,
+          text,
+          orderIndex: index
+        })));
+    }
+  }
+
+  // POH Rating methods
+  async getPOHRatingByDate(userId: number, localDate: string): Promise<PohDailyRating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(pohDailyRatingsTable)
+      .where(
+        and(
+          eq(pohDailyRatingsTable.userId, userId),
+          eq(pohDailyRatingsTable.localDate, localDate)
+        )
+      );
+    return rating;
+  }
+
+  async createPOHRating(data: { userId: number; pohId: string; localDate: string; rating: number }): Promise<PohDailyRating> {
+    const [rating] = await db
+      .insert(pohDailyRatingsTable)
+      .values(data)
+      .returning();
+    return rating;
+  }
+
+  async updatePOHRating(ratingId: string, rating: number): Promise<PohDailyRating> {
+    const [updated] = await db
+      .update(pohDailyRatingsTable)
+      .set({ rating })
+      .where(eq(pohDailyRatingsTable.id, ratingId))
+      .returning();
+    return updated;
   }
 }
 

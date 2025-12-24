@@ -39,9 +39,30 @@ Core pages include Home, Courses, Profile, Progress Insights, Project of Heart, 
   8. Someday POH (very muted, identity continuity)
   9. History link (navigates to separate history page)
 - **History Page**: Shows past projects with status (Completed/Closed Early), achieved milestones, and reflections
-- **Current State**: UI-only with localStorage persistence (`@app:poh_ui_data`); no backend APIs yet
 - **Color Scheme**: Purple (#703DFA), Green (#5FB77D), Gold (#E5AC19 for acknowledgement accents)
 - **Psychological Flow**: Meaning → Identity → Emotion → Direction → Action → Reflection → Hope → Continuity
+
+**POH Backend Implementation**:
+- **Database Tables**: 4 tables with foreign key constraints
+  - `project_of_hearts`: Main POH records (UUID IDs, userId FK, title, why, category, status, startedAt, endedAt, closingReflection)
+  - `poh_milestones`: Milestones per POH (UUID IDs, pohId FK, text, achieved, achievedAt, orderIndex)
+  - `poh_actions`: Top 3 daily actions (UUID IDs, pohId FK, text, orderIndex)
+  - `poh_daily_ratings`: One rating per user per day (UUID IDs, userId FK, pohId FK, localDate UNIQUE per user, rating 0-10)
+- **Status Flow**: active → completed/closed_early | next → active | horizon → next
+- **Auto-Promotion**: When ACTIVE completes/closes, NEXT promotes to ACTIVE (with startedAt set), HORIZON promotes to NEXT
+- **API Endpoints** (all require JWT authentication):
+  - `GET /api/poh/current` - Returns {active, next, horizon} with full milestones/actions
+  - `POST /api/poh` - Create POH (auto-assigns slot: active→next→horizon or NO_SLOT_AVAILABLE)
+  - `PUT /api/poh/:id` - Update title/why/category
+  - `POST /api/poh/:id/milestones` - Create milestone (max 5 per POH)
+  - `PUT /api/poh/milestone/:id` - Edit milestone text (MILESTONE_LOCKED if achieved)
+  - `POST /api/poh/milestone/:id/achieve` - Achieve milestone (locks it)
+  - `PUT /api/poh/:id/actions` - Replace all actions (max 3, min 1 char each)
+  - `POST /api/poh/rate` - Create/update daily rating (one per user per day)
+  - `POST /api/poh/:id/complete` - Complete POH (min 20 char reflection, triggers auto-promote)
+  - `POST /api/poh/:id/close` - Close early (min 20 char reflection, triggers auto-promote)
+  - `GET /api/poh/history` - Get completed/closed POHs with milestones
+- **Categories**: career, health, relationships, wealth (Zod enum validated)
 
 **Progress Insights**: Tracks only PROCESS and PLAYLIST activity types (Spiritual Breaths and Process Checklist features have been removed).
 

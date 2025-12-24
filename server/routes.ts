@@ -22,6 +22,12 @@ import {
   insertDailyQuoteSchema,
   events as eventsTable,
   insertEventSchema,
+  projectOfHearts,
+  pohDailyRatings,
+  pohActions,
+  pohMilestones,
+  pohCategoryEnum,
+  pohStatusEnum,
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -4217,6 +4223,576 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     } catch (error) {
       console.error("Error fetching event:", error);
       res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+
+  // ===== PROJECT OF HEART (POH) APIs =====
+
+  // 1. GET /api/poh/current - Fetch current POH state
+  app.get("/api/poh/current", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      
+      // Fetch all POHs for user
+      const userPOHs = await storage.getUserPOHs(userId);
+      
+      const activePOH = userPOHs.find(p => p.status === "active");
+      const nextPOH = userPOHs.find(p => p.status === "next");
+      const horizonPOH = userPOHs.find(p => p.status === "horizon");
+
+      let activeResponse = null;
+      if (activePOH) {
+        const milestones = await storage.getPOHMilestones(activePOH.id);
+        const actions = await storage.getPOHActions(activePOH.id);
+        
+        activeResponse = {
+          id: activePOH.id,
+          title: activePOH.title,
+          why: activePOH.why,
+          category: activePOH.category,
+          started_at: activePOH.startedAt,
+          milestones: milestones.map(m => ({
+            id: m.id,
+            text: m.text,
+            achieved: m.achieved,
+            achieved_at: m.achievedAt,
+            order_index: m.orderIndex
+          })),
+          actions: actions.map(a => ({
+            id: a.id,
+            text: a.text,
+            order: a.orderIndex
+          }))
+        };
+      }
+
+      // Build next POH response with milestones/actions
+      let nextResponse = null;
+      if (nextPOH) {
+        const nextMilestones = await storage.getPOHMilestones(nextPOH.id);
+        const nextActions = await storage.getPOHActions(nextPOH.id);
+        nextResponse = {
+          id: nextPOH.id,
+          title: nextPOH.title,
+          why: nextPOH.why,
+          category: nextPOH.category,
+          milestones: nextMilestones.map(m => ({
+            id: m.id,
+            text: m.text,
+            achieved: m.achieved,
+            achieved_at: m.achievedAt,
+            order_index: m.orderIndex
+          })),
+          actions: nextActions.map(a => ({
+            id: a.id,
+            text: a.text,
+            order: a.orderIndex
+          }))
+        };
+      }
+
+      // Build horizon POH response with milestones/actions
+      let horizonResponse = null;
+      if (horizonPOH) {
+        const horizonMilestones = await storage.getPOHMilestones(horizonPOH.id);
+        const horizonActions = await storage.getPOHActions(horizonPOH.id);
+        horizonResponse = {
+          id: horizonPOH.id,
+          title: horizonPOH.title,
+          why: horizonPOH.why,
+          category: horizonPOH.category,
+          milestones: horizonMilestones.map(m => ({
+            id: m.id,
+            text: m.text,
+            achieved: m.achieved,
+            achieved_at: m.achievedAt,
+            order_index: m.orderIndex
+          })),
+          actions: horizonActions.map(a => ({
+            id: a.id,
+            text: a.text,
+            order: a.orderIndex
+          }))
+        };
+      }
+
+      res.json({
+        active: activeResponse,
+        next: nextResponse,
+        horizon: horizonResponse
+      });
+    } catch (error) {
+      console.error("Error fetching current POH:", error);
+      res.status(500).json({ error: "Failed to fetch POH state" });
+    }
+  });
+
+  // 2. POST /api/poh - Create Project of Heart
+  app.post("/api/poh", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      const { title, why, category } = req.body;
+
+      // Validate inputs
+      if (!title || title.length > 120) {
+        return res.status(400).json({ error: "Title is required and must be <= 120 characters" });
+      }
+      if (!why || why.length > 500) {
+        return res.status(400).json({ error: "Why is required and must be <= 500 characters" });
+      }
+      if (!pohCategoryEnum.safeParse(category).success) {
+        return res.status(400).json({ error: "Invalid category. Must be: career, health, relationships, or wealth" });
+      }
+
+      // Check existing POHs to determine status
+      const userPOHs = await storage.getUserPOHs(userId);
+      const hasActive = userPOHs.some(p => p.status === "active");
+      const hasNext = userPOHs.some(p => p.status === "next");
+      const hasHorizon = userPOHs.some(p => p.status === "horizon");
+
+      let status: "active" | "next" | "horizon";
+      let startedAt: string | null = null;
+
+      if (!hasActive) {
+        status = "active";
+        startedAt = new Date().toISOString().split('T')[0]; // Today
+      } else if (!hasNext) {
+        status = "next";
+      } else if (!hasHorizon) {
+        status = "horizon";
+      } else {
+        return res.status(400).json({ 
+          error: "Cannot create more POHs. You already have active, next, and horizon projects." 
+        });
+      }
+
+      const newPOH = await storage.createPOH({
+        userId,
+        title,
+        why,
+        category,
+        status,
+        startedAt
+      });
+
+      res.status(201).json(newPOH);
+    } catch (error) {
+      console.error("Error creating POH:", error);
+      res.status(500).json({ error: "Failed to create POH" });
+    }
+  });
+
+  // 3. PUT /api/poh/:id - Update POH text
+  app.put("/api/poh/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const { title, why, category } = req.body;
+
+      // Verify ownership
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+
+      // Validate inputs
+      const updates: any = {};
+      
+      if (title !== undefined) {
+        if (title.length > 120) {
+          return res.status(400).json({ error: "Title must be <= 120 characters" });
+        }
+        updates.title = title;
+      }
+      
+      // Only active POH can update "why"
+      if (why !== undefined) {
+        if (poh.status !== "active") {
+          return res.status(403).json({ error: "Only active POH can update 'why' field" });
+        }
+        if (why.length > 500) {
+          return res.status(400).json({ error: "Why must be <= 500 characters" });
+        }
+        updates.why = why;
+      }
+      
+      if (category !== undefined) {
+        if (!pohCategoryEnum.safeParse(category).success) {
+          return res.status(400).json({ error: "Invalid category" });
+        }
+        updates.category = category;
+      }
+
+      const updatedPOH = await storage.updatePOH(pohId, updates);
+      res.json(updatedPOH);
+    } catch (error) {
+      console.error("Error updating POH:", error);
+      res.status(500).json({ error: "Failed to update POH" });
+    }
+  });
+
+  // 4. POST /api/poh/:id/milestones - Add milestone
+  app.post("/api/poh/:id/milestones", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const { text } = req.body;
+
+      // Verify ownership and status
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only add milestones to active POH" });
+      }
+
+      // Validate text
+      if (!text || text.length > 200) {
+        return res.status(400).json({ error: "Milestone text is required and must be <= 200 characters" });
+      }
+
+      // Check milestone count (max 5)
+      const existingMilestones = await storage.getPOHMilestones(pohId);
+      if (existingMilestones.length >= 5) {
+        return res.status(400).json({ error: "Maximum 5 milestones per POH" });
+      }
+
+      const milestone = await storage.createPOHMilestone({
+        pohId,
+        text,
+        orderIndex: existingMilestones.length
+      });
+
+      res.status(201).json(milestone);
+    } catch (error) {
+      console.error("Error creating milestone:", error);
+      res.status(500).json({ error: "Failed to create milestone" });
+    }
+  });
+
+  // 5. POST /api/poh/milestone/:id/achieve - Achieve milestone
+  app.post("/api/poh/milestone/:id/achieve", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      const milestoneId = req.params.id;
+
+      // Get milestone and verify ownership via POH
+      const milestone = await storage.getPOHMilestoneById(milestoneId);
+      if (!milestone) {
+        return res.status(404).json({ error: "Milestone not found" });
+      }
+
+      const poh = await storage.getPOHById(milestone.pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "Milestone not found" });
+      }
+
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only achieve milestones on active POH" });
+      }
+
+      if (milestone.achieved) {
+        return res.status(400).json({ error: "Milestone already achieved" });
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const updatedMilestone = await storage.achievePOHMilestone(milestoneId, today);
+
+      res.json(updatedMilestone);
+    } catch (error) {
+      console.error("Error achieving milestone:", error);
+      res.status(500).json({ error: "Failed to achieve milestone" });
+    }
+  });
+
+  // 6. PUT /api/poh/milestone/:id - Update milestone
+  app.put("/api/poh/milestone/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      const milestoneId = req.params.id;
+      const { text } = req.body;
+
+      // Get milestone and verify ownership
+      const milestone = await storage.getPOHMilestoneById(milestoneId);
+      if (!milestone) {
+        return res.status(404).json({ error: "Milestone not found" });
+      }
+
+      const poh = await storage.getPOHById(milestone.pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "Milestone not found" });
+      }
+
+      // Cannot edit achieved milestone
+      if (milestone.achieved) {
+        return res.status(403).json({ 
+          error: "MILESTONE_LOCKED",
+          message: "Achieved milestones cannot be edited."
+        });
+      }
+
+      if (!text || text.length > 200) {
+        return res.status(400).json({ error: "Milestone text must be <= 200 characters" });
+      }
+
+      const updatedMilestone = await storage.updatePOHMilestone(milestoneId, { text });
+      res.json(updatedMilestone);
+    } catch (error) {
+      console.error("Error updating milestone:", error);
+      res.status(500).json({ error: "Failed to update milestone" });
+    }
+  });
+
+  // 7. PUT /api/poh/:id/actions - Update actions (Top 3)
+  app.put("/api/poh/:id/actions", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const { actions } = req.body;
+
+      // Verify ownership
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only update actions on active POH" });
+      }
+
+      // Validate actions
+      if (!Array.isArray(actions) || actions.length > 3) {
+        return res.status(400).json({ error: "Actions must be an array with max 3 items" });
+      }
+
+      for (const action of actions) {
+        if (typeof action !== 'string' || action.length === 0) {
+          return res.status(400).json({ error: "Each action must be a non-empty string" });
+        }
+      }
+
+      // Replace all actions
+      await storage.replacePOHActions(pohId, actions);
+      
+      const updatedActions = await storage.getPOHActions(pohId);
+      res.json(updatedActions);
+    } catch (error) {
+      console.error("Error updating actions:", error);
+      res.status(500).json({ error: "Failed to update actions" });
+    }
+  });
+
+  // 8. POST /api/poh/rate - Save daily rating
+  app.post("/api/poh/rate", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      const { poh_id, rating, local_date } = req.body;
+
+      // Validate POH
+      const poh = await storage.getPOHById(poh_id);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only rate active POH" });
+      }
+
+      // Validate rating
+      if (typeof rating !== 'number' || rating < 0 || rating > 10) {
+        return res.status(400).json({ error: "Rating must be between 0 and 10" });
+      }
+
+      // Validate date format
+      if (!local_date || !/^\d{4}-\d{2}-\d{2}$/.test(local_date)) {
+        return res.status(400).json({ error: "Invalid date format. Use YYYY-MM-DD" });
+      }
+
+      // Check if rating exists for this date
+      const existingRating = await storage.getPOHRatingByDate(userId, local_date);
+      
+      let result;
+      if (existingRating) {
+        // Update existing rating
+        result = await storage.updatePOHRating(existingRating.id, rating);
+      } else {
+        // Create new rating
+        result = await storage.createPOHRating({
+          userId,
+          pohId: poh_id,
+          localDate: local_date,
+          rating
+        });
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error saving rating:", error);
+      res.status(500).json({ error: "Failed to save rating" });
+    }
+  });
+
+  // 9. POST /api/poh/:id/complete - Complete POH
+  app.post("/api/poh/:id/complete", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const { closing_reflection } = req.body;
+
+      // Verify ownership
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only complete active POH" });
+      }
+
+      // Validate reflection
+      if (!closing_reflection || closing_reflection.length < 20) {
+        return res.status(400).json({ error: "Closing reflection is required (minimum 20 characters)" });
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Complete the POH
+      await storage.completePOH(pohId, {
+        status: "completed",
+        endedAt: today,
+        closingReflection: closing_reflection
+      });
+
+      // Promote NEXT -> ACTIVE and HORIZON -> NEXT
+      await storage.promotePOHs(userId, today);
+
+      res.json({ success: true, message: "POH completed successfully" });
+    } catch (error) {
+      console.error("Error completing POH:", error);
+      res.status(500).json({ error: "Failed to complete POH" });
+    }
+  });
+
+  // 10. POST /api/poh/:id/close - Close POH early
+  app.post("/api/poh/:id/close", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const { closing_reflection } = req.body;
+
+      // Verify ownership
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only close active POH" });
+      }
+
+      // Validate reflection
+      if (!closing_reflection || closing_reflection.length < 20) {
+        return res.status(400).json({ error: "Closing reflection is required (minimum 20 characters)" });
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Close the POH early
+      await storage.completePOH(pohId, {
+        status: "closed_early",
+        endedAt: today,
+        closingReflection: closing_reflection
+      });
+
+      // Promote NEXT -> ACTIVE and HORIZON -> NEXT
+      await storage.promotePOHs(userId, today);
+
+      res.json({ success: true, message: "POH closed early" });
+    } catch (error) {
+      console.error("Error closing POH:", error);
+      res.status(500).json({ error: "Failed to close POH" });
+    }
+  });
+
+  // 11. GET /api/poh/history - Get POH history
+  app.get("/api/poh/history", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userId = req.user.sub;
+      
+      // Get completed and closed_early POHs
+      const historyPOHs = await storage.getPOHHistory(userId);
+      
+      // Build response with only achieved milestones
+      const historyWithMilestones = await Promise.all(
+        historyPOHs.map(async (poh) => {
+          const milestones = await storage.getPOHMilestones(poh.id);
+          const achievedMilestones = milestones
+            .filter(m => m.achieved)
+            .map(m => m.text);
+
+          return {
+            id: poh.id,
+            title: poh.title,
+            category: poh.category,
+            status: poh.status,
+            started_at: poh.startedAt,
+            ended_at: poh.endedAt,
+            closing_reflection: poh.closingReflection,
+            milestones: achievedMilestones
+          };
+        })
+      );
+
+      res.json(historyWithMilestones);
+    } catch (error) {
+      console.error("Error fetching POH history:", error);
+      res.status(500).json({ error: "Failed to fetch POH history" });
     }
   });
 
