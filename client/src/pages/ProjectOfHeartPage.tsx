@@ -791,7 +791,7 @@ export default function ProjectOfHeartPage() {
                 <div className="mb-4">
                   <span className="text-xs font-medium tracking-widest text-gray-400 uppercase">Visions</span>
                 </div>
-                <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                <div className="flex gap-6 overflow-x-auto pb-2 px-1" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                   {[0, 1, 2].map((index) => {
                     const hasImage = pohState.active?.vision_images?.[index];
                     const isUploading = uploadingVisionIndex === index;
