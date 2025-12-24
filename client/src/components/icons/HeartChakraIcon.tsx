@@ -6,7 +6,13 @@ export default function HeartChakraIcon({
   className = "w-12 h-12",
 }: HeartChakraIconProps) {
   return (
-    <svg className={className} viewBox="0 0 200 200" fill="none">
+    <svg 
+      className={className} 
+      viewBox="0 0 200 200" 
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMid meet"
+    >
       {/* 12 Lotus Petals */}
       <g
         stroke="#5FB77D"
