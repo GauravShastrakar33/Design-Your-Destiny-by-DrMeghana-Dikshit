@@ -993,22 +993,24 @@ export default function ProjectOfHeartPage() {
               </div>
               {ratingError && <p className="text-xs text-red-500 mt-2">{ratingError}</p>}
               <p className="text-xs text-gray-400 mt-3">A moment of awareness, practiced daily, shapes how you show up.</p>
+
+              {/* Re-align Link - bottom right of Active POH card */}
+              <div className="flex justify-end mt-4">
+                <button onClick={() => openRealignFor("active")} className="text-sm text-purple-500 hover:text-purple-600" data-testid="button-realign-active">
+                  Re-align →
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
 
-        {/* Re-align Button (after Active) */}
-        {pohState.active && (
-          <div className="flex flex-col items-center gap-2">
-            <button onClick={() => openRealignFor("active")} className="text-sm text-purple-500 hover:text-purple-600" data-testid="button-realign-active">
-              Re-align →
-            </button>
-            {!pohState.next && (
-              <Button variant="outline" onClick={() => setShowCreateNextModal(true)} className="mt-2" data-testid="button-create-next">
-                <Plus className="w-4 h-4 mr-2" />
-                Create NEXT POH
-              </Button>
-            )}
+        {/* Create NEXT POH Button */}
+        {pohState.active && !pohState.next && (
+          <div className="flex justify-center">
+            <Button variant="outline" onClick={() => setShowCreateNextModal(true)} data-testid="button-create-next">
+              <Plus className="w-4 h-4 mr-2" />
+              Create NEXT POH
+            </Button>
           </div>
         )}
 
@@ -1028,20 +1030,13 @@ export default function ProjectOfHeartPage() {
           </motion.div>
         )}
 
-        {/* Re-align and Create Horizon buttons */}
-        {pohState.active && (
-          <div className="flex flex-col items-center gap-2">
-            {pohState.next && (
-              <button onClick={() => openRealignFor("next")} className="text-sm text-purple-500 hover:text-purple-600" data-testid="button-realign-next">
-                Re-align →
-              </button>
-            )}
-            {!pohState.horizon && (
-              <Button variant="outline" onClick={() => setShowCreateHorizonModal(true)} className="mt-2" data-testid="button-create-horizon">
-                <Plus className="w-4 h-4 mr-2" />
-                Create NORTH STAR
-              </Button>
-            )}
+        {/* Create NORTH STAR Button */}
+        {pohState.active && !pohState.horizon && (
+          <div className="flex justify-center">
+            <Button variant="outline" onClick={() => setShowCreateHorizonModal(true)} data-testid="button-create-horizon">
+              <Plus className="w-4 h-4 mr-2" />
+              Create NORTH STAR
+            </Button>
           </div>
         )}
 
@@ -1060,14 +1055,6 @@ export default function ProjectOfHeartPage() {
           </motion.div>
         )}
 
-        {/* Final Re-align button */}
-        {pohState.horizon && (
-          <div className="flex justify-center">
-            <button onClick={() => openRealignFor("horizon")} className="text-sm text-purple-500 hover:text-purple-600" data-testid="button-realign-horizon">
-              Re-align →
-            </button>
-          </div>
-        )}
 
         {/* History Link */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.45 }}>
