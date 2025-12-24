@@ -803,8 +803,8 @@ export default function ProjectOfHeartPage() {
                         onClick={() => handleVisionSlotClick(index)}
                         data-testid={`button-vision-image-${index}`}
                         style={{
-                          width: "152px",
-                          height: "152px",
+                          width: "140px",
+                          height: "140px",
                           borderRadius: "18px",
                           backgroundColor: hasImage ? "#FAFAFA" : "#F8F8F8",
                           border: hasImage ? "1px solid rgba(0,0,0,0.06)" : "2px dashed rgba(0,0,0,0.12)",
