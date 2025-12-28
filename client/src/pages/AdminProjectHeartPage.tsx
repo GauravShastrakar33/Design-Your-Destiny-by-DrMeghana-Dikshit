@@ -263,7 +263,7 @@ export default function AdminProjectHeartPage() {
           <section data-testid="section-daily-checkins">
             <SectionHeader
               title="Daily Check-ins"
-              description="How many users are taking a daily self-rating?"
+              description="How many users are taking a daily self-rating on scale on 1 to 10?"
             />
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
               <Card className="p-5 border border-gray-200 lg:col-span-1">

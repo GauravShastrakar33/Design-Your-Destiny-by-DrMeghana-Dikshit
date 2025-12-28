@@ -583,3 +583,20 @@ export const insertPohMilestoneSchema = createInsertSchema(pohMilestones).omit({
 
 export type InsertPohMilestone = z.infer<typeof insertPohMilestoneSchema>;
 export type PohMilestone = typeof pohMilestones.$inferSelect;
+
+// Device Tokens for Push Notifications
+export const deviceTokens = pgTable("device_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: text("token").notNull().unique(),
+  platform: varchar("platform", { length: 10 }).notNull().default("web"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDeviceToken = z.infer<typeof insertDeviceTokenSchema>;
+export type DeviceToken = typeof deviceTokens.$inferSelect;
