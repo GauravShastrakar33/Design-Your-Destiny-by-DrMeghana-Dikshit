@@ -5,14 +5,23 @@ let fcmInstance: admin.messaging.Messaging | null = null;
 export function initializeFirebaseAdmin() {
   if (admin.apps.length === 0) {
     const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
-    
+
     if (!serviceAccountJson) {
-      console.warn("FIREBASE_SERVICE_ACCOUNT not set. Push notifications will be disabled.");
+      console.warn(
+        "FIREBASE_SERVICE_ACCOUNT not set. Push notifications will be disabled.",
+      );
       return null;
     }
 
     try {
       const serviceAccount = JSON.parse(serviceAccountJson);
+
+      // 🔍 TEMP VERIFICATION LOG (ADD THIS)
+      console.log(
+        "🔥 Firebase Admin initialized for:",
+        serviceAccount.project_id,
+      );
+
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
@@ -25,7 +34,7 @@ export function initializeFirebaseAdmin() {
   } else {
     fcmInstance = admin.messaging();
   }
-  
+
   return fcmInstance;
 }
 
@@ -40,13 +49,21 @@ export async function sendPushNotification(
   tokens: string[],
   title: string,
   body: string,
-  data?: Record<string, string>
-): Promise<{ successCount: number; failureCount: number; failedTokens: string[] }> {
+  data?: Record<string, string>,
+): Promise<{
+  successCount: number;
+  failureCount: number;
+  failedTokens: string[];
+}> {
   const fcm = getFCM();
-  
+
   if (!fcm) {
     console.error("FCM not initialized");
-    return { successCount: 0, failureCount: tokens.length, failedTokens: tokens };
+    return {
+      successCount: 0,
+      failureCount: tokens.length,
+      failedTokens: tokens,
+    };
   }
 
   if (tokens.length === 0) {
@@ -68,7 +85,7 @@ export async function sendPushNotification(
 
   try {
     const response = await fcm.sendEachForMulticast(message);
-    
+
     const failedTokens: string[] = [];
     response.responses.forEach((resp, idx) => {
       if (!resp.success) {
@@ -84,6 +101,10 @@ export async function sendPushNotification(
     };
   } catch (error) {
     console.error("Error sending multicast notification:", error);
-    return { successCount: 0, failureCount: tokens.length, failedTokens: tokens };
+    return {
+      successCount: 0,
+      failureCount: tokens.length,
+      failedTokens: tokens,
+    };
   }
 }

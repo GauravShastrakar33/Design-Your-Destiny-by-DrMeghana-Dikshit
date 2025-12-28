@@ -2,7 +2,8 @@ import { getToken, onMessage } from "firebase/messaging";
 import { getFirebaseMessaging } from "@/lib/firebase";
 import { apiRequest } from "@/lib/queryClient";
 
-const VAPID_KEY = "BMrLLVU6E1DhWCD8jqgFWyamRpSOXMMbtBgbXxa4qVqMO_sctWDVASLKOLJv_zXi3MzTslf2Mg9TfIVYKWDjrNI";
+const VAPID_KEY =
+  "BMrLLVU6E1DhWCD8jqgFWyamRpSOXMMbtBgbXxa4qVqMO_sctWDVASLKOLJv_zXi3MzTslf2Mg9TfIVYKWDjrNI";
 
 export function isNotificationsEnabled(): boolean {
   if (!("Notification" in window)) return false;
@@ -30,8 +31,9 @@ export async function requestNotificationPermission(): Promise<boolean> {
   try {
     const token = await getToken(messaging, { vapidKey: VAPID_KEY });
     if (!token) return false;
-    
-    console.log("FCM token obtained:", token.substring(0, 20) + "...");
+
+    // console.log("FCM token obtained:", token.substring(0, 20) + "...");
+    console.log("🔥 FCM TOKEN:", token);
     const registered = await registerDeviceToken(token);
     return registered;
   } catch (error) {
@@ -42,7 +44,9 @@ export async function requestNotificationPermission(): Promise<boolean> {
 
 export async function registerDeviceToken(token: string): Promise<boolean> {
   try {
-    await apiRequest("POST", "/api/v1/notifications/register-device", { token });
+    await apiRequest("POST", "/api/v1/notifications/register-device", {
+      token,
+    });
     console.log("Device token registered successfully");
     return true;
   } catch (error) {

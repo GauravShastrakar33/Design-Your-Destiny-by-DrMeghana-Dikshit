@@ -1,9 +1,26 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
+import fs from "fs";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeFirebaseAdmin } from "./lib/firebaseAdmin";
 
 const app = express();
+
+// 🔥 FORCE serve Firebase service worker (bypass Vite)
+app.get("/firebase-messaging-sw.js", (req, res) => {
+  const swPath = path.join(
+    process.cwd(),
+    "client/public/firebase-messaging-sw.js",
+  );
+
+  if (!fs.existsSync(swPath)) {
+    return res.status(404).send("Service worker not found");
+  }
+
+  res.setHeader("Content-Type", "application/javascript");
+  res.sendFile(swPath);
+});
 
 declare module "http" {
   interface IncomingMessage {
@@ -52,7 +69,7 @@ app.use((req, res, next) => {
 (async () => {
   // Initialize Firebase Admin SDK for push notifications
   initializeFirebaseAdmin();
-  
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
