@@ -20,6 +20,7 @@ import AdminSessionBannerFormPage from "@/pages/AdminSessionBannerFormPage";
 import AdminQuotesPage from "@/pages/AdminQuotesPage";
 import AdminEventsPage from "@/pages/AdminEventsPage";
 import AdminEventFormPage from "@/pages/AdminEventFormPage";
+import AdminNotificationsPage from "@/pages/AdminNotificationsPage";
 import CourseCreateStep1 from "@/pages/CourseCreateStep1";
 import CourseCreateStep2 from "@/pages/CourseCreateStep2";
 import CourseCreateStep3 from "@/pages/CourseCreateStep3";
@@ -58,6 +59,7 @@ export default function AdminRoutes() {
       <Route path="/admin/events" component={AdminEventsPage} />
       <Route path="/admin/events/new" component={AdminEventFormPage} />
       <Route path="/admin/events/:id/edit" component={AdminEventFormPage} />
+      <Route path="/admin/notifications" component={AdminNotificationsPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -5028,6 +5028,22 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
+  // Admin: Get notification stats
+  app.get("/admin/api/notifications/stats", requireAdmin, async (req, res) => {
+    try {
+      const allTokens = await db.select().from(deviceTokens);
+      const uniqueUserIds = new Set(allTokens.map(t => t.userId));
+      
+      res.json({
+        totalDevices: allTokens.length,
+        uniqueUsers: uniqueUserIds.size,
+      });
+    } catch (error: any) {
+      console.error("Error getting notification stats:", error);
+      res.status(500).json({ error: "Failed to get stats" });
+    }
+  });
+
   // Admin: Send test notification to all registered devices
   app.post("/admin/api/notifications/test", requireAdmin, async (req, res) => {
     try {
