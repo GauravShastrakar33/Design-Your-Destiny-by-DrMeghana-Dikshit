@@ -1,0 +1,157 @@
+Fix two critical issues:
+
+1️⃣ Backend bug: device tokens are saved with user_id = null
+2️⃣ Frontend bug: notification toggle shows enabled based on browser permission instead of DB state
+
+Do not change notification architecture.
+Do not touch browser permission behavior.
+
+🔧 FIX 1 — Backend: Correct User ID + Defensive Guard
+Problem
+
+The backend is reading req.user.id, but JWT payload uses req.user.sub.
+
+Required Fix (MANDATORY)
+
+In all notification routes, replace:
+
+const userId = req.user.id;
+
+
+with:
+
+const userId = req.user.sub;
+
+Add defensive guard (recommended)
+
+Immediately after reading userId:
+
+if (!userId) {
+  return res.status(401).json({ error: "Unauthorized" });
+}
+
+
+This must be applied to:
+
+POST /api/v1/notifications/register-device
+
+DELETE /api/v1/notifications/unregister-device
+
+Any future notification-related route
+
+🔧 FIX 2 — Backend: Notification Status Endpoint (Source of Truth)
+Add a new endpoint
+GET /api/v1/notifications/status
+
+Behavior
+
+Uses JWT auth
+
+Reads from device_tokens
+
+Returns whether the current user has at least one registered device
+
+Implementation
+app.get(
+  "/api/v1/notifications/status",
+  authenticateJWT,
+  async (req, res) => {
+    const userId = req.user.sub;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const tokens = await db
+      .select()
+      .from(deviceTokens)
+      .where(eq(deviceTokens.userId, userId))
+      .limit(1);
+
+    res.json({ enabled: tokens.length > 0 });
+  }
+);
+
+🎨 FIX 3 — Frontend: Correct Notification Toggle Logic
+Problem
+
+UI currently uses:
+
+Notification.permission === "granted"
+
+
+This is browser-level, not user-level.
+
+Correct Behavior (MANDATORY)
+
+The toggle must reflect DB state, not browser permission.
+
+Frontend Changes
+1️⃣ Fetch notification status on Profile load
+GET /api/v1/notifications/status
+
+
+Response:
+
+{ "enabled": true | false }
+
+
+Use this value to control the toggle state.
+
+2️⃣ Toggle behavior
+Action	What to do
+Enable	Request browser permission → get FCM token → call /register-device
+Disable	Call /unregister-device only
+
+🚫 Do NOT revoke browser permission
+🚫 Do NOT use Notification.permission for UI state
+
+3️⃣ UI rule (important)
+toggle.checked = backendStatus.enabled
+
+
+This ensures:
+
+Correct behavior across users
+
+Correct behavior across browsers
+
+Works later for Android & iOS
+
+🧪 ACCEPTANCE CRITERIA
+
+After this fix:
+
+✅ device_tokens.user_id is never null
+
+✅ Tokens are saved correctly after enabling notifications
+
+✅ Toggle shows OFF for users with no tokens
+
+✅ Toggle shows ON only when DB has tokens
+
+✅ Logging out + logging in as another user does NOT leak state
+
+✅ Browser permission behavior is untouched
+
+🚫 DO NOT DO
+
+❌ Do not store notification state in localStorage
+
+❌ Do not auto-enable toggle based on browser permission
+
+❌ Do not attempt to revoke browser permissions
+
+❌ Do not add Android/iOS logic yet
+
+🧠 RESULT AFTER THIS PROMPT
+
+You will have:
+
+✅ Correct token registration
+
+✅ Correct per-user notification state
+
+✅ Clean foundation for Phase 2 (Android + iOS FCM)
+
+✅ No future refactor needed

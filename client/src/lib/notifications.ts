@@ -5,9 +5,31 @@ import { apiRequest } from "@/lib/queryClient";
 const VAPID_KEY =
   "BMrLLVU6E1DhWCD8jqgFWyamRpSOXMMbtBgbXxa4qVqMO_sctWDVASLKOLJv_zXi3MzTslf2Mg9TfIVYKWDjrNI";
 
-export function isNotificationsEnabled(): boolean {
-  if (!("Notification" in window)) return false;
-  return Notification.permission === "granted";
+// Check if browser supports notifications
+export function isNotificationsSupported(): boolean {
+  return "Notification" in window;
+}
+
+// Fetch notification status from backend (DB source of truth)
+export async function getNotificationStatus(): Promise<boolean> {
+  try {
+    const token = localStorage.getItem("@app:user_token");
+    if (!token) return false;
+    
+    const response = await fetch("/api/v1/notifications/status", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) return false;
+    
+    const data = await response.json();
+    return data.enabled === true;
+  } catch (error) {
+    console.error("Error fetching notification status:", error);
+    return false;
+  }
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -61,7 +83,7 @@ export async function initializePushNotifications(): Promise<boolean> {
 
 export async function unregisterDeviceTokens(): Promise<boolean> {
   try {
-    await apiRequest("DELETE", "/api/v1/notifications/unregister-device", {});
+    await apiRequest("DELETE", "/api/v1/notifications/unregister-device", undefined);
     console.log("Device tokens unregistered successfully");
     return true;
   } catch (error) {

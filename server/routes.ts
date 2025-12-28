@@ -4939,6 +4939,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.post("/api/v1/notifications/register-device", authenticateJWT, async (req, res) => {
     try {
       const userId = (req as any).user.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
       const { token } = req.body;
       
       if (!token || typeof token !== "string") {
@@ -4979,6 +4984,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.delete("/api/v1/notifications/unregister-device", authenticateJWT, async (req, res) => {
     try {
       const userId = (req as any).user.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
       const { token } = req.body;
       
       if (token) {
@@ -4994,6 +5004,27 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     } catch (error: any) {
       console.error("Error unregistering device token:", error);
       res.status(500).json({ error: "Failed to unregister device" });
+    }
+  });
+
+  // Get notification status for current user (DB source of truth)
+  app.get("/api/v1/notifications/status", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const tokens = await db.select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.userId, userId))
+        .limit(1);
+
+      res.json({ enabled: tokens.length > 0 });
+    } catch (error: any) {
+      console.error("Error getting notification status:", error);
+      res.status(500).json({ error: "Failed to get notification status" });
     }
   });
 

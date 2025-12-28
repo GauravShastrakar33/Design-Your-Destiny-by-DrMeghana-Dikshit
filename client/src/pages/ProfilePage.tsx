@@ -26,7 +26,7 @@ import {
   Sun,
   Loader2,
 } from "lucide-react";
-import { requestNotificationPermission, isNotificationsEnabled, unregisterDeviceTokens } from "@/lib/notifications";
+import { requestNotificationPermission, getNotificationStatus, unregisterDeviceTokens } from "@/lib/notifications";
 import { Card, CardContent } from "@/components/ui/card";
 import type { UserWellnessProfile } from "@shared/schema";
 import ConsistencyCalendar from "@/components/ConsistencyCalendar";
@@ -81,26 +81,41 @@ export default function ProfilePage() {
     const savedUserName = localStorage.getItem("@app:userName");
     setUserName(savedUserName || "UserName");
     
-    // Check notification status
-    setNotificationsEnabled(isNotificationsEnabled());
+    // Check notification status from backend (DB source of truth)
+    const checkNotificationStatus = async () => {
+      const enabled = await getNotificationStatus();
+      setNotificationsEnabled(enabled);
+    };
+    checkNotificationStatus();
   }, []);
 
   const handleToggleNotifications = async () => {
-    if (notificationsEnabled) {
-      // Can't programmatically revoke - show info
-      alert("To disable notifications, please use your browser settings.");
-      return;
-    }
-    
     setNotificationsLoading(true);
     try {
-      const success = await requestNotificationPermission();
-      setNotificationsEnabled(success);
-      if (!success) {
-        alert("Unable to enable notifications. Please check your browser settings.");
+      if (notificationsEnabled) {
+        // Disable: unregister device tokens from backend
+        const success = await unregisterDeviceTokens();
+        if (!success) {
+          console.error("Failed to unregister device tokens");
+        }
+        // Re-fetch status from DB to update toggle
+        const enabled = await getNotificationStatus();
+        setNotificationsEnabled(enabled);
+      } else {
+        // Enable: request browser permission → get FCM token → register
+        const success = await requestNotificationPermission();
+        // Re-fetch status from DB regardless to ensure UI matches DB state
+        const enabled = await getNotificationStatus();
+        setNotificationsEnabled(enabled);
+        if (!success && !enabled) {
+          alert("Unable to enable notifications. Please check your browser settings.");
+        }
       }
     } catch (error) {
-      console.error("Error enabling notifications:", error);
+      console.error("Error toggling notifications:", error);
+      // Re-fetch to ensure UI matches DB state even on error
+      const enabled = await getNotificationStatus();
+      setNotificationsEnabled(enabled);
     } finally {
       setNotificationsLoading(false);
     }
