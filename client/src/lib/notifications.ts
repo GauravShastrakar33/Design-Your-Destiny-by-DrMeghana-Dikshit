@@ -4,31 +4,39 @@ import { apiRequest } from "@/lib/queryClient";
 
 const VAPID_KEY = "BMrLLVU6E1DhWCD8jqgFWyamRpSOXMMbtBgbXxa4qVqMO_sctWDVASLKOLJv_zXi3MzTslf2Mg9TfIVYKWDjrNI";
 
-export async function requestNotificationPermission(): Promise<string | null> {
+export function isNotificationsEnabled(): boolean {
+  if (!("Notification" in window)) return false;
+  return Notification.permission === "granted";
+}
+
+export async function requestNotificationPermission(): Promise<boolean> {
   if (!("Notification" in window)) {
     console.log("Notifications not supported in this browser");
-    return null;
+    return false;
   }
 
   const permission = await Notification.requestPermission();
   if (permission !== "granted") {
     console.log("Notification permission denied");
-    return null;
+    return false;
   }
 
   const messaging = await getFirebaseMessaging();
   if (!messaging) {
     console.log("Firebase messaging not supported");
-    return null;
+    return false;
   }
 
   try {
     const token = await getToken(messaging, { vapidKey: VAPID_KEY });
-    console.log("FCM token obtained:", token?.substring(0, 20) + "...");
-    return token;
+    if (!token) return false;
+    
+    console.log("FCM token obtained:", token.substring(0, 20) + "...");
+    const registered = await registerDeviceToken(token);
+    return registered;
   } catch (error) {
     console.error("Error getting FCM token:", error);
-    return null;
+    return false;
   }
 }
 

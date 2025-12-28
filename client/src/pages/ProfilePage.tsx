@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Settings as SettingsIcon,
   Bell,
+  BellOff,
   MessageCircle,
   LogOut,
   Eye,
@@ -25,6 +26,7 @@ import {
   Sun,
   Loader2,
 } from "lucide-react";
+import { requestNotificationPermission, isNotificationsEnabled } from "@/lib/notifications";
 import { Card, CardContent } from "@/components/ui/card";
 import type { UserWellnessProfile } from "@shared/schema";
 import ConsistencyCalendar from "@/components/ConsistencyCalendar";
@@ -43,6 +45,8 @@ export default function ProfilePage() {
   const [userName, setUserName] = useState("UserName");
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState("");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   const userToken = localStorage.getItem("@app:user_token");
   const { data: wellnessProfile, isLoading: isLoadingProfile } = useQuery<
@@ -74,7 +78,31 @@ export default function ProfilePage() {
   useEffect(() => {
     const savedUserName = localStorage.getItem("@app:userName");
     setUserName(savedUserName || "UserName");
+    
+    // Check notification status
+    setNotificationsEnabled(isNotificationsEnabled());
   }, []);
+
+  const handleToggleNotifications = async () => {
+    if (notificationsEnabled) {
+      // Can't programmatically revoke - show info
+      alert("To disable notifications, please use your browser settings.");
+      return;
+    }
+    
+    setNotificationsLoading(true);
+    try {
+      const success = await requestNotificationPermission();
+      setNotificationsEnabled(success);
+      if (!success) {
+        alert("Unable to enable notifications. Please check your browser settings.");
+      }
+    } catch (error) {
+      console.error("Error enabling notifications:", error);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
 
   const handleResetPOH = () => {
     if (
@@ -411,19 +439,35 @@ export default function ProfilePage() {
               </div>
 
               <button
+                onClick={handleToggleNotifications}
+                disabled={notificationsLoading}
                 className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
                 data-testid="button-notifications-settings"
               >
                 <div className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-[#703DFA]" />
+                  {notificationsEnabled ? (
+                    <Bell className="w-5 h-5 text-[#703DFA]" />
+                  ) : (
+                    <BellOff className="w-5 h-5 text-muted-foreground" />
+                  )}
                   <div className="text-left">
                     <p className="font-medium text-foreground">Notifications</p>
                     <p className="text-xs text-muted-foreground">
-                      Manage your notification preferences
+                      {notificationsLoading 
+                        ? "Enabling..." 
+                        : notificationsEnabled 
+                          ? "Push notifications enabled" 
+                          : "Tap to enable push notifications"}
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                {notificationsLoading ? (
+                  <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+                ) : notificationsEnabled ? (
+                  <Check className="w-5 h-5 text-green-500" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                )}
               </button>
 
               <button
