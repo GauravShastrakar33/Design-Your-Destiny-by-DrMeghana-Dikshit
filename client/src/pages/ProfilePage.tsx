@@ -30,6 +30,7 @@ import { requestNotificationPermission, isNotificationsEnabled, unregisterDevice
 import { Card, CardContent } from "@/components/ui/card";
 import type { UserWellnessProfile } from "@shared/schema";
 import ConsistencyCalendar from "@/components/ConsistencyCalendar";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PrescriptionData {
   morning?: string[];
@@ -39,6 +40,7 @@ interface PrescriptionData {
 
 export default function ProfilePage() {
   const [, setLocation] = useLocation();
+  const { logout } = useAuth();
   const [accountExpanded, setAccountExpanded] = useState(false);
   const [prescriptionExpanded, setPrescriptionExpanded] = useState(false);
   const [settingsExpanded, setSettingsExpanded] = useState(false);
@@ -495,8 +497,7 @@ export default function ProfilePage() {
                   } catch (e) {
                     // Continue with logout even if token unregister fails
                   }
-                  localStorage.removeItem("@app:user_token");
-                  localStorage.removeItem("@app:userName");
+                  logout();
                   setLocation("/login");
                 }}
               >
