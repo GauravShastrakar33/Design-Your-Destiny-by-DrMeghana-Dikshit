@@ -52,11 +52,18 @@ export async function registerDeviceToken(token: string): Promise<boolean> {
 }
 
 export async function initializePushNotifications(): Promise<boolean> {
-  const token = await requestNotificationPermission();
-  if (!token) return false;
+  return requestNotificationPermission();
+}
 
-  const registered = await registerDeviceToken(token);
-  return registered;
+export async function unregisterDeviceTokens(): Promise<boolean> {
+  try {
+    await apiRequest("DELETE", "/api/v1/notifications/unregister-device", {});
+    console.log("Device tokens unregistered successfully");
+    return true;
+  } catch (error) {
+    console.error("Error unregistering device tokens:", error);
+    return false;
+  }
 }
 
 export function setupForegroundNotifications() {

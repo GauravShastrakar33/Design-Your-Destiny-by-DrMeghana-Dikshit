@@ -4975,6 +4975,28 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
+  // Unregister device token (called on logout or manual opt-out)
+  app.delete("/api/v1/notifications/unregister-device", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.id;
+      const { token } = req.body;
+      
+      if (token) {
+        // Remove specific token
+        await db.delete(deviceTokens)
+          .where(and(eq(deviceTokens.userId, userId), eq(deviceTokens.token, token)));
+      } else {
+        // Remove all tokens for this user (used on logout)
+        await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
+      }
+
+      res.json({ success: true, message: "Device unregistered" });
+    } catch (error: any) {
+      console.error("Error unregistering device token:", error);
+      res.status(500).json({ error: "Failed to unregister device" });
+    }
+  });
+
   // Admin: Send test notification to all registered devices
   app.post("/admin/api/notifications/test", requireAdmin, async (req, res) => {
     try {

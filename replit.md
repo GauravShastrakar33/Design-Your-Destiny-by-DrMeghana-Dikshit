@@ -100,6 +100,7 @@ Core pages include Home, Courses, Profile, Progress Insights, Project of Heart, 
   - `FIREBASE_SERVICE_ACCOUNT`: JSON service account key (required for sending notifications)
 - **API Endpoints**:
   - `POST /api/v1/notifications/register-device` - Register device token (requires JWT auth)
+  - `DELETE /api/v1/notifications/unregister-device` - Remove all device tokens for user (requires JWT auth)
   - `POST /admin/api/notifications/test` - Send test notification to all devices (admin only)
 - **User Flow**: Profile page > Settings > Notifications toggle enables push notifications
 - **Token Cleanup**: Failed/invalid tokens are automatically removed from database when notifications fail
