@@ -29,7 +29,9 @@ import {
   pohCategoryEnum,
   pohStatusEnum,
   users,
+  deviceTokens,
 } from "@shared/schema";
+import { sendPushNotification, initializeFirebaseAdmin } from "./lib/firebaseAdmin";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -4928,6 +4930,93 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         });
       }
       res.status(500).json({ error: "Failed to upload vision image" });
+    }
+  });
+
+  // ===== PUSH NOTIFICATIONS =====
+  
+  // Register device token for push notifications
+  app.post("/api/v1/notifications/register-device", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.id;
+      const { token } = req.body;
+      
+      if (!token || typeof token !== "string") {
+        return res.status(400).json({ error: "Token is required" });
+      }
+
+      // Check if token already exists (for any user)
+      const existingToken = await db.select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.token, token))
+        .limit(1);
+
+      if (existingToken.length > 0) {
+        // Token already exists - update user_id if different
+        if (existingToken[0].userId !== userId) {
+          await db.update(deviceTokens)
+            .set({ userId })
+            .where(eq(deviceTokens.token, token));
+        }
+        return res.json({ success: true, message: "Token already registered" });
+      }
+
+      // Insert new token
+      await db.insert(deviceTokens).values({
+        userId,
+        token,
+        platform: "web",
+      });
+
+      res.json({ success: true, message: "Device registered successfully" });
+    } catch (error: any) {
+      console.error("Error registering device token:", error);
+      res.status(500).json({ error: "Failed to register device" });
+    }
+  });
+
+  // Admin: Send test notification to all registered devices
+  app.post("/admin/api/notifications/test", requireAdmin, async (req, res) => {
+    try {
+      const { title, body } = req.body;
+      
+      if (!title || !body) {
+        return res.status(400).json({ error: "Title and body are required" });
+      }
+
+      // Fetch all device tokens
+      const allTokens = await db.select({ token: deviceTokens.token })
+        .from(deviceTokens);
+
+      if (allTokens.length === 0) {
+        return res.json({ 
+          success: true, 
+          message: "No devices registered",
+          successCount: 0,
+          failureCount: 0
+        });
+      }
+
+      const tokens = allTokens.map(t => t.token);
+      const result = await sendPushNotification(tokens, title, body);
+
+      // Clean up failed tokens (invalid tokens)
+      if (result.failedTokens.length > 0) {
+        for (const failedToken of result.failedTokens) {
+          await db.delete(deviceTokens).where(eq(deviceTokens.token, failedToken));
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Notification sent`,
+        successCount: result.successCount,
+        failureCount: result.failureCount,
+        tokensCleanedUp: result.failedTokens.length
+      });
+    } catch (error: any) {
+      console.error("Error sending test notification:", error);
+      res.status(500).json({ error: "Failed to send notification" });
     }
   });
 
