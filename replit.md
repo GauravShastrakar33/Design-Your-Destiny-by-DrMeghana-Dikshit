@@ -88,6 +88,22 @@ Core pages include Home, Courses, Profile, Progress Insights, Project of Heart, 
 - **Admin Management**: Full CRUD at /admin/events with thumbnail upload to R2
 - **Decision Zone**: Admin Latest tab shows completed events needing recording decisions (no recordingUrl set)
 
+**Web Push Notifications**: Firebase Cloud Messaging (FCM) powers browser push notifications for user engagement.
+- **Database**: `device_tokens` table stores FCM tokens per user (userId FK, token, platform, createdAt)
+- **Frontend Files**:
+  - `client/src/lib/firebase.ts`: Firebase app initialization
+  - `client/src/lib/notifications.ts`: Permission request, token registration, foreground handling
+  - `client/public/firebase-messaging-sw.js`: Service worker for background notifications
+- **Backend Files**:
+  - `server/lib/firebaseAdmin.ts`: Firebase Admin SDK initialization, sendPushNotification function
+- **Environment Variables**:
+  - `FIREBASE_SERVICE_ACCOUNT`: JSON service account key (required for sending notifications)
+- **API Endpoints**:
+  - `POST /api/v1/notifications/register-device` - Register device token (requires JWT auth)
+  - `POST /admin/api/notifications/test` - Send test notification to all devices (admin only)
+- **User Flow**: Profile page > Settings > Notifications toggle enables push notifications
+- **Token Cleanup**: Failed/invalid tokens are automatically removed from database when notifications fail
+
 ### System Design Choices
 The architecture emphasizes RESTful APIs with distinct public and admin endpoints. React Query is used for efficient data fetching and caching. Components are designed for modularity and extensibility. The database schema is structured to manage various content types, including articles, categories, CMS elements (courses, modules, lessons), programs, and feature mappings with foreign key constraints.
 
@@ -138,3 +154,7 @@ The architecture emphasizes RESTful APIs with distinct public and admin endpoint
 
 ### Mobile App Integration
 - **Capacitor**: For building iOS and Android applications.
+
+### Push Notifications
+- **Firebase**: Client-side messaging and app initialization.
+- **Firebase Admin SDK**: Server-side notification sending.
