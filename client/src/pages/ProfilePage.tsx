@@ -26,7 +26,7 @@ import {
   Sun,
   Loader2,
 } from "lucide-react";
-import { requestNotificationPermission, isNotificationsEnabled } from "@/lib/notifications";
+import { requestNotificationPermission, isNotificationsEnabled, unregisterDeviceTokens } from "@/lib/notifications";
 import { Card, CardContent } from "@/components/ui/card";
 import type { UserWellnessProfile } from "@shared/schema";
 import ConsistencyCalendar from "@/components/ConsistencyCalendar";
@@ -489,6 +489,16 @@ export default function ProfilePage() {
               <button
                 className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
                 data-testid="button-logout"
+                onClick={async () => {
+                  try {
+                    await unregisterDeviceTokens();
+                  } catch (e) {
+                    // Continue with logout even if token unregister fails
+                  }
+                  localStorage.removeItem("@app:user_token");
+                  localStorage.removeItem("@app:userName");
+                  setLocation("/login");
+                }}
               >
                 <div className="flex items-center gap-3">
                   <LogOut className="w-5 h-5 text-red-500" />
