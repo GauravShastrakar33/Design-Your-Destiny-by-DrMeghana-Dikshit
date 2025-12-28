@@ -4938,7 +4938,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   // Register device token for push notifications
   app.post("/api/v1/notifications/register-device", authenticateJWT, async (req, res) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const { token } = req.body;
       
       if (!token || typeof token !== "string") {
@@ -4978,7 +4978,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   // Unregister device token (called on logout or manual opt-out)
   app.delete("/api/v1/notifications/unregister-device", authenticateJWT, async (req, res) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const { token } = req.body;
       
       if (token) {
