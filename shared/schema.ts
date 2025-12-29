@@ -327,6 +327,8 @@ export const sessionBanners = pgTable("session_banners", {
   startAt: timestamp("start_at", { mode: "date" }).notNull(),
   endAt: timestamp("end_at", { mode: "date" }).notNull(),
   liveEnabled: boolean("live_enabled").notNull().default(false),
+  liveStartAt: timestamp("live_start_at", { mode: "date" }),
+  liveEndAt: timestamp("live_end_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });

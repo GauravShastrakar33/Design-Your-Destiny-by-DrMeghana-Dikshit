@@ -63,7 +63,6 @@ const menuContent: Record<
     title: "Session Banner",
     items: [
       { path: "/admin/session-banner/banners", label: "All Banners", icon: List },
-      { path: "/admin/session-banner/banners/new", label: "Add New", icon: Plus },
     ],
   },
   events: {

@@ -28,6 +28,8 @@ export default function AdminSessionBannerFormPage() {
     startAt: "",
     endAt: "",
     liveEnabled: false,
+    liveStartAt: "",
+    liveEndAt: "",
   });
 
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
@@ -62,7 +64,8 @@ export default function AdminSessionBannerFormPage() {
 
   useEffect(() => {
     if (existingBanner) {
-      const formatDateForInput = (date: Date | string) => {
+      const formatDateForInput = (date: Date | string | null) => {
+        if (!date) return "";
         const d = new Date(date);
         return d.toISOString().slice(0, 16);
       };
@@ -77,9 +80,24 @@ export default function AdminSessionBannerFormPage() {
         startAt: formatDateForInput(existingBanner.startAt),
         endAt: formatDateForInput(existingBanner.endAt),
         liveEnabled: existingBanner.liveEnabled,
+        liveStartAt: formatDateForInput(existingBanner.liveStartAt),
+        liveEndAt: formatDateForInput(existingBanner.liveEndAt),
       });
     }
   }, [existingBanner]);
+
+  const handleLiveToggleChange = (checked: boolean) => {
+    if (!checked) {
+      setFormData(prev => ({ 
+        ...prev, 
+        liveEnabled: false,
+        liveStartAt: "",
+        liveEndAt: "",
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, liveEnabled: true }));
+    }
+  };
 
   const uploadFile = async (file: File, type: "thumbnail" | "video" | "poster") => {
     setIsUploading(true);
@@ -109,7 +127,7 @@ export default function AdminSessionBannerFormPage() {
         setPosterPreview(URL.createObjectURL(file));
       }
 
-      toast({ title: `${type} uploaded successfully` });
+      toast({ title: `${type === "thumbnail" ? "Banner" : type} uploaded successfully` });
     } catch (error) {
       console.error("Upload error:", error);
       toast({ title: `Failed to upload ${type}`, variant: "destructive" });
@@ -123,6 +141,46 @@ export default function AdminSessionBannerFormPage() {
     if (file) {
       uploadFile(file, type);
     }
+  };
+
+  const validateForm = (): string | null => {
+    if (!formData.startAt || !formData.endAt) {
+      return "Banner start and end dates are required";
+    }
+
+    const startAt = new Date(formData.startAt);
+    const endAt = new Date(formData.endAt);
+
+    if (startAt >= endAt) {
+      return "Banner end date must be after start date";
+    }
+
+    if (formData.type === "session" && !formData.thumbnailKey) {
+      return "Session Banner image is required";
+    }
+
+    if (formData.type === "advertisement" && !formData.videoKey) {
+      return "Video is required for advertisement banners";
+    }
+
+    if (formData.liveEnabled) {
+      if (!formData.liveStartAt || !formData.liveEndAt) {
+        return "LIVE start and end dates are required when LIVE is enabled";
+      }
+
+      const liveStartAt = new Date(formData.liveStartAt);
+      const liveEndAt = new Date(formData.liveEndAt);
+
+      if (liveStartAt >= liveEndAt) {
+        return "LIVE end date must be after LIVE start date";
+      }
+
+      if (liveStartAt < startAt || liveEndAt > endAt) {
+        return "LIVE dates must be within the banner visibility window";
+      }
+    }
+
+    return null;
   };
 
   const createMutation = useMutation({
@@ -140,6 +198,8 @@ export default function AdminSessionBannerFormPage() {
           posterKey: data.posterKey || null,
           ctaText: data.ctaText || null,
           ctaLink: data.ctaLink || null,
+          liveStartAt: data.liveStartAt || null,
+          liveEndAt: data.liveEndAt || null,
         }),
       });
       if (!response.ok) throw new Error("Failed to create banner");
@@ -170,6 +230,8 @@ export default function AdminSessionBannerFormPage() {
           posterKey: data.posterKey || null,
           ctaText: data.ctaText || null,
           ctaLink: data.ctaLink || null,
+          liveStartAt: data.liveStartAt || null,
+          liveEndAt: data.liveEndAt || null,
         }),
       });
       if (!response.ok) throw new Error("Failed to update banner");
@@ -188,18 +250,9 @@ export default function AdminSessionBannerFormPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.startAt || !formData.endAt) {
-      toast({ title: "Start and end dates are required", variant: "destructive" });
-      return;
-    }
-
-    if (formData.type === "session" && !formData.thumbnailKey) {
-      toast({ title: "Thumbnail is required for session banners", variant: "destructive" });
-      return;
-    }
-
-    if (formData.type === "advertisement" && !formData.videoKey) {
-      toast({ title: "Video is required for advertisement banners", variant: "destructive" });
+    const validationError = validateForm();
+    if (validationError) {
+      toast({ title: validationError, variant: "destructive" });
       return;
     }
 
@@ -214,14 +267,14 @@ export default function AdminSessionBannerFormPage() {
 
   if (isEdit && isLoadingBanner) {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
+      <div className="p-6 max-w-3xl mx-auto">
         <div className="text-center py-8">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
+    <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"
@@ -236,8 +289,9 @@ export default function AdminSessionBannerFormPage() {
         </h1>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 1. Banner Type */}
           <div>
             <Label htmlFor="type">Banner Type</Label>
             <Select
@@ -246,11 +300,11 @@ export default function AdminSessionBannerFormPage() {
                 setFormData(prev => ({ ...prev, type: value }))
               }
             >
-              <SelectTrigger data-testid="select-type">
+              <SelectTrigger data-testid="select-type" className="mt-1.5">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="session">Session Thumbnail</SelectItem>
+                <SelectItem value="session">Session Banner</SelectItem>
                 <SelectItem value="advertisement">Advertisement Video</SelectItem>
               </SelectContent>
             </Select>
@@ -258,8 +312,9 @@ export default function AdminSessionBannerFormPage() {
 
           {formData.type === "session" && (
             <>
+              {/* 2. Session Banner Upload */}
               <div>
-                <Label>Thumbnail Image</Label>
+                <Label>Session Banner</Label>
                 <input
                   ref={thumbnailInputRef}
                   type="file"
@@ -269,7 +324,7 @@ export default function AdminSessionBannerFormPage() {
                 />
                 {formData.thumbnailKey || thumbnailPreview ? (
                   <div className="mt-2 relative inline-block">
-                    <div className="w-48 h-32 bg-muted rounded overflow-hidden">
+                    <div className="w-64 h-40 bg-muted rounded-lg overflow-hidden">
                       {thumbnailPreview ? (
                         <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
                       ) : (
@@ -298,22 +353,104 @@ export default function AdminSessionBannerFormPage() {
                     className="mt-2"
                     onClick={() => thumbnailInputRef.current?.click()}
                     disabled={isUploading}
-                    data-testid="button-upload-thumbnail"
+                    data-testid="button-upload-banner"
                   >
                     {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                    Upload Thumbnail
+                    Upload Banner
                   </Button>
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
+              {/* 3. Banner Start Date & End Date */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startAt">Banner Start Date & Time</Label>
+                  <Input
+                    id="startAt"
+                    type="datetime-local"
+                    value={formData.startAt}
+                    onChange={(e) => setFormData(prev => ({ ...prev, startAt: e.target.value }))}
+                    className="mt-1.5"
+                    data-testid="input-start-at"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endAt">Banner End Date & Time</Label>
+                  <Input
+                    id="endAt"
+                    type="datetime-local"
+                    value={formData.endAt}
+                    onChange={(e) => setFormData(prev => ({ ...prev, endAt: e.target.value }))}
+                    className="mt-1.5"
+                    data-testid="input-end-at"
+                  />
+                </div>
+              </div>
+
+              {/* 4. Enable LIVE Toggle */}
+              <div className="flex items-center gap-3 py-2">
                 <Switch
                   id="liveEnabled"
                   checked={formData.liveEnabled}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, liveEnabled: checked }))}
+                  onCheckedChange={handleLiveToggleChange}
                   data-testid="switch-live-enabled"
                 />
-                <Label htmlFor="liveEnabled">Enable LIVE badge when session is active</Label>
+                <Label htmlFor="liveEnabled" className="cursor-pointer">Enable LIVE</Label>
+              </div>
+
+              {/* 5. LIVE Date Fields (conditional) */}
+              {formData.liveEnabled && (
+                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg border border-muted">
+                  <div>
+                    <Label htmlFor="liveStartAt">Live Start Date & Time</Label>
+                    <Input
+                      id="liveStartAt"
+                      type="datetime-local"
+                      value={formData.liveStartAt}
+                      onChange={(e) => setFormData(prev => ({ ...prev, liveStartAt: e.target.value }))}
+                      className="mt-1.5"
+                      data-testid="input-live-start-at"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Must be within banner visibility window</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="liveEndAt">Live End Date & Time</Label>
+                    <Input
+                      id="liveEndAt"
+                      type="datetime-local"
+                      value={formData.liveEndAt}
+                      onChange={(e) => setFormData(prev => ({ ...prev, liveEndAt: e.target.value }))}
+                      className="mt-1.5"
+                      data-testid="input-live-end-at"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 6. CTA Text */}
+              <div>
+                <Label htmlFor="ctaText">CTA Text (optional)</Label>
+                <Input
+                  id="ctaText"
+                  value={formData.ctaText}
+                  onChange={(e) => setFormData(prev => ({ ...prev, ctaText: e.target.value }))}
+                  placeholder="e.g., Join Now"
+                  className="mt-1.5"
+                  data-testid="input-cta-text"
+                />
+              </div>
+
+              {/* 7. CTA Link */}
+              <div>
+                <Label htmlFor="ctaLink">CTA Link (optional)</Label>
+                <Input
+                  id="ctaLink"
+                  value={formData.ctaLink}
+                  onChange={(e) => setFormData(prev => ({ ...prev, ctaLink: e.target.value }))}
+                  placeholder="e.g., https://example.com/join"
+                  className="mt-1.5"
+                  data-testid="input-cta-link"
+                />
               </div>
             </>
           )}
@@ -331,7 +468,7 @@ export default function AdminSessionBannerFormPage() {
                 />
                 {formData.videoKey || videoPreview ? (
                   <div className="mt-2 relative inline-block">
-                    <div className="w-48 h-32 bg-muted rounded overflow-hidden flex items-center justify-center">
+                    <div className="w-64 h-40 bg-muted rounded-lg overflow-hidden flex items-center justify-center">
                       {videoPreview ? (
                         <video src={videoPreview} className="w-full h-full object-cover" />
                       ) : (
@@ -377,7 +514,7 @@ export default function AdminSessionBannerFormPage() {
                 />
                 {formData.posterKey || posterPreview ? (
                   <div className="mt-2 relative inline-block">
-                    <div className="w-48 h-32 bg-muted rounded overflow-hidden">
+                    <div className="w-64 h-40 bg-muted rounded-lg overflow-hidden">
                       {posterPreview ? (
                         <img src={posterPreview} alt="Poster" className="w-full h-full object-cover" />
                       ) : (
@@ -413,55 +550,60 @@ export default function AdminSessionBannerFormPage() {
                   </Button>
                 )}
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startAt">Start Date & Time</Label>
+                  <Input
+                    id="startAt"
+                    type="datetime-local"
+                    value={formData.startAt}
+                    onChange={(e) => setFormData(prev => ({ ...prev, startAt: e.target.value }))}
+                    className="mt-1.5"
+                    data-testid="input-start-at"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endAt">End Date & Time</Label>
+                  <Input
+                    id="endAt"
+                    type="datetime-local"
+                    value={formData.endAt}
+                    onChange={(e) => setFormData(prev => ({ ...prev, endAt: e.target.value }))}
+                    className="mt-1.5"
+                    data-testid="input-end-at"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="ctaText">CTA Text (optional)</Label>
+                <Input
+                  id="ctaText"
+                  value={formData.ctaText}
+                  onChange={(e) => setFormData(prev => ({ ...prev, ctaText: e.target.value }))}
+                  placeholder="e.g., Learn More"
+                  className="mt-1.5"
+                  data-testid="input-cta-text"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="ctaLink">CTA Link (optional)</Label>
+                <Input
+                  id="ctaLink"
+                  value={formData.ctaLink}
+                  onChange={(e) => setFormData(prev => ({ ...prev, ctaLink: e.target.value }))}
+                  placeholder="e.g., https://example.com"
+                  className="mt-1.5"
+                  data-testid="input-cta-link"
+                />
+              </div>
             </>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="startAt">Start Date & Time</Label>
-              <Input
-                id="startAt"
-                type="datetime-local"
-                value={formData.startAt}
-                onChange={(e) => setFormData(prev => ({ ...prev, startAt: e.target.value }))}
-                data-testid="input-start-at"
-              />
-            </div>
-            <div>
-              <Label htmlFor="endAt">End Date & Time</Label>
-              <Input
-                id="endAt"
-                type="datetime-local"
-                value={formData.endAt}
-                onChange={(e) => setFormData(prev => ({ ...prev, endAt: e.target.value }))}
-                data-testid="input-end-at"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="ctaText">CTA Text (optional)</Label>
-            <Input
-              id="ctaText"
-              value={formData.ctaText}
-              onChange={(e) => setFormData(prev => ({ ...prev, ctaText: e.target.value }))}
-              placeholder="e.g., Join Now"
-              data-testid="input-cta-text"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="ctaLink">CTA Link (optional)</Label>
-            <Input
-              id="ctaLink"
-              value={formData.ctaLink}
-              onChange={(e) => setFormData(prev => ({ ...prev, ctaLink: e.target.value }))}
-              placeholder="e.g., https://example.com/join"
-              data-testid="input-cta-link"
-            />
-          </div>
-
-          <div className="flex gap-3">
+          {/* 8. Action Buttons */}
+          <div className="flex gap-3 pt-4">
             <Button
               type="button"
               variant="outline"

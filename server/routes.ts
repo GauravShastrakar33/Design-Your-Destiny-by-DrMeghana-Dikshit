@@ -3534,7 +3534,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   // POST /api/admin/v1/session-banners - Create banner
   app.post("/api/admin/v1/session-banners", requireAdmin, async (req, res) => {
     try {
-      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled } = req.body;
+      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled, liveStartAt, liveEndAt } = req.body;
       
       if (!type || !startAt || !endAt) {
         return res.status(400).json({ error: "type, startAt, and endAt are required" });
@@ -3550,6 +3550,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         startAt: new Date(startAt),
         endAt: new Date(endAt),
         liveEnabled: liveEnabled || false,
+        liveStartAt: liveStartAt ? new Date(liveStartAt) : null,
+        liveEndAt: liveEndAt ? new Date(liveEndAt) : null,
       });
       res.status(201).json(banner);
     } catch (error) {
@@ -3562,7 +3564,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.put("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled } = req.body;
+      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled, liveStartAt, liveEndAt } = req.body;
 
       const updateData: any = {};
       if (type !== undefined) updateData.type = type;
@@ -3574,6 +3576,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (startAt !== undefined) updateData.startAt = new Date(startAt);
       if (endAt !== undefined) updateData.endAt = new Date(endAt);
       if (liveEnabled !== undefined) updateData.liveEnabled = liveEnabled;
+      if (liveStartAt !== undefined) updateData.liveStartAt = liveStartAt ? new Date(liveStartAt) : null;
+      if (liveEndAt !== undefined) updateData.liveEndAt = liveEndAt ? new Date(liveEndAt) : null;
 
       const banner = await storage.updateSessionBanner(id, updateData);
       if (!banner) {
@@ -3620,6 +3624,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         startAt: original.startAt,
         endAt: original.endAt,
         liveEnabled: original.liveEnabled,
+        liveStartAt: original.liveStartAt,
+        liveEndAt: original.liveEndAt,
       });
       res.status(201).json(duplicate);
     } catch (error) {
@@ -3672,12 +3678,15 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       // Check if live badge should show (session banners only)
+      // Runtime LIVE status: liveEnabled AND now is within liveStartAt/liveEndAt window
       const now = new Date();
       const isLive = banner.type === "session" && 
                      banner.liveEnabled && 
                      status === "active" &&
-                     now >= banner.startAt && 
-                     now < banner.endAt;
+                     banner.liveStartAt && 
+                     banner.liveEndAt &&
+                     now >= new Date(banner.liveStartAt) && 
+                     now < new Date(banner.liveEndAt);
 
       res.json({
         banner: {
