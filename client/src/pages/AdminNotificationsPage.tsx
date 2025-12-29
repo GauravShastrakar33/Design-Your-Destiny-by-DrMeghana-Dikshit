@@ -19,16 +19,23 @@ export default function AdminNotificationsPage() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
 
-  const { data: stats, isLoading: isLoadingStats } = useQuery<DeviceTokenStats>({
+  const { data: stats, isLoading: isLoadingStats, error: statsError } = useQuery<DeviceTokenStats>({
     queryKey: ["/admin/api/notifications/stats"],
   });
 
+  // Debug: log stats query result
+  console.log("[AdminNotifications] Stats:", { stats, isLoadingStats, statsError });
+
   const sendMutation = useMutation({
     mutationFn: async (data: { title: string; body: string }) => {
+      console.log("[AdminNotifications] Sending notification:", data);
       const response = await apiRequest("POST", "/admin/api/notifications/test", data);
-      return response.json();
+      const result = await response.json();
+      console.log("[AdminNotifications] Send result:", result);
+      return result;
     },
     onSuccess: (result) => {
+      console.log("[AdminNotifications] Success:", result);
       toast({
         title: "Notification sent",
         description: `Successfully sent to ${result.successCount || 0} device(s)`,
@@ -37,6 +44,7 @@ export default function AdminNotificationsPage() {
       setBody("");
     },
     onError: (error: any) => {
+      console.error("[AdminNotifications] Error:", error);
       const message = error?.message || "Failed to send notification";
       toast({
         title: "Failed to send",
@@ -77,10 +85,10 @@ export default function AdminNotificationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-gray-900" data-testid="text-total-devices">
-              {isLoadingStats ? "..." : stats?.totalDevices || 0}
+              {isLoadingStats ? "..." : statsError ? "Error" : stats?.totalDevices || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Active push notification tokens
+              {statsError ? "Failed to load stats" : "Active push notification tokens"}
             </p>
           </CardContent>
         </Card>
