@@ -4950,7 +4950,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(400).json({ error: "Token is required" });
       }
 
-      // Check if token already exists (for any user)
+      // Check if this exact token already exists
       const existingToken = await db.select()
         .from(deviceTokens)
         .where(eq(deviceTokens.token, token))
@@ -4965,6 +4965,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         }
         return res.json({ success: true, message: "Token already registered" });
       }
+
+      // UPSERT: Delete any old tokens for this user first, then insert new one
+      // This ensures only the latest token is stored per user (tokens change on browser refresh)
+      await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
 
       // Insert new token
       await db.insert(deviceTokens).values({

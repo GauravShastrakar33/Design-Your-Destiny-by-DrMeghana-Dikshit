@@ -81,6 +81,38 @@ export async function initializePushNotifications(): Promise<boolean> {
   return requestNotificationPermission();
 }
 
+// Refresh push token - call on app load to ensure DB has latest token
+// This handles the case where FCM token changes (browser refresh, SW update, etc.)
+export async function refreshPushToken(): Promise<boolean> {
+  // Only refresh if user has notifications enabled in DB
+  const isEnabled = await getNotificationStatus();
+  if (!isEnabled) {
+    return false;
+  }
+
+  // Check browser permission is still granted
+  if (Notification.permission !== "granted") {
+    return false;
+  }
+
+  const messaging = await getFirebaseMessaging();
+  if (!messaging) {
+    return false;
+  }
+
+  try {
+    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+    if (!token) return false;
+
+    console.log("🔄 Refreshing FCM token:", token.substring(0, 20) + "...");
+    await registerDeviceToken(token);
+    return true;
+  } catch (error) {
+    console.error("Error refreshing FCM token:", error);
+    return false;
+  }
+}
+
 export async function unregisterDeviceTokens(): Promise<boolean> {
   try {
     await apiRequest("DELETE", "/api/v1/notifications/unregister-device", undefined);

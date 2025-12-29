@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { queryClient } from "@/lib/queryClient";
+import { refreshPushToken, setupForegroundNotifications } from "@/lib/notifications";
 
 interface User {
   id: number;
@@ -28,7 +29,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (token && storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        
+        // Refresh push token on app load to ensure DB has latest FCM token
+        // This handles cases where the browser generated a new token
+        refreshPushToken().then((refreshed) => {
+          if (refreshed) {
+            console.log("✅ Push token refreshed on app load");
+          }
+        });
+        
+        // Setup foreground notification handler
+        setupForegroundNotifications();
       } catch {
         localStorage.removeItem("@app:user_token");
         localStorage.removeItem("@app:user");
