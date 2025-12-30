@@ -4,6 +4,7 @@ import fs from "fs";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeFirebaseAdmin } from "./lib/firebaseAdmin";
+import { startNotificationCron } from "./jobs/notificationCron";
 
 const app = express();
 
@@ -69,6 +70,9 @@ app.use((req, res, next) => {
 (async () => {
   // Initialize Firebase Admin SDK for push notifications
   initializeFirebaseAdmin();
+
+  // Start notification cron job (runs every minute)
+  startNotificationCron();
 
   const server = await registerRoutes(app);
 

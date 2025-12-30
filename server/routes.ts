@@ -4046,6 +4046,61 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
+  // Helper function to create event reminder notifications
+  async function createEventReminders(event: { id: number; title: string; startDatetime: Date; requiredProgramCode: string; requiredProgramLevel: number; status: string }) {
+    // Only create reminders for UPCOMING events
+    if (event.status !== "UPCOMING") return;
+
+    const startTime = new Date(event.startDatetime);
+    const now = new Date();
+
+    // Format time for notification body (e.g., "3:30 PM")
+    const timeStr = startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+    const notifications: Array<{
+      title: string;
+      body: string;
+      type: string;
+      scheduledAt: Date;
+      requiredProgramCode: string;
+      requiredProgramLevel: number;
+      relatedEventId: number;
+    }> = [];
+
+    // Reminder 1: 24 hours before (only if in the future)
+    const reminder24h = new Date(startTime.getTime() - 24 * 60 * 60 * 1000);
+    if (reminder24h > now) {
+      notifications.push({
+        title: `${event.title} Tomorrow`,
+        body: `Your ${event.title} starts tomorrow at ${timeStr}.`,
+        type: "event_reminder",
+        scheduledAt: reminder24h,
+        requiredProgramCode: event.requiredProgramCode,
+        requiredProgramLevel: event.requiredProgramLevel,
+        relatedEventId: event.id,
+      });
+    }
+
+    // Reminder 2: 15 minutes before (only if in the future)
+    const reminder15m = new Date(startTime.getTime() - 15 * 60 * 1000);
+    if (reminder15m > now) {
+      notifications.push({
+        title: `Starting Soon`,
+        body: `${event.title} starts in 15 minutes.`,
+        type: "event_reminder",
+        scheduledAt: reminder15m,
+        requiredProgramCode: event.requiredProgramCode,
+        requiredProgramLevel: event.requiredProgramLevel,
+        relatedEventId: event.id,
+      });
+    }
+
+    if (notifications.length > 0) {
+      await storage.createNotifications(notifications);
+      console.log(`Created ${notifications.length} reminder(s) for event ${event.id}: ${event.title}`);
+    }
+  }
+
   // Admin API: Create event
   app.post("/api/admin/v1/events", requireAdmin, async (req, res) => {
     try {
@@ -4055,6 +4110,15 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       const event = await storage.createEvent(parsed.data);
+
+      // Create reminder notifications if event is UPCOMING
+      try {
+        await createEventReminders(event);
+      } catch (notifError) {
+        console.error("Error creating event reminders:", notifError);
+        // Don't fail the event creation if notifications fail
+      }
+
       res.status(201).json(event);
     } catch (error) {
       console.error("Error creating event:", error);
@@ -4072,6 +4136,17 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(404).json({ error: "Event not found" });
       }
 
+      // Recreate reminder notifications when event is updated
+      try {
+        // Delete old notifications for this event
+        await storage.deleteNotificationsByEventId(id);
+        // Create new notifications if event is UPCOMING
+        await createEventReminders(event);
+      } catch (notifError) {
+        console.error("Error updating event reminders:", notifError);
+        // Don't fail the event update if notifications fail
+      }
+
       res.json(event);
     } catch (error) {
       console.error("Error updating event:", error);
@@ -4087,6 +4162,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
+      }
+
+      // Delete notifications for cancelled event
+      try {
+        await storage.deleteNotificationsByEventId(id);
+      } catch (notifError) {
+        console.error("Error deleting event reminders:", notifError);
       }
 
       res.json({ success: true, message: "Event cancelled" });
