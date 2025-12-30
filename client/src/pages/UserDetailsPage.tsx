@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, User, Sparkles, Pill, Plus, X, Loader2, Sunrise, Sun, Moon, Save } from "lucide-react";
+import { ArrowLeft, User, Sparkles, Pill, Plus, X, Loader2, Sunrise, Sun, Moon, Save, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { UserWithPrograms, UserWellnessProfile } from "@shared/schema";
+import type { UserWithPrograms, UserWellnessProfile, UserBadge } from "@shared/schema";
+import { BADGE_REGISTRY, getBadgeSvgPath } from "@/lib/badgeRegistry";
 
 interface PrescriptionData {
   morning?: string[];
@@ -51,6 +52,54 @@ export default function UserDetailsPage() {
       return response.json();
     },
     enabled: !!userId,
+  });
+
+  const { data: userBadges = [], isLoading: isLoadingBadges } = useQuery<UserBadge[]>({
+    queryKey: ["/admin/v1/students", userId, "badges"],
+    queryFn: async () => {
+      const response = await fetch(`/admin/v1/students/${userId}/badges`, {
+        headers: { "Authorization": `Bearer ${adminToken}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch user badges");
+      return response.json();
+    },
+    enabled: !!userId,
+  });
+
+  const grantBadgeMutation = useMutation({
+    mutationFn: async (badgeKey: string) => {
+      const token = localStorage.getItem("@app:admin_token");
+      if (!token) {
+        throw new Error("Admin session expired. Please log in again.");
+      }
+      const response = await fetch(`/admin/v1/students/${userId}/badges`, {
+        method: "POST",
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ badgeKey }),
+      });
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("Admin session expired. Please log in again.");
+        }
+        const data = await response.json();
+        throw new Error(data.error || "Failed to grant badge");
+      }
+      return response.json();
+    },
+    onSuccess: (_, badgeKey) => {
+      queryClient.invalidateQueries({ queryKey: ["/admin/v1/students", userId, "badges"] });
+      const badge = BADGE_REGISTRY.find(b => b.key === badgeKey);
+      toast({ title: `${badge?.displayName || badgeKey} badge granted successfully` });
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message, variant: "destructive" });
+      if (error.message.includes("session expired")) {
+        setLocation("/admin/login");
+      }
+    },
   });
 
   useEffect(() => {
@@ -121,7 +170,10 @@ export default function UserDetailsPage() {
     setHasChanges(true);
   };
 
-  const isLoading = isLoadingStudent || isLoadingProfile;
+  const isLoading = isLoadingStudent || isLoadingProfile || isLoadingBadges;
+  
+  const adminBadges = BADGE_REGISTRY.filter(b => b.type === "admin");
+  const userBadgeKeys = userBadges.map(b => b.badgeKey);
 
   if (isLoading) {
     return (
@@ -316,6 +368,94 @@ export default function UserDetailsPage() {
                 </div>
               ))}
             </div>
+          </Card>
+
+          {/* Admin Badges (Grantable) */}
+          <Card className="p-6" data-testid="card-admin-badges">
+            <div className="flex items-center gap-2 mb-4">
+              <Award className="w-5 h-5 text-amber-500" />
+              <h2 className="text-lg font-semibold">Special Recognition Badges</h2>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Grant special badges to recognize this user's achievements and contributions.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {adminBadges.map((badge) => {
+                const isGranted = userBadgeKeys.includes(badge.key);
+                return (
+                  <div 
+                    key={badge.key} 
+                    className={`border rounded-lg p-4 ${isGranted ? "bg-amber-50 border-amber-200" : "bg-gray-50"}`}
+                    data-testid={`badge-card-${badge.key}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <img 
+                        src={getBadgeSvgPath(badge.key)} 
+                        alt={badge.displayName}
+                        className={`w-12 h-12 ${!isGranted ? "opacity-40 grayscale" : ""}`}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{badge.displayName}</h3>
+                          {isGranted && (
+                            <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-xs">
+                              Granted
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">{badge.meaning}</p>
+                        <p className="text-xs text-muted-foreground mt-1 italic">{badge.howToEarn}</p>
+                      </div>
+                    </div>
+                    {!isGranted && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 w-full gap-2"
+                        onClick={() => grantBadgeMutation.mutate(badge.key)}
+                        disabled={grantBadgeMutation.isPending}
+                        data-testid={`button-grant-${badge.key}`}
+                      >
+                        {grantBadgeMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Award className="w-4 h-4" />
+                        )}
+                        Grant Badge
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Current Badges Display */}
+            {userBadges.length > 0 && (
+              <div className="mt-6 pt-4 border-t">
+                <h3 className="font-medium mb-3">All Earned Badges ({userBadges.length})</h3>
+                <div className="flex flex-wrap gap-2">
+                  {userBadges.map((ub) => {
+                    const badgeDef = BADGE_REGISTRY.find(b => b.key === ub.badgeKey);
+                    return (
+                      <div 
+                        key={ub.id} 
+                        className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1.5"
+                        title={badgeDef?.meaning}
+                        data-testid={`earned-badge-${ub.badgeKey}`}
+                      >
+                        <img 
+                          src={getBadgeSvgPath(ub.badgeKey)} 
+                          alt={badgeDef?.displayName || ub.badgeKey}
+                          className="w-5 h-5"
+                        />
+                        <span className="text-sm font-medium">{badgeDef?.displayName || ub.badgeKey}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </Card>
         </div>
       </div>

@@ -24,6 +24,8 @@ import ActionCard from "@/components/ActionCard";
 import { useToast } from "@/hooks/use-toast";
 import SearchOverlay from "@/components/SearchOverlay";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useEvaluateBadgesOnMount } from "@/hooks/useBadges";
+import { BadgeToastManager } from "@/components/BadgeEarnedToast";
 
 interface BannerData {
   banner: {
@@ -53,6 +55,14 @@ export default function HomePage() {
   const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [markAttempted, setMarkAttempted] = useState(false);
+  const [newBadges, setNewBadges] = useState<string[]>([]);
+  const [badgeEvaluated, setBadgeEvaluated] = useState(false);
+  
+  const { evaluate } = useEvaluateBadgesOnMount({
+    onNewBadges: (badgeKeys) => {
+      setNewBadges(badgeKeys);
+    },
+  });
 
   const { data: bannerData } = useQuery<BannerData>({
     queryKey: ["/api/public/v1/session-banner"],
@@ -94,6 +104,14 @@ export default function HomePage() {
       markTodayMutation.mutate(today);
     }
   }, [markAttempted, isAuthenticated]);
+
+  // Evaluate badges on mount (only once per session)
+  useEffect(() => {
+    if (!badgeEvaluated && isAuthenticated) {
+      setBadgeEvaluated(true);
+      evaluate();
+    }
+  }, [badgeEvaluated, isAuthenticated, evaluate]);
 
   const banner = bannerData?.banner;
   const bannerStatus = bannerData?.status;
@@ -149,6 +167,12 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
+      {/* Badge Earned Toast */}
+      <BadgeToastManager 
+        newBadges={newBadges} 
+        onAllDismissed={() => setNewBadges([])} 
+      />
+      
       <div className="max-w-md mx-auto">
         {/* Header with Search and Notification */}
         <div className="bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3">

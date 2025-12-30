@@ -31,6 +31,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { UserWellnessProfile } from "@shared/schema";
 import ConsistencyCalendar from "@/components/ConsistencyCalendar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBadges } from "@/hooks/useBadges";
+import { BadgeIcon } from "@/components/BadgeIcon";
+import { Award } from "lucide-react";
 
 interface PrescriptionData {
   morning?: string[];
@@ -75,6 +78,9 @@ export default function ProfilePage() {
     prescriptionFromApi.morning?.length ||
     prescriptionFromApi.afternoon?.length ||
     prescriptionFromApi.evening?.length;
+
+  const { badges, isLoading: isLoadingBadges } = useBadges();
+  const earnedBadges = badges.slice(0, 5);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -272,6 +278,33 @@ export default function ProfilePage() {
               </p>
             )}
           </div>
+
+          {/* Earned Badges Section */}
+          {!isLoadingBadges && earnedBadges.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-muted-foreground">Earned Badges</p>
+                <button
+                  onClick={() => setLocation("/badges")}
+                  className="text-xs text-[#703DFA] hover:underline"
+                  data-testid="link-view-all-badges"
+                >
+                  View All
+                </button>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                {earnedBadges.map((badge) => (
+                  <BadgeIcon
+                    key={badge.badgeKey}
+                    badgeKey={badge.badgeKey}
+                    size="sm"
+                    earned
+                    showTooltip
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -454,6 +487,23 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
+
+              <button
+                onClick={() => setLocation("/badges")}
+                className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
+                data-testid="button-badges-settings"
+              >
+                <div className="flex items-center gap-3">
+                  <Award className="w-5 h-5 text-[#703DFA]" />
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">Badges</p>
+                    <p className="text-xs text-muted-foreground">
+                      View your journey and achievements
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
 
               <button
                 onClick={handleToggleNotifications}
