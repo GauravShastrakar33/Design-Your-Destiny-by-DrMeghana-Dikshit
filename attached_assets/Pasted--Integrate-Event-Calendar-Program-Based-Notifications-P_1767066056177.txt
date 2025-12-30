@@ -1,0 +1,135 @@
+🚀 Integrate Event Calendar + Program-Based Notifications (Phase 1 – Web Push)
+Context
+* Backend: Node.js + Express
+* Database: PostgreSQL
+* Auth: JWT (req.user.sub is user ID)
+* Web Push Notifications already implemented (FCM + VAPID)
+* Existing table: device_tokens
+* Existing Event Calendar table: events
+* Program access already implemented using:
+    * programs
+    * user_programs
+    * required_program_code
+    * required_program_level
+* Admin panel exists (web-only)
+⚠️ IMPORTANT
+* This is Phase 1 (Web Push only)
+* Works for:
+    * Desktop Chrome
+    * PWA
+    * Installed PWA on mobile
+* Do NOT add Android/iOS native push yet
+* Do NOT add batch/group logic
+* Reuse program code + level logic exactly like Event Calendar
+
+🎯 Goal
+Automatically send event reminder notifications to eligible users based on:
+* Program code
+* Program level
+Two reminders per event:
+1. 24 hours before
+2. 15 minutes before
+Only users who can access the event should receive notifications.
+
+🧱 Database Changes
+1️⃣ Create notifications table (if not exists)
+
+notifications
+- id SERIAL PRIMARY KEY
+- title TEXT NOT NULL
+- body TEXT NOT NULL
+- type VARCHAR(20) DEFAULT 'system'
+- scheduled_at TIMESTAMP NOT NULL
+- required_program_code VARCHAR(10) NOT NULL
+- required_program_level INT NOT NULL
+- related_event_id INT REFERENCES events(id) ON DELETE CASCADE
+- created_at TIMESTAMP DEFAULT NOW()
+
+2️⃣ Create notification_logs table (for tracking delivery)
+
+notification_logs
+- id SERIAL PRIMARY KEY
+- notification_id INT REFERENCES notifications(id) ON DELETE CASCADE
+- user_id INT NOT NULL
+- device_token TEXT NOT NULL
+- status VARCHAR(20) CHECK (status IN ('sent','failed'))
+- error TEXT
+- created_at TIMESTAMP DEFAULT NOW()
+📌 Do NOT create batches or extra tables
+
+🔔 Notification Creation Logic (Event → Notifications)
+When an event is created OR updated to UPCOMING:
+Create 2 notification records automatically
+Reminder 1 — 24 hours before
+
+scheduled_at = event.start_datetime - INTERVAL '24 hours'
+title = `${event.title} Tomorrow`
+body = `Your ${event.title} starts tomorrow at ${event.start_time}.`
+
+Reminder 2 — 15 minutes before
+scheduled_at = event.start_datetime - INTERVAL '15 minutes'
+title = `Starting Soon`
+body = `${event.title} starts in 15 minutes.`
+Both notifications must copy:
+* required_program_code from event
+* required_program_level from event
+* related_event_id = event.id
+
+⏰ Background Job (Cron / Worker)
+Run every minute.
+Steps:
+1. Find notifications where:
+    * scheduled_at <= NOW()
+    * not already sent (no logs exist for them)
+2. For each notification:
+    * Find eligible users using program access logic
+
+JOIN user_programs → programs
+WHERE
+programs.code = notification.required_program_code
+AND
+programs.level >= notification.required_program_level
+3. Fetch device tokens from device_tokens
+4. Send notification via Firebase Admin SDK
+5. Log result into notification_logs
+6. Remove invalid tokens automatically if FCM returns errors
+
+We already have this API (for testing only)
+
+POST /admin/api/notifications/test
+Body:
+{
+  "title": "Test",
+  "body": "Hello from admin"
+}
+* Send to all device_tokens
+* Log results
+* Cleanup invalid tokens
+
+📱 Frontend Behavior (Already Implemented)
+* User grants notification permission
+* FCM token stored in device_tokens
+* Token auto-refresh handled
+* Logout unregisters tokens
+No frontend changes needed for events.
+
+🧪 Acceptance Criteria
+* Event reminders are created automatically
+* Notifications respect program code + level
+* DYD users receive DYD notifications
+* USM users receive only USM-level notifications
+* No duplicate notifications
+* Failed tokens are cleaned
+* Delivery logs stored for debugging
+
+🚫 Do NOT Do
+* ❌ No Android/iOS native push yet
+* ❌ No manual notification creation for events
+* ❌ No program_code hardcoding
+* ❌ No frontend changes for this phase
+
+✅ Result After This
+* Event Calendar + Notifications are fully integrated
+* Same access logic everywhere (events + notifications)
+* Ready for Phase 2 (Android/iOS native push)
+* Clean, scalable, and future-proof design
