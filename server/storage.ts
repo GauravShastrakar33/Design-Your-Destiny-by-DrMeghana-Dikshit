@@ -1783,7 +1783,12 @@ export class DbStorage implements IStorage {
     return db
       .select()
       .from(notificationsTable)
-      .where(sql`${notificationsTable.scheduledAt} <= ${now}`)
+      .where(
+        and(
+          sql`${notificationsTable.scheduledAt} <= ${now}`,
+          eq(notificationsTable.sent, false)
+        )
+      )
       .orderBy(asc(notificationsTable.scheduledAt));
   }
 
@@ -1793,6 +1798,13 @@ export class DbStorage implements IStorage {
       .from(notificationsTable)
       .where(eq(notificationsTable.id, id));
     return notification;
+  }
+
+  async markNotificationSent(id: number): Promise<void> {
+    await db
+      .update(notificationsTable)
+      .set({ sent: true, sentAt: new Date() })
+      .where(eq(notificationsTable.id, id));
   }
 
   // ===== NOTIFICATION LOGS =====

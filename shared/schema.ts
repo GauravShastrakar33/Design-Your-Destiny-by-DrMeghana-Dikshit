@@ -507,11 +507,15 @@ export const notifications = pgTable("notifications", {
   requiredProgramCode: varchar("required_program_code", { length: 10 }).notNull(),
   requiredProgramLevel: integer("required_program_level").notNull(),
   relatedEventId: integer("related_event_id").references(() => events.id, { onDelete: 'cascade' }),
+  sent: boolean("sent").notNull().default(false),
+  sentAt: timestamp("sent_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
+  sent: true,
+  sentAt: true,
   createdAt: true,
 }).extend({
   scheduledAt: z.coerce.date(),
