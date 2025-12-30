@@ -20,6 +20,8 @@ import {
   type PohDailyRating, type InsertPohDailyRating,
   type PohAction, type InsertPohAction,
   type PohMilestone, type InsertPohMilestone,
+  type Notification, type InsertNotification,
+  type NotificationLog, type InsertNotificationLog,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -34,7 +36,10 @@ import {
   projectOfHearts as projectOfHeartsTable,
   pohDailyRatings as pohDailyRatingsTable,
   pohActions as pohActionsTable,
-  pohMilestones as pohMilestonesTable
+  pohMilestones as pohMilestonesTable,
+  notifications as notificationsTable,
+  notificationLogs as notificationLogsTable,
+  deviceTokens as deviceTokensTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -1739,6 +1744,122 @@ export class DbStorage implements IStorage {
       .where(eq(pohDailyRatingsTable.id, ratingId))
       .returning();
     return updated;
+  }
+
+  // ===== NOTIFICATIONS =====
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await db
+      .insert(notificationsTable)
+      .values(notification)
+      .returning();
+    return newNotification;
+  }
+
+  async createNotifications(notifications: InsertNotification[]): Promise<Notification[]> {
+    if (notifications.length === 0) return [];
+    const result = await db
+      .insert(notificationsTable)
+      .values(notifications)
+      .returning();
+    return result;
+  }
+
+  async getNotificationsByEventId(eventId: number): Promise<Notification[]> {
+    return db
+      .select()
+      .from(notificationsTable)
+      .where(eq(notificationsTable.relatedEventId, eventId));
+  }
+
+  async deleteNotificationsByEventId(eventId: number): Promise<void> {
+    await db
+      .delete(notificationsTable)
+      .where(eq(notificationsTable.relatedEventId, eventId));
+  }
+
+  async getPendingNotifications(): Promise<Notification[]> {
+    const now = new Date();
+    return db
+      .select()
+      .from(notificationsTable)
+      .where(sql`${notificationsTable.scheduledAt} <= ${now}`)
+      .orderBy(asc(notificationsTable.scheduledAt));
+  }
+
+  async getNotificationById(id: number): Promise<Notification | undefined> {
+    const [notification] = await db
+      .select()
+      .from(notificationsTable)
+      .where(eq(notificationsTable.id, id));
+    return notification;
+  }
+
+  // ===== NOTIFICATION LOGS =====
+
+  async createNotificationLog(log: InsertNotificationLog): Promise<NotificationLog> {
+    const [newLog] = await db
+      .insert(notificationLogsTable)
+      .values(log)
+      .returning();
+    return newLog;
+  }
+
+  async createNotificationLogs(logs: InsertNotificationLog[]): Promise<NotificationLog[]> {
+    if (logs.length === 0) return [];
+    const result = await db
+      .insert(notificationLogsTable)
+      .values(logs)
+      .returning();
+    return result;
+  }
+
+  async getNotificationLogsByNotificationId(notificationId: number): Promise<NotificationLog[]> {
+    return db
+      .select()
+      .from(notificationLogsTable)
+      .where(eq(notificationLogsTable.notificationId, notificationId));
+  }
+
+  async hasNotificationBeenSent(notificationId: number): Promise<boolean> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(notificationLogsTable)
+      .where(eq(notificationLogsTable.notificationId, notificationId));
+    return (result?.count ?? 0) > 0;
+  }
+
+  // ===== DEVICE TOKENS (for notifications) =====
+
+  async getDeviceTokensByUserIds(userIds: number[]): Promise<{ userId: number; token: string }[]> {
+    if (userIds.length === 0) return [];
+    return db
+      .select({ userId: deviceTokensTable.userId, token: deviceTokensTable.token })
+      .from(deviceTokensTable)
+      .where(inArray(deviceTokensTable.userId, userIds));
+  }
+
+  async deleteDeviceToken(token: string): Promise<void> {
+    await db
+      .delete(deviceTokensTable)
+      .where(eq(deviceTokensTable.token, token));
+  }
+
+  // ===== ELIGIBLE USERS FOR NOTIFICATIONS (by program code + level) =====
+
+  async getEligibleUserIdsForNotification(programCode: string, programLevel: number): Promise<number[]> {
+    const result = await db
+      .select({ userId: userProgramsTable.userId })
+      .from(userProgramsTable)
+      .innerJoin(programsTable, eq(userProgramsTable.programId, programsTable.id))
+      .where(
+        and(
+          eq(programsTable.code, programCode),
+          sql`${programsTable.level} >= ${programLevel}`,
+          eq(programsTable.isActive, true)
+        )
+      );
+    return result.map(r => r.userId);
   }
 }
 
