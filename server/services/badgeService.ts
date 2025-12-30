@@ -57,21 +57,18 @@ function analyzeStreakHistory(dates: string[]): { cycles: StreakCycle[]; current
 }
 
 export async function evaluateBadges(userId: number, todayDate: string): Promise<string[]> {
-  const newlyAwardedBadges: string[] = [];
   const earnedBadgeKeys = await storage.getUserBadgeKeys(userId);
   const earnedSet = new Set(earnedBadgeKeys);
 
   const currentStreak = await storage.getCurrentStreak(userId, todayDate);
 
   if (!earnedSet.has("day_zero")) {
-    const awarded = await storage.awardBadge(userId, "day_zero");
-    if (awarded) newlyAwardedBadges.push("day_zero");
+    await storage.awardBadge(userId, "day_zero");
   }
 
   for (const { key, threshold } of CORE_BADGE_THRESHOLDS) {
     if (!earnedSet.has(key) && currentStreak >= threshold) {
-      const awarded = await storage.awardBadge(userId, key);
-      if (awarded) newlyAwardedBadges.push(key);
+      await storage.awardBadge(userId, key);
     }
   }
 
@@ -83,8 +80,7 @@ export async function evaluateBadges(userId: number, todayDate: string): Promise
     if (hasStreakAfterBreak) {
       const lastCycle = cycles[cycles.length - 1];
       if (lastCycle.length >= 14) {
-        const awarded = await storage.awardBadge(userId, "resilient");
-        if (awarded) newlyAwardedBadges.push("resilient");
+        await storage.awardBadge(userId, "resilient");
       }
     }
   }
@@ -98,12 +94,19 @@ export async function evaluateBadges(userId: number, todayDate: string): Promise
     }
 
     if (completedThirtyDayStreaks >= 3) {
-      const awarded = await storage.awardBadge(userId, "relentless", { cyclesCompleted: completedThirtyDayStreaks });
-      if (awarded) newlyAwardedBadges.push("relentless");
+      await storage.awardBadge(userId, "relentless", { cyclesCompleted: completedThirtyDayStreaks });
     }
   }
 
-  return newlyAwardedBadges;
+  // Get all unnotified badges (including newly awarded and admin-granted)
+  const unnotifiedBadges = await storage.getUnnotifiedBadgeKeys(userId);
+  
+  // Mark them all as notified
+  if (unnotifiedBadges.length > 0) {
+    await storage.markBadgesAsNotified(userId, unnotifiedBadges);
+  }
+
+  return unnotifiedBadges;
 }
 
 export async function awardAdminBadge(

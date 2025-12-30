@@ -664,6 +664,7 @@ export const userBadges = pgTable("user_badges", {
   badgeKey: varchar("badge_key", { length: 50 }).notNull(),
   earnedAt: timestamp("earned_at", { mode: "date" }).notNull().defaultNow(),
   metadata: jsonb("metadata"),
+  notified: boolean("notified").notNull().default(false),
 }, (table) => ({
   uniqueUserBadge: unique("unique_user_badge").on(table.userId, table.badgeKey),
 }));

@@ -1947,6 +1947,28 @@ export class DbStorage implements IStorage {
         eq(userBadgesTable.badgeKey, badgeKey)
       ));
   }
+
+  async getUnnotifiedBadgeKeys(userId: number): Promise<string[]> {
+    const badges = await db
+      .select({ badgeKey: userBadgesTable.badgeKey })
+      .from(userBadgesTable)
+      .where(and(
+        eq(userBadgesTable.userId, userId),
+        eq(userBadgesTable.notified, false)
+      ));
+    return badges.map(b => b.badgeKey);
+  }
+
+  async markBadgesAsNotified(userId: number, badgeKeys: string[]): Promise<void> {
+    if (badgeKeys.length === 0) return;
+    await db
+      .update(userBadgesTable)
+      .set({ notified: true })
+      .where(and(
+        eq(userBadgesTable.userId, userId),
+        inArray(userBadgesTable.badgeKey, badgeKeys)
+      ));
+  }
 }
 
 export const storage = new DbStorage();
