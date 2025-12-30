@@ -656,3 +656,45 @@ export const insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
 
 export type InsertDeviceToken = z.infer<typeof insertDeviceTokenSchema>;
 export type DeviceToken = typeof deviceTokens.$inferSelect;
+
+// User Badges Table - tracks permanently earned badges
+export const userBadges = pgTable("user_badges", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  badgeKey: varchar("badge_key", { length: 50 }).notNull(),
+  earnedAt: timestamp("earned_at", { mode: "date" }).notNull().defaultNow(),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  uniqueUserBadge: unique("unique_user_badge").on(table.userId, table.badgeKey),
+}));
+
+export const badgeKeyEnum = z.enum([
+  // Core streak badges
+  "day_zero",
+  "spark",
+  "pulse",
+  "anchor",
+  "aligned",
+  "disciplined",
+  "unstoppable",
+  "integrated",
+  "titan",
+  // Meta badges
+  "resilient",
+  "relentless",
+  // Admin badges
+  "ambassador",
+  "hall_of_fame",
+]);
+
+export type BadgeKey = z.infer<typeof badgeKeyEnum>;
+
+export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({
+  id: true,
+  earnedAt: true,
+}).extend({
+  badgeKey: badgeKeyEnum,
+});
+
+export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
+export type UserBadge = typeof userBadges.$inferSelect;

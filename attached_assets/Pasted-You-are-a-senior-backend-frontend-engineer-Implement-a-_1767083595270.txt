@@ -1,0 +1,239 @@
+You are a senior backend + frontend engineer.
+
+Implement a complete Badge System for the DYD app with the following strict constraints and logic.
+
+====================================
+EXISTING SETUP (DO NOT CHANGE)
+====================================
+
+1. users table already exists
+2. user_streaks table already exists with:
+   - user_id
+   - activity_date (YYYY-MM-DD)
+   - unique (user_id, activity_date)
+3. Streak definition:
+   - One row per calendar day = app opened at least once
+   - Missing a day = streak resets
+   - No duration, no actions, no intensity
+4. Badge SVG assets already exist at:
+   /public/badges/{badge_key}.svg
+
+====================================
+GOAL
+====================================
+
+Build a badge system where:
+- Badges are permanent achievements
+- Each badge is earned only once
+- Badge logic lives in code
+- Database only stores outcomes
+
+====================================
+DATABASE (ADD ONLY THIS TABLE)
+====================================
+
+Create ONE new table: user_badges
+
+Columns:
+- id (serial, PK)
+- user_id (FK → users.id, NOT NULL, ON DELETE CASCADE)
+- badge_key (varchar, NOT NULL)
+- earned_at (timestamp, default now)
+- metadata (jsonb, nullable)
+
+Constraints:
+- UNIQUE (user_id, badge_key)
+
+DO NOT add:
+- streak_count
+- is_active
+- earned_count
+- reset flags
+
+====================================
+BADGE KEYS (FINAL & FIXED)
+====================================
+
+Core streak badges (earned once):
+Badge Name	Logic (Existing Metric)	Meaning
+Day Zero	Account created, no streak yet	Awareness before action
+Spark	3-day streak	Momentum initiated
+Pulse	7-day streak	Rhythm established
+Anchor	30-day streak	Habit grounded
+Aligned	90-day streak	Practice internalised
+Disciplined	100-day streak	Control beyond motivation
+"Unstoppable"	365-day streak	Rare continuity
+Integrated	1000-day streak	Lifestyle-level integration
+Titan	3000-day streak	Permanence
+
+Meta badges (earned once):
+- resilient    (rebuild 14-day streak after a break)
+- relentless   (complete 3 separate 30-day streaks)
+
+Admin badges (manual - from admin portal):
+- ambassador - Members who have shared authentic testimonials, reflecting how DYD impacted their life and growth.
+- hall_of_fame - Members of DYD who joined with a clear intention and followed through to achieve meaningful personal outcomes they originally came for.
+
+
+====================================
+BADGE LOGIC (STRICT RULES)
+====================================
+
+CORE BADGES:
+- Award when current streak >= threshold
+- Award ONLY ONCE
+- Never remove
+- Never re-award after streak break
+
+META BADGES:
+
+Resilient:
+- User must break a streak
+- Then later rebuild a NEW 14-day streak
+- Award once
+
+Relentless:
+- Track number of COMPLETED 30-day streak cycles
+- Streak must break between cycles
+- On 3rd completion → award
+- Progress may be stored in metadata if needed
+
+ADMIN BADGES:
+- No streak logic
+- Admin inserts directly into user_badges
+- Award once
+
+====================================
+BACKEND IMPLEMENTATION
+====================================
+
+1. On app open:
+   - Insert today into user_streaks (ignore duplicates) - already present
+   - Calculate current streak from user_streaks
+   - Run badge evaluation logic
+
+2. Badge evaluation:
+   - For each eligible badge:
+     INSERT INTO user_badges (user_id, badge_key)
+     ON CONFLICT (user_id, badge_key) DO NOTHING
+
+3. Create API endpoints:
+   - GET /api/badges
+     → returns list of earned badge_keys for user
+
+   - POST /api/admin/badges
+     → admin assigns ambassador / hall_of_fame
+
+====================================
+FRONTEND IMPLEMENTATION
+====================================
+
+1. Create a badge registry in frontend:
+   - badge_key
+   - display name
+   - meaning
+   - type (core / meta / admin)
+ 
+ Profile Screen – Earned Badges (Identity View)
+
+On the Profile screen:
+
+Placement:
+- Show Earned Badges directly BELOW the “Karmic Affirmation” section.
+
+What to show:
+- ONLY badges the user has earned
+- Maximum 4–5 badges (small icons)
+- No locked badges
+- No explanations by default
+
+UI behavior:
+- Badges shown as small SVG icons (full color)
+- If more badges exist, allow horizontal scroll
+
+
+Purpose:
+- Reinforce identity
+- Keep profile clean and non-gamified
+
+------------------------------------
+
+3. Badges Screen – Full Badge Ladder (Discovery View)
+
+This is a dedicated screen accessible from:
+- Profile → “Badges” entry in Settings
+
+What to show:
+- ALL badges (earned + locked)
+- Earned badges → full color SVG
+- Locked badges → grayscale SVG
+- One-line meaning meaning displayed under each badge and how user get that, Example : 
+Disciplined(badge)
+Control beyond motivation
+Earned after 100 days of consistency
+
+What NOT to show:
+- No progress bars
+- No percentages
+- No “X days left”
+- No counters or pressure indicators
+
+Purpose:
+- Educate users about the journey
+- Allow opt-in exploration
+- Preserve psychological calm
+
+------------------------------------
+
+4. Badge Earned Moment (Subtle Recognition)
+
+When backend awards a NEW badge:
+
+- Show a subtle toast or lightweight modal
+- Copy format:
+  “You earned {Badge Name} — {meaning}”
+
+Rules:
+- Show only once per badge
+- Dismissible
+- No confetti or loud animation
+- Optional soft animation or glow
+
+Purpose:
+- Acknowledge achievement
+- Avoid dopamine-heavy gamification
+
+Show the badge-earned popup/toast on the Home screen
+Show the badge-earned toast for 4–5 seconds, auto-dismissed, with manual dismiss allowed.
+------------------------------------
+
+STRICT UI RULES
+
+- Profile = identity → earned badges only
+- Badges screen = journey → full ladder
+- Locked badges never appear on profile
+- Badges never interrupt daily core flows
+- No re-awarding visuals for same badge
+
+====================================
+STRICT DO-NOTS
+====================================
+
+- Do NOT store badge logic in DB
+- Do NOT duplicate tables per badge type
+- Do NOT remove badges on streak break
+- Do NOT re-award core badges
+- Do NOT gamify with counters or points
+- Do NOT modify user_streaks schema
+
+====================================
+DELIVERABLE
+====================================
+
+- Drizzle schema for user_badges
+- Badge awarding logic
+- API endpoints
+- Frontend badge rendering
+- Clean, minimal, scalable implementation
+
+Follow this spec exactly.

@@ -612,6 +612,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== BADGE ROUTES =====
+
+  // GET /api/v1/badges - Get all earned badges for authenticated user
+  app.get("/api/v1/badges", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const badges = await storage.getUserBadges(req.user.sub);
+      res.json({ badges });
+    } catch (error) {
+      console.error("Error fetching badges:", error);
+      res.status(500).json({ error: "Failed to fetch badges" });
+    }
+  });
+
+  // POST /api/v1/badges/evaluate - Evaluate and award badges (called on app open)
+  app.post("/api/v1/badges/evaluate", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { evaluateBadges } = await import("./services/badgeService");
+      
+      const todayDate = new Date().toISOString().split('T')[0];
+      const newlyAwardedBadges = await evaluateBadges(req.user.sub, todayDate);
+
+      res.json({ 
+        newBadges: newlyAwardedBadges,
+        hasNewBadges: newlyAwardedBadges.length > 0
+      });
+    } catch (error) {
+      console.error("Error evaluating badges:", error);
+      res.status(500).json({ error: "Failed to evaluate badges" });
+    }
+  });
+
   // ===== ACTIVITY LOGGING ROUTES (AI INSIGHTS) =====
 
   // Log user activity (practice/breath/checklist)
@@ -1005,6 +1044,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting student:", error);
       res.status(500).json({ error: "Failed to delete student" });
+    }
+  });
+
+  // Admin routes: Get student badges
+  app.get("/admin/v1/students/:id/badges", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const badges = await storage.getUserBadges(id);
+      res.json({ badges });
+    } catch (error) {
+      console.error("Error fetching student badges:", error);
+      res.status(500).json({ error: "Failed to fetch badges" });
+    }
+  });
+
+  // Admin routes: Grant admin badge (ambassador or hall_of_fame)
+  app.post("/admin/v1/students/:id/badges", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { badgeKey } = req.body;
+
+      if (!badgeKey || !["ambassador", "hall_of_fame"].includes(badgeKey)) {
+        return res.status(400).json({ error: "badgeKey must be 'ambassador' or 'hall_of_fame'" });
+      }
+
+      const student = await storage.getStudentById(id);
+      if (!student) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      const { awardAdminBadge } = await import("./services/badgeService");
+      const result = await awardAdminBadge(id, badgeKey);
+
+      if (result.alreadyEarned) {
+        return res.status(409).json({ error: "Badge already earned" });
+      }
+
+      if (!result.success) {
+        return res.status(500).json({ error: "Failed to award badge" });
+      }
+
+      res.json({ message: "Badge awarded successfully", badgeKey });
+    } catch (error) {
+      console.error("Error granting badge:", error);
+      res.status(500).json({ error: "Failed to grant badge" });
     }
   });
 

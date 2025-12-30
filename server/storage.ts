@@ -22,6 +22,7 @@ import {
   type PohMilestone, type InsertPohMilestone,
   type Notification, type InsertNotification,
   type NotificationLog, type InsertNotificationLog,
+  type UserBadge, type InsertUserBadge, type BadgeKey,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -39,7 +40,8 @@ import {
   pohMilestones as pohMilestonesTable,
   notifications as notificationsTable,
   notificationLogs as notificationLogsTable,
-  deviceTokens as deviceTokensTable
+  deviceTokens as deviceTokensTable,
+  userBadges as userBadgesTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -1872,6 +1874,78 @@ export class DbStorage implements IStorage {
         )
       );
     return result.map(r => r.userId);
+  }
+
+  // ===== USER BADGES =====
+
+  async getUserBadges(userId: number): Promise<UserBadge[]> {
+    return db
+      .select()
+      .from(userBadgesTable)
+      .where(eq(userBadgesTable.userId, userId))
+      .orderBy(desc(userBadgesTable.earnedAt));
+  }
+
+  async getUserBadgeKeys(userId: number): Promise<string[]> {
+    const badges = await db
+      .select({ badgeKey: userBadgesTable.badgeKey })
+      .from(userBadgesTable)
+      .where(eq(userBadgesTable.userId, userId));
+    return badges.map(b => b.badgeKey);
+  }
+
+  async awardBadge(userId: number, badgeKey: string, metadata?: object): Promise<UserBadge | null> {
+    try {
+      const [badge] = await db
+        .insert(userBadgesTable)
+        .values({ userId, badgeKey, metadata: metadata || null })
+        .onConflictDoNothing()
+        .returning();
+      return badge || null;
+    } catch {
+      return null;
+    }
+  }
+
+  async hasBadge(userId: number, badgeKey: string): Promise<boolean> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(userBadgesTable)
+      .where(and(
+        eq(userBadgesTable.userId, userId),
+        eq(userBadgesTable.badgeKey, badgeKey)
+      ));
+    return (result?.count ?? 0) > 0;
+  }
+
+  async getAllStreakHistory(userId: number): Promise<string[]> {
+    const records = await db
+      .select({ activityDate: userStreaksTable.activityDate })
+      .from(userStreaksTable)
+      .where(eq(userStreaksTable.userId, userId))
+      .orderBy(asc(userStreaksTable.activityDate));
+    return records.map(r => r.activityDate);
+  }
+
+  async getBadgeMetadata(userId: number, badgeKey: string): Promise<object | null> {
+    const [badge] = await db
+      .select({ metadata: userBadgesTable.metadata })
+      .from(userBadgesTable)
+      .where(and(
+        eq(userBadgesTable.userId, userId),
+        eq(userBadgesTable.badgeKey, badgeKey)
+      ));
+    return badge?.metadata as object | null;
+  }
+
+  async updateBadgeMetadata(userId: number, badgeKey: string, metadata: object): Promise<void> {
+    await db
+      .update(userBadgesTable)
+      .set({ metadata })
+      .where(and(
+        eq(userBadgesTable.userId, userId),
+        eq(userBadgesTable.badgeKey, badgeKey)
+      ));
   }
 }
 
