@@ -489,6 +489,56 @@ export const insertEventSchema = createInsertSchema(events).omit({
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
 
+// Notification type enum
+export const notificationTypeEnum = z.enum(["system", "event_reminder"]);
+export type NotificationType = z.infer<typeof notificationTypeEnum>;
+
+// Notification log status enum
+export const notificationLogStatusEnum = z.enum(["sent", "failed"]);
+export type NotificationLogStatus = z.infer<typeof notificationLogStatusEnum>;
+
+// Notifications Table - for scheduled notifications
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  type: varchar("type", { length: 20 }).notNull().default("system"),
+  scheduledAt: timestamp("scheduled_at", { mode: "date" }).notNull(),
+  requiredProgramCode: varchar("required_program_code", { length: 10 }).notNull(),
+  requiredProgramLevel: integer("required_program_level").notNull(),
+  relatedEventId: integer("related_event_id").references(() => events.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  scheduledAt: z.coerce.date(),
+});
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
+
+// Notification Logs Table - for tracking delivery
+export const notificationLogs = pgTable("notification_logs", {
+  id: serial("id").primaryKey(),
+  notificationId: integer("notification_id").notNull().references(() => notifications.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull(),
+  deviceToken: text("device_token").notNull(),
+  status: varchar("status", { length: 20 }).notNull(),
+  error: text("error"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertNotificationLogSchema = createInsertSchema(notificationLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertNotificationLog = z.infer<typeof insertNotificationLogSchema>;
+export type NotificationLog = typeof notificationLogs.$inferSelect;
+
 // Project of Heart (POH) Tables
 export const pohCategoryEnum = z.enum(["career", "health", "relationships", "wealth"]);
 export type POHCategory = z.infer<typeof pohCategoryEnum>;
