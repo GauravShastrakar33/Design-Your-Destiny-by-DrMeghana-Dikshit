@@ -54,14 +54,15 @@ export default function UserDetailsPage() {
     enabled: !!userId,
   });
 
-  const { data: userBadges = [], isLoading: isLoadingBadges } = useQuery<UserBadge[]>({
+  const { data: earnedBadgeKeys = [], isLoading: isLoadingBadges } = useQuery<string[]>({
     queryKey: ["/admin/v1/students", userId, "badges"],
     queryFn: async () => {
       const response = await fetch(`/admin/v1/students/${userId}/badges`, {
         headers: { "Authorization": `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to fetch user badges");
-      return response.json();
+      const data = await response.json();
+      return (data.badges ?? []).map((b: UserBadge) => b.badgeKey);
     },
     enabled: !!userId,
   });
@@ -173,7 +174,6 @@ export default function UserDetailsPage() {
   const isLoading = isLoadingStudent || isLoadingProfile || isLoadingBadges;
   
   const adminBadges = BADGE_REGISTRY.filter(b => b.type === "admin");
-  const userBadgeKeys = userBadges.map(b => b.badgeKey);
 
   if (isLoading) {
     return (
@@ -382,7 +382,7 @@ export default function UserDetailsPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {adminBadges.map((badge) => {
-                const isGranted = userBadgeKeys.includes(badge.key);
+                const isGranted = earnedBadgeKeys.includes(badge.key);
                 return (
                   <div 
                     key={badge.key} 
@@ -431,25 +431,25 @@ export default function UserDetailsPage() {
             </div>
 
             {/* Current Badges Display */}
-            {userBadges.length > 0 && (
+            {earnedBadgeKeys.length > 0 && (
               <div className="mt-6 pt-4 border-t">
-                <h3 className="font-medium mb-3">All Earned Badges ({userBadges.length})</h3>
+                <h3 className="font-medium mb-3">All Earned Badges ({earnedBadgeKeys.length})</h3>
                 <div className="flex flex-wrap gap-2">
-                  {userBadges.map((ub) => {
-                    const badgeDef = BADGE_REGISTRY.find(b => b.key === ub.badgeKey);
+                  {earnedBadgeKeys.map((badgeKey) => {
+                    const badgeDef = BADGE_REGISTRY.find(b => b.key === badgeKey);
                     return (
                       <div 
-                        key={ub.id} 
+                        key={badgeKey} 
                         className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1.5"
                         title={badgeDef?.meaning}
-                        data-testid={`earned-badge-${ub.badgeKey}`}
+                        data-testid={`earned-badge-${badgeKey}`}
                       >
                         <img 
-                          src={getBadgeSvgPath(ub.badgeKey)} 
-                          alt={badgeDef?.displayName || ub.badgeKey}
+                          src={getBadgeSvgPath(badgeKey)} 
+                          alt={badgeDef?.displayName || badgeKey}
                           className="w-5 h-5"
                         />
-                        <span className="text-sm font-medium">{badgeDef?.displayName || ub.badgeKey}</span>
+                        <span className="text-sm font-medium">{badgeDef?.displayName || badgeKey}</span>
                       </div>
                     );
                   })}
