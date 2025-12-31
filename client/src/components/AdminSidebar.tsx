@@ -30,7 +30,7 @@ interface MenuItemConfig {
 
 const menuItemsConfig: MenuItemConfig[] = [
   { id: "dashboard", path: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { id: "users", label: "User Management", icon: Users },
+  { id: "users", path: "/admin/users/students", label: "User Management", icon: Users },
   { id: "banner", path: "/admin/session-banner/banners", label: "Session Banner", icon: Image },
   { id: "events", path: "/admin/events", label: "Event Calendar", icon: Calendar },
   { id: "sessions", path: "/admin/sessions", label: "Community Practices", icon: UsersRound },

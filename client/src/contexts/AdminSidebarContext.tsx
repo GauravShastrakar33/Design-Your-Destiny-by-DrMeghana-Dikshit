@@ -22,6 +22,7 @@ const menuItems: MenuItem[] = [
   },
   { 
     id: "users",
+    path: "/admin/users/students",
     label: "User Management",
     submenu: [
       { path: "/admin/users/students", label: "Students" },
