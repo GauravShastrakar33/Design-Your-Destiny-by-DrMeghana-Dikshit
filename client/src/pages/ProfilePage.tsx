@@ -151,8 +151,8 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile Card */}
-      <div className="max-w-md mx-auto px-4 mt-4">
-        <div className="bg-white rounded-2xl shadow-md p-4">
+      <div className="max-w-md mx-auto px-4 mt-2">
+        <div className="bg-white rounded-2xl shadow-md p-4 pb-2">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-sm font-bold border border-white/30 shadow-sm flex-shrink-0">
               {getInitials(userName)}
@@ -185,7 +185,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Other Cards Container */}
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-md mx-auto px-4 py-3 space-y-3">
         {/* Consistency Calendar */}
         <div className="relative">
           <ConsistencyCalendar />
