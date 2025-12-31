@@ -132,11 +132,12 @@ export default function ProfilePage() {
   };
 
   const getInitials = (name: string) => {
-    const words = name.trim().split(/\s+/);
+    const words = name.trim().split(/\s+/).filter(w => w.length > 0);
+    if (words.length === 0) return "";
     if (words.length === 1) {
-      return words[0].substring(0, 2).toUpperCase();
+      return words[0][0].toUpperCase();
     }
-    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    return words.map(w => w[0].toUpperCase()).join("");
   };
 
   return (
@@ -154,7 +155,7 @@ export default function ProfilePage() {
 
       {/* Profile Card */}
       <div className="max-w-md mx-auto px-4 mt-2">
-        <div className="bg-white rounded-2xl shadow-md p-4 pb-2">
+        <div className="bg-white rounded-2xl shadow-md p-4 pb-1">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-sm font-bold border border-white/30 shadow-sm flex-shrink-0">
               {getInitials(userName)}
@@ -188,7 +189,7 @@ export default function ProfilePage() {
                   <BadgeIcon
                     key={badge.badgeKey}
                     badgeKey={badge.badgeKey}
-                    size="lg"
+                    size="xl"
                     earned
                     showTooltip
                   />
