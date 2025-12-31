@@ -1,0 +1,171 @@
+Implement In-App Notifications (Inbox)
+Context
+
+Backend: Node.js + Express
+
+Database: PostgreSQL
+
+Auth: JWT (req.user.sub is user ID)
+
+Push notifications (FCM) already implemented
+
+Deep links from notifications already implemented
+
+Existing tables:
+
+notifications
+
+notification_logs
+
+device_tokens
+
+UI already has a Notifications screen (bell icon)
+
+⚠️ IMPORTANT
+
+This is in-app notifications only
+
+Do NOT add new tables unless absolutely required
+
+Reuse existing notification data
+
+Do NOT change push logic
+
+🎯 Goal
+
+Show all notifications inside the app, even if:
+
+Push was missed
+
+User opens app later
+
+App was closed when notification arrived
+
+The Notifications screen should act as a persistent inbox.
+
+🧱 Database Usage (NO new tables)
+notifications
+
+Source of truth for notification content
+
+notification_logs
+
+Used to determine:
+
+Which user received which notification
+
+Delivery time
+
+Status
+
+🔌 API to Implement
+1️⃣ Fetch in-app notifications for logged-in user
+
+Endpoint
+
+GET /api/v1/notifications
+
+
+Auth
+
+Requires JWT
+
+Logic
+
+Get userId = req.user.sub
+
+Join:
+
+notification_logs
+
+notifications
+
+Filter:
+
+notification_logs.user_id = userId
+
+Order by:
+
+notification_logs.created_at DESC
+
+Response example
+
+[
+  {
+    "id": 12,
+    "title": "Inner Circle Masterclass Tomorrow",
+    "body": "Your Inner Circle Masterclass starts tomorrow at 7:00 PM",
+    "type": "event",
+    "relatedEventId": 42,
+    "createdAt": "2025-01-02T14:30:00Z"
+  }
+]
+
+🧭 Frontend Integration
+2️⃣ Populate Notifications screen
+
+Call GET /api/v1/notifications
+
+Display list using existing UI
+
+Show:
+
+Title
+
+Body
+
+Relative time (e.g. “2 hours ago”)
+
+3️⃣ Click behavior (reuse deep links)
+
+When user taps a notification:
+
+If relatedEventId exists → navigate to /events/{id}
+
+Else → navigate to home /
+
+⚠️ Do NOT add new routing logic — reuse existing deep-link behavior
+
+🔔 Bell Icon (optional but recommended)
+
+Show count = number of notifications returned
+
+No unread logic yet (future phase)
+
+🚫 Do NOT Implement (for now)
+
+❌ Read/unread status
+
+❌ Mark as read API
+
+❌ Notification preferences
+
+❌ New notification tables
+
+❌ Android/iOS native UI changes
+
+✅ Acceptance Criteria
+
+Notifications sent via push also appear in app inbox
+
+Users see notifications even if push was missed
+
+Event notifications deep-link correctly from inbox
+
+Notifications are scoped per user
+
+No duplicate notifications shown
+
+Uses existing tables only
+
+🧠 Result After This
+
+You will have:
+
+Push notifications ✅
+
+Deep links ✅
+
+In-app inbox ✅
+
+This completes Phase 1 (Web Notifications).

@@ -5333,6 +5333,24 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // ===== PUSH NOTIFICATIONS =====
+
+  // Get in-app notifications for logged-in user
+  app.get("/api/v1/notifications", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const notifications = await storage.getUserNotifications(userId);
+      
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching user notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
   
   // Register device token for push notifications
   app.post("/api/v1/notifications/register-device", authenticateJWT, async (req, res) => {

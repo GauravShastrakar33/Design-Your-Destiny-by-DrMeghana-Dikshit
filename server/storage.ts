@@ -1998,6 +1998,52 @@ export class DbStorage implements IStorage {
         inArray(userBadgesTable.badgeKey, badgeKeys)
       ));
   }
+
+  // ===== USER IN-APP NOTIFICATIONS =====
+
+  async getUserNotifications(userId: number): Promise<{
+    id: number;
+    title: string;
+    body: string;
+    type: string;
+    relatedEventId: number | null;
+    createdAt: string;
+  }[]> {
+    const results = await db
+      .select({
+        id: notificationsTable.id,
+        title: notificationsTable.title,
+        body: notificationsTable.body,
+        type: notificationsTable.type,
+        relatedEventId: notificationsTable.relatedEventId,
+        createdAt: notificationLogsTable.createdAt,
+      })
+      .from(notificationLogsTable)
+      .innerJoin(
+        notificationsTable,
+        eq(notificationLogsTable.notificationId, notificationsTable.id)
+      )
+      .where(
+        and(
+          eq(notificationLogsTable.userId, userId),
+          // Include both sent and delivered statuses
+          sql`${notificationLogsTable.status} IN ('sent', 'delivered')`
+        )
+      )
+      .orderBy(desc(notificationLogsTable.createdAt));
+    
+    // Deduplicate by notification ID (user may have multiple device tokens)
+    // Keep the most recent entry per notification
+    const seen = new Set<number>();
+    return results.filter(r => {
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    }).map(r => ({
+      ...r,
+      createdAt: r.createdAt.toISOString(),
+    }));
+  }
 }
 
 export const storage = new DbStorage();
