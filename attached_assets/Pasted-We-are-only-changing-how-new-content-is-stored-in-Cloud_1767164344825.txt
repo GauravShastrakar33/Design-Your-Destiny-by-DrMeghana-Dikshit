@@ -1,0 +1,138 @@
+We are only changing how new content is stored in Cloudflare R2 going forward.
+
+Do NOT perform any migration.
+I have already manually deleted all old courses from the app and all thumbnails and lesson files from Cloudflare R2.
+
+❗ ABSOLUTE CONSTRAINTS (DO NOT VIOLATE)
+
+❌ NO database table changes
+
+❌ NO altering existing tables or columns
+
+❌ NO new tables
+
+❌ NO migrations
+
+❌ NO backward compatibility logic
+
+❌ NO reading or mapping old paths
+
+❌ NO data transformation
+
+✅ ONLY update upload paths for new content
+
+If the current database already stores paths/URLs, reuse those fields as-is and only change the value written.
+
+🎯 Objective
+
+Update the app so that all newly uploaded course and lesson media is stored using the following fixed hierarchy in Cloudflare R2.
+
+✅ FINAL STORAGE HIERARCHY (AUTHORITATIVE)
+programs/
+└── {PROGRAM_CODE}/
+    └── courses/
+        └── {courseId}/
+            ├── thumbnail/
+            │   └── course.png
+            │
+            └── modules/
+                └── {moduleId}/
+                    └── lessons/
+                        └── {lessonId}/
+                            ├── video/
+                            │   └── lesson.mp4
+                            ├── audio/
+                            │   └── lesson.mp3
+                            └── script/
+                                └── lesson.pdf
+
+🔑 Identifier Rules
+
+PROGRAM_CODE
+
+Uppercase (e.g. DYD, USB, USC, USM)
+
+Immutable
+
+Unique
+
+courseId, moduleId, lessonId
+
+Use existing DB IDs
+
+Do not replace with names or slugs
+
+🧩 Admin Panel → Storage Mapping
+1️⃣ Course Creation
+
+Program is selected during course creation
+
+Use programCode (not programId) as the root directory
+
+2️⃣ Course Thumbnail Upload
+
+Store at:
+
+programs/${programCode}/courses/${courseId}/thumbnail/course.png
+
+3️⃣ Module Creation
+
+No files uploaded
+
+Only existing DB records are created/used
+
+R2 directories are implicit (created on first upload)
+
+4️⃣ Lesson Creation
+
+No upload yet
+
+Only metadata saved using existing tables
+
+5️⃣ Lesson File Uploads
+Video
+programs/${programCode}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/video/lesson.mp4
+
+Audio
+programs/${programCode}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/audio/lesson.mp3
+
+Script (PDF)
+programs/${programCode}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/script/lesson.pdf
+
+🛠️ Implementation Notes
+
+Filenames must be fixed (course.png, lesson.mp4, etc.)
+
+Do not generate random filenames
+
+Cloudflare R2 folders are implicit
+
+Use existing DB fields to store the new relative path or URL
+
+Do not add new DB fields
+
+Example stored value:
+
+"videoPath": "programs/DYD/courses/11/modules/3/lessons/7/video/lesson.mp4"
+
+🚫 Explicitly Do NOT Do
+
+❌ Do not modify database schema
+
+❌ Do not write migrations
+
+❌ Do not add fallback logic for old paths
+
+❌ Do not auto-create programs or change program codes
+
+❌ Do not clean up or scan old directories
+
+✅ Expected Result
+
+All new uploads follow the program-first hierarchy
+
+Database remains unchanged
+
+Storage structure matches business logic exactly
+
+Old CMS content is intentionally ignored
