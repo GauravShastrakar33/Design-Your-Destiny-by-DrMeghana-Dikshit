@@ -80,6 +80,7 @@ export async function sendPushNotification(
         body,
         icon: "/icon-192.png",
       },
+      data, // Include data payload for service worker access
     },
   };
 

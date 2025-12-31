@@ -1,0 +1,161 @@
+Implement Deep Linking from Push Notifications (Web / PWA)
+Context
+
+App already has:
+
+Event Calendar (events table)
+
+Push Notifications (FCM + Web Push)
+
+Scheduled Event Reminders (24h + 15min)
+
+Program-based access control
+
+Notifications are successfully sent via Firebase
+
+Frontend routes already exist:
+
+/events/:id
+
+This is Phase 1 (Web Push only)
+❌ No Android / iOS native push yet
+
+🎯 Goal
+
+When a user taps an event reminder notification, the app should:
+
+Open automatically
+
+Navigate directly to the related event page
+
+NOT land on the Home screen
+
+Example:
+
+Tap “Inner Circle Masterclass Tomorrow”
+→ Opens /events/42
+
+🧠 Concept
+
+Attach deep link metadata to push notifications so the app knows where to navigate when the notification is clicked.
+
+🔧 Backend Changes (Minimal)
+1️⃣ Attach deep link data when sending event notifications
+
+When sending a push notification for an event reminder, include a data payload:
+
+data: {
+  type: "event",
+  eventId: event.id.toString()
+}
+
+
+This must be added in:
+
+Event reminder sending logic (cron / worker)
+
+Admin test notification endpoint (optional, for testing)
+
+📌 Do NOT change database schema
+📌 Do NOT add new tables
+
+🔔 Example Push Payload
+await sendPushNotification(tokens, {
+  title: "Inner Circle Masterclass Tomorrow",
+  body: "Your Inner Circle Masterclass starts tomorrow at 7:00 PM",
+  data: {
+    type: "event",
+    eventId: "42"
+  }
+});
+
+🧩 Service Worker Changes (firebase-messaging-sw.js)
+2️⃣ Handle notification click
+
+In firebase-messaging-sw.js, add:
+
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+
+  const data = event.notification.data;
+  let targetUrl = "/";
+
+  if (data?.type === "event" && data.eventId) {
+    targetUrl = `/events/${data.eventId}`;
+  }
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ("focus" in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
+
+📌 This must work when:
+
+App is closed
+
+Browser tab is closed
+
+App is already open
+
+🧭 Frontend Routing
+
+No new UI needed.
+
+Ensure:
+
+/events/:id route loads the event details correctly
+
+Page fetches event by ID on load
+
+This already exists — do not refactor.
+
+🧪 Testing Instructions
+
+Enable notifications in Profile
+
+Send an event reminder or admin test notification
+
+Click the notification
+
+Expected behavior:
+
+App opens
+
+Navigates directly to /events/:id
+
+🚫 Do NOT Do
+
+❌ No Android/iOS native deep links
+
+❌ No new database tables
+
+❌ No inbox UI
+
+❌ No batch logic
+
+❌ No frontend permission changes
+
+✅ Result After This
+
+Push notifications open exact content, not generic home
+
+Event reminders feel intentional and polished
+
+Foundation ready for:
+
+Android App Links
+
+iOS Universal Links
+
+Notification Inbox (later)

@@ -14,11 +14,44 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
+  // Extract data for deep linking
+  const data = payload.data || {};
+  
   self.registration.showNotification(
     payload.notification?.title || "Notification",
     {
       body: payload.notification?.body,
       icon: "/icon-192.png",
+      data: data, // Pass data to notification for click handling
     }
+  );
+});
+
+// Handle notification click for deep linking
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+
+  const data = event.notification.data || {};
+  let targetUrl = "/";
+
+  // Deep link to event page for event reminders
+  if (data.type === "event_reminder" && data.eventId) {
+    targetUrl = `/events/${data.eventId}`;
+  }
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      // Try to focus an existing window and navigate
+      for (const client of clientList) {
+        if ("focus" in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      // No existing window, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
   );
 });

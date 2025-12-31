@@ -40,11 +40,22 @@ async function processNotifications(): Promise<void> {
 
         console.log(`Sending notification ${notification.id} to ${tokens.length} devices`);
 
+        // Build data payload with deep link info for event reminders
+        const dataPayload: Record<string, string> = {
+          type: notification.type,
+          notificationId: String(notification.id),
+        };
+        
+        // Add eventId for deep linking when it's an event reminder
+        if (notification.type === "event_reminder" && notification.relatedEventId) {
+          dataPayload.eventId = String(notification.relatedEventId);
+        }
+
         const result = await sendPushNotification(
           tokens,
           notification.title,
           notification.body,
-          { type: notification.type, notificationId: String(notification.id) }
+          dataPayload
         );
 
         const logs: Array<{
