@@ -57,7 +57,7 @@ export default function HomePage() {
   const [markAttempted, setMarkAttempted] = useState(false);
   const [newBadges, setNewBadges] = useState<string[]>([]);
   const [badgeEvaluated, setBadgeEvaluated] = useState(false);
-  
+
   const { evaluate } = useEvaluateBadgesOnMount({
     onNewBadges: (badgeKeys) => {
       setNewBadges(badgeKeys);
@@ -69,7 +69,10 @@ export default function HomePage() {
   });
 
   // Fetch today's daily quote
-  const { data: quoteData } = useQuery<{ quote: string | null; author: string | null }>({
+  const { data: quoteData } = useQuery<{
+    quote: string | null;
+    author: string | null;
+  }>({
     queryKey: ["/api/quotes/today"],
   });
 
@@ -85,11 +88,15 @@ export default function HomePage() {
   // Mark today mutation
   const markTodayMutation = useMutation({
     mutationFn: async (date: string) => {
-      const res = await apiRequest("POST", "/api/v1/streak/mark-today", { date });
+      const res = await apiRequest("POST", "/api/v1/streak/mark-today", {
+        date,
+      });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/v1/streak/last-7-days"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/v1/streak/last-7-days"],
+      });
     },
     onError: (error) => {
       console.error("Failed to mark streak:", error);
@@ -99,7 +106,7 @@ export default function HomePage() {
   // Mark today on page load (only once per session, only if authenticated)
   useEffect(() => {
     if (!markAttempted && isAuthenticated) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       setMarkAttempted(true);
       markTodayMutation.mutate(today);
     }
@@ -168,11 +175,11 @@ export default function HomePage() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       {/* Badge Earned Toast */}
-      <BadgeToastManager 
-        newBadges={newBadges} 
-        onAllDismissed={() => setNewBadges([])} 
+      <BadgeToastManager
+        newBadges={newBadges}
+        onAllDismissed={() => setNewBadges([])}
       />
-      
+
       <div className="max-w-md mx-auto">
         {/* Header with Search and Notification */}
         <div className="bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3">
@@ -251,35 +258,41 @@ export default function HomePage() {
                   className="w-full h-full object-cover"
                   data-testid="img-banner"
                 />
-                {banner.type === "session" && banner.liveEnabled && bannerStatus === "active" && (
-                  <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-white/20 backdrop-blur-lg px-3 py-1 rounded-md">
-                    <span className="h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse"></span>
-                    <span className="text-xs font-medium text-white">LIVE</span>
-                  </div>
-                )}
+                {banner.type === "session" &&
+                  banner.liveEnabled &&
+                  bannerStatus === "active" && (
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-white/20 backdrop-blur-lg px-3 py-1 rounded-md">
+                      <span className="h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse"></span>
+                      <span className="text-xs font-medium text-white">
+                        LIVE
+                      </span>
+                    </div>
+                  )}
               </div>
             ) : null}
 
-            {banner.ctaText && banner.ctaLink && banner.ctaLink.trim() !== "" && (
-              <div className="w-full flex justify-center">
-                <button
-                  onClick={() => {
-                    if (banner.ctaLink) {
-                      window.open(banner.ctaLink, "_blank");
-                    }
-                  }}
-                  className="mt-3 w-[85%] px-4 py-3 rounded-full font-bold shadow-md hover:opacity-90 transition text-xl"
-                  style={{
-                    backgroundColor: "#E5AC19",
-                    color: "#0D131F",
-                    fontFamily: "Inter",
-                  }}
-                  data-testid="button-banner-cta"
-                >
-                  {banner.ctaText}
-                </button>
-              </div>
-            )}
+            {banner.ctaText &&
+              banner.ctaLink &&
+              banner.ctaLink.trim() !== "" && (
+                <div className="w-full flex justify-center">
+                  <button
+                    onClick={() => {
+                      if (banner.ctaLink) {
+                        window.open(banner.ctaLink, "_blank");
+                      }
+                    }}
+                    className="mt-3 w-[85%] px-4 py-3 rounded-full font-bold shadow-md hover:opacity-90 transition text-xl"
+                    style={{
+                      backgroundColor: "#E5AC19",
+                      color: "#0D131F",
+                      fontFamily: "Inter",
+                    }}
+                    data-testid="button-banner-cta"
+                  >
+                    {banner.ctaText}
+                  </button>
+                </div>
+              )}
           </div>
         )}
 
@@ -320,9 +333,14 @@ export default function HomePage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <GraduationCap className="w-5 h-5 text-white" strokeWidth={2} />
+                  <GraduationCap
+                    className="w-5 h-5 text-white"
+                    strokeWidth={2}
+                  />
                 </div>
-                <h3 className="text-base font-bold text-white">Masterclasses</h3>
+                <h3 className="text-base font-bold text-white">
+                  Masterclasses
+                </h3>
               </div>
               <ChevronRight className="w-5 h-5 text-white/80" />
             </div>
@@ -330,52 +348,67 @@ export default function HomePage() {
 
           {/* 7-Day Streak Tracker - Only show when authenticated */}
           {isAuthenticated && (
-          <div
-            className="bg-white rounded-2xl p-4 shadow-sm border border-[#232A34]/10 mt-4"
-            data-testid="card-streak"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Flame className="w-5 h-5 text-orange-500" />
-                <span className="text-sm font-semibold text-[#232A34]">7-Day Streak</span>
+            <div
+              className="bg-white rounded-2xl p-4 shadow-sm border border-[#232A34]/10 mt-4"
+              data-testid="card-streak"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  <span className="text-sm font-semibold text-[#232A34]">
+                    7-Day Streak
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500">
+                  {streakData
+                    ? `${streakData.filter((d) => d.active).length} day${streakData.filter((d) => d.active).length !== 1 ? "s" : ""} this week`
+                    : ""}
+                </span>
               </div>
-              <span className="text-xs text-gray-500">
-                {streakData ? `${streakData.filter(d => d.active).length} day${streakData.filter(d => d.active).length !== 1 ? 's' : ''} this week` : ''}
-              </span>
+              <div className="flex justify-between gap-1">
+                {(streakData || Array(7).fill({ date: "", active: false })).map(
+                  (day, index) => {
+                    const dayDate = day.date
+                      ? new Date(day.date + "T12:00:00")
+                      : new Date();
+                    const dayName = day.date
+                      ? dayDate
+                          .toLocaleDateString("en-US", { weekday: "short" })
+                          .charAt(0)
+                      : ["M", "T", "W", "T", "F", "S", "S"][index];
+                    const isToday =
+                      day.date === new Date().toISOString().split("T")[0];
+
+                    return (
+                      <div
+                        key={day.date || index}
+                        className="flex flex-col items-center gap-1"
+                        data-testid={`streak-day-${index}`}
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                            day.active
+                              ? "bg-gradient-to-br from-orange-400 to-orange-600 shadow-sm"
+                              : "bg-gray-100"
+                          } ${isToday ? "ring-2 ring-orange-300 ring-offset-1" : ""}`}
+                        >
+                          {day.active ? (
+                            <Flame className="w-4 h-4 text-white" />
+                          ) : (
+                            <div className="w-2 h-2 rounded-full bg-gray-300" />
+                          )}
+                        </div>
+                        <span
+                          className={`text-xs ${day.active ? "text-orange-600 font-medium" : "text-gray-400"}`}
+                        >
+                          {dayName}
+                        </span>
+                      </div>
+                    );
+                  },
+                )}
+              </div>
             </div>
-            <div className="flex justify-between gap-1">
-              {(streakData || Array(7).fill({ date: '', active: false })).map((day, index) => {
-                const dayDate = day.date ? new Date(day.date + 'T12:00:00') : new Date();
-                const dayName = day.date ? dayDate.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0) : ['M', 'T', 'W', 'T', 'F', 'S', 'S'][index];
-                const isToday = day.date === new Date().toISOString().split('T')[0];
-                
-                return (
-                  <div
-                    key={day.date || index}
-                    className="flex flex-col items-center gap-1"
-                    data-testid={`streak-day-${index}`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                        day.active
-                          ? 'bg-gradient-to-br from-orange-400 to-orange-600 shadow-sm'
-                          : 'bg-gray-100'
-                      } ${isToday ? 'ring-2 ring-orange-300 ring-offset-1' : ''}`}
-                    >
-                      {day.active ? (
-                        <Flame className="w-4 h-4 text-white" />
-                      ) : (
-                        <div className="w-2 h-2 rounded-full bg-gray-300" />
-                      )}
-                    </div>
-                    <span className={`text-xs ${day.active ? 'text-orange-600 font-medium' : 'text-gray-400'}`}>
-                      {dayName}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
           )}
 
           {/* Progress Insights Card - Only show when authenticated */}
@@ -416,7 +449,9 @@ export default function HomePage() {
                   "{quoteData.quote}"
                 </p>
                 {quoteData.author && (
-                  <p className="text-white/90 text-sm font-light">— {quoteData.author}</p>
+                  <p className="text-white/90 text-sm font-light">
+                    — {quoteData.author}
+                  </p>
                 )}
               </div>
             </div>
@@ -424,7 +459,10 @@ export default function HomePage() {
         </div>
       </div>
 
-      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <SearchOverlay
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
     </div>
   );
 }

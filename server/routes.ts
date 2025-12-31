@@ -33,6 +33,7 @@ import {
   activityLogs,
   userBadges,
   notificationLogs,
+  notifications,
   communitySessions,
 } from "@shared/schema";
 import { sendPushNotification, initializeFirebaseAdmin } from "./lib/firebaseAdmin";
@@ -5534,13 +5535,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const tokens = allTokens.map(t => t.token);
       const result = await sendPushNotification(tokens, title, body);
 
-      // Create notification logs for each unique user who received the push
-      const uniqueUserIds = [...new Set(allTokens.map(t => t.userId))];
-      if (uniqueUserIds.length > 0 && notification) {
-        const notificationLogRecords = uniqueUserIds.map(userId => ({
+      // Create notification logs for each device token that received the push
+      if (allTokens.length > 0 && notification) {
+        const notificationLogRecords = allTokens.map(t => ({
           notificationId: notification.id,
-          userId,
-          status: "sent" as const,
+          userId: t.userId,
+          deviceToken: t.token,
+          status: "sent",
         }));
         await db.insert(notificationLogs).values(notificationLogRecords);
       }

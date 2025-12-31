@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,17 +25,29 @@ export default function AdminNotificationsPage() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
 
-  const { data: stats, isLoading: isLoadingStats, error: statsError } = useQuery<DeviceTokenStats>({
+  const {
+    data: stats,
+    isLoading: isLoadingStats,
+    error: statsError,
+  } = useQuery<DeviceTokenStats>({
     queryKey: ["/admin/api/notifications/stats"],
   });
 
   // Debug: log stats query result
-  console.log("[AdminNotifications] Stats:", { stats, isLoadingStats, statsError });
+  console.log("[AdminNotifications] Stats:", {
+    stats,
+    isLoadingStats,
+    statsError,
+  });
 
   const sendMutation = useMutation({
     mutationFn: async (data: { title: string; body: string }) => {
       console.log("[AdminNotifications] Sending notification:", data);
-      const response = await apiRequest("POST", "/admin/api/notifications/test", data);
+      const response = await apiRequest(
+        "POST",
+        "/admin/api/notifications/test",
+        data,
+      );
       const result = await response.json();
       console.log("[AdminNotifications] Send result:", result);
       return result;
@@ -70,7 +88,9 @@ export default function AdminNotificationsPage() {
     <div className="p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Push Notifications</h1>
-        <p className="text-gray-600 mt-2">Send notifications to all registered devices</p>
+        <p className="text-gray-600 mt-2">
+          Send notifications to all registered devices
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -84,11 +104,20 @@ export default function AdminNotificationsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900" data-testid="text-total-devices">
-              {isLoadingStats ? "..." : statsError ? "Error" : stats?.totalDevices || 0}
+            <div
+              className="text-3xl font-bold text-gray-900"
+              data-testid="text-total-devices"
+            >
+              {isLoadingStats
+                ? "..."
+                : statsError
+                  ? "Error"
+                  : stats?.totalDevices || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              {statsError ? "Failed to load stats" : "Active push notification tokens"}
+              {statsError
+                ? "Failed to load stats"
+                : "Active push notification tokens"}
             </p>
           </CardContent>
         </Card>
@@ -103,7 +132,10 @@ export default function AdminNotificationsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900" data-testid="text-unique-users">
+            <div
+              className="text-3xl font-bold text-gray-900"
+              data-testid="text-unique-users"
+            >
               {isLoadingStats ? "..." : stats?.uniqueUsers || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -117,10 +149,10 @@ export default function AdminNotificationsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Send className="w-5 h-5" />
-            Send Test Notification
+            Send Notification
           </CardTitle>
           <CardDescription>
-            Send a push notification to all registered devices
+            Send notification to all registered devices
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
