@@ -39,7 +39,6 @@ export default function RewiringScreen() {
       toast({
         title: "Beautiful progress, Champion!",
         description: "Your belief is saved.",
-        className: "bg-[#FCE2B7] text-[#2E2C28] border-[#F4B860]",
       });
     },
     onError: () => {
@@ -64,7 +63,6 @@ export default function RewiringScreen() {
       toast({
         title: "Beautiful progress, Champion!",
         description: "Your belief is updated.",
-        className: "bg-[#FCE2B7] text-[#2E2C28] border-[#F4B860]",
       });
     },
     onError: () => {
@@ -149,67 +147,60 @@ export default function RewiringScreen() {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="min-h-screen pb-24" style={{ backgroundColor: "#FFFDF8" }}>
+    <div className="min-h-screen pb-24" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10" style={{ backgroundColor: "#FFFDF8" }}>
-          <div className="px-4 py-4 flex items-center gap-4 border-b" style={{ borderColor: "#EDE6DA" }}>
+        {/* White Header Section */}
+        <div className="bg-white border-b py-4 px-4">
+          <div className="flex items-center">
             <button
               onClick={() => setLocation("/money-mastery")}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
               data-testid="button-back"
             >
-              <ArrowLeft className="w-6 h-6" style={{ color: "#2E2C28" }} />
+              <ArrowLeft className="w-6 h-6 text-gray-600" />
             </button>
+            <div className="flex-1 text-center pr-10">
+              <h1 className="text-xl font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase">
+                REWIRING BELIEFS
+              </h1>
+            </div>
           </div>
+        </div>
 
-          {/* Motivational Header */}
-          <div
-            className="px-6 py-8"
-            style={{
-              background: "linear-gradient(90deg, #FFF7E2, #FFEFD2)",
-            }}
-          >
-            <h1
-              className="text-2xl font-semibold mb-3 text-center"
-              style={{ color: "#2E2C28", fontFamily: "Poppins, sans-serif" }}
-            >
-              Let's rewire that mindset,{" "}
-              <span className="relative inline-block">
-                <span style={{ textDecoration: "underline", textDecorationColor: "#F4B860" }}>
-                  Champion!
-                </span>
-              </span>
-            </h1>
-            
-            {/* Subtitle with icons */}
-            <div className="flex items-center justify-center gap-2">
-              <p
-                className="text-base font-medium"
-                style={{ color: "#726C63", fontFamily: "Inter, sans-serif" }}
-              >
-                Left tap fear, right tap faith
-              </p>
-              <div className="flex items-center gap-1.5 ml-2">
-                <Brain className="w-4 h-4" style={{ color: "#F4B860" }} />
-                <Zap className="w-4 h-4" style={{ color: "#F4B860" }} />
+        {/* Motivational Card */}
+        <div className="px-4 mt-4">
+          <div className="bg-white rounded-2xl shadow-md p-6">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-800 font-['Poppins'] mb-2">
+                Let's rewire that mindset,{" "}
+                <span className="text-[#703DFA]">Champion!</span>
+              </h2>
+              <div className="flex items-center justify-center gap-2">
+                <p className="text-sm text-gray-500">
+                  Left tap fear, right tap faith
+                </p>
+                <div className="flex items-center gap-1">
+                  <Brain className="w-4 h-4 text-[#703DFA]" />
+                  <Zap className="w-4 h-4 text-[#703DFA]" />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Main Content - Belief Cards */}
-        <div className="px-4 py-6 space-y-4">
+        <div className="px-4 py-4 space-y-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#F4B860" }} />
+              <Loader2 className="w-8 h-8 animate-spin text-[#703DFA]" />
             </div>
           ) : beliefs.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-sm mb-2" style={{ color: "#726C63" }}>
+            <div className="bg-white rounded-2xl shadow-md p-8 text-center">
+              <Brain className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600 font-medium mb-1">
                 No beliefs yet
               </p>
-              <p className="text-xs" style={{ color: "#9CA3AF" }}>
+              <p className="text-sm text-gray-400">
                 Tap the + button below to add your first belief pair
               </p>
             </div>
@@ -217,26 +208,19 @@ export default function RewiringScreen() {
             beliefs.map((belief) => (
               <Card
                 key={belief.id}
-                className="p-5 relative"
-                style={{
-                  backgroundColor: "#FFFFFF",
-                  borderColor: "#EDE6DA",
-                  borderRadius: "1rem",
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-                }}
+                className="bg-white rounded-2xl shadow-md p-5 border-0"
                 data-testid={`belief-card-${belief.id}`}
               >
                 {/* Limiting Belief Section */}
                 <div className="mb-4">
-                  <h3
-                    className="text-lg font-bold mb-2"
-                    style={{ color: "#EF4444" }}
-                  >
-                    Limiting Belief
-                  </h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-red-500" />
+                    <h3 className="text-xs font-bold text-gray-500 tracking-wider uppercase">
+                      Limiting Belief
+                    </h3>
+                  </div>
                   <p
-                    className="text-xl font-medium leading-relaxed"
-                    style={{ color: "#2E2C28", lineHeight: "1.6" }}
+                    className="text-base font-medium text-gray-800 leading-relaxed pl-4"
                     data-testid={`belief-limiting-text-${belief.id}`}
                   >
                     {belief.limitingBelief}
@@ -245,28 +229,27 @@ export default function RewiringScreen() {
 
                 {/* Rewired Belief Section */}
                 <div className="mb-4">
-                  <h3
-                    className="text-lg font-bold mb-2"
-                    style={{ color: "#10B981" }}
-                  >
-                    Rewired Belief
-                  </h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    <h3 className="text-xs font-bold text-gray-500 tracking-wider uppercase">
+                      Rewired Belief
+                    </h3>
+                  </div>
                   <p
-                    className="text-xl font-medium leading-relaxed"
-                    style={{ color: "#2E2C28", lineHeight: "1.6" }}
+                    className="text-base font-medium text-gray-800 leading-relaxed pl-4"
                     data-testid={`belief-uplifting-text-${belief.id}`}
                   >
                     {belief.upliftingBelief}
                   </p>
                 </div>
 
-                {/* Action Row: Edit and Delete on same line */}
-                <div className="flex items-center justify-end gap-2 pt-3 border-t" style={{ borderColor: "#F0F0F0" }}>
+                {/* Action Row */}
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
                   <Button
                     onClick={() => handleOpenEditModal(belief)}
                     size="sm"
-                    variant="outline"
-                    className="gap-1.5"
+                    variant="ghost"
+                    className="gap-1.5 text-gray-500 hover:text-[#703DFA]"
                     disabled={deleteMutation.isPending}
                     data-testid={`button-edit-${belief.id}`}
                   >
@@ -276,8 +259,8 @@ export default function RewiringScreen() {
                   <Button
                     onClick={() => handleDeleteBelief(belief)}
                     size="sm"
-                    variant="outline"
-                    className="gap-1.5"
+                    variant="ghost"
+                    className="gap-1.5 text-gray-500 hover:text-red-500"
                     disabled={deleteMutation.isPending}
                     data-testid={`button-delete-${belief.id}`}
                   >
@@ -293,26 +276,22 @@ export default function RewiringScreen() {
             ))
           )}
 
-          {/* Floating Add Button */}
+          {/* Add Button */}
           {!isLoading && beliefs.length < 5 && (
             <div className="flex justify-center pt-4">
               <button
                 onClick={handleOpenAddModal}
-                className="rounded-full p-4 hover-elevate active-elevate-2"
-                style={{
-                  backgroundColor: "#F4B860",
-                  boxShadow: "0 4px 12px rgba(244, 184, 96, 0.3)",
-                }}
+                className="rounded-full p-4 hover-elevate active-elevate-2 bg-[#703DFA] shadow-lg"
                 data-testid="button-add-belief"
               >
-                <Plus className="w-6 h-6" style={{ color: "#2E2C28" }} />
+                <Plus className="w-6 h-6 text-white" />
               </button>
             </div>
           )}
 
           {/* Max beliefs message */}
           {!isLoading && beliefs.length >= 5 && (
-            <p className="text-center text-sm italic pt-2" style={{ color: "#726C63" }}>
+            <p className="text-center text-sm text-gray-400 italic pt-2">
               Max 5 beliefs reached
             </p>
           )}
@@ -321,18 +300,9 @@ export default function RewiringScreen() {
 
       {/* Add/Edit Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent
-          className="max-w-md"
-          style={{
-            backgroundColor: "#FFFDF8",
-            borderColor: "#EDE6DA",
-          }}
-        >
+        <DialogContent className="max-w-md bg-white">
           <DialogHeader>
-            <DialogTitle
-              className="text-xl font-semibold"
-              style={{ color: "#2E2C28", fontFamily: "Poppins, sans-serif" }}
-            >
+            <DialogTitle className="text-xl font-semibold text-gray-800 font-['Poppins']">
               {editingBelief ? "Edit Belief Pair" : "Add New Belief Pair"}
             </DialogTitle>
           </DialogHeader>
@@ -342,8 +312,7 @@ export default function RewiringScreen() {
             <div className="space-y-2">
               <Label
                 htmlFor="modal-limiting"
-                className="text-xs uppercase font-medium"
-                style={{ color: "#726C63" }}
+                className="text-xs uppercase font-bold text-gray-500 tracking-wider"
               >
                 Limiting Belief
               </Label>
@@ -352,11 +321,7 @@ export default function RewiringScreen() {
                 value={formData.limiting}
                 onChange={(e) => setFormData({ ...formData, limiting: e.target.value })}
                 placeholder="e.g., I never have enough money"
-                className="border"
-                style={{
-                  borderColor: "#EDE6DA",
-                  backgroundColor: "#FFFFFF",
-                }}
+                className="border-gray-200"
                 data-testid="input-modal-limiting"
               />
             </div>
@@ -365,21 +330,16 @@ export default function RewiringScreen() {
             <div className="space-y-2">
               <Label
                 htmlFor="modal-uplifting"
-                className="text-xs uppercase font-medium"
-                style={{ color: "#726C63" }}
+                className="text-xs uppercase font-bold text-gray-500 tracking-wider"
               >
-                Uplifting Belief
+                Rewired Belief
               </Label>
               <Input
                 id="modal-uplifting"
                 value={formData.uplifting}
                 onChange={(e) => setFormData({ ...formData, uplifting: e.target.value })}
                 placeholder="e.g., Abundance flows to me effortlessly"
-                className="border"
-                style={{
-                  borderColor: "#EDE6DA",
-                  backgroundColor: "#FFFFFF",
-                }}
+                className="border-gray-200"
                 data-testid="input-modal-uplifting"
               />
             </div>
@@ -387,13 +347,8 @@ export default function RewiringScreen() {
             {/* Save Button */}
             <Button
               onClick={handleSaveModal}
-              className="w-full font-semibold"
+              className="w-full font-semibold bg-[#703DFA] hover:bg-[#5c2fd9] text-white"
               disabled={isPending}
-              style={{
-                background: "linear-gradient(90deg, #FFD580, #F8A14D)",
-                color: "#2E2C28",
-                fontFamily: "Poppins, sans-serif",
-              }}
               data-testid="button-save-modal"
             >
               {isPending ? (
