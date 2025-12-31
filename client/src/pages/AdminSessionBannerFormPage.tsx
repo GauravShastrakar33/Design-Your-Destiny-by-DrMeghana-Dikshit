@@ -62,14 +62,21 @@ export default function AdminSessionBannerFormPage() {
     enabled: isEdit,
   });
 
+  // Convert UTC date to local datetime-local format (YYYY-MM-DDTHH:MM)
+  const formatDateForInput = (date: Date | string | null) => {
+    if (!date) return "";
+    const d = new Date(date);
+    // Get local date/time components
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   useEffect(() => {
     if (existingBanner) {
-      const formatDateForInput = (date: Date | string | null) => {
-        if (!date) return "";
-        const d = new Date(date);
-        return d.toISOString().slice(0, 16);
-      };
-
       setFormData({
         type: existingBanner.type as "session" | "advertisement",
         thumbnailKey: existingBanner.thumbnailKey || "",
@@ -183,6 +190,12 @@ export default function AdminSessionBannerFormPage() {
     return null;
   };
 
+  // Convert datetime-local string to ISO string (preserves local time as intended UTC)
+  const toISOString = (dateTimeLocal: string | null) => {
+    if (!dateTimeLocal) return null;
+    return new Date(dateTimeLocal).toISOString();
+  };
+
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const response = await fetch("/api/admin/v1/session-banners", {
@@ -198,8 +211,10 @@ export default function AdminSessionBannerFormPage() {
           posterKey: data.posterKey || null,
           ctaText: data.ctaText || null,
           ctaLink: data.ctaLink || null,
-          liveStartAt: data.liveStartAt || null,
-          liveEndAt: data.liveEndAt || null,
+          startAt: toISOString(data.startAt),
+          endAt: toISOString(data.endAt),
+          liveStartAt: toISOString(data.liveStartAt),
+          liveEndAt: toISOString(data.liveEndAt),
         }),
       });
       if (!response.ok) throw new Error("Failed to create banner");
@@ -230,8 +245,10 @@ export default function AdminSessionBannerFormPage() {
           posterKey: data.posterKey || null,
           ctaText: data.ctaText || null,
           ctaLink: data.ctaLink || null,
-          liveStartAt: data.liveStartAt || null,
-          liveEndAt: data.liveEndAt || null,
+          startAt: toISOString(data.startAt),
+          endAt: toISOString(data.endAt),
+          liveStartAt: toISOString(data.liveStartAt),
+          liveEndAt: toISOString(data.liveEndAt),
         }),
       });
       if (!response.ok) throw new Error("Failed to update banner");
