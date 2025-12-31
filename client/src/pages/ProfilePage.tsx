@@ -180,15 +180,15 @@ export default function ProfilePage() {
           {/* Earned Badges Section */}
           {!isLoadingBadges && earnedBadges.length > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-100">
-              <p className="text-xs text-muted-foreground mb-1">
+              <p className="text-xs text-muted-foreground mb-2">
                 Earned Badges
               </p>
-              <div className="flex items-center gap-2 overflow-x-auto">
+              <div className="flex items-center gap-3 overflow-x-auto">
                 {earnedBadges.map((badge) => (
                   <BadgeIcon
                     key={badge.badgeKey}
                     badgeKey={badge.badgeKey}
-                    size="xl"
+                    size="lg"
                     earned
                     showTooltip
                   />
