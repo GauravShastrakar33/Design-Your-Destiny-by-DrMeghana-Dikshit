@@ -93,7 +93,7 @@ const menuContent: Record<
   process: {
     title: "Process Library",
     items: [
-      { path: "/admin/processes", label: "Processes (mapping)", icon: Sparkles },
+      { path: "/admin/processes", label: "Processes", icon: Sparkles },
       { path: "/admin/abundance-mastery", label: "Abundance Mastery", icon: DollarSign },
       { path: "/admin/masterclasses", label: "Masterclasses", icon: Video },
       { path: "/admin/my-processes", label: "My Playlist", icon: Music },
