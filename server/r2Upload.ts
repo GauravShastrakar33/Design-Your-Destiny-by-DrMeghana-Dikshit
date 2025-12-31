@@ -57,18 +57,8 @@ function getR2Client(): S3Client {
   return r2Client;
 }
 
-function sanitizeFileName(filename: string): string {
-  return filename
-    .toLowerCase()
-    .replace(/[^a-z0-9.-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-}
-
-export function generateCourseThumnailKey(courseId: number, filename: string): string {
-  const timestamp = Date.now();
-  const safeName = sanitizeFileName(filename);
-  return `courses/${courseId}/thumbnail/${timestamp}-${safeName}`;
+export function generateCourseThumnailKey(programCode: string, courseId: number): string {
+  return `programs/${programCode}/courses/${courseId}/thumbnail/course.png`;
 }
 
 // Generate public URL from a key - useful for fixing legacy URLs stored in the database
@@ -125,10 +115,15 @@ export function fixThumbnailUrl(
   return null;
 }
 
-export function generateLessonFileKey(lessonId: number, fileType: string, filename: string): string {
-  const timestamp = Date.now();
-  const safeName = sanitizeFileName(filename);
-  return `lessons/${lessonId}/${fileType}/${timestamp}-${safeName}`;
+export function generateLessonFileKey(
+  programCode: string,
+  courseId: number,
+  moduleId: number,
+  lessonId: number,
+  fileType: string
+): string {
+  const extension = fileType === 'video' ? 'mp4' : fileType === 'audio' ? 'mp3' : 'pdf';
+  return `programs/${programCode}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/${fileType}/lesson.${extension}`;
 }
 
 export interface GetUploadUrlResult {

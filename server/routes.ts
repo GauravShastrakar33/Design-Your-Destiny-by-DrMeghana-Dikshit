@@ -1902,6 +1902,16 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return;
       }
 
+      // Get program code for R2 storage hierarchy
+      let programCode: string | null = null;
+      if (course.programId) {
+        const [program] = await db
+          .select({ code: programs.code })
+          .from(programs)
+          .where(eq(programs.id, course.programId));
+        programCode = program?.code || null;
+      }
+
       // Generate signed thumbnail URL from key
       let thumbnailSignedUrl: string | null = null;
       if (course.thumbnailKey) {
@@ -1947,7 +1957,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         }),
       );
 
-      res.json({ ...course, thumbnailSignedUrl, modules: modulesWithContent });
+      res.json({ ...course, programCode, thumbnailSignedUrl, modules: modulesWithContent });
     } catch (error) {
       console.error("Error fetching course:", error);
       res.status(500).json({ error: "Failed to fetch course" });
@@ -2590,6 +2600,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           lessonId,
           fileType,
           courseId,
+          moduleId,
+          programCode,
           uploadType,
         } = req.body;
 
@@ -2612,12 +2624,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
         let key: string;
 
-        if (uploadType === "thumbnail" && courseId) {
-          key = generateCourseThumnailKey(courseId, filename);
-        } else if (lessonId && fileType) {
-          key = generateLessonFileKey(lessonId, fileType, filename);
+        if (uploadType === "thumbnail" && courseId && programCode) {
+          key = generateCourseThumnailKey(programCode, courseId);
+        } else if (lessonId && fileType && programCode && courseId && moduleId) {
+          key = generateLessonFileKey(programCode, courseId, moduleId, lessonId, fileType);
         } else {
-          res.status(400).json({ error: "Invalid upload parameters" });
+          res.status(400).json({ error: "Invalid upload parameters. For thumbnails: programCode, courseId required. For lesson files: programCode, courseId, moduleId, lessonId, fileType required." });
           return;
         }
 

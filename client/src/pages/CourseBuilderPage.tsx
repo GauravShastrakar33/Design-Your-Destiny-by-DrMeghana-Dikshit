@@ -34,6 +34,7 @@ import {
 
 type CourseWithModules = CmsCourse & {
   thumbnailSignedUrl?: string | null;
+  programCode?: string | null;
   modules: (CmsModule & {
     folders: CmsModuleFolder[];
     lessons: (CmsLesson & { files: CmsLessonFile[] })[];
@@ -214,6 +215,11 @@ export default function CourseBuilderPage() {
       return;
     }
 
+    if (!course?.programCode) {
+      toast({ title: "Course must have a program assigned to upload files", variant: "destructive" });
+      return;
+    }
+
     setUploading(true);
 
     try {
@@ -221,6 +227,7 @@ export default function CourseBuilderPage() {
         filename: file.name,
         contentType: file.type,
         courseId,
+        programCode: course.programCode,
         uploadType: "thumbnail",
       });
       const { uploadUrl, key } = await uploadUrlResponse.json();

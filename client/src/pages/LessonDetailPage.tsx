@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { CmsLesson, CmsLessonFile } from "@shared/schema";
+import type { CmsLesson, CmsLessonFile, CmsCourse } from "@shared/schema";
 
 type LessonWithFiles = CmsLesson & { files: CmsLessonFile[] };
+type CourseBasic = CmsCourse & { programCode?: string | null };
 
 interface FileUploadState {
   file: File;
@@ -75,6 +76,20 @@ export default function LessonDetailPage() {
       return response.json();
     },
     enabled: !!lessonId,
+  });
+
+  const { data: course } = useQuery<CourseBasic>({
+    queryKey: ["/api/admin/v1/cms/courses", courseId],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/v1/cms/courses/${courseId}`, {
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch course");
+      return response.json();
+    },
+    enabled: !!courseId,
   });
 
   const updateLessonMutation = useMutation({
@@ -147,6 +162,14 @@ export default function LessonDetailPage() {
 
   const uploadFile = async (uploadState: FileUploadState) => {
     try {
+      if (!course?.programCode || !lesson?.moduleId) {
+        toast({ title: "Missing course or lesson data for upload", variant: "destructive" });
+        setUploadQueue(prev => 
+          prev.map(u => u.file === uploadState.file ? { ...u, status: "error" as const } : u)
+        );
+        return;
+      }
+
       setUploadQueue(prev => 
         prev.map(u => u.file === uploadState.file ? { ...u, status: "uploading" as const, progress: 10 } : u)
       );
@@ -156,6 +179,9 @@ export default function LessonDetailPage() {
         contentType: uploadState.file.type,
         lessonId,
         fileType: uploadState.fileType,
+        programCode: course.programCode,
+        courseId,
+        moduleId: lesson.moduleId,
       });
       const { uploadUrl, key, publicUrl } = await uploadUrlResponse.json();
 

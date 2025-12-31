@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CmsCourse } from "@shared/schema";
 
-type CourseWithSignedUrl = CmsCourse & { thumbnailSignedUrl?: string | null };
+type CourseWithSignedUrl = CmsCourse & { thumbnailSignedUrl?: string | null; programCode?: string | null };
 
 export default function CourseCreateStep2() {
   const params = useParams();
@@ -58,10 +58,17 @@ export default function CourseCreateStep2() {
     setUploading(true);
 
     try {
+      if (!course?.programCode) {
+        toast({ title: "Course must have a program assigned to upload files", variant: "destructive" });
+        setUploading(false);
+        return;
+      }
+
       const uploadUrlResponse = await apiRequest("POST", "/api/admin/v1/cms/files/get-upload-url", {
         filename: file.name,
         contentType: file.type,
         courseId,
+        programCode: course.programCode,
         uploadType: "thumbnail",
       });
       const { uploadUrl, key, signedUrl } = await uploadUrlResponse.json();
