@@ -47,9 +47,7 @@ const menuContent: Record<
   dashboard: {
     title: "Dashboard",
     items: [
-      { path: "/admin", label: "Overview", icon: BarChart3 },
-      { path: "/admin", label: "Analytics", icon: TrendingUp },
-      { path: "/admin", label: "Recent Activity", icon: Clock },
+      { path: "/admin", label: "Dashboard", icon: LayoutDashboard },
     ],
   },
   users: {

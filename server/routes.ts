@@ -30,6 +30,10 @@ import {
   pohStatusEnum,
   users,
   deviceTokens,
+  activityLogs,
+  userBadges,
+  notificationLogs,
+  communitySessions,
 } from "@shared/schema";
 import { sendPushNotification, initializeFirebaseAdmin } from "./lib/firebaseAdmin";
 import { z } from "zod";
@@ -902,6 +906,161 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting session:", error);
       res.status(500).json({ error: "Failed to delete session" });
+    }
+  });
+
+  // ===== ADMIN DASHBOARD ROUTES =====
+
+  // Admin Dashboard: Get all dashboard data in one request
+  app.get("/admin/v1/dashboard", requireAdmin, async (req, res) => {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const sevenDaysLater = new Date(today);
+      sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+      
+      const twentyFourHoursAgo = new Date();
+      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+      // KPIs
+      const [
+        totalUsersResult,
+        activeTodayResult,
+        practisedTodayResult,
+        badgesEarnedTodayResult,
+      ] = await Promise.all([
+        // Total registered users
+        db.select({ count: count() }).from(users).where(eq(users.role, "USER")),
+        // Users active today (lastActivity = today)
+        db.select({ count: count() }).from(users)
+          .where(and(eq(users.role, "USER"), gte(users.lastActivity, today))),
+        // Users who practiced today (PROCESS or PLAYLIST feature types)
+        db.select({ count: countDistinct(activityLogs.userId) }).from(activityLogs)
+          .where(and(
+            eq(activityLogs.activityDate, todayStr),
+            or(
+              eq(activityLogs.featureType, "PROCESS"),
+              eq(activityLogs.featureType, "PLAYLIST")
+            )
+          )),
+        // Badges earned today
+        db.select({ count: count() }).from(userBadges)
+          .where(gte(userBadges.earnedAt, today)),
+      ]);
+
+      // Events
+      const [eventsToday, upcomingEvents] = await Promise.all([
+        // Events happening today
+        db.select().from(eventsTable)
+          .where(and(
+            gte(eventsTable.startDatetime, today),
+            lt(eventsTable.startDatetime, tomorrow)
+          ))
+          .orderBy(asc(eventsTable.startDatetime)),
+        // Events in next 7 days (excluding today)
+        db.select().from(eventsTable)
+          .where(and(
+            gte(eventsTable.startDatetime, tomorrow),
+            lt(eventsTable.startDatetime, sevenDaysLater)
+          ))
+          .orderBy(asc(eventsTable.startDatetime)),
+      ]);
+
+      // Notifications health
+      const [failedNotificationsResult, usersWithDeviceTokens, totalUserCount] = await Promise.all([
+        // Failed notifications in last 24 hours
+        db.select({ count: count() }).from(notificationLogs)
+          .where(and(
+            eq(notificationLogs.status, "failed"),
+            gte(notificationLogs.createdAt, twentyFourHoursAgo)
+          )),
+        // Count of unique users with device tokens
+        db.select({ count: countDistinct(deviceTokens.userId) }).from(deviceTokens),
+        // Total users
+        db.select({ count: count() }).from(users).where(eq(users.role, "USER")),
+      ]);
+      
+      // Users without device tokens = total users - users with tokens
+      const usersWithNotificationsDisabled = 
+        (totalUserCount[0]?.count ?? 0) - (usersWithDeviceTokens[0]?.count ?? 0);
+
+      // Community Practices
+      const [communityPracticesResult] = await Promise.all([
+        db.select({ count: count() }).from(communitySessions),
+      ]);
+
+      // CMS Health
+      const [totalCoursesResult, publishedCoursesResult, lastUpdatedLessonResult] = await Promise.all([
+        // Total courses
+        db.select({ count: count() }).from(cmsCourses),
+        // Published courses
+        db.select({ count: count() }).from(cmsCourses)
+          .where(eq(cmsCourses.isPublished, true)),
+        // Last updated lesson
+        db.select({
+          id: cmsLessons.id,
+          title: cmsLessons.title,
+          updatedAt: cmsLessons.updatedAt,
+        }).from(cmsLessons)
+          .orderBy(desc(cmsLessons.updatedAt))
+          .limit(1),
+      ]);
+
+      // Helper to get event status
+      const getEventStatus = (event: typeof eventsTable.$inferSelect) => {
+        const now = new Date();
+        if (now < event.startDatetime) return "upcoming";
+        if (now >= event.startDatetime && now <= event.endDatetime) return "live";
+        return "completed";
+      };
+
+      res.json({
+        kpis: {
+          totalUsers: totalUsersResult[0]?.count ?? 0,
+          activeToday: activeTodayResult[0]?.count ?? 0,
+          practisedToday: practisedTodayResult[0]?.count ?? 0,
+          badgesEarnedToday: badgesEarnedTodayResult[0]?.count ?? 0,
+        },
+        events: {
+          today: eventsToday.map(e => ({
+            id: e.id,
+            title: e.title,
+            startDatetime: e.startDatetime,
+            endDatetime: e.endDatetime,
+            status: getEventStatus(e),
+          })),
+          upcoming: upcomingEvents.map(e => ({
+            id: e.id,
+            title: e.title,
+            startDatetime: e.startDatetime,
+            endDatetime: e.endDatetime,
+            status: getEventStatus(e),
+          })),
+        },
+        notifications: {
+          failedLast24h: failedNotificationsResult[0]?.count ?? 0,
+          usersDisabled: usersWithNotificationsDisabled,
+        },
+        communityPractices: {
+          total: communityPracticesResult[0]?.count ?? 0,
+        },
+        cmsHealth: {
+          totalCourses: totalCoursesResult[0]?.count ?? 0,
+          publishedCourses: publishedCoursesResult[0]?.count ?? 0,
+          lastUpdatedLesson: lastUpdatedLessonResult[0] ? {
+            title: lastUpdatedLessonResult[0].title,
+            updatedAt: lastUpdatedLessonResult[0].updatedAt,
+          } : null,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
   });
 
