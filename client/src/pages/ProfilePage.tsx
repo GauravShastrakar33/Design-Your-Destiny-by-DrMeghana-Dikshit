@@ -185,7 +185,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Other Cards Container */}
-      <div className="max-w-md mx-auto px-4 py-3 space-y-2.5">
+      <div className="max-w-md mx-auto px-4 py-3 space-y-3">
         {/* Consistency Calendar */}
         <div className="relative">
           <ConsistencyCalendar />
