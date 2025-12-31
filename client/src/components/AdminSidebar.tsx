@@ -59,7 +59,7 @@ export default function AdminSidebar() {
   };
 
   return (
-    <div className="w-16 bg-brand min-h-screen flex flex-col">
+    <div className="w-16 bg-brand h-screen flex flex-col sticky top-0">
       <div className="p-3 border-b border-white/10">
         <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center mx-auto">
           <span className="text-brand font-bold text-sm">Dr.M</span>
