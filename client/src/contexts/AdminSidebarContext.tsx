@@ -55,6 +55,7 @@ const menuItems: MenuItem[] = [
   },
   { 
     id: "process",
+    path: "/admin/processes",
     label: "Process Library",
     submenu: [
       { path: "/admin/processes", label: "Processes" },

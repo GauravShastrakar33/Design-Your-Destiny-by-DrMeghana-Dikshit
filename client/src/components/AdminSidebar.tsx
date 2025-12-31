@@ -35,7 +35,7 @@ const menuItemsConfig: MenuItemConfig[] = [
   { id: "events", path: "/admin/events", label: "Event Calendar", icon: Calendar },
   { id: "sessions", path: "/admin/sessions", label: "Community Practices", icon: UsersRound },
   { id: "courses", path: "/admin/courses", label: "Courses", icon: GraduationCap },
-  { id: "process", label: "Process Library", icon: BookOpen },
+  { id: "process", path: "/admin/processes", label: "Process Library", icon: BookOpen },
   { id: "project", path: "/admin/project-heart", label: "Project of Heart", icon: Heart },
   { id: "quotes", path: "/admin/quotes", label: "Daily Quotes", icon: Quote },
   { id: "notifications", path: "/admin/notifications", label: "Push Notifications", icon: Bell },
