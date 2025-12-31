@@ -26,6 +26,7 @@ import SpiritualBreathLessonPage from "@/pages/SpiritualBreathLessonPage";
 import AbundanceCoursePage from "@/pages/AbundanceCoursePage";
 import MasterclassesPage from "@/pages/MasterclassesPage";
 import BadgesPage from "@/pages/BadgesPage";
+import AccountSettingsPage from "@/pages/AccountSettingsPage";
 import NotFound from "@/pages/not-found";
 
 export default function AppRoutes() {
@@ -64,6 +65,7 @@ export default function AppRoutes() {
       <Route path="/masterclasses" component={MasterclassesPage} />
       <Route path="/masterclasses/course/:courseId" component={AbundanceCoursePage} />
       <Route path="/badges" component={BadgesPage} />
+      <Route path="/account-settings" component={AccountSettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );

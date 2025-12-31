@@ -54,6 +54,7 @@ export interface IStorage {
   getUserById(id: number): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserLastLogin(id: number): Promise<void>;
+  updateUserPassword(id: number, hashedPassword: string): Promise<void>;
   
   getAllCommunitySessions(): Promise<CommunitySession[]>;
   getCommunitySession(id: number): Promise<CommunitySession | undefined>;
@@ -181,6 +182,14 @@ export class MemStorage implements IStorage {
     const user = await this.getUserById(id);
     if (user) {
       user.lastLogin = new Date();
+      this.users.set(id.toString(), user);
+    }
+  }
+
+  async updateUserPassword(id: number, hashedPassword: string): Promise<void> {
+    const user = await this.getUserById(id);
+    if (user) {
+      user.passwordHash = hashedPassword;
       this.users.set(id.toString(), user);
     }
   }
@@ -439,6 +448,10 @@ export class DbStorage implements IStorage {
 
   async updateUserLastLogin(id: number): Promise<void> {
     await db.update(usersTable).set({ lastLogin: new Date() }).where(eq(usersTable.id, id));
+  }
+
+  async updateUserPassword(id: number, hashedPassword: string): Promise<void> {
+    await db.update(usersTable).set({ passwordHash: hashedPassword }).where(eq(usersTable.id, id));
   }
 
   async getAllCommunitySessions(): Promise<CommunitySession[]> {

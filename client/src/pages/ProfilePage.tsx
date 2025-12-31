@@ -20,11 +20,11 @@ import {
   Lock,
   Sparkles,
   Heart,
-  Edit2,
   Check,
-  X,
   Sun,
   Loader2,
+  Phone,
+  User,
 } from "lucide-react";
 import {
   requestNotificationPermission,
@@ -48,12 +48,8 @@ interface PrescriptionData {
 export default function ProfilePage() {
   const [, setLocation] = useLocation();
   const { logout } = useAuth();
-  const [accountExpanded, setAccountExpanded] = useState(false);
   const [prescriptionExpanded, setPrescriptionExpanded] = useState(false);
-  const [settingsExpanded, setSettingsExpanded] = useState(false);
   const [userName, setUserName] = useState("UserName");
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [tempName, setTempName] = useState("");
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
 
@@ -133,59 +129,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleResetPOH = () => {
-    if (
-      confirm(
-        "Are you sure you want to reset your Project of Heart? This will clear all POH progress and set stars to 0.",
-      )
-    ) {
-      localStorage.removeItem("@app:poh_data");
-      localStorage.removeItem("@app:weekly_action");
-      alert("Project of Heart has been reset successfully.");
-    }
-  };
-
-  const handleResetChecklist = () => {
-    if (
-      confirm(
-        "Are you sure you want to reset your Process Checklist? This will remove your current selections and daily progress.",
-      )
-    ) {
-      localStorage.removeItem("userChecklist");
-      localStorage.removeItem("dailyLogs");
-      setLocation("/process-checklist");
-    }
-  };
-
-  const handleClearDrMChats = () => {
-    if (
-      confirm(
-        "Are you sure you want to clear all your conversations with Dr.M? This cannot be undone.",
-      )
-    ) {
-      localStorage.removeItem("@app:drm_conversations");
-      alert("Dr.M chat history has been cleared successfully.");
-    }
-  };
-
-  const handleEditName = () => {
-    setTempName(userName);
-    setIsEditingName(true);
-  };
-
-  const handleSaveName = () => {
-    if (tempName.trim()) {
-      setUserName(tempName.trim());
-      localStorage.setItem("@app:userName", tempName.trim());
-      setIsEditingName(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditingName(false);
-    setTempName("");
-  };
-
   const getInitials = (name: string) => {
     const words = name.trim().split(/\s+/);
     if (words.length === 1) {
@@ -207,96 +150,30 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Profile Card - Full Width */}
-      <div className="bg-white border rounded-xl mt-2 mx-2 sm:mx-6">
-        <div className="max-w-sm mx-auto px-3 py-3 relative">
-          {/* Edit button at top right */}
-          {!isEditingName && (
-            <button
-              onClick={handleEditName}
-              className="absolute top-3 right-3 p-1.5 hover:bg-white/50 rounded-lg transition"
-              data-testid="button-edit-name"
-            >
-              <Edit2 className="w-4 h-4 text-brand" />
-            </button>
-          )}
-
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-xl font-bold border-2 border-white/30 shadow-md flex-shrink-0">
+      {/* Profile Card */}
+      <div className="max-w-md mx-auto px-4 mt-4">
+        <div className="bg-white rounded-2xl shadow-md p-4">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-sm font-bold border border-white/30 shadow-sm flex-shrink-0">
               {getInitials(userName)}
             </div>
-            <div className="flex-1">
-              {isEditingName ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={tempName}
-                    onChange={(e) => setTempName(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand text-foreground bg-white"
-                    placeholder="Enter your name"
-                    autoFocus
-                    data-testid="input-username"
-                  />
-                  <button
-                    onClick={handleSaveName}
-                    className="p-2 bg-brand text-white rounded-lg hover:bg-brand/90"
-                    data-testid="button-save-name"
-                  >
-                    <Check className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={handleCancelEdit}
-                    className="p-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                    data-testid="button-cancel-edit"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              ) : (
-                <h2 className="text-xl font-['Poppins'] font-semibold text-gray-600 dark:text-gray-200 tracking-tight">
-                  {userName}
-                </h2>
-              )}
-            </div>
-          </div>
-          <div className="mt-1">
-            <p className="text-lg text-muted-foreground mb-2 text-center">
-              My Karmic Affirmation
-            </p>
-
-            {isLoadingProfile ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : wellnessProfile?.karmicAffirmation ? (
-              <p
-                className="text-foreground font-['Playfair_Display'] text-base sm:text-lg leading-normal tracking-wide"
-                data-testid="text-affirmation"
-              >
-                {wellnessProfile.karmicAffirmation}
-              </p>
-            ) : (
-              <p
-                className="text-muted-foreground italic text-sm text-center"
-                data-testid="text-affirmation-empty"
-              >
-                Your personalized affirmation will appear here.
-              </p>
-            )}
+            <h2 className="text-lg font-['Poppins'] font-semibold text-gray-600 dark:text-gray-200 tracking-tight" data-testid="text-username">
+              {userName}
+            </h2>
           </div>
 
           {/* Earned Badges Section */}
           {!isLoadingBadges && earnedBadges.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-sm text-muted-foreground mb-3">
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-xs text-muted-foreground mb-2">
                 Earned Badges
               </p>
-              <div className="flex items-center gap-3 overflow-x-auto pb-1">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
                 {earnedBadges.map((badge) => (
                   <BadgeIcon
                     key={badge.badgeKey}
                     badgeKey={badge.badgeKey}
-                    size="md"
+                    size="lg"
                     earned
                     showTooltip
                   />
@@ -425,67 +302,22 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-1">
-              <div>
-                <button
-                  onClick={() => setAccountExpanded(!accountExpanded)}
-                  className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
-                  data-testid="button-account"
-                >
-                  <div className="flex items-center gap-3">
-                    <SettingsIcon className="w-5 h-5 text-[#703DFA]" />
-                    <div className="text-left">
-                      <p className="font-medium text-foreground">Account</p>
-                      <p className="text-xs text-muted-foreground">
-                        Change your account settings
-                      </p>
-                    </div>
+              <button
+                onClick={() => setLocation("/account-settings")}
+                className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
+                data-testid="button-account"
+              >
+                <div className="flex items-center gap-3">
+                  <User className="w-5 h-5 text-[#703DFA]" />
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">Account</p>
+                    <p className="text-xs text-muted-foreground">
+                      Manage your account settings
+                    </p>
                   </div>
-                  <ChevronRight
-                    className={`w-5 h-5 text-muted-foreground transition-transform ${accountExpanded ? "rotate-90" : ""}`}
-                  />
-                </button>
-
-                {accountExpanded && (
-                  <div className="pl-11 pr-3 py-2 space-y-2">
-                    <button
-                      onClick={handleResetPOH}
-                      className="w-full text-left p-3 rounded-lg hover-elevate active-elevate-2 border border-red-200 dark:border-red-800/30"
-                      data-testid="button-reset-poh"
-                    >
-                      <p className="font-medium text-red-600 dark:text-red-400">
-                        Reset Project of Heart
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Clear all POH progress (for demonstration)
-                      </p>
-                    </button>
-                    <button
-                      onClick={handleResetChecklist}
-                      className="w-full text-left p-3 rounded-lg hover-elevate active-elevate-2 border border-red-200 dark:border-red-800/30"
-                      data-testid="button-reset-checklist"
-                    >
-                      <p className="font-medium text-red-600 dark:text-red-400">
-                        Reset Process Checklist
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Clear checklist and daily progress
-                      </p>
-                    </button>
-                    <button
-                      onClick={handleClearDrMChats}
-                      className="w-full text-left p-3 rounded-lg hover-elevate active-elevate-2 border border-orange-200 dark:border-orange-800/30"
-                      data-testid="button-clear-drm-chats"
-                    >
-                      <p className="font-medium text-orange-600 dark:text-orange-400">
-                        Clear Dr.M Chat History
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Delete all conversations with Dr.M avatar
-                      </p>
-                    </button>
-                  </div>
-                )}
-              </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
 
               <button
                 onClick={() => setLocation("/badges")}
@@ -517,7 +349,7 @@ export default function ProfilePage() {
                     <BellOff className="w-5 h-5 text-muted-foreground" />
                   )}
                   <div className="text-left">
-                    <p className="font-medium text-foreground">Notifications</p>
+                    <p className="font-medium text-foreground">Enable Notifications</p>
                     <p className="text-xs text-muted-foreground">
                       {notificationsLoading
                         ? "Enabling..."
@@ -536,21 +368,22 @@ export default function ProfilePage() {
                 )}
               </button>
 
-              <button
+              <a
+                href="tel:+919920115400"
                 className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
                 data-testid="button-support"
               >
                 <div className="flex items-center gap-3">
-                  <MessageCircle className="w-5 h-5 text-[#703DFA]" />
+                  <Phone className="w-5 h-5 text-[#703DFA]" />
                   <div className="text-left">
                     <p className="font-medium text-foreground">Get Support</p>
                     <p className="text-xs text-muted-foreground">
-                      Talk with our Coaches
+                      +91 99201 15400
                     </p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
+              </a>
 
               <button
                 className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
