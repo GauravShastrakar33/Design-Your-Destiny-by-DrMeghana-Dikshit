@@ -70,6 +70,8 @@ export default function ProfilePage() {
       return response.json();
     },
     enabled: !!userToken,
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
   });
 
   const prescriptionFromApi =
@@ -161,6 +163,19 @@ export default function ProfilePage() {
               {userName}
             </h2>
           </div>
+
+          {/* Karmic Affirmation Section */}
+          {!isLoadingProfile && wellnessProfile?.karmicAffirmation && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-[#703DFA] flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Karmic Affirmation</p>
+                  <p className="text-sm text-gray-700 italic">"{wellnessProfile.karmicAffirmation}"</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Earned Badges Section */}
           {!isLoadingBadges && earnedBadges.length > 0 && (

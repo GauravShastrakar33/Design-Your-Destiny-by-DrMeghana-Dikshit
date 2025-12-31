@@ -54,6 +54,8 @@ export default function AccountSettingsPage() {
       return response.json();
     },
     enabled: !!userToken,
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
