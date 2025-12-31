@@ -5505,8 +5505,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(400).json({ error: "Title and body are required" });
       }
 
-      // Fetch all device tokens
-      const allTokens = await db.select({ token: deviceTokens.token })
+      // Fetch all device tokens with userId
+      const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId })
         .from(deviceTokens);
 
       if (allTokens.length === 0) {
@@ -5518,8 +5518,32 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         });
       }
 
+      // Create a notification record for in-app display
+      const [notification] = await db.insert(notifications)
+        .values({
+          title,
+          body,
+          type: "admin_test",
+          scheduledAt: new Date(),
+          sent: true,
+          requiredProgramCode: "",
+          requiredProgramLevel: 0,
+        })
+        .returning();
+
       const tokens = allTokens.map(t => t.token);
       const result = await sendPushNotification(tokens, title, body);
+
+      // Create notification logs for each unique user who received the push
+      const uniqueUserIds = [...new Set(allTokens.map(t => t.userId))];
+      if (uniqueUserIds.length > 0 && notification) {
+        const notificationLogRecords = uniqueUserIds.map(userId => ({
+          notificationId: notification.id,
+          userId,
+          status: "sent" as const,
+        }));
+        await db.insert(notificationLogs).values(notificationLogRecords);
+      }
 
       // Clean up failed tokens (invalid tokens)
       if (result.failedTokens.length > 0) {
