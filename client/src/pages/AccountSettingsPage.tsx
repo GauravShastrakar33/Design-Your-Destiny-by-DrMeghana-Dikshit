@@ -66,9 +66,22 @@ export default function AccountSettingsPage() {
     if (!userName.trim()) return;
     setIsSavingName(true);
     try {
-      localStorage.setItem("@app:userName", userName.trim());
-      setOriginalUserName(userName.trim());
+      const response = await apiRequest("PUT", "/api/v1/me/name", {
+        name: userName.trim(),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        console.error("Failed to update name:", data.error);
+        return;
+      }
+
+      const data = await response.json();
+      localStorage.setItem("@app:userName", data.name);
+      setOriginalUserName(data.name);
       setIsEditingName(false);
+    } catch (error) {
+      console.error("Error updating name:", error);
     } finally {
       setIsSavingName(false);
     }

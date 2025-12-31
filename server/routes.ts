@@ -4189,6 +4189,31 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
+  // Update user name endpoint
+  app.put("/api/v1/me/name", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { name } = req.body;
+
+      if (!name || typeof name !== "string" || name.trim().length === 0) {
+        return res.status(400).json({ error: "Name is required" });
+      }
+
+      const user = await storage.updateUserName(req.user.sub, name.trim());
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ success: true, name: user.name });
+    } catch (error) {
+      console.error("Error updating user name:", error);
+      res.status(500).json({ error: "Failed to update name" });
+    }
+  });
+
   // ===== EVENT CALENDAR APIs =====
 
   // Admin API: Get all events with filters
