@@ -4456,7 +4456,20 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.put("/api/admin/v1/events/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const event = await storage.updateEvent(id, req.body);
+      
+      // Convert datetime strings to Date objects for Drizzle
+      const updateData = { ...req.body };
+      if (updateData.startDatetime && typeof updateData.startDatetime === 'string') {
+        updateData.startDatetime = new Date(updateData.startDatetime);
+      }
+      if (updateData.endDatetime && typeof updateData.endDatetime === 'string') {
+        updateData.endDatetime = new Date(updateData.endDatetime);
+      }
+      if (updateData.recordingExpiryDate && typeof updateData.recordingExpiryDate === 'string') {
+        updateData.recordingExpiryDate = updateData.recordingExpiryDate;
+      }
+      
+      const event = await storage.updateEvent(id, updateData);
       
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
