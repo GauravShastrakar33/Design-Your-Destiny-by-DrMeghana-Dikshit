@@ -15,6 +15,11 @@ import {
 } from "lucide-react";
 import { useAdminSidebar } from "@/contexts/AdminSidebarContext";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface MenuItemConfig {
   id: string;
@@ -54,10 +59,10 @@ export default function AdminSidebar() {
   };
 
   return (
-    <div className="w-16 bg-[#1a1a1a] min-h-screen flex flex-col">
-      <div className="p-3 border-b border-gray-800">
-        <div className="w-10 h-10 rounded-lg bg-brand flex items-center justify-center mx-auto">
-          <span className="text-white font-bold text-sm">Dr.M</span>
+    <div className="w-16 bg-brand min-h-screen flex flex-col">
+      <div className="p-3 border-b border-white/10">
+        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center mx-auto">
+          <span className="text-brand font-bold text-sm">Dr.M</span>
         </div>
       </div>
 
@@ -67,32 +72,43 @@ export default function AdminSidebar() {
           const isActive = selectedMenuId === item.id;
           
           return (
-            <button
-              key={item.id}
-              onClick={() => handleMenuClick(item)}
-              data-testid={`nav-${item.id}`}
-              className={`w-12 h-12 flex items-center justify-center rounded-lg transition-all mb-1 ${
-                isActive
-                  ? "bg-brand/20 text-brand"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
-              }`}
-              title={item.label}
-            >
-              <Icon className="w-5 h-5" />
-            </button>
+            <Tooltip key={item.id} delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleMenuClick(item)}
+                  data-testid={`nav-${item.id}`}
+                  className={`w-12 h-12 flex items-center justify-center rounded-lg transition-all mb-1 ${
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "text-white/60 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-gray-900 text-white border-gray-800">
+                {item.label}
+              </TooltipContent>
+            </Tooltip>
           );
         })}
       </div>
 
-      <div className="border-t border-gray-800 py-4 flex justify-center">
-        <button
-          onClick={handleLogout}
-          data-testid="button-logout"
-          className="w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-900/30 hover:text-red-400 transition-colors"
-          title="Logout"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
+      <div className="border-t border-white/10 py-4 flex justify-center">
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleLogout}
+              data-testid="button-logout"
+              className="w-12 h-12 flex items-center justify-center rounded-lg text-white/60 hover:bg-red-500/30 hover:text-red-300 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="bg-gray-900 text-white border-gray-800">
+            Logout
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

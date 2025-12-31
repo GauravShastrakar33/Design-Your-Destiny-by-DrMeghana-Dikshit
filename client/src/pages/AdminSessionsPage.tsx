@@ -220,16 +220,6 @@ export default function AdminSessionsPage() {
                         data-testid="input-session-link"
                       />
                     </div>
-                    <div>
-                      <Label>Participants</Label>
-                      <Input
-                        type="number"
-                        value={formData.participants}
-                        onChange={(e) => setFormData({ ...formData, participants: parseInt(e.target.value) || 0 })}
-                        placeholder="0"
-                        data-testid="input-session-participants"
-                      />
-                    </div>
                     <div className="flex items-center justify-between">
                       <Label>Active</Label>
                       <Switch
@@ -277,7 +267,6 @@ export default function AdminSessionsPage() {
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-3 px-4 text-gray-700 font-semibold">Title</th>
                     <th className="text-left py-3 px-4 text-gray-700 font-semibold">Time</th>
-                    <th className="text-left py-3 px-4 text-gray-700 font-semibold">Participants</th>
                     <th className="text-left py-3 px-4 text-gray-700 font-semibold">Meeting Link</th>
                     <th className="text-left py-3 px-4 text-gray-700 font-semibold">Status</th>
                     <th className="text-right py-3 px-4 text-gray-700 font-semibold">Actions</th>
@@ -288,7 +277,6 @@ export default function AdminSessionsPage() {
                     <tr key={session.id} className="border-b border-gray-100" data-testid={`row-session-${session.id}`}>
                       <td className="py-3 px-4 text-gray-900">{session.title}</td>
                       <td className="py-3 px-4 text-gray-600">{session.displayTime}</td>
-                      <td className="py-3 px-4 text-gray-600">{session.participants}</td>
                       <td className="py-3 px-4">
                         <a
                           href={session.meetingLink}
@@ -364,14 +352,6 @@ export default function AdminSessionsPage() {
                                     value={formData.meetingLink}
                                     onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
                                     required
-                                  />
-                                </div>
-                                <div>
-                                  <Label>Participants</Label>
-                                  <Input
-                                    type="number"
-                                    value={formData.participants}
-                                    onChange={(e) => setFormData({ ...formData, participants: parseInt(e.target.value) || 0 })}
                                   />
                                 </div>
                                 <div className="flex items-center justify-between">

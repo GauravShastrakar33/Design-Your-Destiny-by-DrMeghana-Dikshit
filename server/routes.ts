@@ -995,19 +995,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ]);
 
       // CMS Health
-      const [totalCoursesResult, publishedCoursesResult, lastUpdatedLessonResult] = await Promise.all([
+      const [totalCoursesResult, publishedCoursesResult, lastUpdatedCourseResult] = await Promise.all([
         // Total courses
         db.select({ count: count() }).from(cmsCourses),
         // Published courses
         db.select({ count: count() }).from(cmsCourses)
           .where(eq(cmsCourses.isPublished, true)),
-        // Last updated lesson
+        // Last updated course
         db.select({
-          id: cmsLessons.id,
-          title: cmsLessons.title,
-          updatedAt: cmsLessons.updatedAt,
-        }).from(cmsLessons)
-          .orderBy(desc(cmsLessons.updatedAt))
+          id: cmsCourses.id,
+          title: cmsCourses.title,
+          updatedAt: cmsCourses.updatedAt,
+        }).from(cmsCourses)
+          .orderBy(desc(cmsCourses.updatedAt))
           .limit(1),
       ]);
 
@@ -1052,9 +1052,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cmsHealth: {
           totalCourses: totalCoursesResult[0]?.count ?? 0,
           publishedCourses: publishedCoursesResult[0]?.count ?? 0,
-          lastUpdatedLesson: lastUpdatedLessonResult[0] ? {
-            title: lastUpdatedLessonResult[0].title,
-            updatedAt: lastUpdatedLessonResult[0].updatedAt,
+          lastUpdatedCourse: lastUpdatedCourseResult[0] ? {
+            title: lastUpdatedCourseResult[0].title,
+            updatedAt: lastUpdatedCourseResult[0].updatedAt,
           } : null,
         },
       });
