@@ -100,7 +100,7 @@ export default function AdminSidebar() {
             <button
               onClick={handleLogout}
               data-testid="button-logout"
-              className="w-12 h-12 flex items-center justify-center rounded-lg text-white/60 hover:bg-red-500/30 hover:text-red-300 transition-colors"
+              className="w-12 h-12 flex items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-all"
             >
               <LogOut className="w-5 h-5" />
             </button>
