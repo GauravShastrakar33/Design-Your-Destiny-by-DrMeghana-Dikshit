@@ -44,11 +44,6 @@ const menuItems: MenuItem[] = [
     label: "Community Practices"
   },
   { 
-    id: "articles",
-    path: "/admin/articles", 
-    label: "Articles"
-  },
-  { 
     id: "workshops",
     path: "/admin/workshops", 
     label: "Masterclasses"

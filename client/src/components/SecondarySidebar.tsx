@@ -67,23 +67,12 @@ const menuContent: Record<
     title: "Event Calendar",
     items: [
       { path: "/admin/events", label: "All Events", icon: List },
-      { path: "/admin/events/new", label: "Create Event", icon: Plus },
     ],
   },
   sessions: {
     title: "Community Practices",
     items: [
-      { path: "/admin/sessions", label: "All Sessions", icon: List },
-      { path: "/admin/sessions", label: "Schedule", icon: Clock },
-      { path: "/admin/sessions", label: "Add New", icon: Plus },
-    ],
-  },
-  articles: {
-    title: "Articles",
-    items: [
-      { path: "/admin/articles", label: "All Articles", icon: List },
-      { path: "/admin/articles", label: "Categories", icon: BookOpen },
-      { path: "/admin/articles", label: "Add New", icon: Plus },
+      { path: "/admin/sessions", label: "Community Practices", icon: UsersRound },
     ],
   },
   workshops: {
@@ -104,7 +93,7 @@ const menuContent: Record<
   process: {
     title: "Process Library",
     items: [
-      { path: "/admin/processes", label: "Processes", icon: Sparkles },
+      { path: "/admin/processes", label: "Processes (mapping)", icon: Sparkles },
       { path: "/admin/abundance-mastery", label: "Abundance Mastery", icon: DollarSign },
       { path: "/admin/masterclasses", label: "Masterclasses", icon: Video },
       { path: "/admin/my-processes", label: "My Playlist", icon: Music },
@@ -119,8 +108,7 @@ const menuContent: Record<
   quotes: {
     title: "Daily Quotes",
     items: [
-      { path: "/admin/quotes", label: "All Quotes", icon: List },
-      { path: "/admin/quotes", label: "Add New", icon: Plus },
+      { path: "/admin/quotes", label: "Daily Quotes", icon: Quote },
     ],
   },
 };

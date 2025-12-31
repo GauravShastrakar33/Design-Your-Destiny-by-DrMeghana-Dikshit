@@ -50,7 +50,7 @@ interface DashboardData {
   cmsHealth: {
     totalCourses: number;
     publishedCourses: number;
-    lastUpdatedLesson: {
+    lastUpdatedCourse: {
       title: string;
       updatedAt: string;
     } | null;
@@ -86,7 +86,7 @@ export default function AdminDashboardPage() {
   const events = data?.events ?? { today: [], upcoming: [] };
   const notifications = data?.notifications ?? { failedLast24h: 0, usersDisabled: 0 };
   const communityPractices = data?.communityPractices ?? { total: 0 };
-  const cmsHealth = data?.cmsHealth ?? { totalCourses: 0, publishedCourses: 0, lastUpdatedLesson: null };
+  const cmsHealth = data?.cmsHealth ?? { totalCourses: 0, publishedCourses: 0, lastUpdatedCourse: null };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -124,7 +124,7 @@ export default function AdminDashboardPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Users</p>
+                <p className="text-sm text-muted-foreground">Students</p>
                 <p className="text-2xl font-bold" data-testid="text-kpi-users">{kpis.totalUsers}</p>
               </div>
               <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
@@ -300,19 +300,19 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-blue-500" />
-                <p className="text-sm text-muted-foreground">Last Updated Lesson</p>
+                <p className="text-sm text-muted-foreground">Last Updated Course</p>
               </div>
-              {cmsHealth.lastUpdatedLesson ? (
+              {cmsHealth.lastUpdatedCourse ? (
                 <div className="text-right">
-                  <p className="text-sm font-medium truncate max-w-[180px]" title={cmsHealth.lastUpdatedLesson.title} data-testid="text-last-updated-lesson-title">
-                    {cmsHealth.lastUpdatedLesson.title}
+                  <p className="text-sm font-medium truncate max-w-[180px]" title={cmsHealth.lastUpdatedCourse.title} data-testid="text-last-updated-course-title">
+                    {cmsHealth.lastUpdatedCourse.title}
                   </p>
-                  <p className="text-xs text-muted-foreground" data-testid="text-last-updated-lesson-time">
-                    {formatDistanceToNow(new Date(cmsHealth.lastUpdatedLesson.updatedAt), { addSuffix: true })}
+                  <p className="text-xs text-muted-foreground" data-testid="text-last-updated-course-time">
+                    {formatDistanceToNow(new Date(cmsHealth.lastUpdatedCourse.updatedAt), { addSuffix: true })}
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500" data-testid="text-no-lessons">No lessons yet</p>
+                <p className="text-sm text-gray-500" data-testid="text-no-courses">No courses yet</p>
               )}
             </div>
           </CardContent>

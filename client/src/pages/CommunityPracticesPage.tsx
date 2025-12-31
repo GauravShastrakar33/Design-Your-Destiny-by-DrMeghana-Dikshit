@@ -127,11 +127,7 @@ export default function CommunityPracticesPage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-1">{session.displayTime}</p>
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <Users className="w-3.5 h-3.5" />
-                          <span>{session.participants} members</span>
-                        </div>
+                        <p className="text-sm text-gray-600">{session.displayTime}</p>
                       </div>
 
                       <Button
