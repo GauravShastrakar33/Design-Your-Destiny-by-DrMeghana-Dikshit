@@ -74,7 +74,13 @@ async function extractTextWithPdf2json(buffer: Buffer): Promise<string> {
         (page.Texts || []).forEach((textItem: any) => {
           const y = Math.round(textItem.y * 10); // Round Y to group nearby items
           const text =
-            textItem.R?.map((r: any) => decodeURIComponent(r.T)).join("") || "";
+            textItem.R?.map((r: any) => {
+              try {
+                return decodeURIComponent(r.T);
+              } catch {
+                return r.T || "";
+              }
+            }).join("") || "";
 
           if (text.trim()) {
             if (!textsByY.has(y)) {
