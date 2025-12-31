@@ -1,0 +1,91 @@
+Replace Admin Dashboard with New Minimal Dashboard
+Context
+* A dashboard screen already exists and must be fully replaced
+* The goal is a minimal, non-overloaded, read-only dashboard
+* POH has a separate analysis section and must NOT appear here
+* This dashboard is for awareness, not actions or analytics
+
+🎯 TASK 1: Replace Existing Dashboard Screen
+Completely remove the current dashboard content, including:
+* Total Sessions card
+* Quick Actions section
+* Any charts
+* Any recent activity list
+* Any analytics widgets
+Then rebuild the dashboard UI from scratch using the structure below.
+
+🧱 NEW DASHBOARD LAYOUT (FINAL)
+1️⃣ KPI STRIP (Top row – 4 cards only)
+Display these four KPIs in a single horizontal row:
+1. Users
+    * Total registered users
+2. Active Today
+    * Unique users who opened the app today
+3. Practised Today
+    * Unique users who completed at least one practice today via:
+        * Processes section OR
+        * Playlist section
+    * Count each user only once
+4. Badges Earned Today
+    * Total badges awarded today
+⚠️ Do NOT show practice types, breath, checklist, or breakdowns.
+
+2️⃣ Events Section
+Title: Events
+Show two simple blocks:
+* Events Today
+* Upcoming Events (Next 7 Days)
+Each event row should show:
+* Event title
+* Date & time
+* Status (Upcoming / Live / Completed)
+Read-only. No actions.
+
+3️⃣ Notifications Section
+Title: Notifications
+Show two simple health indicators (read-only):
+1. Notification Health
+* Definition: Failed notifications are delivery attempts where notification_logs.status = 'failed'.
+* Display logic (time-bound: last 24 hours):
+    * If no failures → ✓ All notifications sent successfully (last 24h)
+    * If failures exist → ⚠️ X notification(s) failed (last 24h)
+* This represents delivery failures, not scheduling issues and not users disabling notifications.
+
+2. Notification Permissions
+* Definition: Count of users who have disabled notifications or do not have an active device token.
+* Display logic:
+    * Show a simple count, for example: 🔕 Y users have notifications disabled
+* This is a separate indicator from failed notifications and should not be mixed with delivery failures.
+
+
+4️⃣ Community Practices Section (Separate)
+Title: Community Practices
+Show:
+* Total Community Practices
+Meaning:
+* Total number of practices created in the Community Practices section
+* This is a content count, not usage or activity
+
+5️⃣ CMS Health Section
+Title: CMS Health
+Show exactly three items:
+* Courses – total courses created
+* Published Courses – courses visible to users
+* Last Updated Lesson – lesson title + relative time (e.g. “2 hours ago”)
+No editing controls.
+
+❌ Explicit Exclusions (Do NOT add)
+* No Quick Actions
+* No Recent Activity feed
+* No Analytics charts
+* No POH metrics
+* No admin actions
+* No practice type breakdowns
+* No community usage stats
+This dashboard must remain calm, minimal, and scannable in under 10 seconds.
+
+🎯 TASK 2: Update Sidebar Navigation
+Remove the following submenu items from the sidebar submenu section:
+* ❌ Overview
+* ❌ Analytics
+* ❌ Recent Activity

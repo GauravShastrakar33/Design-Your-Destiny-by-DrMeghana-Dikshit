@@ -26,7 +26,11 @@ import {
   Sun,
   Loader2,
 } from "lucide-react";
-import { requestNotificationPermission, getNotificationStatus, unregisterDeviceTokens } from "@/lib/notifications";
+import {
+  requestNotificationPermission,
+  getNotificationStatus,
+  unregisterDeviceTokens,
+} from "@/lib/notifications";
 import { Card, CardContent } from "@/components/ui/card";
 import type { UserWellnessProfile } from "@shared/schema";
 import ConsistencyCalendar from "@/components/ConsistencyCalendar";
@@ -86,7 +90,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const savedUserName = localStorage.getItem("@app:userName");
     setUserName(savedUserName || "UserName");
-    
+
     // Check notification status from backend (DB source of truth)
     const checkNotificationStatus = async () => {
       const enabled = await getNotificationStatus();
@@ -114,7 +118,9 @@ export default function ProfilePage() {
         const enabled = await getNotificationStatus();
         setNotificationsEnabled(enabled);
         if (!success && !enabled) {
-          alert("Unable to enable notifications. Please check your browser settings.");
+          alert(
+            "Unable to enable notifications. Please check your browser settings.",
+          );
         }
       }
     } catch (error) {
@@ -282,7 +288,9 @@ export default function ProfilePage() {
           {/* Earned Badges Section */}
           {!isLoadingBadges && earnedBadges.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-sm text-muted-foreground mb-3">Earned Badges</p>
+              <p className="text-sm text-muted-foreground mb-3">
+                Earned Badges
+              </p>
               <div className="flex items-center gap-3 overflow-x-auto pb-1">
                 {earnedBadges.map((badge) => (
                   <BadgeIcon
@@ -511,10 +519,10 @@ export default function ProfilePage() {
                   <div className="text-left">
                     <p className="font-medium text-foreground">Notifications</p>
                     <p className="text-xs text-muted-foreground">
-                      {notificationsLoading 
-                        ? "Enabling..." 
-                        : notificationsEnabled 
-                          ? "Push notifications enabled" 
+                      {notificationsLoading
+                        ? "Enabling..."
+                        : notificationsEnabled
+                          ? "Push notifications enabled"
                           : "Tap to enable push notifications"}
                     </p>
                   </div>
