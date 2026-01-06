@@ -5566,6 +5566,259 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
+  // ===== DR. M QUESTIONS ROUTES =====
+
+  // User: Get current month's question (if any) and all past questions
+  app.get("/api/v1/drm/questions", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.sub;
+      const questions = await storage.getUserDrmQuestions(userId);
+      
+      // Get current month in YYYY-MM format
+      const now = new Date();
+      const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      // Check if user has submitted a question this month
+      const hasSubmittedThisMonth = questions.some(q => q.monthYear === currentMonthYear);
+      
+      res.json({
+        questions,
+        currentMonthYear,
+        hasSubmittedThisMonth,
+      });
+    } catch (error) {
+      console.error("Error fetching DrM questions:", error);
+      res.status(500).json({ error: "Failed to fetch questions" });
+    }
+  });
+
+  // User: Get a specific question by ID (with audio URL if answered)
+  app.get("/api/v1/drm/questions/:id", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.sub;
+      const questionId = parseInt(req.params.id);
+      
+      const question = await storage.getDrmQuestionById(questionId);
+      
+      if (!question) {
+        return res.status(404).json({ error: "Question not found" });
+      }
+      
+      // Ensure user can only access their own question
+      if (question.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      // If question has audio, generate signed URL
+      let audioUrl = null;
+      if (question.audioR2Key) {
+        audioUrl = await getSignedGetUrl(question.audioR2Key);
+      }
+      
+      res.json({
+        ...question,
+        audioUrl,
+      });
+    } catch (error) {
+      console.error("Error fetching DrM question:", error);
+      res.status(500).json({ error: "Failed to fetch question" });
+    }
+  });
+
+  // User: Submit a new question
+  app.post("/api/v1/drm/questions", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.sub;
+      const { questionText } = req.body;
+      
+      // Validate question text
+      if (!questionText || typeof questionText !== 'string') {
+        return res.status(400).json({ error: "Question text is required" });
+      }
+      
+      if (questionText.length > 240) {
+        return res.status(400).json({ error: "Question exceeds 240 character limit" });
+      }
+      
+      if (questionText.trim().length === 0) {
+        return res.status(400).json({ error: "Question cannot be empty" });
+      }
+      
+      // Get current month in YYYY-MM format
+      const now = new Date();
+      const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      // Check if user already submitted this month
+      const existingQuestion = await storage.getDrmQuestionByUserMonth(userId, monthYear);
+      if (existingQuestion) {
+        return res.status(409).json({ error: "You have already submitted a question this month" });
+      }
+      
+      // Create the question
+      const question = await storage.createDrmQuestion({
+        userId,
+        questionText: questionText.trim(),
+        monthYear,
+      });
+      
+      res.status(201).json({
+        success: true,
+        message: "Your question has been sent. Dr. M will respond soon.",
+        question,
+      });
+    } catch (error) {
+      console.error("Error submitting DrM question:", error);
+      res.status(500).json({ error: "Failed to submit question" });
+    }
+  });
+
+  // Admin: Get all questions
+  app.get("/admin/api/drm/questions", requireAdmin, async (req, res) => {
+    try {
+      const questions = await storage.getAllDrmQuestions();
+      res.json(questions);
+    } catch (error) {
+      console.error("Error fetching DrM questions:", error);
+      res.status(500).json({ error: "Failed to fetch questions" });
+    }
+  });
+
+  // Admin: Get a specific question by ID
+  app.get("/admin/api/drm/questions/:id", requireAdmin, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      const question = await storage.getDrmQuestionById(questionId);
+      
+      if (!question) {
+        return res.status(404).json({ error: "Question not found" });
+      }
+      
+      // Get user name
+      const user = await storage.getUserById(question.userId);
+      
+      // If question has audio, generate signed URL
+      let audioUrl = null;
+      if (question.audioR2Key) {
+        audioUrl = await getSignedGetUrl(question.audioR2Key);
+      }
+      
+      res.json({
+        ...question,
+        userName: user?.name || "Unknown",
+        audioUrl,
+      });
+    } catch (error) {
+      console.error("Error fetching DrM question:", error);
+      res.status(500).json({ error: "Failed to fetch question" });
+    }
+  });
+
+  // Admin: Upload audio answer for a question
+  app.post("/admin/api/drm/questions/:id/answer", requireAdmin, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      
+      const question = await storage.getDrmQuestionById(questionId);
+      if (!question) {
+        return res.status(404).json({ error: "Question not found" });
+      }
+      
+      // Generate upload URL for audio
+      const audioKey = `drm-audio/questions/${questionId}/answer.webm`;
+      const uploadUrl = await getSignedPutUrl(audioKey, "audio/webm");
+      
+      res.json({
+        uploadUrl,
+        audioKey,
+      });
+    } catch (error) {
+      console.error("Error generating audio upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  // Admin: Confirm audio answer uploaded and trigger notification
+  app.post("/admin/api/drm/questions/:id/confirm-answer", requireAdmin, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      const { audioKey } = req.body;
+      
+      if (!audioKey) {
+        return res.status(400).json({ error: "Audio key is required" });
+      }
+      
+      const question = await storage.getDrmQuestionById(questionId);
+      if (!question) {
+        return res.status(404).json({ error: "Question not found" });
+      }
+      
+      // Update question status
+      const updatedQuestion = await storage.updateDrmQuestionAnswer(questionId, audioKey);
+      
+      if (!updatedQuestion) {
+        return res.status(500).json({ error: "Failed to update question" });
+      }
+      
+      // Create notification for the user
+      const [notification] = await db.insert(notifications)
+        .values({
+          title: "Dr. M has answered your question 🎧",
+          body: "Your personal voice response is ready to listen.",
+          type: "drm_answer",
+          scheduledAt: new Date(),
+          sent: true,
+          requiredProgramCode: "",
+          requiredProgramLevel: 0,
+        })
+        .returning();
+      
+      // Get user's device tokens and send push notification
+      const userTokens = await storage.getDeviceTokensByUserIds([question.userId]);
+      
+      if (userTokens.length > 0) {
+        const tokens = userTokens.map(t => t.token);
+        const result = await sendPushNotification(
+          tokens,
+          "Dr. M has answered your question 🎧",
+          "Your personal voice response is ready to listen.",
+          { questionId: questionId.toString(), deepLink: `/dr-m/questions/${questionId}` }
+        );
+        
+        // Create notification logs
+        const notificationLogRecords = userTokens.map(t => ({
+          notificationId: notification.id,
+          userId: t.userId,
+          deviceToken: t.token,
+          status: result.successCount > 0 ? "sent" : "failed",
+        }));
+        await db.insert(notificationLogs).values(notificationLogRecords);
+      } else {
+        // Still create notification log for in-app display
+        await db.insert(notificationLogs).values({
+          notificationId: notification.id,
+          userId: question.userId,
+          deviceToken: "in-app-only",
+          status: "sent",
+        });
+      }
+      
+      console.log(`DrM answer submitted for question ${questionId}, notification sent to user ${question.userId}`);
+      
+      // Generate signed URL for admin verification
+      const audioUrl = await getSignedGetUrl(audioKey);
+      
+      res.json({
+        success: true,
+        message: "Answer submitted and user notified",
+        question: updatedQuestion,
+        audioUrl,
+      });
+    } catch (error) {
+      console.error("Error confirming DrM answer:", error);
+      res.status(500).json({ error: "Failed to confirm answer" });
+    }
+  });
+
   // ===== ADMIN PROJECT OF HEART ROUTES =====
   // Observational only - aggregate data, no individual user data
   

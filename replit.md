@@ -105,6 +105,30 @@ Core pages include Home, Courses, Profile, Progress Insights, Project of Heart, 
 - **User Flow**: Profile page > Settings > Notifications toggle enables push notifications
 - **Token Cleanup**: Failed/invalid tokens are automatically removed from database when notifications fail
 
+**Dr.M Monthly Questions**: A personal Q&A feature where users can ask Dr. M one question per month and receive voice-recorded answers.
+- **Routes**: `/drm` (main page), `/dr-m/questions/:id` (deep link to specific question)
+- **Database Table**: `drm_questions` with fields:
+  - id (serial primary key)
+  - userId (FK to users)
+  - questionText (max 240 characters)
+  - askedAt (timestamp)
+  - monthYear (YYYY-MM format, unique per user)
+  - status (PENDING | ANSWERED)
+  - audioR2Key (R2 storage path for voice answer)
+  - answeredAt (timestamp when answered)
+- **User API Endpoints** (require JWT authentication):
+  - `GET /api/v1/drm/questions` - Get user's questions + current month status
+  - `GET /api/v1/drm/questions/:id` - Get specific question with signed audio URL
+  - `POST /api/v1/drm/questions` - Submit new question (240 char limit, one per month)
+- **Admin API Endpoints**:
+  - `GET /admin/api/drm/questions` - List all questions with user names
+  - `GET /admin/api/drm/questions/:id` - Get question with audio URL
+  - `POST /admin/api/drm/questions/:id/answer` - Get R2 upload URL for audio
+  - `POST /admin/api/drm/questions/:id/confirm-answer` - Confirm upload, mark answered, send push notification
+- **Audio Storage**: R2 at `drm-audio/questions/{id}/answer.webm`
+- **User Flow**: Submit question → Wait for response → Listen to voice answer
+- **Push Notification**: Users receive notification when Dr. M answers their question
+
 ### System Design Choices
 The architecture emphasizes RESTful APIs with distinct public and admin endpoints. React Query is used for efficient data fetching and caching. Components are designed for modularity and extensibility. The database schema is structured to manage various content types, including articles, categories, CMS elements (courses, modules, lessons), programs, and feature mappings with foreign key constraints.
 

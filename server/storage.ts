@@ -23,6 +23,7 @@ import {
   type Notification, type InsertNotification,
   type NotificationLog, type InsertNotificationLog,
   type UserBadge, type InsertUserBadge, type BadgeKey,
+  type DrmQuestion, type InsertDrmQuestion,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -41,7 +42,8 @@ import {
   notifications as notificationsTable,
   notificationLogs as notificationLogsTable,
   deviceTokens as deviceTokensTable,
-  userBadges as userBadgesTable
+  userBadges as userBadgesTable,
+  drmQuestions as drmQuestionsTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -2043,6 +2045,81 @@ export class DbStorage implements IStorage {
       ...r,
       createdAt: r.createdAt.toISOString(),
     }));
+  }
+
+  // ===== DR. M QUESTIONS =====
+
+  async getDrmQuestionByUserMonth(userId: number, monthYear: string): Promise<DrmQuestion | undefined> {
+    const [question] = await db
+      .select()
+      .from(drmQuestionsTable)
+      .where(
+        and(
+          eq(drmQuestionsTable.userId, userId),
+          eq(drmQuestionsTable.monthYear, monthYear)
+        )
+      );
+    return question;
+  }
+
+  async createDrmQuestion(data: { userId: number; questionText: string; monthYear: string }): Promise<DrmQuestion> {
+    const [question] = await db
+      .insert(drmQuestionsTable)
+      .values({
+        userId: data.userId,
+        questionText: data.questionText,
+        monthYear: data.monthYear,
+      })
+      .returning();
+    return question;
+  }
+
+  async getUserDrmQuestions(userId: number): Promise<DrmQuestion[]> {
+    return db
+      .select()
+      .from(drmQuestionsTable)
+      .where(eq(drmQuestionsTable.userId, userId))
+      .orderBy(desc(drmQuestionsTable.askedAt));
+  }
+
+  async getDrmQuestionById(id: number): Promise<DrmQuestion | undefined> {
+    const [question] = await db
+      .select()
+      .from(drmQuestionsTable)
+      .where(eq(drmQuestionsTable.id, id));
+    return question;
+  }
+
+  async getAllDrmQuestions(): Promise<(DrmQuestion & { userName: string })[]> {
+    const results = await db
+      .select({
+        id: drmQuestionsTable.id,
+        userId: drmQuestionsTable.userId,
+        questionText: drmQuestionsTable.questionText,
+        askedAt: drmQuestionsTable.askedAt,
+        monthYear: drmQuestionsTable.monthYear,
+        status: drmQuestionsTable.status,
+        audioR2Key: drmQuestionsTable.audioR2Key,
+        answeredAt: drmQuestionsTable.answeredAt,
+        userName: usersTable.name,
+      })
+      .from(drmQuestionsTable)
+      .innerJoin(usersTable, eq(drmQuestionsTable.userId, usersTable.id))
+      .orderBy(desc(drmQuestionsTable.askedAt));
+    return results;
+  }
+
+  async updateDrmQuestionAnswer(id: number, audioR2Key: string): Promise<DrmQuestion | undefined> {
+    const [updated] = await db
+      .update(drmQuestionsTable)
+      .set({
+        status: "ANSWERED",
+        audioR2Key,
+        answeredAt: new Date(),
+      })
+      .where(eq(drmQuestionsTable.id, id))
+      .returning();
+    return updated;
   }
 }
 

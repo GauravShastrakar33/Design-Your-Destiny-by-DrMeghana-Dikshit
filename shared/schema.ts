@@ -490,7 +490,7 @@ export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
 
 // Notification type enum
-export const notificationTypeEnum = z.enum(["system", "event_reminder"]);
+export const notificationTypeEnum = z.enum(["system", "event_reminder", "admin_test", "drm_answer"]);
 export type NotificationType = z.infer<typeof notificationTypeEnum>;
 
 // Notification log status enum
@@ -699,3 +699,33 @@ export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({
 
 export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
 export type UserBadge = typeof userBadges.$inferSelect;
+
+// Dr. M Questions Table - for monthly voice Q&A feature
+export const drmQuestionStatusEnum = z.enum(["PENDING", "ANSWERED"]);
+export type DrmQuestionStatus = z.infer<typeof drmQuestionStatusEnum>;
+
+export const drmQuestions = pgTable("drm_questions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  questionText: varchar("question_text", { length: 240 }).notNull(),
+  askedAt: timestamp("asked_at", { mode: "date" }).notNull().defaultNow(),
+  monthYear: varchar("month_year", { length: 7 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("PENDING"),
+  audioR2Key: text("audio_r2_key"),
+  answeredAt: timestamp("answered_at", { mode: "date" }),
+}, (table) => ({
+  uniqueUserMonth: unique("unique_user_month_question").on(table.userId, table.monthYear),
+}));
+
+export const insertDrmQuestionSchema = createInsertSchema(drmQuestions).omit({
+  id: true,
+  askedAt: true,
+  status: true,
+  audioR2Key: true,
+  answeredAt: true,
+}).extend({
+  questionText: z.string().min(1).max(240),
+});
+
+export type InsertDrmQuestion = z.infer<typeof insertDrmQuestionSchema>;
+export type DrmQuestion = typeof drmQuestions.$inferSelect;

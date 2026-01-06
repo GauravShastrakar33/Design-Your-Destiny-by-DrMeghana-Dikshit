@@ -45,6 +45,7 @@ export default function AppRoutes() {
       <Route path="/project-of-heart/history" component={ProjectOfHeartHistoryPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/drm" component={DrMPage} />
+      <Route path="/dr-m/questions/:id" component={DrMPage} />
       <Route path="/money-mastery" component={MoneyMasteryPage} />
       <Route path="/process-checklist" component={ProcessChecklistPage} />
       <Route path="/more-quotes" component={MoreQuotesPage} />
