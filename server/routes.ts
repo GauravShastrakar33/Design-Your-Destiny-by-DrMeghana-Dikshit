@@ -5612,7 +5612,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // If question has audio, generate signed URL
       let audioUrl = null;
       if (question.audioR2Key) {
-        audioUrl = await getSignedGetUrl(question.audioR2Key);
+        const result = await getSignedGetUrl(question.audioR2Key);
+        if (result.success && result.url) {
+          audioUrl = result.url;
+        }
       }
       
       res.json({
@@ -5699,7 +5702,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // If question has audio, generate signed URL
       let audioUrl = null;
       if (question.audioR2Key) {
-        audioUrl = await getSignedGetUrl(question.audioR2Key);
+        const result = await getSignedGetUrl(question.audioR2Key);
+        if (result.success && result.url) {
+          audioUrl = result.url;
+        }
       }
       
       res.json({

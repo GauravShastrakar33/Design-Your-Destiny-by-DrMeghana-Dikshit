@@ -156,28 +156,25 @@ export default function DrMPage() {
                     </div>
                     {selectedQuestionId === currentMonthQuestion.id && questionDetails?.audioUrl ? (
                       <div className="space-y-3">
-                        <audio
-                          ref={audioRef}
-                          src={questionDetails.audioUrl}
-                          onEnded={handleAudioEnded}
-                        />
-                        <Button
-                          onClick={handlePlayPause}
-                          className="w-full"
-                          data-testid="button-play-audio"
-                        >
-                          {isPlaying ? (
-                            <>
-                              <Pause className="w-4 h-4 mr-2" />
-                              Pause Response
-                            </>
-                          ) : (
-                            <>
-                              <Play className="w-4 h-4 mr-2" />
-                              Listen to Response
-                            </>
-                          )}
-                        </Button>
+                        <div className="bg-primary/5 rounded-lg p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Volume2 className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">Dr. M's Response</p>
+                              <p className="text-xs text-muted-foreground">Personal voice message</p>
+                            </div>
+                          </div>
+                          <audio
+                            ref={audioRef}
+                            src={questionDetails.audioUrl}
+                            controls
+                            className="w-full h-10"
+                            onEnded={handleAudioEnded}
+                            data-testid="audio-response"
+                          />
+                        </div>
                       </div>
                     ) : (
                       <Button
@@ -273,31 +270,15 @@ export default function DrMPage() {
                     {question.status === "ANSWERED" && (
                       <>
                         {selectedQuestionId === question.id && questionDetails?.audioUrl ? (
-                          <div className="space-y-2">
+                          <div className="bg-primary/5 rounded-lg p-3">
                             <audio
                               ref={audioRef}
                               src={questionDetails.audioUrl}
+                              controls
+                              className="w-full h-10"
                               onEnded={handleAudioEnded}
+                              data-testid={`audio-response-${question.id}`}
                             />
-                            <Button
-                              onClick={handlePlayPause}
-                              size="sm"
-                              variant="outline"
-                              className="w-full"
-                              data-testid={`button-play-${question.id}`}
-                            >
-                              {isPlaying ? (
-                                <>
-                                  <Pause className="w-4 h-4 mr-2" />
-                                  Pause
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="w-4 h-4 mr-2" />
-                                  Listen
-                                </>
-                              )}
-                            </Button>
                           </div>
                         ) : (
                           <Button
