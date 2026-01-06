@@ -151,6 +151,7 @@ export default function AdminDrmQuestionsPage() {
           "Authorization": `Bearer ${adminToken}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ mimeType: audioMimeType }),
       });
       
       if (!uploadUrlResponse.ok) {

@@ -5612,7 +5612,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // If question has audio, generate signed URL
       let audioUrl = null;
       if (question.audioR2Key) {
+        console.log("DrM audio R2 key:", question.audioR2Key);
         const result = await getSignedGetUrl(question.audioR2Key);
+        console.log("DrM signed URL result:", result.success, result.url ? "URL generated" : "No URL", result.error || "");
         if (result.success && result.url) {
           audioUrl = result.url;
         }
@@ -5723,18 +5725,32 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.post("/admin/api/drm/questions/:id/answer", requireAdmin, async (req, res) => {
     try {
       const questionId = parseInt(req.params.id);
+      const { mimeType } = req.body;
       
       const question = await storage.getDrmQuestionById(questionId);
       if (!question) {
         return res.status(404).json({ error: "Question not found" });
       }
       
-      // Generate upload URL for audio
-      const audioKey = `drm-audio/questions/${questionId}/answer.webm`;
-      const uploadUrl = await getSignedPutUrl(audioKey, "audio/webm");
+      // Determine file extension based on mime type
+      let extension = "webm";
+      const contentType = mimeType || "audio/webm";
+      if (contentType.includes("mp4") || contentType.includes("m4a")) {
+        extension = "mp4";
+      } else if (contentType.includes("ogg")) {
+        extension = "ogg";
+      }
+      
+      // Generate upload URL for audio with correct content type
+      const audioKey = `drm-audio/questions/${questionId}/answer.${extension}`;
+      const result = await getSignedPutUrl(audioKey, contentType);
+      
+      if (!result.success) {
+        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
+      }
       
       res.json({
-        uploadUrl,
+        uploadUrl: result.uploadUrl,
         audioKey,
       });
     } catch (error) {
