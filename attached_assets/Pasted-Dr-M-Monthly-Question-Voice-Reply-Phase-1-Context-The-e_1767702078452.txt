@@ -1,0 +1,153 @@
+Dr. M Monthly Question & Voice Reply (Phase 1)
+Context
+The existing Dr. M AI / avatar page - DrMPage.tsx has been intentionally cleared and kept empty to avoid Replit churn. Do NOT delete routes or components — only add new functionality described below.
+Phase 1 is a human-answered, async voice reply system. No AI generation, no video, no uploads.
+
+Objective
+Build a feature where:
+* Users can ask 1 question per calendar month
+* Question length is max 240 characters
+* Dr. M answers manually by recording her voice inside the admin panel
+* Users are notified when the answer is ready
+* Both question + audio are stored for future AI training
+
+1️⃣ User Side — Ask a Question
+Requirements
+* One textarea input
+* Max 240 characters
+* Show live character counter
+* Backend-enforced: 1 question per user per calendar month
+* On submit:
+    * Save question
+    * Show confirmation: “Your question has been sent. Dr. M will respond soon.” 
+Validation
+* Reject submission if:
+    * Question exceeds 240 characters
+    * User already submitted a question in current month
+
+2️⃣ Admin Panel — Questions Inbox
+Admin can see:
+* List of all questions
+* For each question:
+    * Question text
+    * User name
+    * Clickable link to user profile
+    * Asked date
+    * Status: PENDING / ANSWERED
+Admin can:
+* Click a question
+* Record audio response inside admin panel only
+* Preview audio before submitting
+* Re-record if needed
+* Submit response
+🚫 No manual audio upload  Recording only via browser microphone
+
+3️⃣ Audio Recording (Admin Only)
+Behavior
+* Use MediaRecorder API
+* Flow:
+    1. Click “Record”
+    2. Start mic recording
+    3. Stop recording
+    4. Show preview audio player
+    5. Options:
+        * Re-record (discard)
+        * Submit answer
+* Audio uploads only after Submit
+* Until submit, audio remains only in browser memory
+
+4️⃣ Storage Rules (Critical)
+Database — Questions
+Table: drm_questions
+Fields:
+id
+user_id
+question_text (varchar 240)
+asked_at
+month_year
+status (PENDING / ANSWERED)
+audio_r2_key (nullable)
+answered_at (nullable)
+
+Audio Storage
+* Store only audio files in Cloudflare R2
+* Folder structure must be:
+
+drm-audio/
+ └── questions/
+     └── {question_id}/
+         └── answer.webm
+* Database stores:
+
+audio_r2_key = drm-audio/questions/{question_id}/answer.webm
+Database is the source of truth. R2 is storage only.
+
+5️⃣ User Side — Listen to Answer
+* User can see:
+    * Their submitted question
+    * Status (Pending / Answered)
+* If answered:
+    * Show audio player
+    * Stream audio from Cloudflare R2
+* User can access only their own data
+
+6️⃣ Notifications (Reuse Existing System, Extend Enum)
+✅ Update Notification Type Enum (NOW)
+Extend the existing enum:
+
+notificationTypeEnum = z.enum([
+  "system",
+  "event_reminder",
+  "drm_answer"
+]);
+This enables:
+* Clean filtering
+* Analytics
+* Future notification preferences
+
+Trigger Condition
+When admin submits audio answer:
+
+status → ANSWERED
+audio_r2_key set
+answered_at set
+
+Notification to Send
+Type:
+
+drm_answer
+Push Title:
+Dr. M has answered your question 🎧
+Push Body:
+Your personal voice response is ready to listen.
+Deep link:
+
+/dr-m/questions/{question_id}
+Also create a matching in-app inbox notification.
+No new notification tables or cron jobs are required.
+
+7️⃣ Backend Logic Summary
+* Enforce monthly question limit (backend)
+* Validate character length (backend)
+* Upload admin-recorded audio to R2
+* Update question status
+* Trigger notification with: type = drm_answer
+* Reuse existing delivery, logs, device tokens, inbox
+* Allow only one active audio per question (overwrite for now)
+
+8️⃣ Future AI Training (Do NOT Build Now)
+Design must ensure:
+* Each audio response is permanently linked to a unique question_id
+* Later we can run a script to export:
+    * question_text from DB
+    * Audio file from R2 using audio_r2_key
+No manual pairing will ever be required.
+
+9️⃣ Explicitly Out of Scope (Phase 1)
+❌ AI answering ❌ Video generation ❌ Audio uploads ❌ Notification infra changes ❌ Automation ❌ Real-time responses
+
+Final Note
+This is a human-first, async, premium experience designed to:
+* Respect Dr. M’s time
+* Keep UX calm and intentional
+* Collect clean, high-quality training data for future AI

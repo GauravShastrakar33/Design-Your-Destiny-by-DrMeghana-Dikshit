@@ -326,23 +326,24 @@ export default function HomePage() {
           {/* Masterclasses Card */}
           <button
             onClick={() => setLocation("/masterclasses")}
-            className="w-full rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition"
-            style={{ background: "#703DFA" }}
+            className="w-full bg-white border border-[#232A34]/10 rounded-2xl p-4 
+                       shadow-sm hover:shadow-md active:scale-[0.98] transition"
             data-testid="card-masterclasses"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center">
                   <GraduationCap
-                    className="w-5 h-5 text-white"
-                    strokeWidth={2}
+                    className="w-5 h-5 text-[#703DFA]"
+                    strokeWidth={1.8}
                   />
                 </div>
-                <h3 className="text-base font-bold text-white">
+                <h3 className="text-base font-semibold text-[#232A34]">
                   Masterclasses
                 </h3>
               </div>
-              <ChevronRight className="w-5 h-5 text-white/80" />
+
+              <ChevronRight className="w-5 h-5 text-[#232A34]/60" />
             </div>
           </button>
 
