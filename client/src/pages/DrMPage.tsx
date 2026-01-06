@@ -48,10 +48,7 @@ export default function DrMPage() {
 
   const submitMutation = useMutation({
     mutationFn: async (text: string) => {
-      return apiRequest("/api/v1/drm/questions", {
-        method: "POST",
-        body: JSON.stringify({ questionText: text }),
-      });
+      return apiRequest("POST", "/api/v1/drm/questions", { questionText: text });
     },
     onSuccess: () => {
       toast({
