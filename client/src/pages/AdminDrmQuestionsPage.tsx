@@ -202,13 +202,18 @@ export default function AdminDrmQuestionsPage() {
     setAudioMimeType("audio/webm");
     setIsRecording(false);
     setIsPlaying(false);
-    setSelectedQuestion(null);
   };
 
   const openAnswerDialog = (question: DrmQuestionWithUser) => {
-    setSelectedQuestion(question);
     resetRecordingState();
+    setSelectedQuestion(question);
     setAnswerDialogOpen(true);
+  };
+
+  const closeAnswerDialog = () => {
+    setAnswerDialogOpen(false);
+    resetRecordingState();
+    setSelectedQuestion(null);
   };
 
   const formatMonthYear = (monthYear: string) => {
@@ -323,8 +328,7 @@ export default function AdminDrmQuestionsPage() {
       )}
 
       <Dialog open={answerDialogOpen} onOpenChange={(open) => {
-        if (!open) resetRecordingState();
-        setAnswerDialogOpen(open);
+        if (!open) closeAnswerDialog();
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -391,7 +395,7 @@ export default function AdminDrmQuestionsPage() {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAnswerDialogOpen(false)}>
+            <Button variant="outline" onClick={closeAnswerDialog}>
               Cancel
             </Button>
             <Button
