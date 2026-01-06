@@ -38,9 +38,16 @@ export default function AdminDrmQuestionsPage() {
   const [audioMimeType, setAudioMimeType] = useState<string>("audio/webm");
   const [isUploading, setIsUploading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState<number>(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
@@ -202,6 +209,7 @@ export default function AdminDrmQuestionsPage() {
     setAudioMimeType("audio/webm");
     setIsRecording(false);
     setIsPlaying(false);
+    setAudioDuration(0);
   };
 
   const openAnswerDialog = (question: DrmQuestionWithUser) => {
@@ -357,30 +365,47 @@ export default function AdminDrmQuestionsPage() {
                     <Mic className={`w-12 h-12 ${isRecording ? "animate-pulse" : ""}`} />
                   </Button>
                 ) : (
-                  <div className="w-full space-y-3">
-                    <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} />
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handlePlayPause}
-                        variant="outline"
-                        className="flex-1"
-                        data-testid="button-preview"
-                      >
-                        {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-                        {isPlaying ? "Pause" : "Preview"}
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setAudioBlob(null);
-                          setAudioUrl(null);
+                  <div className="w-full space-y-4">
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Play className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">Recording ready</p>
+                          <p className="text-xs text-muted-foreground">
+                            Duration: {audioDuration > 0 ? formatDuration(audioDuration) : "Loading..."}
+                          </p>
+                        </div>
+                      </div>
+                      <audio 
+                        ref={audioRef} 
+                        src={audioUrl} 
+                        controls
+                        className="w-full h-10"
+                        onLoadedMetadata={(e) => {
+                          const audio = e.target as HTMLAudioElement;
+                          if (audio.duration && isFinite(audio.duration)) {
+                            setAudioDuration(audio.duration);
+                          }
                         }}
-                        variant="outline"
-                        data-testid="button-rerecord"
-                      >
-                        <Mic className="w-4 h-4 mr-2" />
-                        Re-record
-                      </Button>
+                        onEnded={() => setIsPlaying(false)}
+                        data-testid="audio-preview"
+                      />
                     </div>
+                    <Button
+                      onClick={() => {
+                        setAudioBlob(null);
+                        setAudioUrl(null);
+                        setAudioDuration(0);
+                      }}
+                      variant="outline"
+                      className="w-full"
+                      data-testid="button-rerecord"
+                    >
+                      <Mic className="w-4 h-4 mr-2" />
+                      Re-record
+                    </Button>
                   </div>
                 )}
                 <p className="text-sm text-muted-foreground text-center">
