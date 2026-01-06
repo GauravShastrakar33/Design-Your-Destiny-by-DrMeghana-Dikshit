@@ -35,6 +35,7 @@ export default function AdminDrmQuestionsPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioMimeType, setAudioMimeType] = useState<string>("audio/webm");
   const [isUploading, setIsUploading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -59,10 +60,31 @@ export default function AdminDrmQuestionsPage() {
   const pendingQuestions = questions.filter(q => q.status === "PENDING");
   const answeredQuestions = questions.filter(q => q.status === "ANSWERED");
 
+  const getSupportedMimeType = () => {
+    const types = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4",
+      "audio/ogg;codecs=opus",
+      "audio/ogg",
+      ""
+    ];
+    for (const type of types) {
+      if (type === "" || MediaRecorder.isTypeSupported(type)) {
+        return type || undefined;
+      }
+    }
+    return undefined;
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      
+      const mimeType = getSupportedMimeType();
+      const options: MediaRecorderOptions = mimeType ? { mimeType } : {};
+      
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -73,18 +95,21 @@ export default function AdminDrmQuestionsPage() {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const recordedMimeType = mediaRecorder.mimeType || "audio/webm";
+        const blob = new Blob(audioChunksRef.current, { type: recordedMimeType });
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
+        setAudioMimeType(recordedMimeType);
         stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Recording error:", error);
       toast({
-        title: "Microphone access denied",
-        description: "Please allow microphone access to record your answer.",
+        title: "Recording failed",
+        description: error.message || "Please allow microphone access to record your answer.",
         variant: "destructive",
       });
     }
@@ -131,7 +156,7 @@ export default function AdminDrmQuestionsPage() {
         method: "PUT",
         body: audioBlob,
         headers: {
-          "Content-Type": "audio/webm",
+          "Content-Type": audioMimeType,
         },
       });
 
@@ -174,6 +199,7 @@ export default function AdminDrmQuestionsPage() {
   const resetRecordingState = () => {
     setAudioBlob(null);
     setAudioUrl(null);
+    setAudioMimeType("audio/webm");
     setIsRecording(false);
     setIsPlaying(false);
     setSelectedQuestion(null);
