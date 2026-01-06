@@ -11,7 +11,8 @@ import {
   BookOpen,
   Quote,
   Calendar,
-  Bell
+  Bell,
+  MessageCircle
 } from "lucide-react";
 import { useAdminSidebar } from "@/contexts/AdminSidebarContext";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -39,6 +40,7 @@ const menuItemsConfig: MenuItemConfig[] = [
   { id: "project", path: "/admin/project-heart", label: "Project of Heart", icon: Heart },
   { id: "quotes", path: "/admin/quotes", label: "Daily Quotes", icon: Quote },
   { id: "notifications", path: "/admin/notifications", label: "Push Notifications", icon: Bell },
+  { id: "drm-questions", path: "/admin/drm-questions", label: "Dr.M Questions", icon: MessageCircle },
 ];
 
 export default function AdminSidebar() {
