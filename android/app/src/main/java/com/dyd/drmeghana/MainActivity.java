@@ -1,4 +1,4 @@
-package com.drm.app;
+package com.dyd.drmeghana;
 
 import com.getcapacitor.BridgeActivity;
 

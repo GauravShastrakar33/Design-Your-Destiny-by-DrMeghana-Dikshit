@@ -1,12 +1,15 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.drm.app',
-  appName: 'Dr.M App',
+  appId: 'com.dyd.drmeghana',
+  appName: 'Design Your Destiny by Dr. Meghana Dikshit',
   webDir: 'dist/public',
   server: {
-    androidScheme: 'https'
-  }
+    url: 'https://app.drmeghana.com',
+    androidScheme: 'https',
+  },
 };
 
 export default config;
+
+

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "645018757980",
+    "project_id": "dyd-by-dr-m",
+    "storage_bucket": "dyd-by-dr-m.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645018757980:android:a7e550cbc69611a70fef99",
+        "android_client_info": {
+          "package_name": "com.dyd.drmeghana"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpBJhozlwVnNibUt69eyq2wwPCvVBk17U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
