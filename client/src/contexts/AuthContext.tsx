@@ -1,3 +1,5 @@
+import { Capacitor } from "@capacitor/core";
+import { initializeNativePush } from "@/lib/nativePush";
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { refreshPushToken, setupForegroundNotifications } from "@/lib/notifications";
@@ -24,37 +26,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("@app:user_token");
-    const storedUser = localStorage.getItem("@app:user");
-    
-    if (token && storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        
-        // Refresh push token on app load to ensure DB has latest FCM token
-        // This handles cases where the browser generated a new token
+  const token = localStorage.getItem("@app:user_token");
+  const storedUser = localStorage.getItem("@app:user");
+
+  if (token && storedUser) {
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+
+      if (Capacitor.isNativePlatform()) {
+        // 📱 Android / iOS
+        initializeNativePush().then(() => {
+          console.log("📱 Native push initialized");
+        });
+      } else {
+        // 🌐 Web / PWA
         refreshPushToken().then((refreshed) => {
           if (refreshed) {
-            console.log("✅ Push token refreshed on app load");
+            console.log("🌐 Web push token refreshed");
           }
         });
-        
-        // Setup foreground notification handler
+
         setupForegroundNotifications();
-      } catch {
-        localStorage.removeItem("@app:user_token");
-        localStorage.removeItem("@app:user");
       }
+    } catch (error) {
+      localStorage.removeItem("@app:user_token");
+      localStorage.removeItem("@app:user");
     }
-    setIsLoading(false);
-  }, []);
+  }
+
+  setIsLoading(false);
+}, []);
+
 
   const login = (token: string, userData: User) => {
-    localStorage.setItem("@app:user_token", token);
-    localStorage.setItem("@app:user", JSON.stringify(userData));
-    setUser(userData);
-  };
+  localStorage.setItem("@app:user_token", token);
+  localStorage.setItem("@app:user", JSON.stringify(userData));
+  setUser(userData);
+
+  // 🔔 Register push AFTER login
+  if (Capacitor.isNativePlatform()) {
+    initializeNativePush().then(() => {
+      console.log("📱 Native push initialized after login");
+    });
+  }
+};
+
 
   const logout = () => {
     localStorage.removeItem("@app:user_token");

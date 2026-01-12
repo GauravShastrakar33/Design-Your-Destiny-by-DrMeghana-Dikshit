@@ -1,20 +1,19 @@
 var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-
-// server/index.ts
-import express2 from "express";
-
-// server/routes.ts
-import { createServer } from "http";
 
 // shared/schema.ts
 var schema_exports = {};
 __export(schema_exports, {
   activityLogs: () => activityLogs,
   articles: () => articles,
+  badgeKeyEnum: () => badgeKeyEnum,
   categories: () => categories,
   cmsCourses: () => cmsCourses,
   cmsLessonFiles: () => cmsLessonFiles,
@@ -22,7 +21,13 @@ __export(schema_exports, {
   cmsModuleFolders: () => cmsModuleFolders,
   cmsModules: () => cmsModules,
   communitySessions: () => communitySessions,
+  dailyQuotes: () => dailyQuotes,
+  deviceTokens: () => deviceTokens,
   drmMessageSchema: () => drmMessageSchema,
+  drmQuestionStatusEnum: () => drmQuestionStatusEnum,
+  drmQuestions: () => drmQuestions,
+  eventStatusEnum: () => eventStatusEnum,
+  events: () => events,
   featureCourseMap: () => featureCourseMap,
   featureTypeEnum: () => featureTypeEnum,
   frontendFeatures: () => frontendFeatures,
@@ -35,906 +40,1884 @@ __export(schema_exports, {
   insertCmsModuleFolderSchema: () => insertCmsModuleFolderSchema,
   insertCmsModuleSchema: () => insertCmsModuleSchema,
   insertCommunitySessionSchema: () => insertCommunitySessionSchema,
+  insertDailyQuoteSchema: () => insertDailyQuoteSchema,
+  insertDeviceTokenSchema: () => insertDeviceTokenSchema,
+  insertDrmQuestionSchema: () => insertDrmQuestionSchema,
+  insertEventSchema: () => insertEventSchema,
   insertFeatureCourseMapSchema: () => insertFeatureCourseMapSchema,
   insertFrontendFeatureSchema: () => insertFrontendFeatureSchema,
   insertMoneyEntrySchema: () => insertMoneyEntrySchema,
+  insertNotificationLogSchema: () => insertNotificationLogSchema,
+  insertNotificationSchema: () => insertNotificationSchema,
   insertPlaylistItemSchema: () => insertPlaylistItemSchema,
   insertPlaylistSchema: () => insertPlaylistSchema,
+  insertPohActionSchema: () => insertPohActionSchema,
+  insertPohDailyRatingSchema: () => insertPohDailyRatingSchema,
+  insertPohMilestoneSchema: () => insertPohMilestoneSchema,
   insertProgramSchema: () => insertProgramSchema,
+  insertProjectOfHeartSchema: () => insertProjectOfHeartSchema,
+  insertRewiringBeliefSchema: () => insertRewiringBeliefSchema,
   insertSessionBannerSchema: () => insertSessionBannerSchema,
+  insertUserBadgeSchema: () => insertUserBadgeSchema,
   insertUserProgramSchema: () => insertUserProgramSchema,
   insertUserSchema: () => insertUserSchema,
   insertUserStreakSchema: () => insertUserStreakSchema,
+  insertUserWellnessProfileSchema: () => insertUserWellnessProfileSchema,
   lessonFileTypeEnum: () => lessonFileTypeEnum,
   moneyEntries: () => moneyEntries,
+  notificationLogStatusEnum: () => notificationLogStatusEnum,
+  notificationLogs: () => notificationLogs,
+  notificationTypeEnum: () => notificationTypeEnum,
+  notifications: () => notifications,
   playlistItems: () => playlistItems,
   playlists: () => playlists,
+  pohActions: () => pohActions,
+  pohCategoryEnum: () => pohCategoryEnum,
+  pohDailyRatings: () => pohDailyRatings,
+  pohMilestones: () => pohMilestones,
+  pohStatusEnum: () => pohStatusEnum,
   programs: () => programs,
+  projectOfHearts: () => projectOfHearts,
+  rewiringBeliefs: () => rewiringBeliefs,
   sessionBanners: () => sessionBanners,
+  userBadges: () => userBadges,
   userPrograms: () => userPrograms,
   userStreaks: () => userStreaks,
+  userWellnessProfiles: () => userWellnessProfiles,
   users: () => users
 });
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-var users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 150 }).notNull(),
-  email: varchar("email", { length: 150 }).notNull().unique(),
-  phone: varchar("phone", { length: 20 }),
-  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
-  role: varchar("role", { length: 20 }).notNull().default("USER"),
-  status: varchar("status", { length: 20 }).notNull().default("active"),
-  lastLogin: timestamp("last_login", { mode: "date" }),
-  lastActivity: timestamp("last_activity", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+var users, insertUserSchema, communitySessions, insertCommunitySessionSchema, drmMessageSchema, categories, insertCategorySchema, articles, insertArticleSchema, programs, insertProgramSchema, userPrograms, insertUserProgramSchema, cmsCourses, insertCmsCourseSchema, cmsModules, insertCmsModuleSchema, cmsModuleFolders, insertCmsModuleFolderSchema, cmsLessons, insertCmsLessonSchema, lessonFileTypeEnum, cmsLessonFiles, insertCmsLessonFileSchema, frontendFeatures, insertFrontendFeatureSchema, featureCourseMap, insertFeatureCourseMapSchema, moneyEntries, insertMoneyEntrySchema, playlists, insertPlaylistSchema, playlistItems, insertPlaylistItemSchema, sessionBanners, insertSessionBannerSchema, userStreaks, insertUserStreakSchema, activityLogs, insertActivityLogSchema, featureTypeEnum, dailyQuotes, insertDailyQuoteSchema, rewiringBeliefs, insertRewiringBeliefSchema, userWellnessProfiles, insertUserWellnessProfileSchema, eventStatusEnum, events, insertEventSchema, notificationTypeEnum, notificationLogStatusEnum, notifications, insertNotificationSchema, notificationLogs, insertNotificationLogSchema, pohCategoryEnum, pohStatusEnum, projectOfHearts, insertProjectOfHeartSchema, pohDailyRatings, insertPohDailyRatingSchema, pohActions, insertPohActionSchema, pohMilestones, insertPohMilestoneSchema, deviceTokens, insertDeviceTokenSchema, userBadges, badgeKeyEnum, insertUserBadgeSchema, drmQuestionStatusEnum, drmQuestions, insertDrmQuestionSchema;
+var init_schema = __esm({
+  "shared/schema.ts"() {
+    "use strict";
+    users = pgTable("users", {
+      id: serial("id").primaryKey(),
+      name: varchar("name", { length: 150 }).notNull(),
+      email: varchar("email", { length: 150 }).notNull().unique(),
+      phone: varchar("phone", { length: 20 }),
+      passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+      role: varchar("role", { length: 20 }).notNull().default("USER"),
+      status: varchar("status", { length: 20 }).notNull().default("active"),
+      lastLogin: timestamp("last_login", { mode: "date" }),
+      lastActivity: timestamp("last_activity", { mode: "date" }),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertUserSchema = createInsertSchema(users).omit({
+      id: true,
+      lastLogin: true,
+      lastActivity: true,
+      createdAt: true
+    });
+    communitySessions = pgTable("community_sessions", {
+      id: serial("id").primaryKey(),
+      title: text("title").notNull(),
+      time: text("time").notNull(),
+      displayTime: text("display_time").notNull(),
+      meetingLink: text("meeting_link").notNull(),
+      participants: integer("participants").notNull().default(0),
+      isActive: boolean("is_active").notNull().default(true)
+    });
+    insertCommunitySessionSchema = createInsertSchema(communitySessions).omit({
+      id: true
+    });
+    drmMessageSchema = z.object({
+      id: z.string(),
+      question: z.string(),
+      userName: z.string().optional(),
+      videoUrl: z.string(),
+      subtitlesUrl: z.string().optional(),
+      textResponse: z.string(),
+      timestamp: z.number()
+    });
+    categories = pgTable("categories", {
+      id: serial("id").primaryKey(),
+      name: text("name").notNull().unique()
+    });
+    insertCategorySchema = createInsertSchema(categories).omit({
+      id: true
+    });
+    articles = pgTable("articles", {
+      id: serial("id").primaryKey(),
+      title: text("title").notNull(),
+      categoryId: integer("category_id").notNull(),
+      imageUrl: text("image_url").notNull(),
+      content: text("content").notNull(),
+      isPublished: boolean("is_published").notNull().default(false),
+      createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`)
+    });
+    insertArticleSchema = createInsertSchema(articles).omit({
+      id: true,
+      createdAt: true
+    });
+    programs = pgTable("programs", {
+      id: serial("id").primaryKey(),
+      code: varchar("code", { length: 10 }).notNull().unique(),
+      name: varchar("name", { length: 150 }).notNull(),
+      level: integer("level").notNull(),
+      isActive: boolean("is_active").notNull().default(true),
+      deletedAt: timestamp("deleted_at", { mode: "date" }),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertProgramSchema = createInsertSchema(programs).omit({
+      id: true,
+      deletedAt: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    userPrograms = pgTable("user_programs", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      programId: integer("program_id").notNull().references(() => programs.id, { onDelete: "cascade" })
+    });
+    insertUserProgramSchema = createInsertSchema(userPrograms).omit({
+      id: true
+    });
+    cmsCourses = pgTable("cms_courses", {
+      id: serial("id").primaryKey(),
+      title: text("title").notNull(),
+      programId: integer("program_id").references(() => programs.id, { onDelete: "set null" }),
+      description: text("description"),
+      thumbnailKey: text("thumbnail_key"),
+      isPublished: boolean("is_published").notNull().default(false),
+      createdByAdminId: integer("created_by_admin_id").references(() => users.id),
+      position: integer("position").notNull().default(0),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertCmsCourseSchema = createInsertSchema(cmsCourses).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    cmsModules = pgTable("cms_modules", {
+      id: serial("id").primaryKey(),
+      courseId: integer("course_id").notNull().references(() => cmsCourses.id, { onDelete: "cascade" }),
+      title: text("title").notNull(),
+      position: integer("position").notNull().default(0),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertCmsModuleSchema = createInsertSchema(cmsModules).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    cmsModuleFolders = pgTable("cms_module_folders", {
+      id: serial("id").primaryKey(),
+      moduleId: integer("module_id").notNull().references(() => cmsModules.id, { onDelete: "cascade" }),
+      title: text("title").notNull(),
+      position: integer("position").notNull().default(0),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertCmsModuleFolderSchema = createInsertSchema(cmsModuleFolders).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    cmsLessons = pgTable("cms_lessons", {
+      id: serial("id").primaryKey(),
+      moduleId: integer("module_id").notNull().references(() => cmsModules.id, { onDelete: "cascade" }),
+      folderId: integer("folder_id").references(() => cmsModuleFolders.id, { onDelete: "set null" }),
+      title: text("title").notNull(),
+      description: text("description"),
+      position: integer("position").notNull().default(0),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertCmsLessonSchema = createInsertSchema(cmsLessons).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    lessonFileTypeEnum = ["video", "audio", "script"];
+    cmsLessonFiles = pgTable("cms_lesson_files", {
+      id: serial("id").primaryKey(),
+      lessonId: integer("lesson_id").notNull().references(() => cmsLessons.id, { onDelete: "cascade" }),
+      fileType: text("file_type").notNull(),
+      // 'video', 'audio', 'script'
+      r2Key: text("r2_key").notNull(),
+      publicUrl: text("public_url"),
+      sizeMb: integer("size_mb"),
+      durationSec: integer("duration_sec"),
+      extractedText: text("extracted_text"),
+      // For PDF/script files - stores extracted text content
+      scriptHtml: text("script_html"),
+      // For PDF/script files - stores formatted HTML content
+      position: integer("position").notNull().default(0),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertCmsLessonFileSchema = createInsertSchema(cmsLessonFiles).omit({
+      id: true,
+      createdAt: true
+    });
+    frontendFeatures = pgTable("frontend_features", {
+      id: serial("id").primaryKey(),
+      code: text("code").notNull().unique(),
+      displayName: text("display_name").notNull(),
+      displayMode: text("display_mode").notNull(),
+      // 'modules' | 'lessons' | 'courses'
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertFrontendFeatureSchema = createInsertSchema(frontendFeatures).omit({
+      id: true,
+      createdAt: true
+    });
+    featureCourseMap = pgTable("feature_course_map", {
+      id: serial("id").primaryKey(),
+      featureId: integer("feature_id").notNull().references(() => frontendFeatures.id, { onDelete: "cascade" }),
+      courseId: integer("course_id").notNull().references(() => cmsCourses.id, { onDelete: "cascade" }),
+      position: integer("position").notNull().default(0),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertFeatureCourseMapSchema = createInsertSchema(featureCourseMap).omit({
+      id: true,
+      createdAt: true
+    });
+    moneyEntries = pgTable("money_entries", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      entryDate: date("entry_date", { mode: "string" }).notNull(),
+      amount: numeric("amount", { precision: 12, scale: 2 }).notNull().default("0"),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    }, (table) => ({
+      uniqueUserDate: unique("unique_user_date").on(table.userId, table.entryDate)
+    }));
+    insertMoneyEntrySchema = createInsertSchema(moneyEntries).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    playlists = pgTable("playlists", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      title: text("title").notNull(),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertPlaylistSchema = createInsertSchema(playlists).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    playlistItems = pgTable("playlist_items", {
+      id: serial("id").primaryKey(),
+      playlistId: integer("playlist_id").notNull().references(() => playlists.id, { onDelete: "cascade" }),
+      lessonId: integer("lesson_id").notNull().references(() => cmsLessons.id, { onDelete: "cascade" }),
+      position: integer("position").notNull().default(0),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    }, (table) => ({
+      uniquePlaylistLesson: unique("unique_playlist_lesson").on(table.playlistId, table.lessonId)
+    }));
+    insertPlaylistItemSchema = createInsertSchema(playlistItems).omit({
+      id: true,
+      createdAt: true
+    });
+    sessionBanners = pgTable("session_banners", {
+      id: serial("id").primaryKey(),
+      type: varchar("type", { length: 20 }).notNull(),
+      // "session" | "advertisement"
+      thumbnailKey: text("thumbnail_key"),
+      videoKey: text("video_key"),
+      posterKey: text("poster_key"),
+      ctaText: text("cta_text"),
+      ctaLink: text("cta_link"),
+      startAt: timestamp("start_at", { mode: "date" }).notNull(),
+      endAt: timestamp("end_at", { mode: "date" }).notNull(),
+      liveEnabled: boolean("live_enabled").notNull().default(false),
+      liveStartAt: timestamp("live_start_at", { mode: "date" }),
+      liveEndAt: timestamp("live_end_at", { mode: "date" }),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertSessionBannerSchema = createInsertSchema(sessionBanners).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    userStreaks = pgTable("user_streaks", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      activityDate: varchar("activity_date", { length: 10 }).notNull(),
+      // YYYY-MM-DD format
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    }, (table) => ({
+      uniqueUserActivityDate: unique("unique_user_activity_date").on(table.userId, table.activityDate)
+    }));
+    insertUserStreakSchema = createInsertSchema(userStreaks).omit({
+      id: true,
+      createdAt: true
+    });
+    activityLogs = pgTable("activity_logs", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      lessonId: integer("lesson_id").notNull(),
+      lessonName: varchar("lesson_name", { length: 255 }).notNull(),
+      featureType: varchar("feature_type", { length: 50 }).notNull(),
+      // 'PROCESS' | 'BREATH' | 'CHECKLIST'
+      activityDate: varchar("activity_date", { length: 10 }).notNull(),
+      // YYYY-MM-DD format
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    }, (table) => ({
+      uniqueUserLessonFeatureDate: unique("unique_user_lesson_feature_date").on(
+        table.userId,
+        table.lessonId,
+        table.featureType,
+        table.activityDate
+      )
+    }));
+    insertActivityLogSchema = createInsertSchema(activityLogs).omit({
+      id: true,
+      createdAt: true
+    });
+    featureTypeEnum = ["PROCESS", "BREATH", "CHECKLIST"];
+    dailyQuotes = pgTable("daily_quotes", {
+      id: serial("id").primaryKey(),
+      quoteText: text("quote_text").notNull(),
+      author: text("author"),
+      isActive: boolean("is_active").notNull().default(true),
+      displayOrder: integer("display_order").notNull(),
+      lastShownDate: varchar("last_shown_date", { length: 10 }),
+      // YYYY-MM-DD format
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertDailyQuoteSchema = createInsertSchema(dailyQuotes).omit({
+      id: true,
+      lastShownDate: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    rewiringBeliefs = pgTable("rewiring_beliefs", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      limitingBelief: text("limiting_belief").notNull(),
+      upliftingBelief: text("uplifting_belief").notNull(),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertRewiringBeliefSchema = createInsertSchema(rewiringBeliefs).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    userWellnessProfiles = pgTable("user_wellness_profiles", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+      karmicAffirmation: text("karmic_affirmation"),
+      prescription: jsonb("prescription"),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertUserWellnessProfileSchema = createInsertSchema(userWellnessProfiles).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    eventStatusEnum = z.enum(["DRAFT", "UPCOMING", "COMPLETED", "CANCELLED"]);
+    events = pgTable("events", {
+      id: serial("id").primaryKey(),
+      title: text("title").notNull(),
+      description: text("description"),
+      coachName: varchar("coach_name", { length: 150 }),
+      thumbnailUrl: text("thumbnail_url"),
+      startDatetime: timestamp("start_datetime", { mode: "date" }).notNull(),
+      endDatetime: timestamp("end_datetime", { mode: "date" }).notNull(),
+      joinUrl: text("join_url"),
+      recordingUrl: text("recording_url"),
+      recordingPasscode: varchar("recording_passcode", { length: 50 }),
+      showRecording: boolean("show_recording").notNull().default(false),
+      recordingSkipped: boolean("recording_skipped").notNull().default(false),
+      recordingExpiryDate: date("recording_expiry_date", { mode: "string" }),
+      requiredProgramCode: varchar("required_program_code", { length: 10 }).notNull().default("USB"),
+      requiredProgramLevel: integer("required_program_level").notNull().default(1),
+      status: varchar("status", { length: 20 }).notNull().default("DRAFT"),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertEventSchema = createInsertSchema(events).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    }).extend({
+      startDatetime: z.coerce.date(),
+      endDatetime: z.coerce.date(),
+      // recordingExpiryDate is mode: "string" in DB, so keep as string (YYYY-MM-DD format)
+      recordingExpiryDate: z.string().nullable().optional()
+    });
+    notificationTypeEnum = z.enum(["system", "event_reminder", "admin_test", "drm_answer"]);
+    notificationLogStatusEnum = z.enum(["sent", "failed"]);
+    notifications = pgTable("notifications", {
+      id: serial("id").primaryKey(),
+      title: text("title").notNull(),
+      body: text("body").notNull(),
+      type: varchar("type", { length: 20 }).notNull().default("system"),
+      scheduledAt: timestamp("scheduled_at", { mode: "date" }).notNull(),
+      requiredProgramCode: varchar("required_program_code", { length: 10 }).notNull(),
+      requiredProgramLevel: integer("required_program_level").notNull(),
+      relatedEventId: integer("related_event_id").references(() => events.id, { onDelete: "cascade" }),
+      sent: boolean("sent").notNull().default(false),
+      sentAt: timestamp("sent_at", { mode: "date" }),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertNotificationSchema = createInsertSchema(notifications).omit({
+      id: true,
+      sent: true,
+      sentAt: true,
+      createdAt: true
+    }).extend({
+      scheduledAt: z.coerce.date()
+    });
+    notificationLogs = pgTable("notification_logs", {
+      id: serial("id").primaryKey(),
+      notificationId: integer("notification_id").notNull().references(() => notifications.id, { onDelete: "cascade" }),
+      userId: integer("user_id").notNull(),
+      deviceToken: text("device_token").notNull(),
+      status: varchar("status", { length: 20 }).notNull(),
+      error: text("error"),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertNotificationLogSchema = createInsertSchema(notificationLogs).omit({
+      id: true,
+      createdAt: true
+    });
+    pohCategoryEnum = z.enum(["career", "health", "relationships", "wealth"]);
+    pohStatusEnum = z.enum(["active", "next", "horizon", "completed", "closed_early"]);
+    projectOfHearts = pgTable("project_of_hearts", {
+      id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      title: text("title").notNull(),
+      why: text("why").notNull(),
+      category: varchar("category", { length: 32 }).notNull(),
+      status: varchar("status", { length: 20 }).notNull(),
+      startedAt: date("started_at", { mode: "string" }),
+      endedAt: date("ended_at", { mode: "string" }),
+      closingReflection: text("closing_reflection"),
+      visionImages: text("vision_images").array().default([]),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertProjectOfHeartSchema = createInsertSchema(projectOfHearts).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    }).extend({
+      title: z.string().min(1).max(120),
+      why: z.string().min(1).max(500),
+      category: pohCategoryEnum,
+      status: pohStatusEnum
+    });
+    pohDailyRatings = pgTable("poh_daily_ratings", {
+      id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      pohId: varchar("poh_id", { length: 36 }).notNull().references(() => projectOfHearts.id, { onDelete: "cascade" }),
+      localDate: date("local_date", { mode: "string" }).notNull(),
+      rating: integer("rating").notNull(),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    }, (table) => [
+      unique("one_rating_per_day").on(table.userId, table.localDate)
+    ]);
+    insertPohDailyRatingSchema = createInsertSchema(pohDailyRatings).omit({
+      id: true,
+      createdAt: true
+    }).extend({
+      rating: z.number().int().min(0).max(10)
+    });
+    pohActions = pgTable("poh_actions", {
+      id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+      pohId: varchar("poh_id", { length: 36 }).notNull().references(() => projectOfHearts.id, { onDelete: "cascade" }),
+      text: text("text").notNull(),
+      orderIndex: integer("order_index").notNull(),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertPohActionSchema = createInsertSchema(pohActions).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    pohMilestones = pgTable("poh_milestones", {
+      id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+      pohId: varchar("poh_id", { length: 36 }).notNull().references(() => projectOfHearts.id, { onDelete: "cascade" }),
+      text: text("text").notNull(),
+      achieved: boolean("achieved").notNull().default(false),
+      achievedAt: date("achieved_at", { mode: "string" }),
+      orderIndex: integer("order_index").notNull(),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertPohMilestoneSchema = createInsertSchema(pohMilestones).omit({
+      id: true,
+      achieved: true,
+      achievedAt: true,
+      createdAt: true
+    }).extend({
+      text: z.string().min(1).max(200)
+    });
+    deviceTokens = pgTable("device_tokens", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      token: text("token").notNull().unique(),
+      platform: varchar("platform", { length: 10 }).notNull().default("web"),
+      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+    });
+    insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
+      id: true,
+      createdAt: true
+    });
+    userBadges = pgTable("user_badges", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      badgeKey: varchar("badge_key", { length: 50 }).notNull(),
+      earnedAt: timestamp("earned_at", { mode: "date" }).notNull().defaultNow(),
+      metadata: jsonb("metadata"),
+      notified: boolean("notified").notNull().default(false)
+    }, (table) => ({
+      uniqueUserBadge: unique("unique_user_badge").on(table.userId, table.badgeKey)
+    }));
+    badgeKeyEnum = z.enum([
+      // Core streak badges
+      "day_zero",
+      "spark",
+      "pulse",
+      "anchor",
+      "aligned",
+      "disciplined",
+      "unstoppable",
+      "integrated",
+      "titan",
+      // Meta badges
+      "resilient",
+      "relentless",
+      // Admin badges
+      "ambassador",
+      "hall_of_fame"
+    ]);
+    insertUserBadgeSchema = createInsertSchema(userBadges).omit({
+      id: true,
+      earnedAt: true
+    }).extend({
+      badgeKey: badgeKeyEnum
+    });
+    drmQuestionStatusEnum = z.enum(["PENDING", "ANSWERED"]);
+    drmQuestions = pgTable("drm_questions", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      questionText: varchar("question_text", { length: 240 }).notNull(),
+      askedAt: timestamp("asked_at", { mode: "date" }).notNull().defaultNow(),
+      monthYear: varchar("month_year", { length: 7 }).notNull(),
+      status: varchar("status", { length: 20 }).notNull().default("PENDING"),
+      audioR2Key: text("audio_r2_key"),
+      answeredAt: timestamp("answered_at", { mode: "date" })
+    }, (table) => ({
+      uniqueUserMonth: unique("unique_user_month_question").on(table.userId, table.monthYear)
+    }));
+    insertDrmQuestionSchema = createInsertSchema(drmQuestions).omit({
+      id: true,
+      askedAt: true,
+      status: true,
+      audioR2Key: true,
+      answeredAt: true
+    }).extend({
+      questionText: z.string().min(1).max(240)
+    });
+  }
 });
-var insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  lastLogin: true,
-  lastActivity: true,
-  createdAt: true
-});
-var communitySessions = pgTable("community_sessions", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  time: text("time").notNull(),
-  displayTime: text("display_time").notNull(),
-  meetingLink: text("meeting_link").notNull(),
-  participants: integer("participants").notNull().default(0),
-  isActive: boolean("is_active").notNull().default(true)
-});
-var insertCommunitySessionSchema = createInsertSchema(communitySessions).omit({
-  id: true
-});
-var drmMessageSchema = z.object({
-  id: z.string(),
-  question: z.string(),
-  userName: z.string().optional(),
-  videoUrl: z.string(),
-  subtitlesUrl: z.string().optional(),
-  textResponse: z.string(),
-  timestamp: z.number()
-});
-var categories = pgTable("categories", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique()
-});
-var insertCategorySchema = createInsertSchema(categories).omit({
-  id: true
-});
-var articles = pgTable("articles", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  categoryId: integer("category_id").notNull(),
-  imageUrl: text("image_url").notNull(),
-  content: text("content").notNull(),
-  isPublished: boolean("is_published").notNull().default(false),
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`)
-});
-var insertArticleSchema = createInsertSchema(articles).omit({
-  id: true,
-  createdAt: true
-});
-var programs = pgTable("programs", {
-  id: serial("id").primaryKey(),
-  code: varchar("code", { length: 10 }).notNull().unique(),
-  name: varchar("name", { length: 150 }).notNull()
-});
-var insertProgramSchema = createInsertSchema(programs).omit({
-  id: true
-});
-var userPrograms = pgTable("user_programs", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  programId: integer("program_id").notNull().references(() => programs.id, { onDelete: "cascade" })
-});
-var insertUserProgramSchema = createInsertSchema(userPrograms).omit({
-  id: true
-});
-var cmsCourses = pgTable("cms_courses", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  programId: integer("program_id").references(() => programs.id, { onDelete: "set null" }),
-  description: text("description"),
-  thumbnailKey: text("thumbnail_key"),
-  isPublished: boolean("is_published").notNull().default(false),
-  createdByAdminId: integer("created_by_admin_id").references(() => users.id),
-  position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
-});
-var insertCmsCourseSchema = createInsertSchema(cmsCourses).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var cmsModules = pgTable("cms_modules", {
-  id: serial("id").primaryKey(),
-  courseId: integer("course_id").notNull().references(() => cmsCourses.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
-});
-var insertCmsModuleSchema = createInsertSchema(cmsModules).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var cmsModuleFolders = pgTable("cms_module_folders", {
-  id: serial("id").primaryKey(),
-  moduleId: integer("module_id").notNull().references(() => cmsModules.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
-});
-var insertCmsModuleFolderSchema = createInsertSchema(cmsModuleFolders).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var cmsLessons = pgTable("cms_lessons", {
-  id: serial("id").primaryKey(),
-  moduleId: integer("module_id").notNull().references(() => cmsModules.id, { onDelete: "cascade" }),
-  folderId: integer("folder_id").references(() => cmsModuleFolders.id, { onDelete: "set null" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
-});
-var insertCmsLessonSchema = createInsertSchema(cmsLessons).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var lessonFileTypeEnum = ["video", "audio", "script"];
-var cmsLessonFiles = pgTable("cms_lesson_files", {
-  id: serial("id").primaryKey(),
-  lessonId: integer("lesson_id").notNull().references(() => cmsLessons.id, { onDelete: "cascade" }),
-  fileType: text("file_type").notNull(),
-  // 'video', 'audio', 'script'
-  r2Key: text("r2_key").notNull(),
-  publicUrl: text("public_url"),
-  sizeMb: integer("size_mb"),
-  durationSec: integer("duration_sec"),
-  extractedText: text("extracted_text"),
-  // For PDF/script files - stores extracted text content
-  scriptHtml: text("script_html"),
-  // For PDF/script files - stores formatted HTML content
-  position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
-});
-var insertCmsLessonFileSchema = createInsertSchema(cmsLessonFiles).omit({
-  id: true,
-  createdAt: true
-});
-var frontendFeatures = pgTable("frontend_features", {
-  id: serial("id").primaryKey(),
-  code: text("code").notNull().unique(),
-  displayName: text("display_name").notNull(),
-  displayMode: text("display_mode").notNull(),
-  // 'modules' | 'lessons' | 'courses'
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
-});
-var insertFrontendFeatureSchema = createInsertSchema(frontendFeatures).omit({
-  id: true,
-  createdAt: true
-});
-var featureCourseMap = pgTable("feature_course_map", {
-  id: serial("id").primaryKey(),
-  featureId: integer("feature_id").notNull().references(() => frontendFeatures.id, { onDelete: "cascade" }),
-  courseId: integer("course_id").notNull().references(() => cmsCourses.id, { onDelete: "cascade" }),
-  position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
-});
-var insertFeatureCourseMapSchema = createInsertSchema(featureCourseMap).omit({
-  id: true,
-  createdAt: true
-});
-var moneyEntries = pgTable("money_entries", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  entryDate: date("entry_date", { mode: "string" }).notNull(),
-  amount: numeric("amount", { precision: 12, scale: 2 }).notNull().default("0"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
-}, (table) => ({
-  uniqueUserDate: unique("unique_user_date").on(table.userId, table.entryDate)
-}));
-var insertMoneyEntrySchema = createInsertSchema(moneyEntries).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var playlists = pgTable("playlists", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
-});
-var insertPlaylistSchema = createInsertSchema(playlists).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var playlistItems = pgTable("playlist_items", {
-  id: serial("id").primaryKey(),
-  playlistId: integer("playlist_id").notNull().references(() => playlists.id, { onDelete: "cascade" }),
-  lessonId: integer("lesson_id").notNull().references(() => cmsLessons.id, { onDelete: "cascade" }),
-  position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
-}, (table) => ({
-  uniquePlaylistLesson: unique("unique_playlist_lesson").on(table.playlistId, table.lessonId)
-}));
-var insertPlaylistItemSchema = createInsertSchema(playlistItems).omit({
-  id: true,
-  createdAt: true
-});
-var sessionBanners = pgTable("session_banners", {
-  id: serial("id").primaryKey(),
-  type: varchar("type", { length: 20 }).notNull(),
-  // "session" | "advertisement"
-  thumbnailKey: text("thumbnail_key"),
-  videoKey: text("video_key"),
-  posterKey: text("poster_key"),
-  ctaText: text("cta_text"),
-  ctaLink: text("cta_link"),
-  startAt: timestamp("start_at", { mode: "date" }).notNull(),
-  endAt: timestamp("end_at", { mode: "date" }).notNull(),
-  liveEnabled: boolean("live_enabled").notNull().default(false),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
-});
-var insertSessionBannerSchema = createInsertSchema(sessionBanners).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var userStreaks = pgTable("user_streaks", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  activityDate: varchar("activity_date", { length: 10 }).notNull(),
-  // YYYY-MM-DD format
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
-}, (table) => ({
-  uniqueUserActivityDate: unique("unique_user_activity_date").on(table.userId, table.activityDate)
-}));
-var insertUserStreakSchema = createInsertSchema(userStreaks).omit({
-  id: true,
-  createdAt: true
-});
-var activityLogs = pgTable("activity_logs", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  lessonId: integer("lesson_id").notNull(),
-  lessonName: varchar("lesson_name", { length: 255 }).notNull(),
-  featureType: varchar("feature_type", { length: 50 }).notNull(),
-  // 'PROCESS' | 'BREATH' | 'CHECKLIST'
-  activityDate: varchar("activity_date", { length: 10 }).notNull(),
-  // YYYY-MM-DD format
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
-}, (table) => ({
-  uniqueUserLessonFeatureDate: unique("unique_user_lesson_feature_date").on(
-    table.userId,
-    table.lessonId,
-    table.featureType,
-    table.activityDate
-  )
-}));
-var insertActivityLogSchema = createInsertSchema(activityLogs).omit({
-  id: true,
-  createdAt: true
-});
-var featureTypeEnum = ["PROCESS", "BREATH", "CHECKLIST"];
 
 // server/db.ts
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { Pool, neonConfig } from "@neondatabase/serverless";
 import ws from "ws";
-neonConfig.webSocketConstructor = ws;
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?"
-  );
-}
-var pool = new Pool({ connectionString: process.env.DATABASE_URL });
-var db = drizzle(pool, { schema: schema_exports });
+var pool, db;
+var init_db = __esm({
+  "server/db.ts"() {
+    "use strict";
+    init_schema();
+    neonConfig.webSocketConstructor = ws;
+    if (!process.env.DATABASE_URL) {
+      throw new Error(
+        "DATABASE_URL must be set. Did you forget to provision a database?"
+      );
+    }
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    db = drizzle(pool, { schema: schema_exports });
+  }
+});
 
 // server/storage.ts
 import { eq, ilike, and, or, inArray, sql as sql2, count, asc, desc } from "drizzle-orm";
-var DbStorage = class {
-  async getUser(id) {
-    const user = await db.query.users.findFirst({
-      where: (users2, { eq: eq3 }) => eq3(users2.id, parseInt(id))
-    });
-    return user;
-  }
-  async getUserByUsername(username) {
-    const user = await db.query.users.findFirst({
-      where: (users2, { eq: eq3 }) => eq3(users2.email, username)
-    });
-    return user;
-  }
-  async getUserByEmail(email) {
-    const user = await db.query.users.findFirst({
-      where: (users2, { eq: eq3 }) => eq3(users2.email, email)
-    });
-    return user;
-  }
-  async getUserById(id) {
-    const user = await db.query.users.findFirst({
-      where: (users2, { eq: eq3 }) => eq3(users2.id, id)
-    });
-    return user;
-  }
-  async createUser(insertUser) {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
-  }
-  async updateUserLastLogin(id) {
-    await db.update(users).set({ lastLogin: /* @__PURE__ */ new Date() }).where(eq(users.id, id));
-  }
-  async getAllCommunitySessions() {
-    return await db.query.communitySessions.findMany({
-      orderBy: (sessions, { asc: asc3 }) => [asc3(sessions.time)]
-    });
-  }
-  async getCommunitySession(id) {
-    return await db.query.communitySessions.findFirst({
-      where: (sessions, { eq: eq3 }) => eq3(sessions.id, id)
-    });
-  }
-  async createCommunitySession(session) {
-    const [newSession] = await db.insert(communitySessions).values(session).returning();
-    return newSession;
-  }
-  async updateCommunitySession(id, session) {
-    const [updated] = await db.update(communitySessions).set(session).where(eq(communitySessions.id, id)).returning();
-    return updated;
-  }
-  async deleteCommunitySession(id) {
-    const result = await db.delete(communitySessions).where(eq(communitySessions.id, id)).returning();
-    return result.length > 0;
-  }
-  async getAllCategories() {
-    return await db.query.categories.findMany({
-      orderBy: (categories2, { asc: asc3 }) => [asc3(categories2.name)]
-    });
-  }
-  async getCategory(id) {
-    return await db.query.categories.findFirst({
-      where: (categories2, { eq: eq3 }) => eq3(categories2.id, id)
-    });
-  }
-  async createCategory(category) {
-    const [newCategory] = await db.insert(categories).values(category).returning();
-    return newCategory;
-  }
-  async getAllArticles() {
-    return await db.query.articles.findMany({
-      orderBy: (articles2, { desc: desc2 }) => [desc2(articles2.createdAt)]
-    });
-  }
-  async getPublishedArticles() {
-    return await db.query.articles.findMany({
-      where: (articles2, { eq: eq3 }) => eq3(articles2.isPublished, true),
-      orderBy: (articles2, { desc: desc2 }) => [desc2(articles2.createdAt)]
-    });
-  }
-  async getArticle(id) {
-    return await db.query.articles.findFirst({
-      where: (articles2, { eq: eq3 }) => eq3(articles2.id, id)
-    });
-  }
-  async createArticle(article) {
-    const [newArticle] = await db.insert(articles).values(article).returning();
-    return newArticle;
-  }
-  async updateArticle(id, article) {
-    const [updated] = await db.update(articles).set(article).where(eq(articles.id, id)).returning();
-    return updated;
-  }
-  async deleteArticle(id) {
-    const result = await db.delete(articles).where(eq(articles.id, id)).returning();
-    return result.length > 0;
-  }
-  async getAllPrograms() {
-    return await db.query.programs.findMany({
-      orderBy: (programs2, { asc: asc3 }) => [asc3(programs2.code)]
-    });
-  }
-  async getProgramByCode(code) {
-    return await db.query.programs.findFirst({
-      where: (programs2, { eq: eq3 }) => eq3(programs2.code, code)
-    });
-  }
-  async getProgramById(id) {
-    return await db.query.programs.findFirst({
-      where: (programs2, { eq: eq3 }) => eq3(programs2.id, id)
-    });
-  }
-  async createProgram(program) {
-    const [newProgram] = await db.insert(programs).values(program).returning();
-    return newProgram;
-  }
-  async getUserPrograms(userId) {
-    const userProgramLinks = await db.select().from(userPrograms).where(eq(userPrograms.userId, userId));
-    if (userProgramLinks.length === 0) return [];
-    const programIds = userProgramLinks.map((up) => up.programId);
-    const programs2 = await db.select().from(programs).where(inArray(programs.id, programIds));
-    return programs2.map((p) => p.code);
-  }
-  async assignUserProgram(userId, programId) {
-    await db.insert(userPrograms).values({ userId, programId });
-  }
-  async clearUserPrograms(userId) {
-    await db.delete(userPrograms).where(eq(userPrograms.userId, userId));
-  }
-  async getStudents(params) {
-    const { search = "", programCode = "ALL", page = 1, limit = 20 } = params;
-    const offset = (page - 1) * limit;
-    let userIdsFilter = null;
-    if (programCode && programCode !== "ALL") {
-      const program = await this.getProgramByCode(programCode);
-      if (program) {
-        const userProgramLinks = await db.select().from(userPrograms).where(eq(userPrograms.programId, program.id));
-        userIdsFilter = userProgramLinks.map((up) => up.userId);
-        if (userIdsFilter.length === 0) {
-          return { data: [], pagination: { total: 0, page: 1, pages: 1 } };
+var DbStorage, storage;
+var init_storage = __esm({
+  "server/storage.ts"() {
+    "use strict";
+    init_schema();
+    init_db();
+    DbStorage = class {
+      async getUser(id) {
+        const user = await db.query.users.findFirst({
+          where: (users2, { eq: eq3 }) => eq3(users2.id, parseInt(id))
+        });
+        return user;
+      }
+      async getUserByUsername(username) {
+        const user = await db.query.users.findFirst({
+          where: (users2, { eq: eq3 }) => eq3(users2.email, username)
+        });
+        return user;
+      }
+      async getUserByEmail(email) {
+        const user = await db.query.users.findFirst({
+          where: (users2, { eq: eq3 }) => eq3(users2.email, email)
+        });
+        return user;
+      }
+      async getUserById(id) {
+        const user = await db.query.users.findFirst({
+          where: (users2, { eq: eq3 }) => eq3(users2.id, id)
+        });
+        return user;
+      }
+      async createUser(insertUser) {
+        const [user] = await db.insert(users).values(insertUser).returning();
+        return user;
+      }
+      async updateUserLastLogin(id) {
+        await db.update(users).set({ lastLogin: /* @__PURE__ */ new Date() }).where(eq(users.id, id));
+      }
+      async updateUserPassword(id, hashedPassword) {
+        await db.update(users).set({ passwordHash: hashedPassword }).where(eq(users.id, id));
+      }
+      async updateUserName(id, name) {
+        const [user] = await db.update(users).set({ name }).where(eq(users.id, id)).returning();
+        return user;
+      }
+      async getAllCommunitySessions() {
+        return await db.query.communitySessions.findMany({
+          orderBy: (sessions, { asc: asc3 }) => [asc3(sessions.time)]
+        });
+      }
+      async getCommunitySession(id) {
+        return await db.query.communitySessions.findFirst({
+          where: (sessions, { eq: eq3 }) => eq3(sessions.id, id)
+        });
+      }
+      async createCommunitySession(session) {
+        const [newSession] = await db.insert(communitySessions).values(session).returning();
+        return newSession;
+      }
+      async updateCommunitySession(id, session) {
+        const [updated] = await db.update(communitySessions).set(session).where(eq(communitySessions.id, id)).returning();
+        return updated;
+      }
+      async deleteCommunitySession(id) {
+        const result = await db.delete(communitySessions).where(eq(communitySessions.id, id)).returning();
+        return result.length > 0;
+      }
+      async getAllCategories() {
+        return await db.query.categories.findMany({
+          orderBy: (categories2, { asc: asc3 }) => [asc3(categories2.name)]
+        });
+      }
+      async getCategory(id) {
+        return await db.query.categories.findFirst({
+          where: (categories2, { eq: eq3 }) => eq3(categories2.id, id)
+        });
+      }
+      async createCategory(category) {
+        const [newCategory] = await db.insert(categories).values(category).returning();
+        return newCategory;
+      }
+      async getAllArticles() {
+        return await db.query.articles.findMany({
+          orderBy: (articles2, { desc: desc3 }) => [desc3(articles2.createdAt)]
+        });
+      }
+      async getPublishedArticles() {
+        return await db.query.articles.findMany({
+          where: (articles2, { eq: eq3 }) => eq3(articles2.isPublished, true),
+          orderBy: (articles2, { desc: desc3 }) => [desc3(articles2.createdAt)]
+        });
+      }
+      async getArticle(id) {
+        return await db.query.articles.findFirst({
+          where: (articles2, { eq: eq3 }) => eq3(articles2.id, id)
+        });
+      }
+      async createArticle(article) {
+        const [newArticle] = await db.insert(articles).values(article).returning();
+        return newArticle;
+      }
+      async updateArticle(id, article) {
+        const [updated] = await db.update(articles).set(article).where(eq(articles.id, id)).returning();
+        return updated;
+      }
+      async deleteArticle(id) {
+        const result = await db.delete(articles).where(eq(articles.id, id)).returning();
+        return result.length > 0;
+      }
+      async getAllPrograms() {
+        return await db.query.programs.findMany({
+          orderBy: (programs2, { asc: asc3 }) => [asc3(programs2.code)]
+        });
+      }
+      async getProgramByCode(code) {
+        return await db.query.programs.findFirst({
+          where: (programs2, { eq: eq3 }) => eq3(programs2.code, code)
+        });
+      }
+      async getProgramById(id) {
+        return await db.query.programs.findFirst({
+          where: (programs2, { eq: eq3 }) => eq3(programs2.id, id)
+        });
+      }
+      async createProgram(program) {
+        const [newProgram] = await db.insert(programs).values(program).returning();
+        return newProgram;
+      }
+      async getUserPrograms(userId) {
+        const userProgramLinks = await db.select().from(userPrograms).where(eq(userPrograms.userId, userId));
+        if (userProgramLinks.length === 0) return [];
+        const programIds = userProgramLinks.map((up) => up.programId);
+        const programs2 = await db.select().from(programs).where(inArray(programs.id, programIds));
+        return programs2.map((p) => p.code);
+      }
+      async assignUserProgram(userId, programId) {
+        await db.insert(userPrograms).values({ userId, programId });
+      }
+      async clearUserPrograms(userId) {
+        await db.delete(userPrograms).where(eq(userPrograms.userId, userId));
+      }
+      async getStudents(params) {
+        const { search = "", programCode = "ALL", page = 1, limit = 20 } = params;
+        const offset = (page - 1) * limit;
+        let userIdsFilter = null;
+        if (programCode && programCode !== "ALL") {
+          const program = await this.getProgramByCode(programCode);
+          if (program) {
+            const userProgramLinks = await db.select().from(userPrograms).where(eq(userPrograms.programId, program.id));
+            userIdsFilter = userProgramLinks.map((up) => up.userId);
+            if (userIdsFilter.length === 0) {
+              return { data: [], pagination: { total: 0, page: 1, pages: 1 } };
+            }
+          }
+        }
+        const conditions = [eq(users.role, "USER")];
+        if (search) {
+          conditions.push(
+            or(
+              ilike(users.name, `%${search}%`),
+              ilike(users.email, `%${search}%`)
+            )
+          );
+        }
+        if (userIdsFilter) {
+          conditions.push(inArray(users.id, userIdsFilter));
+        }
+        const totalResult = await db.select({ count: count() }).from(users).where(and(...conditions));
+        const total = totalResult[0]?.count || 0;
+        const students = await db.select().from(users).where(and(...conditions)).orderBy(users.createdAt).limit(limit).offset(offset);
+        const studentsWithPrograms = await Promise.all(
+          students.map(async (student) => {
+            const programs2 = await this.getUserPrograms(student.id);
+            return { ...student, programs: programs2 };
+          })
+        );
+        return {
+          data: studentsWithPrograms,
+          pagination: {
+            total,
+            page,
+            pages: Math.ceil(total / limit) || 1
+          }
+        };
+      }
+      async getStudentById(id) {
+        const student = await db.query.users.findFirst({
+          where: (users2, { eq: eq3, and: and3 }) => and3(eq3(users2.id, id), eq3(users2.role, "USER"))
+        });
+        if (!student) return void 0;
+        const programs2 = await this.getUserPrograms(id);
+        return { ...student, programs: programs2 };
+      }
+      async createStudent(student, programCode) {
+        const [newStudent] = await db.insert(users).values({
+          ...student,
+          role: "USER",
+          status: student.status || "active"
+        }).returning();
+        if (programCode) {
+          const program = await this.getProgramByCode(programCode);
+          if (program) {
+            await this.assignUserProgram(newStudent.id, program.id);
+          }
+        }
+        return newStudent;
+      }
+      async updateStudent(id, student, programCode) {
+        const [updated] = await db.update(users).set(student).where(eq(users.id, id)).returning();
+        if (programCode) {
+          await this.clearUserPrograms(id);
+          const program = await this.getProgramByCode(programCode);
+          if (program) {
+            await this.assignUserProgram(id, program.id);
+          }
+        }
+        return updated;
+      }
+      async updateStudentStatus(id, status) {
+        const [updated] = await db.update(users).set({ status }).where(eq(users.id, id)).returning();
+        return updated;
+      }
+      async deleteStudent(id) {
+        await this.clearUserPrograms(id);
+        const result = await db.delete(users).where(eq(users.id, id)).returning();
+        return result.length > 0;
+      }
+      // ===== ADMIN MANAGEMENT =====
+      async getAdmins(params) {
+        const { search = "", page = 1, limit = 20 } = params;
+        const offset = (page - 1) * limit;
+        const conditions = [
+          or(
+            eq(users.role, "SUPER_ADMIN"),
+            eq(users.role, "COACH")
+          )
+        ];
+        if (search) {
+          conditions.push(
+            or(
+              ilike(users.name, `%${search}%`),
+              ilike(users.email, `%${search}%`)
+            )
+          );
+        }
+        const totalResult = await db.select({ count: count() }).from(users).where(and(...conditions));
+        const total = totalResult[0]?.count || 0;
+        const admins = await db.select().from(users).where(and(...conditions)).orderBy(users.createdAt).limit(limit).offset(offset);
+        return {
+          data: admins,
+          pagination: {
+            total,
+            page,
+            pages: Math.ceil(total / limit) || 1
+          }
+        };
+      }
+      async getAdminById(id) {
+        return await db.query.users.findFirst({
+          where: (users2, { eq: eq3, and: and3, or: or3 }) => and3(
+            eq3(users2.id, id),
+            or3(eq3(users2.role, "SUPER_ADMIN"), eq3(users2.role, "COACH"))
+          )
+        });
+      }
+      async createAdmin(admin2) {
+        const [newAdmin] = await db.insert(users).values({
+          ...admin2,
+          status: admin2.status || "active"
+        }).returning();
+        return newAdmin;
+      }
+      async updateAdmin(id, admin2) {
+        const [updated] = await db.update(users).set(admin2).where(eq(users.id, id)).returning();
+        return updated;
+      }
+      async updateAdminStatus(id, status) {
+        const [updated] = await db.update(users).set({ status }).where(eq(users.id, id)).returning();
+        return updated;
+      }
+      async deleteAdmin(id) {
+        const result = await db.delete(users).where(eq(users.id, id)).returning();
+        return result.length > 0;
+      }
+      // ===== FRONTEND FEATURE MAPPING =====
+      async getAllFrontendFeatures() {
+        return await db.select().from(frontendFeatures).orderBy(asc(frontendFeatures.id));
+      }
+      async getFrontendFeatureByCode(code) {
+        const result = await db.select().from(frontendFeatures).where(eq(frontendFeatures.code, code));
+        return result[0];
+      }
+      async getFeatureCourseMappings(featureId) {
+        const mappings = await db.select().from(featureCourseMap).where(eq(featureCourseMap.featureId, featureId)).orderBy(asc(featureCourseMap.position));
+        const result = await Promise.all(mappings.map(async (mapping) => {
+          const courseResult = await db.select({ id: cmsCourses.id, title: cmsCourses.title }).from(cmsCourses).where(eq(cmsCourses.id, mapping.courseId));
+          return {
+            ...mapping,
+            course: courseResult[0] || { id: mapping.courseId, title: "Unknown Course" }
+          };
+        }));
+        return result;
+      }
+      async createFeatureCourseMapping(mapping) {
+        const [newMapping] = await db.insert(featureCourseMap).values(mapping).returning();
+        return newMapping;
+      }
+      async deleteFeatureCourseMapping(featureId, courseId) {
+        const result = await db.delete(featureCourseMap).where(and(eq(featureCourseMap.featureId, featureId), eq(featureCourseMap.courseId, courseId))).returning();
+        return result.length > 0;
+      }
+      async clearFeatureCourseMappings(featureId) {
+        await db.delete(featureCourseMap).where(eq(featureCourseMap.featureId, featureId));
+      }
+      async reorderFeatureCourseMappings(featureId, courseIds) {
+        for (let i = 0; i < courseIds.length; i++) {
+          await db.update(featureCourseMap).set({ position: i }).where(and(eq(featureCourseMap.featureId, featureId), eq(featureCourseMap.courseId, courseIds[i])));
         }
       }
-    }
-    const conditions = [eq(users.role, "USER")];
-    if (search) {
-      conditions.push(
-        or(
-          ilike(users.name, `%${search}%`),
-          ilike(users.email, `%${search}%`)
-        )
-      );
-    }
-    if (userIdsFilter) {
-      conditions.push(inArray(users.id, userIdsFilter));
-    }
-    const totalResult = await db.select({ count: count() }).from(users).where(and(...conditions));
-    const total = totalResult[0]?.count || 0;
-    const students = await db.select().from(users).where(and(...conditions)).orderBy(users.createdAt).limit(limit).offset(offset);
-    const studentsWithPrograms = await Promise.all(
-      students.map(async (student) => {
-        const programs2 = await this.getUserPrograms(student.id);
-        return { ...student, programs: programs2 };
-      })
-    );
-    return {
-      data: studentsWithPrograms,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit) || 1
+      async getModulesForCourse(courseId) {
+        return await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId)).orderBy(asc(cmsModules.position));
       }
-    };
-  }
-  async getStudentById(id) {
-    const student = await db.query.users.findFirst({
-      where: (users2, { eq: eq3, and: and3 }) => and3(eq3(users2.id, id), eq3(users2.role, "USER"))
-    });
-    if (!student) return void 0;
-    const programs2 = await this.getUserPrograms(id);
-    return { ...student, programs: programs2 };
-  }
-  async createStudent(student, programCode) {
-    const [newStudent] = await db.insert(users).values({
-      ...student,
-      role: "USER",
-      status: student.status || "active"
-    }).returning();
-    if (programCode) {
-      const program = await this.getProgramByCode(programCode);
-      if (program) {
-        await this.assignUserProgram(newStudent.id, program.id);
+      async getLessonsForCourse(courseId) {
+        const modules = await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId));
+        const moduleIds = modules.map((m) => m.id);
+        if (moduleIds.length === 0) return [];
+        return await db.select().from(cmsLessons).where(inArray(cmsLessons.moduleId, moduleIds)).orderBy(asc(cmsLessons.position));
       }
-    }
-    return newStudent;
-  }
-  async updateStudent(id, student, programCode) {
-    const [updated] = await db.update(users).set(student).where(eq(users.id, id)).returning();
-    if (programCode) {
-      await this.clearUserPrograms(id);
-      const program = await this.getProgramByCode(programCode);
-      if (program) {
-        await this.assignUserProgram(id, program.id);
+      // Money Calendar Methods
+      async upsertMoneyEntry(userId, entryDate, amount) {
+        const [entry] = await db.insert(moneyEntries).values({
+          userId,
+          entryDate,
+          amount
+        }).onConflictDoUpdate({
+          target: [moneyEntries.userId, moneyEntries.entryDate],
+          set: {
+            amount,
+            updatedAt: /* @__PURE__ */ new Date()
+          }
+        }).returning();
+        return entry;
       }
-    }
-    return updated;
-  }
-  async updateStudentStatus(id, status) {
-    const [updated] = await db.update(users).set({ status }).where(eq(users.id, id)).returning();
-    return updated;
-  }
-  async deleteStudent(id) {
-    await this.clearUserPrograms(id);
-    const result = await db.delete(users).where(eq(users.id, id)).returning();
-    return result.length > 0;
-  }
-  // ===== ADMIN MANAGEMENT =====
-  async getAdmins(params) {
-    const { search = "", page = 1, limit = 20 } = params;
-    const offset = (page - 1) * limit;
-    const conditions = [
-      or(
-        eq(users.role, "SUPER_ADMIN"),
-        eq(users.role, "COACH")
-      )
-    ];
-    if (search) {
-      conditions.push(
-        or(
-          ilike(users.name, `%${search}%`),
-          ilike(users.email, `%${search}%`)
-        )
-      );
-    }
-    const totalResult = await db.select({ count: count() }).from(users).where(and(...conditions));
-    const total = totalResult[0]?.count || 0;
-    const admins = await db.select().from(users).where(and(...conditions)).orderBy(users.createdAt).limit(limit).offset(offset);
-    return {
-      data: admins,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit) || 1
-      }
-    };
-  }
-  async getAdminById(id) {
-    return await db.query.users.findFirst({
-      where: (users2, { eq: eq3, and: and3, or: or3 }) => and3(
-        eq3(users2.id, id),
-        or3(eq3(users2.role, "SUPER_ADMIN"), eq3(users2.role, "COACH"))
-      )
-    });
-  }
-  async createAdmin(admin) {
-    const [newAdmin] = await db.insert(users).values({
-      ...admin,
-      status: admin.status || "active"
-    }).returning();
-    return newAdmin;
-  }
-  async updateAdmin(id, admin) {
-    const [updated] = await db.update(users).set(admin).where(eq(users.id, id)).returning();
-    return updated;
-  }
-  async updateAdminStatus(id, status) {
-    const [updated] = await db.update(users).set({ status }).where(eq(users.id, id)).returning();
-    return updated;
-  }
-  async deleteAdmin(id) {
-    const result = await db.delete(users).where(eq(users.id, id)).returning();
-    return result.length > 0;
-  }
-  // ===== FRONTEND FEATURE MAPPING =====
-  async getAllFrontendFeatures() {
-    return await db.select().from(frontendFeatures).orderBy(asc(frontendFeatures.id));
-  }
-  async getFrontendFeatureByCode(code) {
-    const result = await db.select().from(frontendFeatures).where(eq(frontendFeatures.code, code));
-    return result[0];
-  }
-  async getFeatureCourseMappings(featureId) {
-    const mappings = await db.select().from(featureCourseMap).where(eq(featureCourseMap.featureId, featureId)).orderBy(asc(featureCourseMap.position));
-    const result = await Promise.all(mappings.map(async (mapping) => {
-      const courseResult = await db.select({ id: cmsCourses.id, title: cmsCourses.title }).from(cmsCourses).where(eq(cmsCourses.id, mapping.courseId));
-      return {
-        ...mapping,
-        course: courseResult[0] || { id: mapping.courseId, title: "Unknown Course" }
-      };
-    }));
-    return result;
-  }
-  async createFeatureCourseMapping(mapping) {
-    const [newMapping] = await db.insert(featureCourseMap).values(mapping).returning();
-    return newMapping;
-  }
-  async deleteFeatureCourseMapping(featureId, courseId) {
-    const result = await db.delete(featureCourseMap).where(and(eq(featureCourseMap.featureId, featureId), eq(featureCourseMap.courseId, courseId))).returning();
-    return result.length > 0;
-  }
-  async clearFeatureCourseMappings(featureId) {
-    await db.delete(featureCourseMap).where(eq(featureCourseMap.featureId, featureId));
-  }
-  async reorderFeatureCourseMappings(featureId, courseIds) {
-    for (let i = 0; i < courseIds.length; i++) {
-      await db.update(featureCourseMap).set({ position: i }).where(and(eq(featureCourseMap.featureId, featureId), eq(featureCourseMap.courseId, courseIds[i])));
-    }
-  }
-  async getModulesForCourse(courseId) {
-    return await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId)).orderBy(asc(cmsModules.position));
-  }
-  async getLessonsForCourse(courseId) {
-    const modules = await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId));
-    const moduleIds = modules.map((m) => m.id);
-    if (moduleIds.length === 0) return [];
-    return await db.select().from(cmsLessons).where(inArray(cmsLessons.moduleId, moduleIds)).orderBy(asc(cmsLessons.position));
-  }
-  // Money Calendar Methods
-  async upsertMoneyEntry(userId, entryDate, amount) {
-    const [entry] = await db.insert(moneyEntries).values({
-      userId,
-      entryDate,
-      amount
-    }).onConflictDoUpdate({
-      target: [moneyEntries.userId, moneyEntries.entryDate],
-      set: {
-        amount,
-        updatedAt: /* @__PURE__ */ new Date()
-      }
-    }).returning();
-    return entry;
-  }
-  async getMoneyEntriesForMonth(userId, year, month) {
-    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-    const lastDay = new Date(year, month, 0).getDate();
-    const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-    const entries = await db.select().from(moneyEntries).where(
-      and(
-        eq(moneyEntries.userId, userId),
-        sql2`${moneyEntries.entryDate} >= ${startDate}::date`,
-        sql2`${moneyEntries.entryDate} <= ${endDate}::date`
-      )
-    );
-    const days = {};
-    let total = 0;
-    let highest = 0;
-    for (const entry of entries) {
-      const amount = parseFloat(entry.amount);
-      days[entry.entryDate] = amount;
-      total += amount;
-      if (amount > highest) highest = amount;
-    }
-    const entryCount = entries.length;
-    const average = entryCount > 0 ? total / entryCount : 0;
-    return {
-      days,
-      summary: {
-        total: Math.round(total * 100) / 100,
-        highest: Math.round(highest * 100) / 100,
-        average: Math.round(average * 100) / 100
-      }
-    };
-  }
-  // Playlist Methods
-  async getUserPlaylists(userId) {
-    return await db.select().from(playlists).where(eq(playlists.userId, userId)).orderBy(desc(playlists.createdAt));
-  }
-  async getPlaylistById(id) {
-    const [playlist] = await db.select().from(playlists).where(eq(playlists.id, id));
-    return playlist;
-  }
-  async createPlaylist(playlist) {
-    const [newPlaylist] = await db.insert(playlists).values(playlist).returning();
-    return newPlaylist;
-  }
-  async updatePlaylist(id, title) {
-    const [updated] = await db.update(playlists).set({ title, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playlists.id, id)).returning();
-    return updated;
-  }
-  async deletePlaylist(id) {
-    const result = await db.delete(playlists).where(eq(playlists.id, id)).returning();
-    return result.length > 0;
-  }
-  async getPlaylistItems(playlistId) {
-    const items = await db.select().from(playlistItems).where(eq(playlistItems.playlistId, playlistId)).orderBy(asc(playlistItems.position));
-    const result = await Promise.all(items.map(async (item) => {
-      const [lesson] = await db.select({ id: cmsLessons.id, title: cmsLessons.title, description: cmsLessons.description }).from(cmsLessons).where(eq(cmsLessons.id, item.lessonId));
-      return {
-        ...item,
-        lesson: lesson || { id: item.lessonId, title: "Unknown Lesson", description: null }
-      };
-    }));
-    return result;
-  }
-  async setPlaylistItems(playlistId, lessonIds) {
-    await db.delete(playlistItems).where(eq(playlistItems.playlistId, playlistId));
-    if (lessonIds.length === 0) return [];
-    const items = lessonIds.map((lessonId, index) => ({
-      playlistId,
-      lessonId,
-      position: index
-    }));
-    return await db.insert(playlistItems).values(items).returning();
-  }
-  async reorderPlaylistItems(playlistId, orderedItemIds) {
-    for (let i = 0; i < orderedItemIds.length; i++) {
-      await db.update(playlistItems).set({ position: i }).where(and(eq(playlistItems.playlistId, playlistId), eq(playlistItems.id, orderedItemIds[i])));
-    }
-  }
-  async deletePlaylistItem(playlistId, itemId) {
-    const result = await db.delete(playlistItems).where(and(eq(playlistItems.playlistId, playlistId), eq(playlistItems.id, itemId))).returning();
-    return result.length > 0;
-  }
-  async getPlaylistSourceData(courseId) {
-    const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
-    if (!course) return null;
-    const modules = await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId)).orderBy(asc(cmsModules.position));
-    const modulesWithLessons = await Promise.all(modules.map(async (module) => {
-      const lessons = await db.select().from(cmsLessons).where(eq(cmsLessons.moduleId, module.id)).orderBy(asc(cmsLessons.position));
-      const lessonsWithAudio = await Promise.all(lessons.map(async (lesson) => {
-        const audioFiles = await db.select().from(cmsLessonFiles).where(and(eq(cmsLessonFiles.lessonId, lesson.id), eq(cmsLessonFiles.fileType, "audio"))).orderBy(asc(cmsLessonFiles.position));
-        if (audioFiles.length === 0) return null;
+      async getMoneyEntriesForMonth(userId, year, month) {
+        const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+        const lastDay = new Date(year, month, 0).getDate();
+        const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+        const entries = await db.select().from(moneyEntries).where(
+          and(
+            eq(moneyEntries.userId, userId),
+            sql2`${moneyEntries.entryDate} >= ${startDate}::date`,
+            sql2`${moneyEntries.entryDate} <= ${endDate}::date`
+          )
+        );
+        const days = {};
+        let total = 0;
+        let highest = 0;
+        for (const entry of entries) {
+          const amount = parseFloat(entry.amount);
+          days[entry.entryDate] = amount;
+          total += amount;
+          if (amount > highest) highest = amount;
+        }
+        const entryCount = entries.length;
+        const average = entryCount > 0 ? total / entryCount : 0;
         return {
-          ...lesson,
-          audioFiles
+          days,
+          summary: {
+            total: Math.round(total * 100) / 100,
+            highest: Math.round(highest * 100) / 100,
+            average: Math.round(average * 100) / 100
+          }
         };
-      }));
-      const filteredLessons = lessonsWithAudio.filter((l) => l !== null);
-      if (filteredLessons.length === 0) return null;
-      return {
-        ...module,
-        lessons: filteredLessons
-      };
-    }));
+      }
+      // Playlist Methods
+      async getUserPlaylists(userId) {
+        return await db.select().from(playlists).where(eq(playlists.userId, userId)).orderBy(desc(playlists.createdAt));
+      }
+      async getPlaylistById(id) {
+        const [playlist] = await db.select().from(playlists).where(eq(playlists.id, id));
+        return playlist;
+      }
+      async createPlaylist(playlist) {
+        const [newPlaylist] = await db.insert(playlists).values(playlist).returning();
+        return newPlaylist;
+      }
+      async updatePlaylist(id, title) {
+        const [updated] = await db.update(playlists).set({ title, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playlists.id, id)).returning();
+        return updated;
+      }
+      async deletePlaylist(id) {
+        const result = await db.delete(playlists).where(eq(playlists.id, id)).returning();
+        return result.length > 0;
+      }
+      async getPlaylistItems(playlistId) {
+        const items = await db.select().from(playlistItems).where(eq(playlistItems.playlistId, playlistId)).orderBy(asc(playlistItems.position));
+        const result = await Promise.all(items.map(async (item) => {
+          const [lesson] = await db.select({ id: cmsLessons.id, title: cmsLessons.title, description: cmsLessons.description }).from(cmsLessons).where(eq(cmsLessons.id, item.lessonId));
+          return {
+            ...item,
+            lesson: lesson || { id: item.lessonId, title: "Unknown Lesson", description: null }
+          };
+        }));
+        return result;
+      }
+      async setPlaylistItems(playlistId, lessonIds) {
+        await db.delete(playlistItems).where(eq(playlistItems.playlistId, playlistId));
+        if (lessonIds.length === 0) return [];
+        const items = lessonIds.map((lessonId, index) => ({
+          playlistId,
+          lessonId,
+          position: index
+        }));
+        return await db.insert(playlistItems).values(items).returning();
+      }
+      async reorderPlaylistItems(playlistId, orderedItemIds) {
+        for (let i = 0; i < orderedItemIds.length; i++) {
+          await db.update(playlistItems).set({ position: i }).where(and(eq(playlistItems.playlistId, playlistId), eq(playlistItems.id, orderedItemIds[i])));
+        }
+      }
+      async deletePlaylistItem(playlistId, itemId) {
+        const result = await db.delete(playlistItems).where(and(eq(playlistItems.playlistId, playlistId), eq(playlistItems.id, itemId))).returning();
+        return result.length > 0;
+      }
+      async getPlaylistSourceData(courseId) {
+        const [course] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
+        if (!course) return null;
+        const modules = await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId)).orderBy(asc(cmsModules.position));
+        const modulesWithLessons = await Promise.all(modules.map(async (module) => {
+          const lessons = await db.select().from(cmsLessons).where(eq(cmsLessons.moduleId, module.id)).orderBy(asc(cmsLessons.position));
+          const lessonsWithAudio = await Promise.all(lessons.map(async (lesson) => {
+            const audioFiles = await db.select().from(cmsLessonFiles).where(and(eq(cmsLessonFiles.lessonId, lesson.id), eq(cmsLessonFiles.fileType, "audio"))).orderBy(asc(cmsLessonFiles.position));
+            if (audioFiles.length === 0) return null;
+            return {
+              ...lesson,
+              audioFiles
+            };
+          }));
+          const filteredLessons = lessonsWithAudio.filter((l) => l !== null);
+          if (filteredLessons.length === 0) return null;
+          return {
+            ...module,
+            lessons: filteredLessons
+          };
+        }));
+        return {
+          course,
+          modules: modulesWithLessons.filter((m) => m !== null)
+        };
+      }
+      async isLessonInMappedCourse(lessonId, featureCode) {
+        const feature = await this.getFrontendFeatureByCode(featureCode);
+        if (!feature) return false;
+        const mappings = await this.getFeatureCourseMappings(feature.id);
+        if (mappings.length === 0) return false;
+        const courseId = mappings[0].courseId;
+        const modules = await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId));
+        const moduleIds = modules.map((m) => m.id);
+        if (moduleIds.length === 0) return false;
+        const [lesson] = await db.select().from(cmsLessons).where(and(eq(cmsLessons.id, lessonId), inArray(cmsLessons.moduleId, moduleIds)));
+        return !!lesson;
+      }
+      async doesLessonHaveAudio(lessonId) {
+        const audioFiles = await db.select().from(cmsLessonFiles).where(and(eq(cmsLessonFiles.lessonId, lessonId), eq(cmsLessonFiles.fileType, "audio")));
+        return audioFiles.length > 0;
+      }
+      // ===== SESSION BANNERS =====
+      async getAllSessionBanners() {
+        return await db.select().from(sessionBanners).orderBy(desc(sessionBanners.startAt));
+      }
+      async getSessionBannerById(id) {
+        const [banner] = await db.select().from(sessionBanners).where(eq(sessionBanners.id, id));
+        return banner;
+      }
+      async createSessionBanner(banner) {
+        const [newBanner] = await db.insert(sessionBanners).values(banner).returning();
+        return newBanner;
+      }
+      async updateSessionBanner(id, banner) {
+        const [updated] = await db.update(sessionBanners).set({ ...banner, updatedAt: /* @__PURE__ */ new Date() }).where(eq(sessionBanners.id, id)).returning();
+        return updated;
+      }
+      async deleteSessionBanner(id) {
+        const result = await db.delete(sessionBanners).where(eq(sessionBanners.id, id)).returning();
+        return result.length > 0;
+      }
+      async getActiveBanner() {
+        const now = /* @__PURE__ */ new Date();
+        const [active] = await db.select().from(sessionBanners).where(
+          and(
+            sql2`${sessionBanners.startAt} <= ${now}`,
+            sql2`${sessionBanners.endAt} > ${now}`
+          )
+        ).orderBy(desc(sessionBanners.startAt)).limit(1);
+        return active;
+      }
+      async getNextScheduledBanner() {
+        const now = /* @__PURE__ */ new Date();
+        const [scheduled] = await db.select().from(sessionBanners).where(sql2`${sessionBanners.startAt} > ${now}`).orderBy(asc(sessionBanners.startAt)).limit(1);
+        return scheduled;
+      }
+      async getLastExpiredBanner() {
+        const now = /* @__PURE__ */ new Date();
+        const [expired] = await db.select().from(sessionBanners).where(sql2`${sessionBanners.endAt} <= ${now}`).orderBy(desc(sessionBanners.endAt)).limit(1);
+        return expired;
+      }
+      // ===== USER STREAKS =====
+      async markUserActivityDate(userId, activityDate) {
+        const [existing] = await db.select().from(userStreaks).where(and(eq(userStreaks.userId, userId), eq(userStreaks.activityDate, activityDate)));
+        if (existing) {
+          return existing;
+        }
+        const [newStreak] = await db.insert(userStreaks).values({ userId, activityDate }).returning();
+        return newStreak;
+      }
+      async getUserStreakDates(userId, dates) {
+        if (dates.length === 0) return [];
+        const records = await db.select({ activityDate: userStreaks.activityDate }).from(userStreaks).where(and(
+          eq(userStreaks.userId, userId),
+          inArray(userStreaks.activityDate, dates)
+        ));
+        return records.map((r) => r.activityDate);
+      }
+      async getConsistencyMonth(userId, year, month) {
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const allDates = [];
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          allDates.push(dateStr);
+        }
+        const activeDates = await this.getUserStreakDates(userId, allDates);
+        const activeDateSet = new Set(activeDates);
+        return allDates.map((date2) => ({
+          date: date2,
+          active: activeDateSet.has(date2)
+        }));
+      }
+      async getConsistencyRange(userId) {
+        const [earliest] = await db.select({ activityDate: userStreaks.activityDate }).from(userStreaks).where(eq(userStreaks.userId, userId)).orderBy(asc(userStreaks.activityDate)).limit(1);
+        const startMonth = earliest ? earliest.activityDate.slice(0, 7) : null;
+        return { startMonth, currentMonth: "current" };
+      }
+      async getCurrentStreak(userId, todayDate) {
+        const allRecords = await db.select({ activityDate: userStreaks.activityDate }).from(userStreaks).where(eq(userStreaks.userId, userId)).orderBy(desc(userStreaks.activityDate));
+        if (allRecords.length === 0) return 0;
+        const activeDates = new Set(allRecords.map((r) => r.activityDate));
+        let streak = 0;
+        let checkDate = /* @__PURE__ */ new Date(todayDate + "T12:00:00");
+        if (!activeDates.has(todayDate)) {
+          checkDate.setDate(checkDate.getDate() - 1);
+        }
+        while (true) {
+          const dateStr = checkDate.toISOString().split("T")[0];
+          if (activeDates.has(dateStr)) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+        return streak;
+      }
+      // ===== ACTIVITY LOGS (AI INSIGHTS) =====
+      async logActivity(userId, lessonId, lessonName, featureType, activityDate) {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(activityDate)) {
+          activityDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        }
+        const serverDate = /* @__PURE__ */ new Date();
+        const inputDate = /* @__PURE__ */ new Date(activityDate + "T12:00:00");
+        const diffDays = Math.abs((serverDate.getTime() - inputDate.getTime()) / (1e3 * 60 * 60 * 24));
+        if (diffDays > 1) {
+          activityDate = serverDate.toISOString().split("T")[0];
+        }
+        const [existing] = await db.select().from(activityLogs).where(and(
+          eq(activityLogs.userId, userId),
+          eq(activityLogs.lessonId, lessonId),
+          eq(activityLogs.featureType, featureType),
+          eq(activityLogs.activityDate, activityDate)
+        ));
+        if (existing) {
+          return { logged: false, activity: existing };
+        }
+        const [newLog] = await db.insert(activityLogs).values({ userId, lessonId, lessonName, featureType, activityDate }).returning();
+        return { logged: true, activity: newLog };
+      }
+      async getMonthlyStats(userId, month) {
+        const monthRegex = /^\d{4}-\d{2}$/;
+        if (!monthRegex.test(month)) {
+          month = (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
+        }
+        const now = /* @__PURE__ */ new Date();
+        const inputDate = /* @__PURE__ */ new Date(month + "-01");
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        if (inputDate < sixMonthsAgo) {
+          month = sixMonthsAgo.toISOString().slice(0, 7);
+        }
+        const startDate = month + "-01";
+        const endDate = month + "-31";
+        const activities = await db.select({
+          lessonId: activityLogs.lessonId,
+          lessonName: activityLogs.lessonName,
+          featureType: activityLogs.featureType,
+          count: count(activityLogs.id)
+        }).from(activityLogs).where(and(
+          eq(activityLogs.userId, userId),
+          sql2`${activityLogs.activityDate} >= ${startDate}`,
+          sql2`${activityLogs.activityDate} <= ${endDate}`
+        )).groupBy(activityLogs.lessonId, activityLogs.lessonName, activityLogs.featureType);
+        const result = {
+          PROCESS: [],
+          PLAYLIST: [],
+          maxCount: 0
+        };
+        for (const activity of activities) {
+          const item = {
+            lessonId: activity.lessonId,
+            lessonName: activity.lessonName,
+            count: Number(activity.count)
+          };
+          if (item.count > result.maxCount) {
+            result.maxCount = item.count;
+          }
+          if (activity.featureType === "PROCESS") {
+            result.PROCESS.push(item);
+          } else if (activity.featureType === "PLAYLIST") {
+            result.PLAYLIST.push(item);
+          }
+        }
+        result.PROCESS.sort((a, b) => b.count - a.count);
+        result.PLAYLIST.sort((a, b) => b.count - a.count);
+        return result;
+      }
+      // ===== REWIRING BELIEFS =====
+      async getRewiringBeliefsByUserId(userId) {
+        const beliefs = await db.select().from(rewiringBeliefs).where(eq(rewiringBeliefs.userId, userId)).orderBy(desc(rewiringBeliefs.createdAt));
+        return beliefs;
+      }
+      async getRewiringBeliefById(id) {
+        const [belief] = await db.select().from(rewiringBeliefs).where(eq(rewiringBeliefs.id, id));
+        return belief;
+      }
+      async createRewiringBelief(belief) {
+        const [newBelief] = await db.insert(rewiringBeliefs).values(belief).returning();
+        return newBelief;
+      }
+      async updateRewiringBelief(id, userId, updates) {
+        const [updated] = await db.update(rewiringBeliefs).set({ ...updates, updatedAt: /* @__PURE__ */ new Date() }).where(and(eq(rewiringBeliefs.id, id), eq(rewiringBeliefs.userId, userId))).returning();
+        return updated;
+      }
+      async deleteRewiringBelief(id, userId) {
+        const result = await db.delete(rewiringBeliefs).where(and(eq(rewiringBeliefs.id, id), eq(rewiringBeliefs.userId, userId))).returning();
+        return result.length > 0;
+      }
+      // ===== USER WELLNESS PROFILES =====
+      async getWellnessProfileByUserId(userId) {
+        const [profile] = await db.select().from(userWellnessProfiles).where(eq(userWellnessProfiles.userId, userId));
+        return profile;
+      }
+      async upsertWellnessProfile(userId, data) {
+        const existing = await this.getWellnessProfileByUserId(userId);
+        if (existing) {
+          const [updated] = await db.update(userWellnessProfiles).set({
+            karmicAffirmation: data.karmicAffirmation,
+            prescription: data.prescription,
+            updatedAt: /* @__PURE__ */ new Date()
+          }).where(eq(userWellnessProfiles.userId, userId)).returning();
+          return updated;
+        } else {
+          const [created] = await db.insert(userWellnessProfiles).values({
+            userId,
+            karmicAffirmation: data.karmicAffirmation,
+            prescription: data.prescription
+          }).returning();
+          return created;
+        }
+      }
+      // ===== EVENTS =====
+      // Auto-transition UPCOMING events to COMPLETED when endDatetime has passed
+      async autoCompleteEvents() {
+        const now = /* @__PURE__ */ new Date();
+        await db.update(events).set({ status: "COMPLETED", updatedAt: now }).where(
+          and(
+            eq(events.status, "UPCOMING"),
+            sql2`${events.endDatetime} < ${now}`
+          )
+        );
+      }
+      async getAllEvents(filters) {
+        await this.autoCompleteEvents();
+        const conditions = [];
+        if (filters?.status) {
+          conditions.push(eq(events.status, filters.status));
+        }
+        if (filters?.month && filters?.year) {
+          const startOfMonth = new Date(filters.year, filters.month - 1, 1);
+          const endOfMonth = new Date(filters.year, filters.month, 0, 23, 59, 59);
+          conditions.push(
+            and(
+              sql2`${events.startDatetime} >= ${startOfMonth}`,
+              sql2`${events.startDatetime} <= ${endOfMonth}`
+            )
+          );
+        } else if (filters?.year) {
+          const startOfYear = new Date(filters.year, 0, 1);
+          const endOfYear = new Date(filters.year, 11, 31, 23, 59, 59);
+          conditions.push(
+            and(
+              sql2`${events.startDatetime} >= ${startOfYear}`,
+              sql2`${events.startDatetime} <= ${endOfYear}`
+            )
+          );
+        }
+        const events2 = await db.select().from(events).where(conditions.length > 0 ? and(...conditions) : void 0).orderBy(desc(events.startDatetime));
+        return events2;
+      }
+      async getEventById(id) {
+        const [event] = await db.select().from(events).where(eq(events.id, id));
+        return event;
+      }
+      async getUpcomingEvents() {
+        const now = /* @__PURE__ */ new Date();
+        const events2 = await db.select().from(events).where(
+          and(
+            eq(events.status, "UPCOMING"),
+            sql2`${events.endDatetime} >= ${now}`
+          )
+        ).orderBy(asc(events.startDatetime));
+        return events2;
+      }
+      async getLatestEvents() {
+        await this.autoCompleteEvents();
+        const now = /* @__PURE__ */ new Date();
+        const todayStr = now.toISOString().split("T")[0];
+        const events2 = await db.select().from(events).where(
+          and(
+            eq(events.status, "COMPLETED"),
+            eq(events.showRecording, true),
+            or(
+              sql2`${events.recordingExpiryDate} IS NULL`,
+              sql2`${events.recordingExpiryDate} >= ${todayStr}`
+            )
+          )
+        ).orderBy(desc(events.startDatetime));
+        return events2;
+      }
+      async createEvent(event) {
+        const [newEvent] = await db.insert(events).values(event).returning();
+        return newEvent;
+      }
+      async updateEvent(id, event) {
+        const [updated] = await db.update(events).set({ ...event, updatedAt: /* @__PURE__ */ new Date() }).where(eq(events.id, id)).returning();
+        return updated;
+      }
+      async cancelEvent(id) {
+        const [cancelled] = await db.update(events).set({ status: "CANCELLED", updatedAt: /* @__PURE__ */ new Date() }).where(eq(events.id, id)).returning();
+        return cancelled;
+      }
+      // ===== POH (Project of Heart) Methods =====
+      async getUserPOHs(userId) {
+        return db.select().from(projectOfHearts).where(eq(projectOfHearts.userId, userId)).orderBy(asc(projectOfHearts.createdAt));
+      }
+      async getPOHById(pohId) {
+        const [poh] = await db.select().from(projectOfHearts).where(eq(projectOfHearts.id, pohId));
+        return poh;
+      }
+      async createPOH(data) {
+        const [newPOH] = await db.insert(projectOfHearts).values({
+          userId: data.userId,
+          title: data.title,
+          why: data.why,
+          category: data.category,
+          status: data.status,
+          startedAt: data.startedAt
+        }).returning();
+        return newPOH;
+      }
+      async updatePOH(pohId, updates) {
+        const [updated] = await db.update(projectOfHearts).set({ ...updates, updatedAt: /* @__PURE__ */ new Date() }).where(eq(projectOfHearts.id, pohId)).returning();
+        return updated;
+      }
+      async completePOH(pohId, data) {
+        await db.update(projectOfHearts).set({
+          status: data.status,
+          endedAt: data.endedAt,
+          closingReflection: data.closingReflection,
+          updatedAt: /* @__PURE__ */ new Date()
+        }).where(eq(projectOfHearts.id, pohId));
+      }
+      async promotePOHs(userId, today) {
+        const userPOHs = await this.getUserPOHs(userId);
+        const nextPOH = userPOHs.find((p) => p.status === "next");
+        const horizonPOH = userPOHs.find((p) => p.status === "horizon");
+        if (nextPOH) {
+          await db.update(projectOfHearts).set({ status: "active", startedAt: today, updatedAt: /* @__PURE__ */ new Date() }).where(eq(projectOfHearts.id, nextPOH.id));
+        }
+        if (horizonPOH) {
+          await db.update(projectOfHearts).set({ status: "next", updatedAt: /* @__PURE__ */ new Date() }).where(eq(projectOfHearts.id, horizonPOH.id));
+        }
+      }
+      async getPOHHistory(userId) {
+        return db.select().from(projectOfHearts).where(
+          and(
+            eq(projectOfHearts.userId, userId),
+            or(
+              eq(projectOfHearts.status, "completed"),
+              eq(projectOfHearts.status, "closed_early")
+            )
+          )
+        ).orderBy(desc(projectOfHearts.endedAt));
+      }
+      // POH Milestone methods
+      async getPOHMilestones(pohId) {
+        return db.select().from(pohMilestones).where(eq(pohMilestones.pohId, pohId)).orderBy(asc(pohMilestones.orderIndex));
+      }
+      async getPOHMilestoneById(milestoneId) {
+        const [milestone] = await db.select().from(pohMilestones).where(eq(pohMilestones.id, milestoneId));
+        return milestone;
+      }
+      async createPOHMilestone(data) {
+        const [milestone] = await db.insert(pohMilestones).values(data).returning();
+        return milestone;
+      }
+      async updatePOHMilestone(milestoneId, updates) {
+        const [updated] = await db.update(pohMilestones).set(updates).where(eq(pohMilestones.id, milestoneId)).returning();
+        return updated;
+      }
+      async achievePOHMilestone(milestoneId, achievedAt) {
+        const [updated] = await db.update(pohMilestones).set({ achieved: true, achievedAt }).where(eq(pohMilestones.id, milestoneId)).returning();
+        return updated;
+      }
+      // POH Action methods
+      async getPOHActions(pohId) {
+        return db.select().from(pohActions).where(eq(pohActions.pohId, pohId)).orderBy(asc(pohActions.orderIndex));
+      }
+      async replacePOHActions(pohId, actions) {
+        await db.delete(pohActions).where(eq(pohActions.pohId, pohId));
+        if (actions.length > 0) {
+          await db.insert(pohActions).values(actions.map((text2, index) => ({
+            pohId,
+            text: text2,
+            orderIndex: index
+          })));
+        }
+      }
+      // POH Rating methods
+      async getPOHRatingByDate(userId, localDate) {
+        const [rating] = await db.select().from(pohDailyRatings).where(
+          and(
+            eq(pohDailyRatings.userId, userId),
+            eq(pohDailyRatings.localDate, localDate)
+          )
+        );
+        return rating;
+      }
+      async createPOHRating(data) {
+        const [rating] = await db.insert(pohDailyRatings).values(data).returning();
+        return rating;
+      }
+      async updatePOHRating(ratingId, rating) {
+        const [updated] = await db.update(pohDailyRatings).set({ rating }).where(eq(pohDailyRatings.id, ratingId)).returning();
+        return updated;
+      }
+      // ===== NOTIFICATIONS =====
+      async createNotification(notification) {
+        const [newNotification] = await db.insert(notifications).values(notification).returning();
+        return newNotification;
+      }
+      async createNotifications(notifications2) {
+        if (notifications2.length === 0) return [];
+        const result = await db.insert(notifications).values(notifications2).returning();
+        return result;
+      }
+      async getNotificationsByEventId(eventId) {
+        return db.select().from(notifications).where(eq(notifications.relatedEventId, eventId));
+      }
+      async deleteNotificationsByEventId(eventId) {
+        await db.delete(notifications).where(eq(notifications.relatedEventId, eventId));
+      }
+      async getPendingNotifications() {
+        const now = /* @__PURE__ */ new Date();
+        return db.select().from(notifications).where(
+          and(
+            sql2`${notifications.scheduledAt} <= ${now}`,
+            eq(notifications.sent, false)
+          )
+        ).orderBy(asc(notifications.scheduledAt));
+      }
+      async getNotificationById(id) {
+        const [notification] = await db.select().from(notifications).where(eq(notifications.id, id));
+        return notification;
+      }
+      async markNotificationSent(id) {
+        await db.update(notifications).set({ sent: true, sentAt: /* @__PURE__ */ new Date() }).where(eq(notifications.id, id));
+      }
+      // ===== NOTIFICATION LOGS =====
+      async createNotificationLog(log2) {
+        const [newLog] = await db.insert(notificationLogs).values(log2).returning();
+        return newLog;
+      }
+      async createNotificationLogs(logs) {
+        if (logs.length === 0) return [];
+        const result = await db.insert(notificationLogs).values(logs).returning();
+        return result;
+      }
+      async getNotificationLogsByNotificationId(notificationId) {
+        return db.select().from(notificationLogs).where(eq(notificationLogs.notificationId, notificationId));
+      }
+      async hasNotificationBeenSent(notificationId) {
+        const [result] = await db.select({ count: count() }).from(notificationLogs).where(eq(notificationLogs.notificationId, notificationId));
+        return (result?.count ?? 0) > 0;
+      }
+      // ===== DEVICE TOKENS (for notifications) =====
+      async getDeviceTokensByUserIds(userIds) {
+        if (userIds.length === 0) return [];
+        return db.select({ userId: deviceTokens.userId, token: deviceTokens.token }).from(deviceTokens).where(inArray(deviceTokens.userId, userIds));
+      }
+      async deleteDeviceToken(token) {
+        await db.delete(deviceTokens).where(eq(deviceTokens.token, token));
+      }
+      // ===== ELIGIBLE USERS FOR NOTIFICATIONS (by program code + level) =====
+      async getEligibleUserIdsForNotification(programCode, programLevel) {
+        const result = await db.select({ userId: userPrograms.userId }).from(userPrograms).innerJoin(programs, eq(userPrograms.programId, programs.id)).where(
+          and(
+            eq(programs.code, programCode),
+            sql2`${programs.level} >= ${programLevel}`,
+            eq(programs.isActive, true)
+          )
+        );
+        return result.map((r) => r.userId);
+      }
+      // ===== USER BADGES =====
+      async getUserBadges(userId) {
+        return db.select().from(userBadges).where(eq(userBadges.userId, userId)).orderBy(desc(userBadges.earnedAt));
+      }
+      async getUserBadgeKeys(userId) {
+        const badges = await db.select({ badgeKey: userBadges.badgeKey }).from(userBadges).where(eq(userBadges.userId, userId));
+        return badges.map((b) => b.badgeKey);
+      }
+      async awardBadge(userId, badgeKey, metadata) {
+        try {
+          const [badge] = await db.insert(userBadges).values({ userId, badgeKey, metadata: metadata || null }).onConflictDoNothing().returning();
+          return badge || null;
+        } catch {
+          return null;
+        }
+      }
+      async hasBadge(userId, badgeKey) {
+        const [result] = await db.select({ count: count() }).from(userBadges).where(and(
+          eq(userBadges.userId, userId),
+          eq(userBadges.badgeKey, badgeKey)
+        ));
+        return (result?.count ?? 0) > 0;
+      }
+      async getAllStreakHistory(userId) {
+        const records = await db.select({ activityDate: userStreaks.activityDate }).from(userStreaks).where(eq(userStreaks.userId, userId)).orderBy(asc(userStreaks.activityDate));
+        return records.map((r) => r.activityDate);
+      }
+      async getBadgeMetadata(userId, badgeKey) {
+        const [badge] = await db.select({ metadata: userBadges.metadata }).from(userBadges).where(and(
+          eq(userBadges.userId, userId),
+          eq(userBadges.badgeKey, badgeKey)
+        ));
+        return badge?.metadata;
+      }
+      async updateBadgeMetadata(userId, badgeKey, metadata) {
+        await db.update(userBadges).set({ metadata }).where(and(
+          eq(userBadges.userId, userId),
+          eq(userBadges.badgeKey, badgeKey)
+        ));
+      }
+      async getUnnotifiedBadgeKeys(userId) {
+        const badges = await db.select({ badgeKey: userBadges.badgeKey }).from(userBadges).where(and(
+          eq(userBadges.userId, userId),
+          eq(userBadges.notified, false)
+        ));
+        return badges.map((b) => b.badgeKey);
+      }
+      async markBadgesAsNotified(userId, badgeKeys) {
+        if (badgeKeys.length === 0) return;
+        await db.update(userBadges).set({ notified: true }).where(and(
+          eq(userBadges.userId, userId),
+          inArray(userBadges.badgeKey, badgeKeys)
+        ));
+      }
+      // ===== USER IN-APP NOTIFICATIONS =====
+      async getUserNotifications(userId) {
+        const results = await db.select({
+          id: notifications.id,
+          title: notifications.title,
+          body: notifications.body,
+          type: notifications.type,
+          relatedEventId: notifications.relatedEventId,
+          createdAt: notificationLogs.createdAt
+        }).from(notificationLogs).innerJoin(
+          notifications,
+          eq(notificationLogs.notificationId, notifications.id)
+        ).where(
+          and(
+            eq(notificationLogs.userId, userId),
+            // Include both sent and delivered statuses
+            sql2`${notificationLogs.status} IN ('sent', 'delivered')`
+          )
+        ).orderBy(desc(notificationLogs.createdAt));
+        const seen = /* @__PURE__ */ new Set();
+        return results.filter((r) => {
+          if (seen.has(r.id)) return false;
+          seen.add(r.id);
+          return true;
+        }).map((r) => ({
+          ...r,
+          createdAt: r.createdAt.toISOString()
+        }));
+      }
+      // ===== DR. M QUESTIONS =====
+      async getDrmQuestionByUserMonth(userId, monthYear) {
+        const [question] = await db.select().from(drmQuestions).where(
+          and(
+            eq(drmQuestions.userId, userId),
+            eq(drmQuestions.monthYear, monthYear)
+          )
+        );
+        return question;
+      }
+      async createDrmQuestion(data) {
+        const [question] = await db.insert(drmQuestions).values({
+          userId: data.userId,
+          questionText: data.questionText,
+          monthYear: data.monthYear
+        }).returning();
+        return question;
+      }
+      async getUserDrmQuestions(userId) {
+        return db.select().from(drmQuestions).where(eq(drmQuestions.userId, userId)).orderBy(desc(drmQuestions.askedAt));
+      }
+      async getDrmQuestionById(id) {
+        const [question] = await db.select().from(drmQuestions).where(eq(drmQuestions.id, id));
+        return question;
+      }
+      async getAllDrmQuestions() {
+        const results = await db.select({
+          id: drmQuestions.id,
+          userId: drmQuestions.userId,
+          questionText: drmQuestions.questionText,
+          askedAt: drmQuestions.askedAt,
+          monthYear: drmQuestions.monthYear,
+          status: drmQuestions.status,
+          audioR2Key: drmQuestions.audioR2Key,
+          answeredAt: drmQuestions.answeredAt,
+          userName: users.name
+        }).from(drmQuestions).innerJoin(users, eq(drmQuestions.userId, users.id)).orderBy(desc(drmQuestions.askedAt));
+        return results;
+      }
+      async updateDrmQuestionAnswer(id, audioR2Key) {
+        const [updated] = await db.update(drmQuestions).set({
+          status: "ANSWERED",
+          audioR2Key,
+          answeredAt: /* @__PURE__ */ new Date()
+        }).where(eq(drmQuestions.id, id)).returning();
+        return updated;
+      }
+    };
+    storage = new DbStorage();
+  }
+});
+
+// server/services/badgeService.ts
+var badgeService_exports = {};
+__export(badgeService_exports, {
+  awardAdminBadge: () => awardAdminBadge,
+  evaluateBadges: () => evaluateBadges
+});
+function analyzeStreakHistory(dates) {
+  if (dates.length === 0) return { cycles: [], currentStreak: 0, hadBreak: false };
+  const sortedDates = [...dates].sort();
+  const cycles = [];
+  let currentCycleStart = sortedDates[0];
+  let currentCycleLength = 1;
+  let hadBreak = false;
+  for (let i = 1; i < sortedDates.length; i++) {
+    const prevDate = /* @__PURE__ */ new Date(sortedDates[i - 1] + "T12:00:00");
+    const currDate = /* @__PURE__ */ new Date(sortedDates[i] + "T12:00:00");
+    const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / (1e3 * 60 * 60 * 24));
+    if (diffDays === 1) {
+      currentCycleLength++;
+    } else {
+      cycles.push({
+        start: currentCycleStart,
+        end: sortedDates[i - 1],
+        length: currentCycleLength
+      });
+      hadBreak = true;
+      currentCycleStart = sortedDates[i];
+      currentCycleLength = 1;
+    }
+  }
+  cycles.push({
+    start: currentCycleStart,
+    end: sortedDates[sortedDates.length - 1],
+    length: currentCycleLength
+  });
+  const currentStreak = cycles.length > 0 ? cycles[cycles.length - 1].length : 0;
+  return { cycles, currentStreak, hadBreak };
+}
+async function evaluateBadges(userId, todayDate) {
+  const earnedBadgeKeys = await storage.getUserBadgeKeys(userId);
+  const earnedSet = new Set(earnedBadgeKeys);
+  const currentStreak = await storage.getCurrentStreak(userId, todayDate);
+  if (!earnedSet.has("day_zero")) {
+    await storage.awardBadge(userId, "day_zero");
+  }
+  for (const { key, threshold } of CORE_BADGE_THRESHOLDS) {
+    if (!earnedSet.has(key) && currentStreak >= threshold) {
+      await storage.awardBadge(userId, key);
+    }
+  }
+  const allDates = await storage.getAllStreakHistory(userId);
+  const { cycles, hadBreak } = analyzeStreakHistory(allDates);
+  if (!earnedSet.has("resilient") && hadBreak) {
+    const hasStreakAfterBreak = cycles.length >= 2;
+    if (hasStreakAfterBreak) {
+      const lastCycle = cycles[cycles.length - 1];
+      if (lastCycle.length >= 14) {
+        await storage.awardBadge(userId, "resilient");
+      }
+    }
+  }
+  if (!earnedSet.has("relentless")) {
+    const completedThirtyDayStreaks = cycles.filter((c) => c.length >= 30).length;
+    let metadata = await storage.getBadgeMetadata(userId, "relentless_progress");
+    if (!metadata) {
+      metadata = { count: 0 };
+    }
+    if (completedThirtyDayStreaks >= 3) {
+      await storage.awardBadge(userId, "relentless", { cyclesCompleted: completedThirtyDayStreaks });
+    }
+  }
+  const unnotifiedBadges = await storage.getUnnotifiedBadgeKeys(userId);
+  if (unnotifiedBadges.length > 0) {
+    await storage.markBadgesAsNotified(userId, unnotifiedBadges);
+  }
+  return unnotifiedBadges;
+}
+async function awardAdminBadge(userId, badgeKey) {
+  const hasBadge = await storage.hasBadge(userId, badgeKey);
+  if (hasBadge) {
+    return { success: false, alreadyEarned: true };
+  }
+  const awarded = await storage.awardBadge(userId, badgeKey);
+  return { success: !!awarded, alreadyEarned: false };
+}
+var CORE_BADGE_THRESHOLDS;
+var init_badgeService = __esm({
+  "server/services/badgeService.ts"() {
+    "use strict";
+    init_storage();
+    CORE_BADGE_THRESHOLDS = [
+      { key: "spark", threshold: 3 },
+      { key: "pulse", threshold: 7 },
+      { key: "anchor", threshold: 30 },
+      { key: "aligned", threshold: 90 },
+      { key: "disciplined", threshold: 100 },
+      { key: "unstoppable", threshold: 365 },
+      { key: "integrated", threshold: 1e3 },
+      { key: "titan", threshold: 3e3 }
+    ];
+  }
+});
+
+// server/index.ts
+import express2 from "express";
+import path4 from "path";
+import fs3 from "fs";
+
+// server/routes.ts
+init_storage();
+init_schema();
+import { createServer } from "http";
+
+// server/lib/firebaseAdmin.ts
+import admin from "firebase-admin";
+var fcmInstance = null;
+function initializeFirebaseAdmin() {
+  if (admin.apps.length === 0) {
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!serviceAccountJson) {
+      console.warn(
+        "FIREBASE_SERVICE_ACCOUNT not set. Push notifications will be disabled."
+      );
+      return null;
+    }
+    try {
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      console.log(
+        "\u{1F525} Firebase Admin initialized for:",
+        serviceAccount.project_id
+      );
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+      });
+      fcmInstance = admin.messaging();
+      console.log("Firebase Admin SDK initialized successfully");
+    } catch (error) {
+      console.error("Failed to initialize Firebase Admin:", error);
+      return null;
+    }
+  } else {
+    fcmInstance = admin.messaging();
+  }
+  return fcmInstance;
+}
+function getFCM() {
+  if (!fcmInstance) {
+    return initializeFirebaseAdmin();
+  }
+  return fcmInstance;
+}
+async function sendPushNotification(tokens, title, body, data) {
+  const fcm = getFCM();
+  if (!fcm) {
+    console.error("FCM not initialized");
     return {
-      course,
-      modules: modulesWithLessons.filter((m) => m !== null)
+      successCount: 0,
+      failureCount: tokens.length,
+      failedTokens: tokens
     };
   }
-  async isLessonInMappedCourse(lessonId, featureCode) {
-    const feature = await this.getFrontendFeatureByCode(featureCode);
-    if (!feature) return false;
-    const mappings = await this.getFeatureCourseMappings(feature.id);
-    if (mappings.length === 0) return false;
-    const courseId = mappings[0].courseId;
-    const modules = await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId));
-    const moduleIds = modules.map((m) => m.id);
-    if (moduleIds.length === 0) return false;
-    const [lesson] = await db.select().from(cmsLessons).where(and(eq(cmsLessons.id, lessonId), inArray(cmsLessons.moduleId, moduleIds)));
-    return !!lesson;
+  if (tokens.length === 0) {
+    return { successCount: 0, failureCount: 0, failedTokens: [] };
   }
-  async doesLessonHaveAudio(lessonId) {
-    const audioFiles = await db.select().from(cmsLessonFiles).where(and(eq(cmsLessonFiles.lessonId, lessonId), eq(cmsLessonFiles.fileType, "audio")));
-    return audioFiles.length > 0;
-  }
-  // ===== SESSION BANNERS =====
-  async getAllSessionBanners() {
-    return await db.select().from(sessionBanners).orderBy(desc(sessionBanners.startAt));
-  }
-  async getSessionBannerById(id) {
-    const [banner] = await db.select().from(sessionBanners).where(eq(sessionBanners.id, id));
-    return banner;
-  }
-  async createSessionBanner(banner) {
-    const [newBanner] = await db.insert(sessionBanners).values(banner).returning();
-    return newBanner;
-  }
-  async updateSessionBanner(id, banner) {
-    const [updated] = await db.update(sessionBanners).set({ ...banner, updatedAt: /* @__PURE__ */ new Date() }).where(eq(sessionBanners.id, id)).returning();
-    return updated;
-  }
-  async deleteSessionBanner(id) {
-    const result = await db.delete(sessionBanners).where(eq(sessionBanners.id, id)).returning();
-    return result.length > 0;
-  }
-  async getActiveBanner() {
-    const now = /* @__PURE__ */ new Date();
-    const [active] = await db.select().from(sessionBanners).where(
-      and(
-        sql2`${sessionBanners.startAt} <= ${now}`,
-        sql2`${sessionBanners.endAt} > ${now}`
-      )
-    ).orderBy(desc(sessionBanners.startAt)).limit(1);
-    return active;
-  }
-  async getNextScheduledBanner() {
-    const now = /* @__PURE__ */ new Date();
-    const [scheduled] = await db.select().from(sessionBanners).where(sql2`${sessionBanners.startAt} > ${now}`).orderBy(asc(sessionBanners.startAt)).limit(1);
-    return scheduled;
-  }
-  async getLastExpiredBanner() {
-    const now = /* @__PURE__ */ new Date();
-    const [expired] = await db.select().from(sessionBanners).where(sql2`${sessionBanners.endAt} <= ${now}`).orderBy(desc(sessionBanners.endAt)).limit(1);
-    return expired;
-  }
-  // ===== USER STREAKS =====
-  async markUserActivityDate(userId, activityDate) {
-    const [existing] = await db.select().from(userStreaks).where(and(eq(userStreaks.userId, userId), eq(userStreaks.activityDate, activityDate)));
-    if (existing) {
-      return existing;
+  const message = {
+    tokens,
+    notification: { title, body },
+    data,
+    webpush: {
+      notification: {
+        title,
+        body,
+        icon: "/icon-192.png"
+      },
+      data
+      // Include data payload for service worker access
     }
-    const [newStreak] = await db.insert(userStreaks).values({ userId, activityDate }).returning();
-    return newStreak;
-  }
-  async getUserStreakDates(userId, dates) {
-    if (dates.length === 0) return [];
-    const records = await db.select({ activityDate: userStreaks.activityDate }).from(userStreaks).where(and(
-      eq(userStreaks.userId, userId),
-      inArray(userStreaks.activityDate, dates)
-    ));
-    return records.map((r) => r.activityDate);
-  }
-  // ===== ACTIVITY LOGS (AI INSIGHTS) =====
-  async logActivity(userId, lessonId, lessonName, featureType, activityDate) {
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(activityDate)) {
-      activityDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-    }
-    const serverDate = /* @__PURE__ */ new Date();
-    const inputDate = /* @__PURE__ */ new Date(activityDate + "T12:00:00");
-    const diffDays = Math.abs((serverDate.getTime() - inputDate.getTime()) / (1e3 * 60 * 60 * 24));
-    if (diffDays > 1) {
-      activityDate = serverDate.toISOString().split("T")[0];
-    }
-    const [existing] = await db.select().from(activityLogs).where(and(
-      eq(activityLogs.userId, userId),
-      eq(activityLogs.lessonId, lessonId),
-      eq(activityLogs.featureType, featureType),
-      eq(activityLogs.activityDate, activityDate)
-    ));
-    if (existing) {
-      return { logged: false, activity: existing };
-    }
-    const [newLog] = await db.insert(activityLogs).values({ userId, lessonId, lessonName, featureType, activityDate }).returning();
-    return { logged: true, activity: newLog };
-  }
-  async getMonthlyStats(userId, month) {
-    const monthRegex = /^\d{4}-\d{2}$/;
-    if (!monthRegex.test(month)) {
-      month = (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
-    }
-    const now = /* @__PURE__ */ new Date();
-    const inputDate = /* @__PURE__ */ new Date(month + "-01");
-    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-    if (inputDate < sixMonthsAgo) {
-      month = sixMonthsAgo.toISOString().slice(0, 7);
-    }
-    const startDate = month + "-01";
-    const endDate = month + "-31";
-    const activities = await db.select({
-      lessonId: activityLogs.lessonId,
-      lessonName: activityLogs.lessonName,
-      featureType: activityLogs.featureType,
-      count: count(activityLogs.id)
-    }).from(activityLogs).where(and(
-      eq(activityLogs.userId, userId),
-      sql2`${activityLogs.activityDate} >= ${startDate}`,
-      sql2`${activityLogs.activityDate} <= ${endDate}`
-    )).groupBy(activityLogs.lessonId, activityLogs.lessonName, activityLogs.featureType);
-    const result = {
-      PROCESS: [],
-      BREATH: [],
-      CHECKLIST: [],
-      maxCount: 0
+  };
+  try {
+    const response = await fcm.sendEachForMulticast(message);
+    const failedTokens = [];
+    response.responses.forEach((resp, idx) => {
+      if (!resp.success) {
+        failedTokens.push(tokens[idx]);
+        console.error(`Failed to send to token ${idx}:`, resp.error);
+      }
+    });
+    return {
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+      failedTokens
     };
-    for (const activity of activities) {
-      const item = {
-        lessonId: activity.lessonId,
-        lessonName: activity.lessonName,
-        count: Number(activity.count)
-      };
-      if (item.count > result.maxCount) {
-        result.maxCount = item.count;
-      }
-      if (activity.featureType === "PROCESS") {
-        result.PROCESS.push(item);
-      } else if (activity.featureType === "BREATH") {
-        result.BREATH.push(item);
-      } else if (activity.featureType === "CHECKLIST") {
-        result.CHECKLIST.push(item);
-      }
-    }
-    result.PROCESS.sort((a, b) => b.count - a.count);
-    result.BREATH.sort((a, b) => b.count - a.count);
-    result.CHECKLIST.sort((a, b) => b.count - a.count);
-    return result;
+  } catch (error) {
+    console.error("Error sending multicast notification:", error);
+    return {
+      successCount: 0,
+      failureCount: tokens.length,
+      failedTokens: tokens
+    };
   }
-};
-var storage = new DbStorage();
+}
 
 // server/routes.ts
 import { z as z2 } from "zod";
@@ -986,18 +1969,12 @@ function getR2Client() {
   }
   return r2Client;
 }
-function sanitizeFileName(filename) {
-  return filename.toLowerCase().replace(/[^a-z0-9.-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+function generateCourseThumnailKey(programCode, courseId) {
+  return `programs/${programCode}/courses/${courseId}/thumbnail/course.png`;
 }
-function generateCourseThumnailKey(courseId, filename) {
-  const timestamp2 = Date.now();
-  const safeName = sanitizeFileName(filename);
-  return `courses/${courseId}/thumbnail/${timestamp2}-${safeName}`;
-}
-function generateLessonFileKey(lessonId, fileType, filename) {
-  const timestamp2 = Date.now();
-  const safeName = sanitizeFileName(filename);
-  return `lessons/${lessonId}/${fileType}/${timestamp2}-${safeName}`;
+function generateLessonFileKey(programCode, courseId, moduleId, lessonId, fileType) {
+  const extension = fileType === "video" ? "mp4" : fileType === "audio" ? "mp3" : "pdf";
+  return `programs/${programCode}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/${fileType}/lesson.${extension}`;
 }
 async function getSignedPutUrl(key, contentType, ttlSeconds) {
   try {
@@ -1103,10 +2080,39 @@ async function downloadR2Object(key) {
     };
   }
 }
+async function uploadBufferToR2(buffer, key, contentType) {
+  try {
+    const credCheck = checkR2Credentials();
+    if (!credCheck.valid) {
+      return { success: false, error: credCheck.error };
+    }
+    const client = getR2Client();
+    const command = new PutObjectCommand({
+      Bucket: r2Config.bucketName,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType
+    });
+    await client.send(command);
+    const publicUrl = r2Config.publicBaseUrl ? `${r2Config.publicBaseUrl}/${key}` : `https://${r2Config.accountId}.r2.cloudflarestorage.com/${r2Config.bucketName}/${key}`;
+    return {
+      success: true,
+      url: publicUrl,
+      key
+    };
+  } catch (error) {
+    console.error("R2 upload error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred"
+    };
+  }
+}
 
 // server/routes.ts
+init_db();
 import PDFParser from "pdf2json";
-import { eq as eq2, asc as asc2, and as and2, sql as sql3 } from "drizzle-orm";
+import { eq as eq2, asc as asc2, and as and2, or as or2, sql as sql3, count as count2, countDistinct, gte, desc as desc2, lt } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt2 from "jsonwebtoken";
 
@@ -1144,7 +2150,13 @@ async function extractTextWithPdf2json(buffer) {
         const textsByY = /* @__PURE__ */ new Map();
         (page.Texts || []).forEach((textItem) => {
           const y = Math.round(textItem.y * 10);
-          const text2 = textItem.R?.map((r) => decodeURIComponent(r.T)).join("") || "";
+          const text2 = textItem.R?.map((r) => {
+            try {
+              return decodeURIComponent(r.T);
+            } catch {
+              return r.T || "";
+            }
+          }).join("") || "";
           if (text2.trim()) {
             if (!textsByY.has(y)) {
               textsByY.set(y, []);
@@ -1508,6 +2520,79 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch streak data" });
     }
   });
+  app2.get("/api/v1/consistency/month", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const yearParam = req.query.year;
+      const monthParam = req.query.month;
+      if (!yearParam || !monthParam) {
+        return res.status(400).json({ error: "year and month query parameters are required" });
+      }
+      const year = parseInt(yearParam, 10);
+      const month = parseInt(monthParam, 10);
+      if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+        return res.status(400).json({ error: "Invalid year or month" });
+      }
+      const days = await storage.getConsistencyMonth(req.user.sub, year, month);
+      res.json({ year, month, days });
+    } catch (error) {
+      console.error("Error fetching consistency month:", error);
+      res.status(500).json({ error: "Failed to fetch consistency data" });
+    }
+  });
+  app2.get("/api/v1/consistency/range", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const todayDate = req.query.today;
+      if (!todayDate || !/^\d{4}-\d{2}-\d{2}$/.test(todayDate)) {
+        return res.status(400).json({ error: "today query parameter required (YYYY-MM-DD)" });
+      }
+      const currentMonth = todayDate.slice(0, 7);
+      const rangeData = await storage.getConsistencyRange(req.user.sub);
+      const currentStreak = await storage.getCurrentStreak(req.user.sub, todayDate);
+      res.json({
+        startMonth: rangeData.startMonth,
+        currentMonth,
+        currentStreak
+      });
+    } catch (error) {
+      console.error("Error fetching consistency range:", error);
+      res.status(500).json({ error: "Failed to fetch consistency range" });
+    }
+  });
+  app2.get("/api/v1/badges", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const badges = await storage.getUserBadges(req.user.sub);
+      res.json({ badges });
+    } catch (error) {
+      console.error("Error fetching badges:", error);
+      res.status(500).json({ error: "Failed to fetch badges" });
+    }
+  });
+  app2.post("/api/v1/badges/evaluate", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const { evaluateBadges: evaluateBadges2 } = await Promise.resolve().then(() => (init_badgeService(), badgeService_exports));
+      const todayDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      const newlyAwardedBadges = await evaluateBadges2(req.user.sub, todayDate);
+      res.json({
+        newBadges: newlyAwardedBadges,
+        hasNewBadges: newlyAwardedBadges.length > 0
+      });
+    } catch (error) {
+      console.error("Error evaluating badges:", error);
+      res.status(500).json({ error: "Failed to evaluate badges" });
+    }
+  });
   app2.post("/api/v1/activity/log", authenticateJWT, async (req, res) => {
     try {
       if (!req.user) {
@@ -1520,8 +2605,8 @@ async function registerRoutes(app2) {
       if (!lessonName || typeof lessonName !== "string") {
         return res.status(400).json({ error: "lessonName is required" });
       }
-      if (!featureType || !["PROCESS", "BREATH", "CHECKLIST"].includes(featureType)) {
-        return res.status(400).json({ error: "featureType must be PROCESS, BREATH, or CHECKLIST" });
+      if (!featureType || !["PROCESS", "PLAYLIST"].includes(featureType)) {
+        return res.status(400).json({ error: "featureType must be PROCESS or PLAYLIST" });
       }
       const dateToUse = activityDate || (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
       const result = await storage.logActivity(
@@ -1545,12 +2630,102 @@ async function registerRoutes(app2) {
       const month = req.query.month || (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
       console.log(`[monthly-stats] Fetching stats for userId=${req.user.sub}, month=${month}`);
       const stats = await storage.getMonthlyStats(req.user.sub, month);
-      console.log(`[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, BREATH=${stats.BREATH.length}, CHECKLIST=${stats.CHECKLIST.length}`);
+      console.log(`[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, PLAYLIST=${stats.PLAYLIST.length}`);
       res.set("Cache-Control", "no-store");
       res.json(stats);
     } catch (error) {
       console.error("Error fetching monthly stats:", error);
       res.status(500).json({ error: "Failed to fetch monthly stats" });
+    }
+  });
+  app2.get("/api/v1/rewiring-beliefs", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const beliefs = await storage.getRewiringBeliefsByUserId(req.user.sub);
+      res.json(beliefs);
+    } catch (error) {
+      console.error("Error fetching rewiring beliefs:", error);
+      res.status(500).json({ error: "Failed to fetch beliefs" });
+    }
+  });
+  app2.post("/api/v1/rewiring-beliefs", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const { limitingBelief, upliftingBelief } = req.body;
+      if (!limitingBelief || typeof limitingBelief !== "string" || !limitingBelief.trim()) {
+        return res.status(400).json({ error: "Limiting belief is required" });
+      }
+      if (!upliftingBelief || typeof upliftingBelief !== "string" || !upliftingBelief.trim()) {
+        return res.status(400).json({ error: "Uplifting belief is required" });
+      }
+      const belief = await storage.createRewiringBelief({
+        userId: req.user.sub,
+        limitingBelief: limitingBelief.trim(),
+        upliftingBelief: upliftingBelief.trim()
+      });
+      res.status(201).json(belief);
+    } catch (error) {
+      console.error("Error creating rewiring belief:", error);
+      res.status(500).json({ error: "Failed to create belief" });
+    }
+  });
+  app2.put("/api/v1/rewiring-beliefs/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid belief ID" });
+      }
+      const { limitingBelief, upliftingBelief } = req.body;
+      const updates = {};
+      if (limitingBelief !== void 0) {
+        if (typeof limitingBelief !== "string" || !limitingBelief.trim()) {
+          return res.status(400).json({ error: "Limiting belief cannot be empty" });
+        }
+        updates.limitingBelief = limitingBelief.trim();
+      }
+      if (upliftingBelief !== void 0) {
+        if (typeof upliftingBelief !== "string" || !upliftingBelief.trim()) {
+          return res.status(400).json({ error: "Uplifting belief cannot be empty" });
+        }
+        updates.upliftingBelief = upliftingBelief.trim();
+      }
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: "No updates provided" });
+      }
+      const updated = await storage.updateRewiringBelief(id, req.user.sub, updates);
+      if (!updated) {
+        return res.status(404).json({ error: "Belief not found or not authorized" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating rewiring belief:", error);
+      res.status(500).json({ error: "Failed to update belief" });
+    }
+  });
+  app2.delete("/api/v1/rewiring-beliefs/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid belief ID" });
+      }
+      const success = await storage.deleteRewiringBelief(id, req.user.sub);
+      if (!success) {
+        return res.status(404).json({ error: "Belief not found or not authorized" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting rewiring belief:", error);
+      res.status(500).json({ error: "Failed to delete belief" });
     }
   });
   app2.get("/api/admin/sessions", requireAdmin, async (req, res) => {
@@ -1607,6 +2782,127 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Error deleting session:", error);
       res.status(500).json({ error: "Failed to delete session" });
+    }
+  });
+  app2.get("/admin/v1/dashboard", requireAdmin, async (req, res) => {
+    try {
+      const today = /* @__PURE__ */ new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split("T")[0];
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const sevenDaysLater = new Date(today);
+      sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+      const twentyFourHoursAgo = /* @__PURE__ */ new Date();
+      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+      const [
+        totalUsersResult,
+        activeTodayResult,
+        practisedTodayResult,
+        badgesEarnedTodayResult
+      ] = await Promise.all([
+        // Total registered users
+        db.select({ count: count2() }).from(users).where(eq2(users.role, "USER")),
+        // Users active today (lastActivity = today)
+        db.select({ count: count2() }).from(users).where(and2(eq2(users.role, "USER"), gte(users.lastActivity, today))),
+        // Users who practiced today (PROCESS or PLAYLIST feature types)
+        db.select({ count: countDistinct(activityLogs.userId) }).from(activityLogs).where(and2(
+          eq2(activityLogs.activityDate, todayStr),
+          or2(
+            eq2(activityLogs.featureType, "PROCESS"),
+            eq2(activityLogs.featureType, "PLAYLIST")
+          )
+        )),
+        // Badges earned today
+        db.select({ count: count2() }).from(userBadges).where(gte(userBadges.earnedAt, today))
+      ]);
+      const [eventsToday, upcomingEvents] = await Promise.all([
+        // Events happening today
+        db.select().from(events).where(and2(
+          gte(events.startDatetime, today),
+          lt(events.startDatetime, tomorrow)
+        )).orderBy(asc2(events.startDatetime)),
+        // Events in next 7 days (excluding today)
+        db.select().from(events).where(and2(
+          gte(events.startDatetime, tomorrow),
+          lt(events.startDatetime, sevenDaysLater)
+        )).orderBy(asc2(events.startDatetime))
+      ]);
+      const [failedNotificationsResult, usersWithDeviceTokens, totalUserCount] = await Promise.all([
+        // Failed notifications in last 24 hours
+        db.select({ count: count2() }).from(notificationLogs).where(and2(
+          eq2(notificationLogs.status, "failed"),
+          gte(notificationLogs.createdAt, twentyFourHoursAgo)
+        )),
+        // Count of unique users with device tokens
+        db.select({ count: countDistinct(deviceTokens.userId) }).from(deviceTokens),
+        // Total users
+        db.select({ count: count2() }).from(users).where(eq2(users.role, "USER"))
+      ]);
+      const usersWithNotificationsDisabled = (totalUserCount[0]?.count ?? 0) - (usersWithDeviceTokens[0]?.count ?? 0);
+      const [communityPracticesResult] = await Promise.all([
+        db.select({ count: count2() }).from(communitySessions)
+      ]);
+      const [totalCoursesResult, publishedCoursesResult, lastUpdatedCourseResult] = await Promise.all([
+        // Total courses
+        db.select({ count: count2() }).from(cmsCourses),
+        // Published courses
+        db.select({ count: count2() }).from(cmsCourses).where(eq2(cmsCourses.isPublished, true)),
+        // Last updated course
+        db.select({
+          id: cmsCourses.id,
+          title: cmsCourses.title,
+          updatedAt: cmsCourses.updatedAt
+        }).from(cmsCourses).orderBy(desc2(cmsCourses.updatedAt)).limit(1)
+      ]);
+      const getEventStatus = (event) => {
+        const now = /* @__PURE__ */ new Date();
+        if (now < event.startDatetime) return "upcoming";
+        if (now >= event.startDatetime && now <= event.endDatetime) return "live";
+        return "completed";
+      };
+      res.json({
+        kpis: {
+          totalUsers: totalUsersResult[0]?.count ?? 0,
+          activeToday: activeTodayResult[0]?.count ?? 0,
+          practisedToday: practisedTodayResult[0]?.count ?? 0,
+          badgesEarnedToday: badgesEarnedTodayResult[0]?.count ?? 0
+        },
+        events: {
+          today: eventsToday.map((e) => ({
+            id: e.id,
+            title: e.title,
+            startDatetime: e.startDatetime,
+            endDatetime: e.endDatetime,
+            status: getEventStatus(e)
+          })),
+          upcoming: upcomingEvents.map((e) => ({
+            id: e.id,
+            title: e.title,
+            startDatetime: e.startDatetime,
+            endDatetime: e.endDatetime,
+            status: getEventStatus(e)
+          }))
+        },
+        notifications: {
+          failedLast24h: failedNotificationsResult[0]?.count ?? 0,
+          usersDisabled: usersWithNotificationsDisabled
+        },
+        communityPractices: {
+          total: communityPracticesResult[0]?.count ?? 0
+        },
+        cmsHealth: {
+          totalCourses: totalCoursesResult[0]?.count ?? 0,
+          publishedCourses: publishedCoursesResult[0]?.count ?? 0,
+          lastUpdatedCourse: lastUpdatedCourseResult[0] ? {
+            title: lastUpdatedCourseResult[0].title,
+            updatedAt: lastUpdatedCourseResult[0].updatedAt
+          } : null
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
   });
   app2.get("/admin/v1/students", requireAdmin, async (req, res) => {
@@ -1718,6 +3014,41 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Error deleting student:", error);
       res.status(500).json({ error: "Failed to delete student" });
+    }
+  });
+  app2.get("/admin/v1/students/:id/badges", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const badges = await storage.getUserBadges(id);
+      res.json({ badges });
+    } catch (error) {
+      console.error("Error fetching student badges:", error);
+      res.status(500).json({ error: "Failed to fetch badges" });
+    }
+  });
+  app2.post("/admin/v1/students/:id/badges", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { badgeKey } = req.body;
+      if (!badgeKey || !["ambassador", "hall_of_fame"].includes(badgeKey)) {
+        return res.status(400).json({ error: "badgeKey must be 'ambassador' or 'hall_of_fame'" });
+      }
+      const student = await storage.getStudentById(id);
+      if (!student) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+      const { awardAdminBadge: awardAdminBadge2 } = await Promise.resolve().then(() => (init_badgeService(), badgeService_exports));
+      const result = await awardAdminBadge2(id, badgeKey);
+      if (result.alreadyEarned) {
+        return res.status(409).json({ error: "Badge already earned" });
+      }
+      if (!result.success) {
+        return res.status(500).json({ error: "Failed to award badge" });
+      }
+      res.json({ message: "Badge awarded successfully", badgeKey });
+    } catch (error) {
+      console.error("Error granting badge:", error);
+      res.status(500).json({ error: "Failed to grant badge" });
     }
   });
   app2.get("/api/admin/students/sample-csv", requireAdmin, (req, res) => {
@@ -1851,12 +3182,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app2.get("/admin/v1/admins/:id", requireSuperAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const admin = await storage.getAdminById(id);
-      if (!admin) {
+      const admin2 = await storage.getAdminById(id);
+      if (!admin2) {
         res.status(404).json({ error: "Admin not found" });
         return;
       }
-      res.json(admin);
+      res.json(admin2);
     } catch (error) {
       console.error("Error fetching admin:", error);
       res.status(500).json({ error: "Failed to fetch admin" });
@@ -1876,7 +3207,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(400).json({ error: "Email already registered" });
       }
       const passwordHash = await bcrypt.hash(password || "Admin@123", 10);
-      const admin = await storage.createAdmin({
+      const admin2 = await storage.createAdmin({
         name,
         email,
         phone: phone || null,
@@ -1884,7 +3215,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         role,
         status: status || "active"
       });
-      res.status(201).json({ message: "Admin created", adminId: admin.id });
+      res.status(201).json({ message: "Admin created", adminId: admin2.id });
     } catch (error) {
       console.error("Error creating admin:", error);
       res.status(500).json({ error: "Failed to create admin" });
@@ -1897,13 +3228,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (role && !["SUPER_ADMIN", "COACH"].includes(role)) {
         return res.status(400).json({ error: "Role must be SUPER_ADMIN or COACH" });
       }
-      const admin = await storage.updateAdmin(id, {
+      const admin2 = await storage.updateAdmin(id, {
         name,
         email,
         role,
         status
       });
-      if (!admin) {
+      if (!admin2) {
         res.status(404).json({ error: "Admin not found" });
         return;
       }
@@ -1926,8 +3257,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         if (req.user && req.user.sub === id) {
           return res.status(400).json({ error: "Cannot change your own status" });
         }
-        const admin = await storage.updateAdminStatus(id, status);
-        if (!admin) {
+        const admin2 = await storage.updateAdminStatus(id, status);
+        if (!admin2) {
           res.status(404).json({ error: "Admin not found" });
           return;
         }
@@ -2192,6 +3523,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         res.status(404).json({ error: "Course not found" });
         return;
       }
+      let programCode = null;
+      if (course.programId) {
+        const [program] = await db.select({ code: programs.code }).from(programs).where(eq2(programs.id, course.programId));
+        programCode = program?.code || null;
+      }
       let thumbnailSignedUrl = null;
       if (course.thumbnailKey) {
         const signedResult = await getSignedGetUrl(course.thumbnailKey);
@@ -2213,7 +3549,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return { ...module, folders, lessons: lessonsWithFiles };
         })
       );
-      res.json({ ...course, thumbnailSignedUrl, modules: modulesWithContent });
+      res.json({ ...course, programCode, thumbnailSignedUrl, modules: modulesWithContent });
     } catch (error) {
       console.error("Error fetching course:", error);
       res.status(500).json({ error: "Failed to fetch course" });
@@ -2616,6 +3952,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           lessonId,
           fileType,
           courseId,
+          moduleId,
+          programCode,
           uploadType
         } = req.body;
         if (!filename || !contentType) {
@@ -2632,12 +3970,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return;
         }
         let key;
-        if (uploadType === "thumbnail" && courseId) {
-          key = generateCourseThumnailKey(courseId, filename);
-        } else if (lessonId && fileType) {
-          key = generateLessonFileKey(lessonId, fileType, filename);
+        if (uploadType === "thumbnail" && courseId && programCode) {
+          key = generateCourseThumnailKey(programCode, courseId);
+        } else if (lessonId && fileType && programCode && courseId && moduleId) {
+          key = generateLessonFileKey(programCode, courseId, moduleId, lessonId, fileType);
         } else {
-          res.status(400).json({ error: "Invalid upload parameters" });
+          res.status(400).json({ error: "Invalid upload parameters. For thumbnails: programCode, courseId required. For lesson files: programCode, courseId, moduleId, lessonId, fileType required." });
           return;
         }
         const result = await getSignedPutUrl(key, contentType);
@@ -2854,8 +4192,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       try {
         const { code } = req.params;
         const { courseIds } = req.body;
-        if (code !== "ABUNDANCE") {
-          return res.status(400).json({ error: "Reorder only allowed for ABUNDANCE feature" });
+        const allowedCodes = ["ABUNDANCE", "MASTERCLASS"];
+        if (!allowedCodes.includes(code)) {
+          return res.status(400).json({ error: "Reorder only allowed for ABUNDANCE and MASTERCLASS features" });
         }
         if (!Array.isArray(courseIds)) {
           return res.status(400).json({ error: "courseIds must be an array" });
@@ -2899,7 +4238,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.json({ feature, course, lessons });
       }
       if (feature.displayMode === "courses") {
-        const builtIns = [
+        const builtIns = code === "ABUNDANCE" ? [
           {
             id: "builtin-money-calendar",
             title: "Money Calendar",
@@ -2910,7 +4249,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             title: "Rewiring Belief",
             isBuiltIn: true
           }
-        ];
+        ] : [];
         const mappedCourses = await Promise.all(
           mappings.map(async (m) => {
             const [course] = await db.select().from(cmsCourses).where(eq2(cmsCourses.id, m.courseId));
@@ -3468,7 +4807,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
   app2.post("/api/admin/v1/session-banners", requireAdmin, async (req, res) => {
     try {
-      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled } = req.body;
+      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled, liveStartAt, liveEndAt } = req.body;
       if (!type || !startAt || !endAt) {
         return res.status(400).json({ error: "type, startAt, and endAt are required" });
       }
@@ -3481,7 +4820,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         ctaLink: ctaLink || null,
         startAt: new Date(startAt),
         endAt: new Date(endAt),
-        liveEnabled: liveEnabled || false
+        liveEnabled: liveEnabled || false,
+        liveStartAt: liveStartAt ? new Date(liveStartAt) : null,
+        liveEndAt: liveEndAt ? new Date(liveEndAt) : null
       });
       res.status(201).json(banner);
     } catch (error) {
@@ -3492,7 +4833,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app2.put("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled } = req.body;
+      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled, liveStartAt, liveEndAt } = req.body;
       const updateData = {};
       if (type !== void 0) updateData.type = type;
       if (thumbnailKey !== void 0) updateData.thumbnailKey = thumbnailKey;
@@ -3503,6 +4844,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (startAt !== void 0) updateData.startAt = new Date(startAt);
       if (endAt !== void 0) updateData.endAt = new Date(endAt);
       if (liveEnabled !== void 0) updateData.liveEnabled = liveEnabled;
+      if (liveStartAt !== void 0) updateData.liveStartAt = liveStartAt ? new Date(liveStartAt) : null;
+      if (liveEndAt !== void 0) updateData.liveEndAt = liveEndAt ? new Date(liveEndAt) : null;
       const banner = await storage.updateSessionBanner(id, updateData);
       if (!banner) {
         return res.status(404).json({ error: "Banner not found" });
@@ -3542,7 +4885,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         ctaLink: original.ctaLink,
         startAt: original.startAt,
         endAt: original.endAt,
-        liveEnabled: original.liveEnabled
+        liveEnabled: original.liveEnabled,
+        liveStartAt: original.liveStartAt,
+        liveEndAt: original.liveEndAt
       });
       res.status(201).json(duplicate);
     } catch (error) {
@@ -3581,7 +4926,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         posterUrl = result.success ? result.url : null;
       }
       const now = /* @__PURE__ */ new Date();
-      const isLive = banner.type === "session" && banner.liveEnabled && status === "active" && now >= banner.startAt && now < banner.endAt;
+      const isLive = banner.type === "session" && banner.liveEnabled && status === "active" && banner.liveStartAt && banner.liveEndAt && now >= new Date(banner.liveStartAt) && now < new Date(banner.liveEndAt);
       res.json({
         banner: {
           ...banner,
@@ -3595,6 +4940,1530 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     } catch (error) {
       console.error("Error fetching public session banner:", error);
       res.status(500).json({ error: "Failed to fetch session banner" });
+    }
+  });
+  app2.get("/api/quotes/today", async (req, res) => {
+    try {
+      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      const [todayQuote] = await db.select().from(dailyQuotes).where(and2(eq2(dailyQuotes.isActive, true), eq2(dailyQuotes.lastShownDate, today)));
+      if (todayQuote) {
+        return res.json({
+          quote: todayQuote.quoteText,
+          author: todayQuote.author || null
+        });
+      }
+      const activeQuotes = await db.select().from(dailyQuotes).where(eq2(dailyQuotes.isActive, true)).orderBy(
+        sql3`CASE WHEN ${dailyQuotes.lastShownDate} IS NULL THEN 0 ELSE 1 END`,
+        sql3`${dailyQuotes.lastShownDate} NULLS FIRST`,
+        asc2(dailyQuotes.displayOrder)
+      );
+      if (activeQuotes.length === 0) {
+        return res.json({ quote: null, author: null });
+      }
+      const selectedQuote = activeQuotes[0];
+      await db.update(dailyQuotes).set({ lastShownDate: today, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(dailyQuotes.id, selectedQuote.id));
+      res.json({
+        quote: selectedQuote.quoteText,
+        author: selectedQuote.author || null
+      });
+    } catch (error) {
+      console.error("Error fetching today's quote:", error);
+      res.status(500).json({ error: "Failed to fetch quote" });
+    }
+  });
+  app2.get("/api/admin/quotes", requireAdmin, async (req, res) => {
+    try {
+      const quotes = await db.select().from(dailyQuotes).orderBy(asc2(dailyQuotes.displayOrder));
+      res.json(quotes);
+    } catch (error) {
+      console.error("Error fetching quotes:", error);
+      res.status(500).json({ error: "Failed to fetch quotes" });
+    }
+  });
+  app2.post("/api/admin/quotes", requireAdmin, async (req, res) => {
+    try {
+      const parsed = insertDailyQuoteSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Validation failed", details: parsed.error.errors });
+      }
+      const [newQuote] = await db.insert(dailyQuotes).values(parsed.data).returning();
+      res.status(201).json(newQuote);
+    } catch (error) {
+      console.error("Error creating quote:", error);
+      res.status(500).json({ error: "Failed to create quote" });
+    }
+  });
+  app2.put("/api/admin/quotes/:id", requireAdmin, async (req, res) => {
+    try {
+      const quoteId = parseInt(req.params.id);
+      const { quoteText, author, displayOrder, isActive } = req.body;
+      const [updated] = await db.update(dailyQuotes).set({
+        ...quoteText !== void 0 && { quoteText },
+        ...author !== void 0 && { author },
+        ...displayOrder !== void 0 && { displayOrder },
+        ...isActive !== void 0 && { isActive },
+        updatedAt: /* @__PURE__ */ new Date()
+      }).where(eq2(dailyQuotes.id, quoteId)).returning();
+      if (!updated) {
+        return res.status(404).json({ error: "Quote not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating quote:", error);
+      res.status(500).json({ error: "Failed to update quote" });
+    }
+  });
+  app2.delete("/api/admin/quotes/:id", requireAdmin, async (req, res) => {
+    try {
+      const quoteId = parseInt(req.params.id);
+      const [updated] = await db.update(dailyQuotes).set({ isActive: false, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(dailyQuotes.id, quoteId)).returning();
+      if (!updated) {
+        return res.status(404).json({ error: "Quote not found" });
+      }
+      res.json({ success: true, message: "Quote deactivated" });
+    } catch (error) {
+      console.error("Error deleting quote:", error);
+      res.status(500).json({ error: "Failed to delete quote" });
+    }
+  });
+  app2.get("/admin/v1/users/:userId/wellness-profile", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      const profile = await storage.getWellnessProfileByUserId(userId);
+      res.json(profile || { userId, karmicAffirmation: null, prescription: null });
+    } catch (error) {
+      console.error("Error fetching wellness profile:", error);
+      res.status(500).json({ error: "Failed to fetch wellness profile" });
+    }
+  });
+  app2.post("/admin/v1/users/:userId/wellness-profile", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      const { karmicAffirmation, prescription } = req.body;
+      const profile = await storage.upsertWellnessProfile(userId, {
+        karmicAffirmation: karmicAffirmation ?? null,
+        prescription: prescription ?? null
+      });
+      res.json(profile);
+    } catch (error) {
+      console.error("Error saving wellness profile:", error);
+      res.status(500).json({ error: "Failed to save wellness profile" });
+    }
+  });
+  app2.get("/api/v1/me/wellness-profile", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const profile = await storage.getWellnessProfileByUserId(req.user.sub);
+      res.json(profile || { karmicAffirmation: null, prescription: null });
+    } catch (error) {
+      console.error("Error fetching user wellness profile:", error);
+      res.status(500).json({ error: "Failed to fetch wellness profile" });
+    }
+  });
+  app2.post("/api/v1/me/change-password", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: "Current and new password are required" });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "New password must be at least 6 characters" });
+      }
+      const user = await storage.getUserById(req.user.sub);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      const bcrypt2 = await import("bcryptjs");
+      const isValidPassword = await bcrypt2.compare(currentPassword, user.passwordHash);
+      if (!isValidPassword) {
+        return res.status(400).json({ error: "Current password is incorrect" });
+      }
+      const hashedPassword = await bcrypt2.hash(newPassword, 10);
+      await storage.updateUserPassword(req.user.sub, hashedPassword);
+      res.json({ success: true, message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ error: "Failed to change password" });
+    }
+  });
+  app2.put("/api/v1/me/name", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const { name } = req.body;
+      if (!name || typeof name !== "string" || name.trim().length === 0) {
+        return res.status(400).json({ error: "Name is required" });
+      }
+      const user = await storage.updateUserName(req.user.sub, name.trim());
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, name: user.name });
+    } catch (error) {
+      console.error("Error updating user name:", error);
+      res.status(500).json({ error: "Failed to update name" });
+    }
+  });
+  app2.get("/api/admin/v1/events", requireAdmin, async (req, res) => {
+    try {
+      const { status, month, year } = req.query;
+      const filters = {};
+      if (status) filters.status = String(status);
+      if (month) filters.month = parseInt(String(month));
+      if (year) filters.year = parseInt(String(year));
+      const events2 = await storage.getAllEvents(filters);
+      const eventsWithSignedUrls = await Promise.all(
+        events2.map(async (event) => {
+          let thumbnailSignedUrl = null;
+          if (event.thumbnailUrl) {
+            const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          return { ...event, thumbnailSignedUrl };
+        })
+      );
+      res.json(eventsWithSignedUrls);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+  app2.get("/api/admin/v1/events/upcoming", requireAdmin, async (req, res) => {
+    try {
+      const events2 = await storage.getAllEvents({ status: "UPCOMING" });
+      const eventsWithSignedUrls = await Promise.all(
+        events2.map(async (event) => {
+          let thumbnailSignedUrl = null;
+          if (event.thumbnailUrl) {
+            const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          return { ...event, thumbnailSignedUrl };
+        })
+      );
+      res.json(eventsWithSignedUrls);
+    } catch (error) {
+      console.error("Error fetching upcoming events:", error);
+      res.status(500).json({ error: "Failed to fetch upcoming events" });
+    }
+  });
+  app2.get("/api/admin/v1/events/latest", requireAdmin, async (req, res) => {
+    try {
+      const allCompleted = await storage.getAllEvents({ status: "COMPLETED" });
+      const latestEvents = allCompleted.filter(
+        (event) => event.showRecording === true || event.recordingUrl === null
+      );
+      const eventsWithSignedUrls = await Promise.all(
+        latestEvents.map(async (event) => {
+          let thumbnailSignedUrl = null;
+          if (event.thumbnailUrl) {
+            const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          return { ...event, thumbnailSignedUrl };
+        })
+      );
+      res.json(eventsWithSignedUrls);
+    } catch (error) {
+      console.error("Error fetching latest events:", error);
+      res.status(500).json({ error: "Failed to fetch latest events" });
+    }
+  });
+  app2.get("/api/admin/v1/events/upload-url", requireAdmin, async (req, res) => {
+    try {
+      const { filename, contentType } = req.query;
+      if (!filename || !contentType) {
+        return res.status(400).json({ error: "filename and contentType are required" });
+      }
+      const key = `events/${Date.now()}-${filename}`;
+      const result = await getSignedPutUrl(key, contentType);
+      if (!result.success) {
+        console.error("R2 upload URL error:", result.error);
+        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
+      }
+      res.json({ key: result.key, signedUrl: result.uploadUrl });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+  app2.get("/api/admin/v1/events/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.getEventById(id);
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      let thumbnailSignedUrl = null;
+      if (event.thumbnailUrl) {
+        const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+        if (signedResult.success && signedResult.url) {
+          thumbnailSignedUrl = signedResult.url;
+        }
+      }
+      res.json({ ...event, thumbnailSignedUrl });
+    } catch (error) {
+      console.error("Error fetching event:", error);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+  async function createEventReminders(event) {
+    if (event.status !== "UPCOMING") return;
+    const startTime = new Date(event.startDatetime);
+    const now = /* @__PURE__ */ new Date();
+    const timeStr = startTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    const notifications2 = [];
+    const reminder24h = new Date(startTime.getTime() - 24 * 60 * 60 * 1e3);
+    if (reminder24h > now) {
+      notifications2.push({
+        title: `${event.title} Tomorrow`,
+        body: `Your ${event.title} starts tomorrow at ${timeStr}.`,
+        type: "event_reminder",
+        scheduledAt: reminder24h,
+        requiredProgramCode: event.requiredProgramCode,
+        requiredProgramLevel: event.requiredProgramLevel,
+        relatedEventId: event.id
+      });
+    }
+    const reminder15m = new Date(startTime.getTime() - 15 * 60 * 1e3);
+    if (reminder15m > now) {
+      notifications2.push({
+        title: `Starting Soon`,
+        body: `${event.title} starts in 15 minutes.`,
+        type: "event_reminder",
+        scheduledAt: reminder15m,
+        requiredProgramCode: event.requiredProgramCode,
+        requiredProgramLevel: event.requiredProgramLevel,
+        relatedEventId: event.id
+      });
+    }
+    if (notifications2.length > 0) {
+      await storage.createNotifications(notifications2);
+      console.log(`Created ${notifications2.length} reminder(s) for event ${event.id}: ${event.title}`);
+    }
+  }
+  app2.post("/api/admin/v1/events", requireAdmin, async (req, res) => {
+    try {
+      const parsed = insertEventSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Validation failed", details: parsed.error.errors });
+      }
+      const event = await storage.createEvent(parsed.data);
+      try {
+        await createEventReminders(event);
+      } catch (notifError) {
+        console.error("Error creating event reminders:", notifError);
+      }
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ error: "Failed to create event" });
+    }
+  });
+  app2.put("/api/admin/v1/events/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = { ...req.body };
+      if (updateData.startDatetime && typeof updateData.startDatetime === "string") {
+        updateData.startDatetime = new Date(updateData.startDatetime);
+      }
+      if (updateData.endDatetime && typeof updateData.endDatetime === "string") {
+        updateData.endDatetime = new Date(updateData.endDatetime);
+      }
+      if (updateData.recordingExpiryDate && typeof updateData.recordingExpiryDate === "string") {
+        updateData.recordingExpiryDate = updateData.recordingExpiryDate;
+      }
+      const event = await storage.updateEvent(id, updateData);
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      try {
+        await storage.deleteNotificationsByEventId(id);
+        await createEventReminders(event);
+      } catch (notifError) {
+        console.error("Error updating event reminders:", notifError);
+      }
+      res.json(event);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ error: "Failed to update event" });
+    }
+  });
+  app2.delete("/api/admin/v1/events/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.cancelEvent(id);
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      try {
+        await storage.deleteNotificationsByEventId(id);
+      } catch (notifError) {
+        console.error("Error deleting event reminders:", notifError);
+      }
+      res.json({ success: true, message: "Event cancelled" });
+    } catch (error) {
+      console.error("Error cancelling event:", error);
+      res.status(500).json({ error: "Failed to cancel event" });
+    }
+  });
+  app2.post("/api/admin/v1/events/:id/skip-recording", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.updateEvent(id, {
+        showRecording: false,
+        recordingSkipped: true,
+        recordingUrl: null,
+        recordingPasscode: null,
+        recordingExpiryDate: null
+      });
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      res.json({ success: true, message: "Recording skipped" });
+    } catch (error) {
+      console.error("Error skipping recording:", error);
+      res.status(500).json({ error: "Failed to skip recording" });
+    }
+  });
+  app2.post("/api/admin/v1/events/:id/add-recording", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { recordingUrl, recordingPasscode, recordingExpiryDate } = req.body;
+      if (!recordingUrl || !recordingPasscode || !recordingExpiryDate) {
+        return res.status(400).json({ error: "recordingUrl, recordingPasscode, and recordingExpiryDate are required" });
+      }
+      const event = await storage.updateEvent(id, {
+        recordingUrl,
+        recordingPasscode,
+        recordingExpiryDate,
+        showRecording: true,
+        recordingSkipped: false
+      });
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      res.json(event);
+    } catch (error) {
+      console.error("Error adding recording:", error);
+      res.status(500).json({ error: "Failed to add recording" });
+    }
+  });
+  app2.get("/api/events/upcoming", async (req, res) => {
+    try {
+      const events2 = await storage.getUpcomingEvents();
+      const eventsWithSignedUrls = await Promise.all(
+        events2.map(async (event) => {
+          let thumbnailSignedUrl = null;
+          if (event.thumbnailUrl) {
+            const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          const now = /* @__PURE__ */ new Date();
+          const isLive = event.startDatetime <= now && now <= event.endDatetime;
+          return { ...event, thumbnailSignedUrl, isLive };
+        })
+      );
+      res.json(eventsWithSignedUrls);
+    } catch (error) {
+      console.error("Error fetching upcoming events:", error);
+      res.status(500).json({ error: "Failed to fetch upcoming events" });
+    }
+  });
+  app2.get("/api/events/latest", async (req, res) => {
+    try {
+      const events2 = await storage.getLatestEvents();
+      const eventsWithSignedUrls = await Promise.all(
+        events2.map(async (event) => {
+          let thumbnailSignedUrl = null;
+          if (event.thumbnailUrl) {
+            const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+            if (signedResult.success && signedResult.url) {
+              thumbnailSignedUrl = signedResult.url;
+            }
+          }
+          return { ...event, thumbnailSignedUrl };
+        })
+      );
+      res.json(eventsWithSignedUrls);
+    } catch (error) {
+      console.error("Error fetching latest events:", error);
+      res.status(500).json({ error: "Failed to fetch latest events" });
+    }
+  });
+  app2.get("/api/events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.getEventById(id);
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      if (event.status === "CANCELLED") {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      let thumbnailSignedUrl = null;
+      if (event.thumbnailUrl) {
+        const signedResult = await getSignedGetUrl(event.thumbnailUrl);
+        if (signedResult.success && signedResult.url) {
+          thumbnailSignedUrl = signedResult.url;
+        }
+      }
+      const now = /* @__PURE__ */ new Date();
+      const isLive = event.startDatetime <= now && now <= event.endDatetime;
+      res.json({ ...event, thumbnailSignedUrl, isLive });
+    } catch (error) {
+      console.error("Error fetching event:", error);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+  app2.get("/api/poh/current", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const userPOHs = await storage.getUserPOHs(userId);
+      const activePOH = userPOHs.find((p) => p.status === "active");
+      const nextPOH = userPOHs.find((p) => p.status === "next");
+      const horizonPOH = userPOHs.find((p) => p.status === "horizon");
+      let activeResponse = null;
+      if (activePOH) {
+        const milestones = await storage.getPOHMilestones(activePOH.id);
+        const actions = await storage.getPOHActions(activePOH.id);
+        const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        const todayRating = await storage.getPOHRatingByDate(userId, today);
+        const visionImages = activePOH.visionImages || [];
+        const signedVisionImages = [];
+        for (const img of visionImages) {
+          if (img && img !== "NULL") {
+            try {
+              let key;
+              if (img.includes(".r2.cloudflarestorage.com/")) {
+                key = img.split(".r2.cloudflarestorage.com/")[1];
+              } else if (img.startsWith("http")) {
+                const url = new URL(img);
+                key = url.pathname.startsWith("/") ? url.pathname.slice(1) : url.pathname;
+              } else {
+                key = img;
+              }
+              const signedResult = await getSignedGetUrl(key, 3600);
+              signedVisionImages.push(signedResult.success ? signedResult.url : null);
+            } catch (err) {
+              console.error("Error generating signed URL for vision image:", err);
+              signedVisionImages.push(null);
+            }
+          } else {
+            signedVisionImages.push(null);
+          }
+        }
+        activeResponse = {
+          id: activePOH.id,
+          title: activePOH.title,
+          why: activePOH.why,
+          category: activePOH.category,
+          started_at: activePOH.startedAt,
+          vision_images: signedVisionImages,
+          milestones: milestones.map((m) => ({
+            id: m.id,
+            text: m.text,
+            achieved: m.achieved,
+            achieved_at: m.achievedAt,
+            order_index: m.orderIndex
+          })),
+          actions: actions.map((a) => ({
+            id: a.id,
+            text: a.text,
+            order: a.orderIndex
+          })),
+          today_rating: todayRating ? todayRating.rating : null
+        };
+      }
+      let nextResponse = null;
+      if (nextPOH) {
+        nextResponse = {
+          id: nextPOH.id,
+          title: nextPOH.title,
+          why: nextPOH.why,
+          category: nextPOH.category,
+          milestones: [],
+          actions: []
+        };
+      }
+      let horizonResponse = null;
+      if (horizonPOH) {
+        horizonResponse = {
+          id: horizonPOH.id,
+          title: horizonPOH.title,
+          why: horizonPOH.why,
+          category: horizonPOH.category,
+          milestones: [],
+          actions: []
+        };
+      }
+      res.json({
+        active: activeResponse,
+        next: nextResponse,
+        horizon: horizonResponse
+      });
+    } catch (error) {
+      console.error("Error fetching current POH:", error);
+      res.status(500).json({ error: "Failed to fetch POH state" });
+    }
+  });
+  app2.post("/api/poh", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const { title, why, category } = req.body;
+      if (!title || title.length > 120) {
+        return res.status(400).json({ error: "Title is required and must be <= 120 characters" });
+      }
+      if (!why || why.length > 500) {
+        return res.status(400).json({ error: "Why is required and must be <= 500 characters" });
+      }
+      if (!pohCategoryEnum.safeParse(category).success) {
+        return res.status(400).json({ error: "Invalid category. Must be: career, health, relationships, or wealth" });
+      }
+      const userPOHs = await storage.getUserPOHs(userId);
+      const hasActive = userPOHs.some((p) => p.status === "active");
+      const hasNext = userPOHs.some((p) => p.status === "next");
+      const hasHorizon = userPOHs.some((p) => p.status === "horizon");
+      let status;
+      let startedAt = null;
+      if (!hasActive) {
+        status = "active";
+        startedAt = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      } else if (!hasNext) {
+        status = "next";
+      } else if (!hasHorizon) {
+        status = "horizon";
+      } else {
+        return res.status(400).json({
+          error: "Cannot create more POHs. You already have active, next, and horizon projects."
+        });
+      }
+      const newPOH = await storage.createPOH({
+        userId,
+        title,
+        why,
+        category,
+        status,
+        startedAt
+      });
+      res.status(201).json(newPOH);
+    } catch (error) {
+      console.error("Error creating POH:", error);
+      res.status(500).json({ error: "Failed to create POH" });
+    }
+  });
+  app2.put("/api/poh/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const { title, why, category } = req.body;
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+      const updates = {};
+      if (title !== void 0) {
+        if (title.length > 120) {
+          return res.status(400).json({ error: "Title must be <= 120 characters" });
+        }
+        updates.title = title;
+      }
+      if (why !== void 0) {
+        if (poh.status !== "active") {
+          return res.status(403).json({ error: "Only active POH can update 'why' field" });
+        }
+        if (why.length > 500) {
+          return res.status(400).json({ error: "Why must be <= 500 characters" });
+        }
+        updates.why = why;
+      }
+      if (category !== void 0) {
+        if (!pohCategoryEnum.safeParse(category).success) {
+          return res.status(400).json({ error: "Invalid category" });
+        }
+        updates.category = category;
+      }
+      const updatedPOH = await storage.updatePOH(pohId, updates);
+      res.json(updatedPOH);
+    } catch (error) {
+      console.error("Error updating POH:", error);
+      res.status(500).json({ error: "Failed to update POH" });
+    }
+  });
+  app2.post("/api/poh/:id/milestones", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const { text: text2 } = req.body;
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only add milestones to active POH" });
+      }
+      if (!text2 || text2.length > 200) {
+        return res.status(400).json({ error: "Milestone text is required and must be <= 200 characters" });
+      }
+      const existingMilestones = await storage.getPOHMilestones(pohId);
+      if (existingMilestones.length >= 5) {
+        return res.status(400).json({ error: "Maximum 5 milestones per POH" });
+      }
+      const milestone = await storage.createPOHMilestone({
+        pohId,
+        text: text2,
+        orderIndex: existingMilestones.length
+      });
+      res.status(201).json(milestone);
+    } catch (error) {
+      console.error("Error creating milestone:", error);
+      res.status(500).json({ error: "Failed to create milestone" });
+    }
+  });
+  app2.post("/api/poh/milestone/:id/achieve", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const milestoneId = req.params.id;
+      const milestone = await storage.getPOHMilestoneById(milestoneId);
+      if (!milestone) {
+        return res.status(404).json({ error: "Milestone not found" });
+      }
+      const poh = await storage.getPOHById(milestone.pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "Milestone not found" });
+      }
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only achieve milestones on active POH" });
+      }
+      if (milestone.achieved) {
+        return res.status(400).json({ error: "Milestone already achieved" });
+      }
+      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      const updatedMilestone = await storage.achievePOHMilestone(milestoneId, today);
+      res.json(updatedMilestone);
+    } catch (error) {
+      console.error("Error achieving milestone:", error);
+      res.status(500).json({ error: "Failed to achieve milestone" });
+    }
+  });
+  app2.put("/api/poh/milestone/:id", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const milestoneId = req.params.id;
+      const { text: text2 } = req.body;
+      const milestone = await storage.getPOHMilestoneById(milestoneId);
+      if (!milestone) {
+        return res.status(404).json({ error: "Milestone not found" });
+      }
+      const poh = await storage.getPOHById(milestone.pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "Milestone not found" });
+      }
+      if (poh.status !== "active") {
+        return res.status(403).json({
+          error: "POH_NOT_ACTIVE",
+          message: "Can only edit milestones on active POH"
+        });
+      }
+      if (milestone.achieved) {
+        return res.status(403).json({
+          error: "MILESTONE_LOCKED",
+          message: "Achieved milestones cannot be edited."
+        });
+      }
+      if (!text2 || text2.length > 200) {
+        return res.status(400).json({ error: "Milestone text must be <= 200 characters" });
+      }
+      const updatedMilestone = await storage.updatePOHMilestone(milestoneId, { text: text2 });
+      res.json(updatedMilestone);
+    } catch (error) {
+      console.error("Error updating milestone:", error);
+      res.status(500).json({ error: "Failed to update milestone" });
+    }
+  });
+  app2.put("/api/poh/:id/actions", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const { actions } = req.body;
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only update actions on active POH" });
+      }
+      if (!Array.isArray(actions) || actions.length > 3) {
+        return res.status(400).json({ error: "Actions must be an array with max 3 items" });
+      }
+      for (const action of actions) {
+        if (typeof action !== "string" || action.length === 0) {
+          return res.status(400).json({ error: "Each action must be a non-empty string" });
+        }
+      }
+      await storage.replacePOHActions(pohId, actions);
+      const updatedActions = await storage.getPOHActions(pohId);
+      res.json(updatedActions);
+    } catch (error) {
+      console.error("Error updating actions:", error);
+      res.status(500).json({ error: "Failed to update actions" });
+    }
+  });
+  app2.post("/api/poh/rate", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const { poh_id, rating, local_date } = req.body;
+      const poh = await storage.getPOHById(poh_id);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only rate active POH" });
+      }
+      if (typeof rating !== "number" || rating < 0 || rating > 10) {
+        return res.status(400).json({ error: "Rating must be between 0 and 10" });
+      }
+      if (!local_date || !/^\d{4}-\d{2}-\d{2}$/.test(local_date)) {
+        return res.status(400).json({ error: "Invalid date format. Use YYYY-MM-DD" });
+      }
+      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      if (local_date !== today) {
+        return res.status(403).json({
+          error: "RATING_DATE_LOCKED",
+          message: "Can only submit or update rating for today"
+        });
+      }
+      const existingRating = await storage.getPOHRatingByDate(userId, local_date);
+      let result;
+      if (existingRating) {
+        result = await storage.updatePOHRating(existingRating.id, rating);
+      } else {
+        result = await storage.createPOHRating({
+          userId,
+          pohId: poh_id,
+          localDate: local_date,
+          rating
+        });
+      }
+      res.json(result);
+    } catch (error) {
+      console.error("Error saving rating:", error);
+      res.status(500).json({ error: "Failed to save rating" });
+    }
+  });
+  app2.post("/api/poh/:id/complete", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const { closing_reflection } = req.body;
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only complete active POH" });
+      }
+      if (!closing_reflection || closing_reflection.length < 20) {
+        return res.status(400).json({ error: "Closing reflection is required (minimum 20 characters)" });
+      }
+      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      await storage.completePOH(pohId, {
+        status: "completed",
+        endedAt: today,
+        closingReflection: closing_reflection
+      });
+      await storage.promotePOHs(userId, today);
+      res.json({ success: true, message: "POH completed successfully" });
+    } catch (error) {
+      console.error("Error completing POH:", error);
+      res.status(500).json({ error: "Failed to complete POH" });
+    }
+  });
+  app2.post("/api/poh/:id/close", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const { closing_reflection } = req.body;
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+      if (poh.status !== "active") {
+        return res.status(403).json({ error: "Can only close active POH" });
+      }
+      if (!closing_reflection || closing_reflection.length < 20) {
+        return res.status(400).json({ error: "Closing reflection is required (minimum 20 characters)" });
+      }
+      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      await storage.completePOH(pohId, {
+        status: "closed_early",
+        endedAt: today,
+        closingReflection: closing_reflection
+      });
+      await storage.promotePOHs(userId, today);
+      res.json({ success: true, message: "POH closed early" });
+    } catch (error) {
+      console.error("Error closing POH:", error);
+      res.status(500).json({ error: "Failed to close POH" });
+    }
+  });
+  app2.get("/api/poh/history", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const historyPOHs = await storage.getPOHHistory(userId);
+      const historyWithMilestones = await Promise.all(
+        historyPOHs.map(async (poh) => {
+          const milestones = await storage.getPOHMilestones(poh.id);
+          const achievedMilestones = milestones.filter((m) => m.achieved).map((m) => m.text);
+          return {
+            id: poh.id,
+            title: poh.title,
+            category: poh.category,
+            status: poh.status,
+            started_at: poh.startedAt,
+            ended_at: poh.endedAt,
+            closing_reflection: poh.closingReflection,
+            milestones: achievedMilestones
+          };
+        })
+      );
+      res.json(historyWithMilestones);
+    } catch (error) {
+      console.error("Error fetching POH history:", error);
+      res.status(500).json({ error: "Failed to fetch POH history" });
+    }
+  });
+  const uploadPOHVision = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    // 5MB limit
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error("INVALID_IMAGE"));
+      }
+    }
+  });
+  app2.post("/api/poh/:id/vision", authenticateJWT, uploadPOHVision.single("image"), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user.sub;
+      const pohId = req.params.id;
+      const indexStr = req.body.index;
+      const index = parseInt(indexStr, 10);
+      if (isNaN(index) || index < 0 || index > 2) {
+        return res.status(400).json({
+          error: "INVALID_INDEX",
+          message: "Index must be 0, 1, or 2"
+        });
+      }
+      const poh = await storage.getPOHById(pohId);
+      if (!poh || poh.userId !== userId) {
+        return res.status(404).json({ error: "POH not found" });
+      }
+      if (poh.status !== "active") {
+        return res.status(403).json({
+          error: "VISION_UPLOAD_NOT_ALLOWED",
+          message: "Can only upload vision images to active POH"
+        });
+      }
+      if (!req.file) {
+        return res.status(400).json({
+          error: "INVALID_IMAGE",
+          message: "No image file provided"
+        });
+      }
+      const extMap = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp"
+      };
+      const ext = extMap[req.file.mimetype] || "jpg";
+      const key = `poh-visions/${userId}/${pohId}/vision-${index}.${ext}`;
+      const uploadResult = await uploadBufferToR2(req.file.buffer, key, req.file.mimetype);
+      if (!uploadResult.success) {
+        console.error("R2 upload failed:", uploadResult.error);
+        return res.status(500).json({ error: "Failed to upload image" });
+      }
+      const currentImages = poh.visionImages || [];
+      const newImages = [...currentImages];
+      while (newImages.length < 3) {
+        newImages.push(null);
+      }
+      newImages[index] = uploadResult.url;
+      await storage.updatePOH(pohId, { visionImages: newImages });
+      res.json({
+        success: true,
+        vision_images: newImages,
+        uploaded_index: index
+      });
+    } catch (error) {
+      console.error("Error uploading vision image:", error);
+      if (error.message === "INVALID_IMAGE") {
+        return res.status(400).json({
+          error: "INVALID_IMAGE",
+          message: "Only JPEG, PNG, and WebP images are allowed"
+        });
+      }
+      res.status(500).json({ error: "Failed to upload vision image" });
+    }
+  });
+  app2.get("/api/v1/notifications", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const notifications2 = await storage.getUserNotifications(userId);
+      res.json(notifications2);
+    } catch (error) {
+      console.error("Error fetching user notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+  app2.post("/api/v1/notifications/register-device", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const { token } = req.body;
+      if (!token || typeof token !== "string") {
+        return res.status(400).json({ error: "Token is required" });
+      }
+      const existingToken = await db.select().from(deviceTokens).where(eq2(deviceTokens.token, token)).limit(1);
+      if (existingToken.length > 0) {
+        if (existingToken[0].userId !== userId) {
+          await db.update(deviceTokens).set({ userId }).where(eq2(deviceTokens.token, token));
+        }
+        return res.json({ success: true, message: "Token already registered" });
+      }
+      await db.delete(deviceTokens).where(eq2(deviceTokens.userId, userId));
+      await db.insert(deviceTokens).values({
+        userId,
+        token,
+        platform: "web"
+      });
+      res.json({ success: true, message: "Device registered successfully" });
+    } catch (error) {
+      console.error("Error registering device token:", error);
+      res.status(500).json({ error: "Failed to register device" });
+    }
+  });
+  app2.delete("/api/v1/notifications/unregister-device", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const { token } = req.body;
+      if (token) {
+        await db.delete(deviceTokens).where(and2(eq2(deviceTokens.userId, userId), eq2(deviceTokens.token, token)));
+      } else {
+        await db.delete(deviceTokens).where(eq2(deviceTokens.userId, userId));
+      }
+      res.json({ success: true, message: "Device unregistered" });
+    } catch (error) {
+      console.error("Error unregistering device token:", error);
+      res.status(500).json({ error: "Failed to unregister device" });
+    }
+  });
+  app2.get("/api/v1/notifications/status", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const tokens = await db.select().from(deviceTokens).where(eq2(deviceTokens.userId, userId)).limit(1);
+      res.json({ enabled: tokens.length > 0 });
+    } catch (error) {
+      console.error("Error getting notification status:", error);
+      res.status(500).json({ error: "Failed to get notification status" });
+    }
+  });
+  app2.get("/admin/api/notifications/stats", requireAdmin, async (req, res) => {
+    try {
+      const allTokens = await db.select().from(deviceTokens);
+      const uniqueUserIds = new Set(allTokens.map((t) => t.userId));
+      res.json({
+        totalDevices: allTokens.length,
+        uniqueUsers: uniqueUserIds.size
+      });
+    } catch (error) {
+      console.error("Error getting notification stats:", error);
+      res.status(500).json({ error: "Failed to get stats" });
+    }
+  });
+  app2.post("/admin/api/notifications/test", requireAdmin, async (req, res) => {
+    try {
+      const { title, body } = req.body;
+      if (!title || !body) {
+        return res.status(400).json({ error: "Title and body are required" });
+      }
+      const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId }).from(deviceTokens);
+      if (allTokens.length === 0) {
+        return res.json({
+          success: true,
+          message: "No devices registered",
+          successCount: 0,
+          failureCount: 0
+        });
+      }
+      const [notification] = await db.insert(notifications).values({
+        title,
+        body,
+        type: "admin_test",
+        scheduledAt: /* @__PURE__ */ new Date(),
+        sent: true,
+        requiredProgramCode: "",
+        requiredProgramLevel: 0
+      }).returning();
+      const tokens = allTokens.map((t) => t.token);
+      const result = await sendPushNotification(tokens, title, body);
+      if (allTokens.length > 0 && notification) {
+        const notificationLogRecords = allTokens.map((t) => ({
+          notificationId: notification.id,
+          userId: t.userId,
+          deviceToken: t.token,
+          status: "sent"
+        }));
+        await db.insert(notificationLogs).values(notificationLogRecords);
+      }
+      if (result.failedTokens.length > 0) {
+        for (const failedToken of result.failedTokens) {
+          await db.delete(deviceTokens).where(eq2(deviceTokens.token, failedToken));
+        }
+      }
+      res.json({
+        success: true,
+        message: `Notification sent`,
+        successCount: result.successCount,
+        failureCount: result.failureCount,
+        tokensCleanedUp: result.failedTokens.length
+      });
+    } catch (error) {
+      console.error("Error sending test notification:", error);
+      res.status(500).json({ error: "Failed to send notification" });
+    }
+  });
+  app2.get("/api/v1/drm/questions", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      const questions = await storage.getUserDrmQuestions(userId);
+      const now = /* @__PURE__ */ new Date();
+      const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const hasSubmittedThisMonth = questions.some((q) => q.monthYear === currentMonthYear);
+      res.json({
+        questions,
+        currentMonthYear,
+        hasSubmittedThisMonth
+      });
+    } catch (error) {
+      console.error("Error fetching DrM questions:", error);
+      res.status(500).json({ error: "Failed to fetch questions" });
+    }
+  });
+  app2.get("/api/v1/drm/questions/:id", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      const questionId = parseInt(req.params.id);
+      const question = await storage.getDrmQuestionById(questionId);
+      if (!question) {
+        return res.status(404).json({ error: "Question not found" });
+      }
+      if (question.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      let audioUrl = null;
+      if (question.audioR2Key) {
+        console.log("DrM audio R2 key:", question.audioR2Key);
+        const result = await getSignedGetUrl(question.audioR2Key);
+        console.log("DrM signed URL result:", result.success, result.url ? "URL generated" : "No URL", result.error || "");
+        if (result.success && result.url) {
+          audioUrl = result.url;
+        }
+      }
+      res.json({
+        ...question,
+        audioUrl
+      });
+    } catch (error) {
+      console.error("Error fetching DrM question:", error);
+      res.status(500).json({ error: "Failed to fetch question" });
+    }
+  });
+  app2.post("/api/v1/drm/questions", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      const { questionText } = req.body;
+      if (!questionText || typeof questionText !== "string") {
+        return res.status(400).json({ error: "Question text is required" });
+      }
+      if (questionText.length > 240) {
+        return res.status(400).json({ error: "Question exceeds 240 character limit" });
+      }
+      if (questionText.trim().length === 0) {
+        return res.status(400).json({ error: "Question cannot be empty" });
+      }
+      const now = /* @__PURE__ */ new Date();
+      const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const existingQuestion = await storage.getDrmQuestionByUserMonth(userId, monthYear);
+      if (existingQuestion) {
+        return res.status(409).json({ error: "You have already submitted a question this month" });
+      }
+      const question = await storage.createDrmQuestion({
+        userId,
+        questionText: questionText.trim(),
+        monthYear
+      });
+      res.status(201).json({
+        success: true,
+        message: "Your question has been sent. Dr. M will respond soon.",
+        question
+      });
+    } catch (error) {
+      console.error("Error submitting DrM question:", error);
+      res.status(500).json({ error: "Failed to submit question" });
+    }
+  });
+  app2.get("/admin/api/drm/questions", requireAdmin, async (req, res) => {
+    try {
+      const questions = await storage.getAllDrmQuestions();
+      res.json(questions);
+    } catch (error) {
+      console.error("Error fetching DrM questions:", error);
+      res.status(500).json({ error: "Failed to fetch questions" });
+    }
+  });
+  app2.get("/admin/api/drm/questions/:id", requireAdmin, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      const question = await storage.getDrmQuestionById(questionId);
+      if (!question) {
+        return res.status(404).json({ error: "Question not found" });
+      }
+      const user = await storage.getUserById(question.userId);
+      let audioUrl = null;
+      if (question.audioR2Key) {
+        const result = await getSignedGetUrl(question.audioR2Key);
+        if (result.success && result.url) {
+          audioUrl = result.url;
+        }
+      }
+      res.json({
+        ...question,
+        userName: user?.name || "Unknown",
+        audioUrl
+      });
+    } catch (error) {
+      console.error("Error fetching DrM question:", error);
+      res.status(500).json({ error: "Failed to fetch question" });
+    }
+  });
+  app2.post("/admin/api/drm/questions/:id/answer", requireAdmin, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      const { mimeType } = req.body;
+      const question = await storage.getDrmQuestionById(questionId);
+      if (!question) {
+        return res.status(404).json({ error: "Question not found" });
+      }
+      let extension = "webm";
+      const contentType = mimeType || "audio/webm";
+      if (contentType.includes("mp4") || contentType.includes("m4a")) {
+        extension = "mp4";
+      } else if (contentType.includes("ogg")) {
+        extension = "ogg";
+      }
+      const audioKey = `drm-audio/questions/${questionId}/answer.${extension}`;
+      const result = await getSignedPutUrl(audioKey, contentType);
+      if (!result.success) {
+        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
+      }
+      res.json({
+        uploadUrl: result.uploadUrl,
+        audioKey
+      });
+    } catch (error) {
+      console.error("Error generating audio upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+  app2.post("/admin/api/drm/questions/:id/confirm-answer", requireAdmin, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      const { audioKey } = req.body;
+      if (!audioKey) {
+        return res.status(400).json({ error: "Audio key is required" });
+      }
+      const question = await storage.getDrmQuestionById(questionId);
+      if (!question) {
+        return res.status(404).json({ error: "Question not found" });
+      }
+      const updatedQuestion = await storage.updateDrmQuestionAnswer(questionId, audioKey);
+      if (!updatedQuestion) {
+        return res.status(500).json({ error: "Failed to update question" });
+      }
+      const [notification] = await db.insert(notifications).values({
+        title: "Dr. M has answered your question \u{1F3A7}",
+        body: "Your personal voice response is ready to listen.",
+        type: "drm_answer",
+        scheduledAt: /* @__PURE__ */ new Date(),
+        sent: true,
+        requiredProgramCode: "",
+        requiredProgramLevel: 0
+      }).returning();
+      const userTokens = await storage.getDeviceTokensByUserIds([question.userId]);
+      if (userTokens.length > 0) {
+        const tokens = userTokens.map((t) => t.token);
+        const result = await sendPushNotification(
+          tokens,
+          "Dr. M has answered your question \u{1F3A7}",
+          "Your personal voice response is ready to listen.",
+          { questionId: questionId.toString(), deepLink: `/dr-m/questions/${questionId}` }
+        );
+        const notificationLogRecords = userTokens.map((t) => ({
+          notificationId: notification.id,
+          userId: t.userId,
+          deviceToken: t.token,
+          status: result.successCount > 0 ? "sent" : "failed"
+        }));
+        await db.insert(notificationLogs).values(notificationLogRecords);
+      } else {
+        await db.insert(notificationLogs).values({
+          notificationId: notification.id,
+          userId: question.userId,
+          deviceToken: "in-app-only",
+          status: "sent"
+        });
+      }
+      console.log(`DrM answer submitted for question ${questionId}, notification sent to user ${question.userId}`);
+      const audioUrl = await getSignedGetUrl(audioKey);
+      res.json({
+        success: true,
+        message: "Answer submitted and user notified",
+        question: updatedQuestion,
+        audioUrl
+      });
+    } catch (error) {
+      console.error("Error confirming DrM answer:", error);
+      res.status(500).json({ error: "Failed to confirm answer" });
+    }
+  });
+  app2.get("/admin/api/poh/usage", requireAdmin, async (req, res) => {
+    try {
+      const totalUsersResult = await db.select({ count: count2() }).from(users);
+      const totalUsers = Number(totalUsersResult[0]?.count) || 0;
+      const usersWithPohResult = await db.select({
+        count: countDistinct(projectOfHearts.userId)
+      }).from(projectOfHearts);
+      const usersWithPoh = Number(usersWithPohResult[0]?.count) || 0;
+      const activeResult = await db.select({ count: count2() }).from(projectOfHearts).where(eq2(projectOfHearts.status, "active"));
+      const active = Number(activeResult[0]?.count) || 0;
+      const nextResult = await db.select({ count: count2() }).from(projectOfHearts).where(eq2(projectOfHearts.status, "next"));
+      const next = Number(nextResult[0]?.count) || 0;
+      const northStarResult = await db.select({ count: count2() }).from(projectOfHearts).where(eq2(projectOfHearts.status, "horizon"));
+      const northStar = Number(northStarResult[0]?.count) || 0;
+      res.json({
+        total_users: totalUsers,
+        users_with_poh: usersWithPoh,
+        active,
+        next,
+        north_star: northStar
+      });
+    } catch (error) {
+      console.error("Error fetching POH usage:", error);
+      res.status(500).json({ error: "Failed to fetch usage data" });
+    }
+  });
+  app2.get("/admin/api/poh/daily-checkins", requireAdmin, async (req, res) => {
+    try {
+      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      const todayResult = await db.select({
+        count: countDistinct(pohDailyRatings.userId)
+      }).from(pohDailyRatings).where(eq2(pohDailyRatings.localDate, today));
+      const todayCheckedIn = Number(todayResult[0]?.count) || 0;
+      const activeUsersResult = await db.select({
+        count: countDistinct(projectOfHearts.userId)
+      }).from(projectOfHearts).where(eq2(projectOfHearts.status, "active"));
+      const activeUsers = Number(activeUsersResult[0]?.count) || 0;
+      const percentOfActive = activeUsers > 0 ? Math.round(todayCheckedIn / activeUsers * 100) : 0;
+      const thirtyDaysAgo = /* @__PURE__ */ new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+      const last30DaysResult = await db.select({
+        date: pohDailyRatings.localDate,
+        count: countDistinct(pohDailyRatings.userId)
+      }).from(pohDailyRatings).where(gte(pohDailyRatings.localDate, thirtyDaysAgoStr)).groupBy(pohDailyRatings.localDate).orderBy(asc2(pohDailyRatings.localDate));
+      const dateMap = new Map(last30DaysResult.map((r) => [r.date, Number(r.count)]));
+      const last30Days = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = /* @__PURE__ */ new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split("T")[0];
+        last30Days.push({
+          date: dateStr,
+          users_checked_in: dateMap.get(dateStr) || 0
+        });
+      }
+      res.json({
+        today: {
+          date: today,
+          users_checked_in: todayCheckedIn,
+          percent_of_active_users: percentOfActive
+        },
+        last_30_days: last30Days
+      });
+    } catch (error) {
+      console.error("Error fetching daily check-ins:", error);
+      res.status(500).json({ error: "Failed to fetch check-in data" });
+    }
+  });
+  app2.get("/admin/api/poh/progress-signals", requireAdmin, async (req, res) => {
+    try {
+      const today = /* @__PURE__ */ new Date();
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+      const completedPohResult = await db.select({ count: count2() }).from(projectOfHearts).where(eq2(projectOfHearts.status, "completed"));
+      const completedPoh = Number(completedPohResult[0]?.count) || 0;
+      const achieved30Result = await db.select({ count: count2() }).from(pohMilestones).where(and2(
+        eq2(pohMilestones.achieved, true),
+        gte(pohMilestones.achievedAt, thirtyDaysAgoStr)
+      ));
+      const milestonesAchieved30 = Number(achieved30Result[0]?.count) || 0;
+      const firstMilestonesResult = await db.execute(sql3`
+        SELECT AVG(days_to_first)::float as avg_days FROM (
+          SELECT 
+            p.id as poh_id,
+            MIN(m.achieved_at::date - p.started_at::date) as days_to_first
+          FROM project_of_hearts p
+          JOIN poh_milestones m ON m.poh_id = p.id
+          WHERE m.achieved = true AND p.started_at IS NOT NULL AND m.achieved_at IS NOT NULL
+          GROUP BY p.id
+        ) sub
+      `);
+      const avgDaysToFirst = Math.round(firstMilestonesResult.rows[0]?.avg_days || 0);
+      res.json({
+        completed_poh: Number(completedPoh),
+        milestones_achieved_30_days: Number(milestonesAchieved30),
+        avg_days_to_first_milestone: Number(avgDaysToFirst) || 0
+      });
+    } catch (error) {
+      console.error("Error fetching progress signals:", error);
+      res.status(500).json({ error: "Failed to fetch progress signals" });
+    }
+  });
+  app2.get("/admin/api/poh/drop-offs", requireAdmin, async (req, res) => {
+    try {
+      const closedEarlyResult = await db.select({ count: count2() }).from(projectOfHearts).where(eq2(projectOfHearts.status, "closed_early"));
+      const closedEarly = Number(closedEarlyResult[0]?.count) || 0;
+      const activeNoMilestonesResult = await db.execute(sql3`
+        SELECT COUNT(DISTINCT p.id) as count
+        FROM project_of_hearts p
+        LEFT JOIN poh_milestones m ON m.poh_id = p.id AND m.achieved = true
+        WHERE p.status = 'active' AND m.id IS NULL
+      `);
+      const activeNoMilestones = parseInt(activeNoMilestonesResult.rows[0]?.count || "0");
+      const avgDurationResult = await db.execute(sql3`
+        SELECT AVG(ended_at::date - started_at::date)::float as avg_days
+        FROM project_of_hearts
+        WHERE ended_at IS NOT NULL AND started_at IS NOT NULL
+          AND status IN ('completed', 'closed_early')
+      `);
+      const avgDuration = Math.round(avgDurationResult.rows[0]?.avg_days || 0);
+      res.json({
+        closed_early: Number(closedEarly),
+        active_with_no_milestones: Number(activeNoMilestones),
+        avg_active_duration_days: Number(avgDuration) || 0
+      });
+    } catch (error) {
+      console.error("Error fetching drop-offs:", error);
+      res.status(500).json({ error: "Failed to fetch drop-off data" });
+    }
+  });
+  app2.get("/admin/api/poh/life-areas", requireAdmin, async (req, res) => {
+    try {
+      const categoryResult = await db.select({
+        category: projectOfHearts.category,
+        count: count2()
+      }).from(projectOfHearts).where(eq2(projectOfHearts.status, "active")).groupBy(projectOfHearts.category);
+      const categories2 = {
+        career: 0,
+        health: 0,
+        relationships: 0,
+        wealth: 0
+      };
+      categoryResult.forEach((r) => {
+        if (r.category in categories2) {
+          categories2[r.category] = Number(r.count) || 0;
+        }
+      });
+      res.json(categories2);
+    } catch (error) {
+      console.error("Error fetching life areas:", error);
+      res.status(500).json({ error: "Failed to fetch life areas" });
     }
   });
   const httpServer = createServer(app2);
@@ -3720,8 +6589,109 @@ function serveStatic(app2) {
   });
 }
 
+// server/jobs/notificationCron.ts
+init_storage();
+var cronInterval = null;
+var isProcessing = false;
+async function processNotifications() {
+  if (isProcessing) {
+    console.log("Notification cron: Previous run still in progress, skipping");
+    return;
+  }
+  isProcessing = true;
+  try {
+    const pendingNotifications = await storage.getPendingNotifications();
+    for (const notification of pendingNotifications) {
+      try {
+        const eligibleUserIds = await storage.getEligibleUserIdsForNotification(
+          notification.requiredProgramCode,
+          notification.requiredProgramLevel
+        );
+        if (eligibleUserIds.length === 0) {
+          console.log(`No eligible users for notification ${notification.id}, marking as sent`);
+          await storage.markNotificationSent(notification.id);
+          continue;
+        }
+        const deviceTokens2 = await storage.getDeviceTokensByUserIds(eligibleUserIds);
+        if (deviceTokens2.length === 0) {
+          console.log(`No device tokens found for notification ${notification.id}, marking as sent`);
+          await storage.markNotificationSent(notification.id);
+          continue;
+        }
+        const tokens = deviceTokens2.map((dt) => dt.token);
+        const userIdByToken = new Map(deviceTokens2.map((dt) => [dt.token, dt.userId]));
+        console.log(`Sending notification ${notification.id} to ${tokens.length} devices`);
+        const dataPayload = {
+          type: notification.type,
+          notificationId: String(notification.id)
+        };
+        if (notification.type === "event_reminder" && notification.relatedEventId) {
+          dataPayload.eventId = String(notification.relatedEventId);
+        }
+        const result = await sendPushNotification(
+          tokens,
+          notification.title,
+          notification.body,
+          dataPayload
+        );
+        const logs = [];
+        for (const token of tokens) {
+          const userId = userIdByToken.get(token) || 0;
+          const failed = result.failedTokens.includes(token);
+          logs.push({
+            notificationId: notification.id,
+            userId,
+            deviceToken: token,
+            status: failed ? "failed" : "sent",
+            error: failed ? "FCM delivery failed" : null
+          });
+        }
+        await storage.createNotificationLogs(logs);
+        for (const failedToken of result.failedTokens) {
+          try {
+            await storage.deleteDeviceToken(failedToken);
+            console.log(`Removed invalid token: ${failedToken.substring(0, 20)}...`);
+          } catch (err) {
+            console.error("Error removing failed token:", err);
+          }
+        }
+        await storage.markNotificationSent(notification.id);
+        console.log(
+          `Notification ${notification.id}: ${result.successCount} sent, ${result.failureCount} failed`
+        );
+      } catch (notificationError) {
+        console.error(`Error processing notification ${notification.id}:`, notificationError);
+      }
+    }
+  } catch (error) {
+    console.error("Error processing notifications:", error);
+  } finally {
+    isProcessing = false;
+  }
+}
+function startNotificationCron() {
+  if (cronInterval) {
+    console.log("Notification cron already running");
+    return;
+  }
+  console.log("Starting notification cron job (runs every 60 seconds)");
+  cronInterval = setInterval(processNotifications, 60 * 1e3);
+  processNotifications();
+}
+
 // server/index.ts
 var app = express2();
+app.get("/firebase-messaging-sw.js", (req, res) => {
+  const swPath = path4.join(
+    process.cwd(),
+    "client/public/firebase-messaging-sw.js"
+  );
+  if (!fs3.existsSync(swPath)) {
+    return res.status(404).send("Service worker not found");
+  }
+  res.setHeader("Content-Type", "application/javascript");
+  res.sendFile(swPath);
+});
 app.use(
   express2.json({
     verify: (req, _res, buf) => {
@@ -3732,7 +6702,7 @@ app.use(
 app.use(express2.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   const start = Date.now();
-  const path4 = req.path;
+  const path5 = req.path;
   let capturedJsonResponse = void 0;
   const originalResJson = res.json;
   res.json = function(bodyJson, ...args) {
@@ -3741,8 +6711,8 @@ app.use((req, res, next) => {
   };
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path4.startsWith("/api")) {
-      let logLine = `${req.method} ${path4} ${res.statusCode} in ${duration}ms`;
+    if (path5.startsWith("/api")) {
+      let logLine = `${req.method} ${path5} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -3755,6 +6725,8 @@ app.use((req, res, next) => {
   next();
 });
 (async () => {
+  initializeFirebaseAdmin();
+  startNotificationCron();
   const server = await registerRoutes(app);
   app.use((err, _req, res, _next) => {
     const status = err.status || err.statusCode || 500;
