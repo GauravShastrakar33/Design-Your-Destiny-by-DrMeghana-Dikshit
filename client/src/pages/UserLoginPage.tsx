@@ -22,7 +22,7 @@ export default function UserLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({
         title: "Fields required",
@@ -75,8 +75,12 @@ export default function UserLoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-brand/10 rounded-full mb-4">
             <User className="w-8 h-8 text-brand" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to continue your wellness journey</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Welcome Back
+          </h1>
+          <p className="text-gray-600">
+            Sign in to continue your wellness journey
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -128,11 +132,10 @@ export default function UserLoginPage() {
         <div className="mt-6 text-center space-y-2">
           <p className="text-sm text-gray-500">
             Don't have an account?{" "}
-            <span className="text-brand font-medium">Contact admin to register</span>
+            <span className="text-brand font-medium">
+              Contact admin to register
+            </span>
           </p>
-          <Link href="/admin/login" className="text-sm text-gray-400 hover:text-gray-600">
-            Admin? Login here
-          </Link>
         </div>
       </Card>
     </div>
