@@ -8,6 +8,11 @@ const config: CapacitorConfig = {
     url: 'https://app.drmeghana.com',
     androidScheme: 'https',
   },
+  plugins: {
+    StatusBar: {
+      overlay: false,
+    },
+  },
 };
 
 export default config;

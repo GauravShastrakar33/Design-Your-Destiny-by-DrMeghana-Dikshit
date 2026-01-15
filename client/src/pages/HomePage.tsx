@@ -182,7 +182,7 @@ export default function HomePage() {
 
       <div className="max-w-md mx-auto">
         {/* Header with Search and Notification */}
-        <div className="bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3">
+        <div className="bg-white px-4 py-3 pt-[env(safe-area-inset-top)] shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3">
           <div className="flex-1">
             <h1 className="text-lg font-bold" style={{ fontFamily: "Inter" }}>
               Welcome back, Champion 🏆
