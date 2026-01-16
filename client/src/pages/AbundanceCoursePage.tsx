@@ -16,7 +16,10 @@ interface CourseResponse {
 export default function AbundanceCoursePage() {
   const params = useParams();
   const courseId = params.courseId;
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  
+  // Determine back destination based on current URL path
+  const backPath = location.startsWith("/masterclasses") ? "/masterclasses" : "/money-mastery";
 
   const { data, isLoading, error } = useQuery<CourseResponse>({
     queryKey: ["/api/public/v1/courses", courseId],
@@ -63,7 +66,7 @@ export default function AbundanceCoursePage() {
         <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
           <div className="px-4 py-4 flex items-center gap-3">
             <button
-              onClick={() => setLocation("/money-mastery")}
+              onClick={() => setLocation(backPath)}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
               data-testid="button-back"
             >
