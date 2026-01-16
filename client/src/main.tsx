@@ -4,8 +4,22 @@ import "./index.css";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
+import { App as CapacitorApp } from "@capacitor/app";
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+// 🔙 Handle Android hardware back button
+if (Capacitor.isNativePlatform()) {
+  CapacitorApp.addListener("backButton", ({ canGoBack }) => {
+    // Check if we can go back in browser history
+    if (window.history.length > 1 && canGoBack) {
+      window.history.back();
+    } else {
+      // At root - minimize app instead of closing
+      CapacitorApp.minimizeApp();
+    }
+  });
+}
 
 // 📱 Configure StatusBar for native platforms
 if (Capacitor.isNativePlatform()) {
