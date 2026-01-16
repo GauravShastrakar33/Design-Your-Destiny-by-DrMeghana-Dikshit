@@ -1,4 +1,4 @@
-import { Search, Bell, ChevronRight, GraduationCap } from "lucide-react";
+import { Search, Bell, ChevronRight, GraduationCap, Play } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -84,26 +84,31 @@ export default function MasterclassesPage() {
                     onClick={() => setLocation(`/masterclasses/course/${course.id}`)}
                     data-testid={`card-masterclass-course-${course.id}`}
                   >
-                    <div className="flex items-center gap-4 p-4">
+                    {/* Wide thumbnail with play button overlay */}
+                    <div className="relative aspect-video w-full bg-gray-100">
                       {course.thumbnailUrl ? (
-                        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
-                          <img 
-                            src={course.thumbnailUrl} 
-                            alt={course.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+                        <img 
+                          src={course.thumbnailUrl} 
+                          alt={course.title}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <div className="w-16 h-16 rounded-xl bg-[#703DFA]/10 flex items-center justify-center flex-shrink-0">
-                          <GraduationCap className="w-8 h-8 text-[#703DFA]" />
+                        <div className="w-full h-full bg-[#703DFA]/10 flex items-center justify-center">
+                          <GraduationCap className="w-12 h-12 text-[#703DFA]" />
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 line-clamp-2">
-                          {course.title}
-                        </h3>
+                      {/* Play button overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-white/80 flex items-center justify-center shadow-lg">
+                          <Play className="w-6 h-6 text-gray-800 ml-1" fill="currentColor" />
+                        </div>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    </div>
+                    {/* Title below thumbnail */}
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-900 text-lg">
+                        {course.title}
+                      </h3>
                     </div>
                   </Card>
                 ))}
