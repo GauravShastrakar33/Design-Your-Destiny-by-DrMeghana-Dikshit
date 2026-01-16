@@ -13,16 +13,16 @@ const config: CapacitorConfig = {
       showSpinner: false,
       androidScaleType: "CENTER_CROP",
     },
+    StatusBar: {
+      overlaysWebView: false,
+      style: "DARK",
+      backgroundColor: "#703DFA",
+    },
   },
 
   server: {
     url: "https://app.drmeghana.com",
     androidScheme: "https",
-  },
-  plugins: {
-    StatusBar: {
-      overlay: false,
-    },
   },
 };
 

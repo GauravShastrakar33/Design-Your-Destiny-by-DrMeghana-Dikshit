@@ -3,8 +3,26 @@ import App from "./App";
 import "./index.css";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { Capacitor } from "@capacitor/core";
+import { StatusBar, Style } from "@capacitor/status-bar";
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+// 📱 Configure StatusBar for native platforms
+if (Capacitor.isNativePlatform()) {
+  (async () => {
+    try {
+      // Ensure content doesn't overlap with status bar
+      await StatusBar.setOverlaysWebView({ overlay: false });
+      // Set status bar style (light text for dark backgrounds)
+      await StatusBar.setStyle({ style: Style.Light });
+      // Set status bar background color to match app theme
+      await StatusBar.setBackgroundColor({ color: "#703DFA" });
+      console.log("✅ StatusBar configured successfully");
+    } catch (e) {
+      console.error("❌ StatusBar configuration failed", e);
+    }
+  })();
+}
 
 // 🔔 Run ONLY on native platforms & AFTER bridge is ready
 if (Capacitor.isNativePlatform()) {
