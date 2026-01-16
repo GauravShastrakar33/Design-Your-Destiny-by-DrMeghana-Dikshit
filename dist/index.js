@@ -4253,11 +4253,23 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const mappedCourses = await Promise.all(
           mappings.map(async (m) => {
             const [course] = await db.select().from(cmsCourses).where(eq2(cmsCourses.id, m.courseId));
+            let thumbnailUrl = null;
+            if (course.thumbnailKey) {
+              try {
+                const result = await getSignedGetUrl(course.thumbnailKey, 3600);
+                if (result.success && result.url) {
+                  thumbnailUrl = result.url;
+                }
+              } catch (e) {
+                console.error("Error generating thumbnail URL:", e);
+              }
+            }
             return {
               id: course.id,
               title: course.title,
               description: course.description,
               thumbnailKey: course.thumbnailKey,
+              thumbnailUrl,
               position: m.position,
               isBuiltIn: false
             };
@@ -4336,6 +4348,26 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.json({ course: { ...course, thumbnailUrl }, modules });
     } catch (error) {
       console.error("Error fetching course:", error);
+      res.status(500).json({ error: "Failed to fetch course" });
+    }
+  });
+  app2.get("/api/public/v1/courses/:id/full", async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      const [course] = await db.select().from(cmsCourses).where(eq2(cmsCourses.id, courseId));
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      const modules = await storage.getModulesForCourse(courseId);
+      const modulesWithLessons = await Promise.all(
+        modules.map(async (module) => {
+          const lessons = await db.select().from(cmsLessons).where(eq2(cmsLessons.moduleId, module.id)).orderBy(asc2(cmsLessons.position));
+          return { ...module, lessons };
+        })
+      );
+      res.json({ course, modules: modulesWithLessons });
+    } catch (error) {
+      console.error("Error fetching course full:", error);
       res.status(500).json({ error: "Failed to fetch course" });
     }
   });
