@@ -353,6 +353,11 @@ const requireSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for connectivity testing
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ status: "ok" });
+  });
+
   // Public route: Get all active community sessions
   app.get("/api/sessions", async (req, res) => {
     try {

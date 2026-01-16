@@ -11,6 +11,7 @@ import AppLayout from "@/layouts/AppLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import AppRoutes from "@/routes/AppRoutes";
 import AdminRoutes from "@/routes/AdminRoutes";
+import NetworkStatus from "@/components/NetworkStatus";
 
 function App() {
   const [location] = useLocation();
@@ -19,38 +20,40 @@ function App() {
   const isLoginPage = location === "/login";
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <AdminAuthProvider>
-            {isAdminRoute ? (
-              isAdminLoginPage ? (
-                <AdminLayout>
-                  <AdminRoutes />
-                </AdminLayout>
-              ) : (
-                <AdminRoute>
+    <NetworkStatus>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>
+            <AdminAuthProvider>
+              {isAdminRoute ? (
+                isAdminLoginPage ? (
                   <AdminLayout>
                     <AdminRoutes />
                   </AdminLayout>
-                </AdminRoute>
-              )
-            ) : isLoginPage ? (
-              <AppLayout>
-                <AppRoutes />
-              </AppLayout>
-            ) : (
-              <ProtectedRoute>
+                ) : (
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminRoutes />
+                    </AdminLayout>
+                  </AdminRoute>
+                )
+              ) : isLoginPage ? (
                 <AppLayout>
                   <AppRoutes />
                 </AppLayout>
-              </ProtectedRoute>
-            )}
-          </AdminAuthProvider>
-        </AuthProvider>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+              ) : (
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AppRoutes />
+                  </AppLayout>
+                </ProtectedRoute>
+              )}
+            </AdminAuthProvider>
+          </AuthProvider>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </NetworkStatus>
   );
 }
 
