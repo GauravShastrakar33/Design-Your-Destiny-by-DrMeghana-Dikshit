@@ -11,7 +11,6 @@ import {
   Plus,
   Pencil,
   X,
-  GripVertical,
   Check,
   Music,
   Loader2,
@@ -484,26 +483,41 @@ export default function MyPracticePlaylistPage() {
         <div className="px-4 py-6 space-y-3">
           {playlists.map((playlist) => (
             <Card key={playlist.id} className="overflow-hidden bg-white" data-testid={`playlist-${playlist.id}`}>
-              <button
-                onClick={() => setExpandedPlaylistId(expandedPlaylistId === playlist.id ? null : playlist.id)}
-                className="w-full p-4 flex items-center gap-3 hover-elevate active-elevate-2"
-                data-testid={`button-expand-${playlist.id}`}
-              >
+              <div className="p-4 flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F3F0FF" }}>
                   <ListMusic className="w-6 h-6" style={{ color: "#703DFA" }} />
                 </div>
-                <div className="flex-1 text-left">
+                <button
+                  onClick={() => setExpandedPlaylistId(expandedPlaylistId === playlist.id ? null : playlist.id)}
+                  className="flex-1 text-left hover-elevate active-elevate-2 rounded-lg py-1"
+                  data-testid={`button-expand-${playlist.id}`}
+                >
                   <h3 className="font-semibold text-foreground">{playlist.title}</h3>
                   <p className="text-sm text-muted-foreground">
                     Created {new Date(playlist.createdAt).toLocaleDateString()}
                   </p>
+                </button>
+                <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => handleOpenRename(playlist)}
+                    className="p-2 hover-elevate active-elevate-2 rounded-lg"
+                    data-testid={`button-rename-${playlist.id}`}
+                  >
+                    <Pencil className="w-4 h-4" style={{ color: "#703DFA" }} />
+                  </button>
+                  <button
+                    onClick={() => setExpandedPlaylistId(expandedPlaylistId === playlist.id ? null : playlist.id)}
+                    className="p-2 hover-elevate active-elevate-2 rounded-lg"
+                    data-testid={`button-toggle-${playlist.id}`}
+                  >
+                    {expandedPlaylistId === playlist.id ? (
+                      <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                    )}
+                  </button>
                 </div>
-                {expandedPlaylistId === playlist.id ? (
-                  <ChevronUp className="w-5 h-5 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                )}
-              </button>
+              </div>
 
               <AnimatePresence>
                 {expandedPlaylistId === playlist.id && (
@@ -525,39 +539,6 @@ export default function MyPracticePlaylistPage() {
                             <div className="text-center py-2">
                               <p className="text-muted-foreground text-sm">No items in this playlist yet.</p>
                             </div>
-                          ) : editMode === playlist.id ? (
-                            <Reorder.Group
-                              axis="y"
-                              values={expandedPlaylistData?.items || []}
-                              onReorder={handleReorder}
-                              className="space-y-2"
-                            >
-                              {expandedPlaylistData?.items.map((item) => (
-                                <Reorder.Item key={item.id} value={item} className="cursor-grab active:cursor-grabbing">
-                                  <div
-                                    className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
-                                    data-testid={`item-${item.id}`}
-                                  >
-                                    <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <span className="text-sm font-medium text-foreground truncate block">
-                                        {item.lesson?.title || `Lesson ${item.lessonId}`}
-                                      </span>
-                                    </div>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        removeItemMutation.mutate({ playlistId: playlist.id, itemId: item.id });
-                                      }}
-                                      className="p-1 hover:bg-red-100 rounded"
-                                      data-testid={`button-remove-item-${item.id}`}
-                                    >
-                                      <X className="w-4 h-4 text-red-500" />
-                                    </button>
-                                  </div>
-                                </Reorder.Item>
-                              ))}
-                            </Reorder.Group>
                           ) : expandedPlaylistData?.items && expandedPlaylistData.items.length > 0 ? (
                             <div className="space-y-2">
                               {expandedPlaylistData.items.map((item, index) => (
@@ -595,40 +576,26 @@ export default function MyPracticePlaylistPage() {
 
                           <div className="flex gap-2 pt-2 flex-wrap">
                             {(expandedPlaylistData?.items?.length || 0) > 0 && (
-                              <>
-                                <Button
-                                  className="flex-1 border-0"
-                                  style={{ backgroundColor: "#703DFA", color: "white" }}
-                                  onClick={() =>
-                                    currentPlaylistId === playlist.id ? handleStopPlaylist() : handlePlayPlaylist(playlist.id)
-                                  }
-                                  data-testid={`button-play-${playlist.id}`}
-                                >
-                                  {currentPlaylistId === playlist.id ? (
-                                    <>
-                                      <Pause className="w-4 h-4 mr-2" />
-                                      Stop
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Play className="w-4 h-4 mr-2" />
-                                      Play
-                                    </>
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => setEditMode(editMode === playlist.id ? null : playlist.id)}
-                                  data-testid={`button-edit-mode-${playlist.id}`}
-                                >
-                                  {editMode === playlist.id ? (
-                                    <Check className="w-4 h-4" style={{ color: "#703DFA" }} />
-                                  ) : (
-                                    <GripVertical className="w-4 h-4" style={{ color: "#703DFA" }} />
-                                  )}
-                                </Button>
-                              </>
+                              <Button
+                                className="flex-1 border-0"
+                                style={{ backgroundColor: "#703DFA", color: "white" }}
+                                onClick={() =>
+                                  currentPlaylistId === playlist.id ? handleStopPlaylist() : handlePlayPlaylist(playlist.id)
+                                }
+                                data-testid={`button-play-${playlist.id}`}
+                              >
+                                {currentPlaylistId === playlist.id ? (
+                                  <>
+                                    <Pause className="w-4 h-4 mr-2" />
+                                    Stop
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="w-4 h-4 mr-2" />
+                                    Play
+                                  </>
+                                )}
+                              </Button>
                             )}
                             <Button
                               variant="outline"
@@ -637,14 +604,6 @@ export default function MyPracticePlaylistPage() {
                               data-testid={`button-edit-items-${playlist.id}`}
                             >
                               <Plus className="w-4 h-4" style={{ color: "#703DFA" }} />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleOpenRename(playlist)}
-                              data-testid={`button-rename-${playlist.id}`}
-                            >
-                              <Pencil className="w-4 h-4" style={{ color: "#703DFA" }} />
                             </Button>
                             <Button
                               variant="outline"
