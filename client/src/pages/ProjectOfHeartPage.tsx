@@ -23,6 +23,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Capacitor } from "@capacitor/core";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { Filesystem, Directory } from "@capacitor/filesystem";
 
 type POHStatus = "active" | "next" | "horizon";
 type Category = "career" | "health" | "relationships" | "wealth" | "other";
@@ -380,12 +383,62 @@ export default function ProjectOfHeartPage() {
     }
   };
 
-  // Vision upload handlers
+  const pickVisionImageNative = async (index: number) => {
+    if (!pohState.active) return;
+
+    setUploadingVisionIndex(index);
+
+    try {
+      const photo = await Camera.getPhoto({
+        source: CameraSource.Photos,
+        resultType: CameraResultType.Uri,
+        quality: 80,
+      });
+
+      if (!photo.webPath) return;
+
+      const imageResponse = await fetch(photo.webPath);
+      const blob = await imageResponse.blob();
+
+      const formData = new FormData();
+      formData.append("image", blob, "vision.jpg");
+      formData.append("index", String(index));
+
+      const token = localStorage.getItem("@app:user_token");
+
+      const uploadResponse = await fetch(
+        `/api/poh/${pohState.active.id}/vision`,
+        {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: formData,
+        }
+      );
+
+      if (uploadResponse.ok) {
+        await fetchPOHData();
+      }
+    } catch (error) {
+      console.error("Native vision upload failed:", error);
+    } finally {
+      setUploadingVisionIndex(null);
+    }
+  };
+
   const handleVisionSlotClick = (index: number) => {
     if (uploadingVisionIndex !== null || !pohState.active) return;
+
+    // ✅ Native Android / iOS → use Capacitor gallery
+    if (Capacitor.isNativePlatform()) {
+      pickVisionImageNative(index);
+      return;
+    }
+
+    // 🌐 Web fallback
     pendingVisionIndex.current = index;
     visionInputRef.current?.click();
   };
+
 
   const handleVisionFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
