@@ -11,14 +11,17 @@ createRoot(document.getElementById("root")!).render(<App />);
 // 🔙 Handle Android hardware back button
 if (Capacitor.isNativePlatform()) {
   CapacitorApp.addListener("backButton", ({ canGoBack }) => {
-    // Check if we can go back in browser history
-    if (window.history.length > 1 && canGoBack) {
+    console.log("🔙 Back button pressed, canGoBack:", canGoBack);
+    
+    // Use Capacitor's canGoBack which checks WebView history
+    if (canGoBack) {
       window.history.back();
     } else {
       // At root - minimize app instead of closing
       CapacitorApp.minimizeApp();
     }
   });
+  console.log("✅ Android back button handler registered");
 }
 
 // 📱 Configure StatusBar for native platforms
