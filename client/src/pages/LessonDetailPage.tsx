@@ -97,6 +97,7 @@ export default function LessonDetailPage() {
       await apiRequest("PUT", `/api/admin/v1/cms/lessons/${lessonId}`, data);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/cms/lessons", lessonId] });
       toast({ title: "Lesson updated" });
     },
     onError: () => {
