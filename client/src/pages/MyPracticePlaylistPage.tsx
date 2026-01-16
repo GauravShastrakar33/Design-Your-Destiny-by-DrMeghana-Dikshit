@@ -726,7 +726,8 @@ export default function MyPracticePlaylistPage() {
                     <h4 className="font-semibold text-sm text-gray-700">{module.title}</h4>
                     <div className="space-y-1">
                       {module.lessons.map((lesson) => {
-                        const isSelected = selectedLessonIds.includes(lesson.id);
+                        const selectionIndex = selectedLessonIds.indexOf(lesson.id);
+                        const isSelected = selectionIndex !== -1;
                         const hasAudio = lesson.audioFiles.length > 0;
                         if (!hasAudio) return null;
                         return (
@@ -740,7 +741,14 @@ export default function MyPracticePlaylistPage() {
                           >
                             <Music className="w-4 h-4 text-brand flex-shrink-0" />
                             <span className="flex-1 text-left text-sm">{lesson.title}</span>
-                            {isSelected && <Check className="w-4 h-4 text-brand" />}
+                            {isSelected && (
+                              <div 
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                                style={{ backgroundColor: "#703DFA" }}
+                              >
+                                {selectionIndex + 1}
+                              </div>
+                            )}
                           </button>
                         );
                       })}
