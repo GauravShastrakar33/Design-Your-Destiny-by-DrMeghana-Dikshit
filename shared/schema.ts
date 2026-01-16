@@ -386,7 +386,7 @@ export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 export type ActivityLog = typeof activityLogs.$inferSelect;
 
-export const featureTypeEnum = ["PROCESS", "BREATH", "CHECKLIST"] as const;
+export const featureTypeEnum = ["PROCESS", "PLAYLIST"] as const;
 export type FeatureType = typeof featureTypeEnum[number];
 
 // Daily Quotes Table - for displaying one quote per day with round-robin rotation

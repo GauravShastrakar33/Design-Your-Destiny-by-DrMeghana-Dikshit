@@ -207,7 +207,7 @@ export default function MyPracticePlaylistPage() {
       const res = await apiRequest("POST", "/api/v1/activity/log", {
         lessonId: params.lessonId,
         lessonName: params.lessonName,
-        featureType: "PROCESS",
+        featureType: "PLAYLIST",
         activityDate: new Date().toISOString().split('T')[0],
       });
       return res.json();

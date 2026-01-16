@@ -1,9 +1,8 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { ArrowLeft, Loader2, Video, Music, FileText, Wind } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import type { CmsLesson, CmsLessonFile } from "@shared/schema";
 
 interface LessonFileWithUrl extends CmsLessonFile {
@@ -19,51 +18,8 @@ export default function SpiritualBreathLessonPage() {
   const params = useParams();
   const lessonId = params.lessonId;
   const [, setLocation] = useLocation();
-  const [hasLoggedActivity, setHasLoggedActivity] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  const isAuthenticated = !!localStorage.getItem("@app:user_token");
-
-  const logActivityMutation = useMutation({
-    mutationFn: async (params: { lessonId: number; lessonName: string }) => {
-      const res = await apiRequest("POST", "/api/v1/activity/log", {
-        lessonId: params.lessonId,
-        lessonName: params.lessonName,
-        featureType: "BREATH",
-        activityDate: new Date().toISOString().split('T')[0],
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        predicate: (query) => 
-          Array.isArray(query.queryKey) && 
-          query.queryKey[0] === "/api/v1/activity/monthly-stats"
-      });
-    },
-  });
-
-  const logActivity = (lessonId: number, lessonName: string) => {
-    if (!hasLoggedActivity && isAuthenticated) {
-      setHasLoggedActivity(true);
-      logActivityMutation.mutate({ lessonId, lessonName });
-    }
-  };
-
-  const handlePlay = (lessonId: number, lessonName: string) => {
-    logActivity(lessonId, lessonName);
-  };
-
-  const handleTimeUpdate = (
-    element: HTMLVideoElement | HTMLAudioElement,
-    lessonId: number,
-    lessonName: string
-  ) => {
-    if (element.duration && element.currentTime >= element.duration * 0.5) {
-      logActivity(lessonId, lessonName);
-    }
-  };
 
   const { data, isLoading, error } = useQuery<LessonResponse>({
     queryKey: ["/api/public/v1/lessons", lessonId],
@@ -141,8 +97,6 @@ export default function SpiritualBreathLessonPage() {
                 className="w-full aspect-video bg-black"
                 src={videoFile.signedUrl}
                 data-testid="video-player"
-                onPlay={() => handlePlay(lesson.id, lesson.title)}
-                onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget, lesson.id, lesson.title)}
               >
                 Your browser does not support the video tag.
               </video>
@@ -161,8 +115,6 @@ export default function SpiritualBreathLessonPage() {
                 className="w-full"
                 src={audioFile.signedUrl}
                 data-testid="audio-player"
-                onPlay={() => handlePlay(lesson.id, lesson.title)}
-                onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget, lesson.id, lesson.title)}
               >
                 Your browser does not support the audio tag.
               </audio>
