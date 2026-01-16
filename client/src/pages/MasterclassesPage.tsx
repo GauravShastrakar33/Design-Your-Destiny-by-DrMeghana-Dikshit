@@ -1,4 +1,4 @@
-import { Search, Bell, ChevronRight, GraduationCap, Play } from "lucide-react";
+import { Search, Bell, ChevronRight, GraduationCap } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -84,8 +84,8 @@ export default function MasterclassesPage() {
                     onClick={() => setLocation(`/masterclasses/course/${course.id}`)}
                     data-testid={`card-masterclass-course-${course.id}`}
                   >
-                    {/* Wide thumbnail with play button overlay */}
-                    <div className="relative aspect-video w-full bg-gray-100">
+                    {/* Wide thumbnail */}
+                    <div className="aspect-[2/1] w-full bg-gray-100">
                       {course.thumbnailUrl ? (
                         <img 
                           src={course.thumbnailUrl} 
@@ -94,19 +94,13 @@ export default function MasterclassesPage() {
                         />
                       ) : (
                         <div className="w-full h-full bg-[#703DFA]/10 flex items-center justify-center">
-                          <GraduationCap className="w-12 h-12 text-[#703DFA]" />
+                          <GraduationCap className="w-10 h-10 text-[#703DFA]" />
                         </div>
                       )}
-                      {/* Play button overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-14 h-14 rounded-full bg-white/80 flex items-center justify-center shadow-lg">
-                          <Play className="w-6 h-6 text-gray-800 ml-1" fill="currentColor" />
-                        </div>
-                      </div>
                     </div>
                     {/* Title below thumbnail */}
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 text-lg">
+                    <div className="p-3">
+                      <h3 className="font-semibold text-gray-900">
                         {course.title}
                       </h3>
                     </div>
