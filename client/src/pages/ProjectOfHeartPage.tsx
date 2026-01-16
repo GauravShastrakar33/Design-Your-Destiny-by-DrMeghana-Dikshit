@@ -6,7 +6,7 @@ import heartChakraPng from "@assets/generated_images/heart_chakra_anahata_symbol
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, ChevronLeft, Image as ImageIcon, Plus, History, Edit3, Check, X, Sparkles } from "lucide-react";
+import { Loader2, ChevronLeft, Image as ImageIcon, Plus, History, Edit3, Check, X, Sparkles, Heart } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -121,6 +121,7 @@ export default function ProjectOfHeartPage() {
   const [sliderValue, setSliderValue] = useState(5);
   const [savingRating, setSavingRating] = useState(false);
   const [ratingError, setRatingError] = useState<string | null>(null);
+  const [showReflectionModal, setShowReflectionModal] = useState(false);
   
   // Vision upload state
   const [uploadingVisionIndex, setUploadingVisionIndex] = useState<number | null>(null);
@@ -1201,7 +1202,6 @@ export default function ProjectOfHeartPage() {
                 <Slider
                   value={[sliderValue]}
                   onValueChange={(v) => setSliderValue(v[0])}
-                  onValueCommit={(v) => saveRating(v[0])}
                   max={10}
                   step={1}
                   className="w-full"
@@ -1210,11 +1210,26 @@ export default function ProjectOfHeartPage() {
               </div>
               <div className="flex justify-between mt-3">
                 <span className="text-xs text-gray-400">0</span>
-                <span className="text-sm font-medium text-gray-500">{sliderValue} {savingRating && <Loader2 className="w-3 h-3 inline animate-spin ml-1" />}</span>
+                <span className="text-sm font-medium text-gray-500">{sliderValue}</span>
                 <span className="text-xs text-gray-400">10</span>
               </div>
               {ratingError && <p className="text-xs text-red-500 mt-2">{ratingError}</p>}
-              <p className="text-sm text-gray-500 mt-4">A moment of awareness, practiced daily, shapes how you show up.</p>
+              
+              {/* Save Reflection Button */}
+              <div className="mt-5">
+                <Button 
+                  onClick={() => setShowReflectionModal(true)}
+                  disabled={savingRating}
+                  className="w-full"
+                  style={{ backgroundColor: "#703DFA" }}
+                  data-testid="button-save-reflection"
+                >
+                  {savingRating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Save Reflection
+                </Button>
+              </div>
+              
+              <p className="text-sm text-gray-500 mt-4 text-center">A moment of awareness, practiced daily, shapes how you show up.</p>
             </div>
           </motion.div>
         )}
@@ -1548,6 +1563,49 @@ export default function ProjectOfHeartPage() {
             <Button onClick={saveRealign} disabled={savingRealign || !realignTitle.trim()} className="flex-1" style={{ backgroundColor: "#703DFA" }} data-testid="button-save-realign">
               {savingRealign ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save Reflection Modal */}
+      <Dialog open={showReflectionModal} onOpenChange={setShowReflectionModal}>
+        <DialogContent className="max-w-sm">
+          <div className="text-center py-4">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(112, 61, 250, 0.1)" }}>
+              <Heart className="w-8 h-8" style={{ color: "#703DFA" }} />
+            </div>
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-center text-xl">Save Today's Reflection</DialogTitle>
+              <DialogDescription className="text-center mt-2">
+                You rated your alignment as <span className="font-semibold" style={{ color: "#703DFA" }}>{sliderValue}/10</span> today.
+              </DialogDescription>
+            </DialogHeader>
+            <p className="text-sm text-gray-500 mb-6">
+              This moment of self-awareness is a step toward becoming who you wish to be.
+            </p>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowReflectionModal(false)} 
+                className="flex-1"
+                data-testid="button-cancel-reflection"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={async () => {
+                  setShowReflectionModal(false);
+                  await saveRating(sliderValue);
+                }}
+                disabled={savingRating}
+                className="flex-1"
+                style={{ backgroundColor: "#703DFA" }}
+                data-testid="button-confirm-reflection"
+              >
+                {savingRating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Save
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
