@@ -43,6 +43,41 @@ if (Capacitor.isNativePlatform()) {
 
 // 🔔 Run ONLY on native platforms & AFTER bridge is ready
 if (Capacitor.isNativePlatform()) {
+  // Register token with backend
+  const registerTokenWithBackend = async (token: string) => {
+    try {
+      const userToken = localStorage.getItem("@app:user_token");
+      if (!userToken) {
+        console.warn("⚠️ No user token, cannot register device");
+        return false;
+      }
+      
+      const response = await fetch("/api/v1/notifications/register-device", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({ token }),
+      });
+      
+      if (response.ok) {
+        console.log("✅ Device token registered with backend");
+        // Dispatch event so ProfilePage can update its toggle
+        window.dispatchEvent(new CustomEvent("nativePushRegistered", { 
+          detail: { success: true } 
+        }));
+        return true;
+      } else {
+        console.error("❌ Failed to register device token:", response.status);
+        return false;
+      }
+    } catch (error) {
+      console.error("❌ Error registering device token:", error);
+      return false;
+    }
+  };
+
   setTimeout(async () => {
     try {
       const permStatus = await PushNotifications.requestPermissions();
@@ -55,12 +90,17 @@ if (Capacitor.isNativePlatform()) {
         console.warn("❌ Push notification permission not granted");
       }
 
-      PushNotifications.addListener("registration", token => {
+      PushNotifications.addListener("registration", async (token) => {
         console.log("🔥 FCM TOKEN:", token.value);
+        // Send token to backend!
+        await registerTokenWithBackend(token.value);
       });
 
       PushNotifications.addListener("registrationError", err => {
         console.error("❌ Registration error:", err);
+        window.dispatchEvent(new CustomEvent("nativePushRegistered", { 
+          detail: { success: false, error: err } 
+        }));
       });
     } catch (e) {
       console.error("❌ Push init failed", e);
