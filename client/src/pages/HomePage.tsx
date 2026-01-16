@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -47,6 +48,7 @@ interface StreakDay {
 }
 
 export default function HomePage() {
+  const isNative = Capacitor.isNativePlatform();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [practiceProgress] = useState({ current: 15, total: 30 });
@@ -182,7 +184,11 @@ export default function HomePage() {
 
       <div className="max-w-md mx-auto">
         {/* Header with Search and Notification */}
-        <div className="bg-white px-4 py-3 pt-[env(safe-area-inset-top)] shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3">
+        <div
+  className={`bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3 ${
+    isNative ? 'pt-[env(safe-area-inset-top)]' : ''
+  }`}
+>
           <div className="flex-1">
             <h1 className="text-lg font-bold" style={{ fontFamily: "Inter" }}>
               Welcome back, Champion 🏆

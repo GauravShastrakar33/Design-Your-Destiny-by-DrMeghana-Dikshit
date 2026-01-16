@@ -21,3 +21,12 @@ android/.idea/
 ios/App/build/
 ios/DerivedData/
 *.ipa
+ios/App/App/GoogleService-Info.plist
+
+# iOS
+ios/App/App/GoogleService-Info.plist
+ios/App/App.xcworkspace/
+ios/App/Podfile.lock
+
+# Git
+FETCH_HEAD
