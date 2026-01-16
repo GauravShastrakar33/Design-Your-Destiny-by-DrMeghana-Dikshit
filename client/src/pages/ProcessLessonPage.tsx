@@ -65,7 +65,10 @@ export default function ProcessLessonPage() {
   });
 
   const logActivity = (lessonId: number, lessonName: string) => {
-    if (!hasLoggedActivity && isAuthenticated) {
+    // Only track activity from "All Processes" route (not from Masterclasses, Abundance, etc.)
+    const isFromAllProcesses = location.startsWith("/processes/lesson") && !fromAbundance;
+    
+    if (!hasLoggedActivity && isAuthenticated && isFromAllProcesses) {
       setHasLoggedActivity(true);
       logActivityMutation.mutate({ lessonId, lessonName });
     }
