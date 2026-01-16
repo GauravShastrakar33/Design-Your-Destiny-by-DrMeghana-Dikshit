@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, useParams, useSearch } from "wouter";
 import { ArrowLeft, Upload, Trash2, Video, Music, FileType, Save, X } from "lucide-react";
@@ -47,6 +47,7 @@ export default function LessonDetailPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [uploadQueue, setUploadQueue] = useState<FileUploadState[]>([]);
+  const [formInitialized, setFormInitialized] = useState(false);
 
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
@@ -92,12 +93,27 @@ export default function LessonDetailPage() {
     enabled: !!courseId,
   });
 
+  useEffect(() => {
+    setFormInitialized(false);
+    setTitle("");
+    setDescription("");
+  }, [lessonId]);
+
+  useEffect(() => {
+    if (lesson && !formInitialized) {
+      setTitle(lesson.title);
+      setDescription(lesson.description || "");
+      setFormInitialized(true);
+    }
+  }, [lesson, formInitialized]);
+
   const updateLessonMutation = useMutation({
     mutationFn: async (data: { title: string; description?: string }) => {
       await apiRequest("PUT", `/api/admin/v1/cms/lessons/${lessonId}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/cms/lessons", lessonId] });
+      setFormInitialized(false);
       toast({ title: "Lesson updated" });
     },
     onError: () => {
@@ -253,11 +269,14 @@ export default function LessonDetailPage() {
   };
 
   const handleSave = () => {
-    if (!title.trim()) {
+    const finalTitle = title.trim() || lesson?.title?.trim() || "";
+    const finalDescription = description || lesson?.description || "";
+    
+    if (!finalTitle) {
       toast({ title: "Title is required", variant: "destructive" });
       return;
     }
-    updateLessonMutation.mutate({ title, description });
+    updateLessonMutation.mutate({ title: finalTitle, description: finalDescription });
   };
 
   const getFileIcon = (fileType: string) => {
@@ -307,7 +326,7 @@ export default function LessonDetailPage() {
             <div>
               <Label>Title</Label>
               <Input
-                value={title || lesson?.title || ""}
+                value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter lesson title"
                 className="mt-2"
@@ -317,7 +336,7 @@ export default function LessonDetailPage() {
             <div>
               <Label>Description (Optional)</Label>
               <Textarea
-                value={description || lesson?.description || ""}
+                value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Enter lesson description"
                 className="mt-2 min-h-[80px]"
