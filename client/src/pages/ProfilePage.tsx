@@ -31,6 +31,12 @@ import {
   getNotificationStatus,
   unregisterDeviceTokens,
 } from "@/lib/notifications";
+import {
+  isNativePlatform,
+  checkNativePermissionStatus,
+  requestNativePushPermission,
+  setupNativePushListeners,
+} from "@/lib/nativePush";
 import { Card, CardContent } from "@/components/ui/card";
 import type { UserWellnessProfile } from "@shared/schema";
 import ConsistencyCalendar from "@/components/ConsistencyCalendar";
@@ -89,12 +95,44 @@ export default function ProfilePage() {
     const savedUserName = localStorage.getItem("@app:userName");
     setUserName(savedUserName || "UserName");
 
-    // Check notification status from backend (DB source of truth)
+    // Set up native push listeners on mount (no-op on web)
+    setupNativePushListeners();
+
+    // Check notification status - combines OS permission + backend status
     const checkNotificationStatus = async () => {
-      const enabled = await getNotificationStatus();
-      setNotificationsEnabled(enabled);
+      // First check backend status (DB source of truth for enabled state)
+      const backendEnabled = await getNotificationStatus();
+      
+      // On native platform, also verify OS permission is still granted
+      if (isNativePlatform()) {
+        const osPermission = await checkNativePermissionStatus();
+        // Only show as enabled if BOTH backend says enabled AND OS permission is granted
+        setNotificationsEnabled(backendEnabled && osPermission === "granted");
+      } else {
+        // On web, check browser permission too
+        const browserGranted = "Notification" in window && Notification.permission === "granted";
+        setNotificationsEnabled(backendEnabled && browserGranted);
+      }
     };
     checkNotificationStatus();
+
+    // Listen for native push registration events to update UI
+    const handleNativePushRegistered = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log("📱 Native push registered event:", customEvent.detail);
+      if (customEvent.detail?.success) {
+        // Re-check status from backend after successful registration
+        const enabled = await getNotificationStatus();
+        setNotificationsEnabled(enabled);
+        setNotificationsLoading(false);
+      }
+    };
+
+    window.addEventListener("nativePushRegistered", handleNativePushRegistered);
+
+    return () => {
+      window.removeEventListener("nativePushRegistered", handleNativePushRegistered);
+    };
   }, []);
 
   const handleToggleNotifications = async () => {
@@ -109,16 +147,51 @@ export default function ProfilePage() {
         // Re-fetch status from DB to update toggle
         const enabled = await getNotificationStatus();
         setNotificationsEnabled(enabled);
+        setNotificationsLoading(false);
       } else {
-        // Enable: request browser permission → get FCM token → register
-        const success = await requestNotificationPermission();
-        // Re-fetch status from DB regardless to ensure UI matches DB state
-        const enabled = await getNotificationStatus();
-        setNotificationsEnabled(enabled);
-        if (!success && !enabled) {
-          alert(
-            "Unable to enable notifications. Please check your browser settings.",
-          );
+        // Enable: request permission based on platform
+        if (isNativePlatform()) {
+          // Native (Android/iOS): use Capacitor push notifications
+          console.log("📱 Requesting native push permission...");
+          const success = await requestNativePushPermission();
+          
+          if (!success) {
+            // Permission denied or error
+            setNotificationsLoading(false);
+            alert(
+              "Unable to enable notifications. Please check your device settings.",
+            );
+            return;
+          }
+          
+          // On native, the token registration happens async in the listener
+          // The UI will update when we receive the 'nativePushRegistered' event
+          // Keep loading state active until event is received (or timeout)
+          setTimeout(async () => {
+            // Fallback: check status after 5 seconds if event wasn't received
+            const enabled = await getNotificationStatus();
+            if (isNativePlatform()) {
+              const osPermission = await checkNativePermissionStatus();
+              setNotificationsEnabled(enabled && osPermission === "granted");
+            } else {
+              setNotificationsEnabled(enabled);
+            }
+            setNotificationsLoading(false);
+          }, 5000);
+        } else {
+          // Web: use Firebase web SDK
+          const success = await requestNotificationPermission();
+          // Re-fetch status from DB regardless to ensure UI matches DB state
+          const enabled = await getNotificationStatus();
+          const browserGranted = "Notification" in window && Notification.permission === "granted";
+          setNotificationsEnabled(enabled && browserGranted);
+          setNotificationsLoading(false);
+          
+          if (!success && !enabled) {
+            alert(
+              "Unable to enable notifications. Please check your browser settings.",
+            );
+          }
         }
       }
     } catch (error) {
@@ -126,7 +199,6 @@ export default function ProfilePage() {
       // Re-fetch to ensure UI matches DB state even on error
       const enabled = await getNotificationStatus();
       setNotificationsEnabled(enabled);
-    } finally {
       setNotificationsLoading(false);
     }
   };
