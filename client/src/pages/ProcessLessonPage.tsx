@@ -18,7 +18,7 @@ interface LessonResponse {
 export default function ProcessLessonPage() {
   const params = useParams();
   const lessonId = params.lessonId;
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [hasLoggedActivity, setHasLoggedActivity] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -28,9 +28,12 @@ export default function ProcessLessonPage() {
   const fromAbundance = searchParams.get("from") === "abundance";
   const courseId = searchParams.get("courseId");
   const moduleId = searchParams.get("moduleId");
+  const isMasterclass = location.startsWith("/masterclasses");
 
   const handleBack = () => {
-    if (moduleId) {
+    if (isMasterclass && courseId) {
+      setLocation(`/masterclasses/course/${courseId}`);
+    } else if (moduleId) {
       const moduleUrl = fromAbundance && courseId
         ? `/processes/module/${moduleId}?from=abundance&courseId=${courseId}`
         : `/processes/module/${moduleId}`;

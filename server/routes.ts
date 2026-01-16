@@ -3023,11 +3023,25 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
               .select()
               .from(cmsCourses)
               .where(eq(cmsCourses.id, m.courseId));
+            
+            let thumbnailUrl = null;
+            if (course.thumbnailKey) {
+              try {
+                const result = await getSignedGetUrl(course.thumbnailKey, 3600);
+                if (result.success && result.url) {
+                  thumbnailUrl = result.url;
+                }
+              } catch (e) {
+                console.error("Error generating thumbnail URL:", e);
+              }
+            }
+            
             return {
               id: course.id,
               title: course.title,
               description: course.description,
               thumbnailKey: course.thumbnailKey,
+              thumbnailUrl,
               position: m.position,
               isBuiltIn: false,
             };
@@ -3154,6 +3168,41 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.json({ course: { ...course, thumbnailUrl }, modules });
     } catch (error) {
       console.error("Error fetching course:", error);
+      res.status(500).json({ error: "Failed to fetch course" });
+    }
+  });
+
+  // Get course with modules and lessons (flattened structure for masterclasses)
+  app.get("/api/public/v1/courses/:id/full", async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      const [course] = await db
+        .select()
+        .from(cmsCourses)
+        .where(eq(cmsCourses.id, courseId));
+
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      // Get modules for this course
+      const modules = await storage.getModulesForCourse(courseId);
+
+      // Get lessons for each module
+      const modulesWithLessons = await Promise.all(
+        modules.map(async (module) => {
+          const lessons = await db
+            .select()
+            .from(cmsLessons)
+            .where(eq(cmsLessons.moduleId, module.id))
+            .orderBy(asc(cmsLessons.position));
+          return { ...module, lessons };
+        })
+      );
+
+      res.json({ course, modules: modulesWithLessons });
+    } catch (error) {
+      console.error("Error fetching course full:", error);
       res.status(500).json({ error: "Failed to fetch course" });
     }
   });

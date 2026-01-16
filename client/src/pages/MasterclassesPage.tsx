@@ -9,6 +9,7 @@ interface MasterclassCourse {
   title: string;
   description: string | null;
   thumbnailKey: string | null;
+  thumbnailUrl: string | null;
   position: number;
   isBuiltIn: boolean;
 }
@@ -84,18 +85,23 @@ export default function MasterclassesPage() {
                     data-testid={`card-masterclass-course-${course.id}`}
                   >
                     <div className="flex items-center gap-4 p-4">
-                      <div className="w-16 h-16 rounded-xl bg-[#703DFA]/10 flex items-center justify-center flex-shrink-0">
-                        <GraduationCap className="w-8 h-8 text-[#703DFA]" />
-                      </div>
+                      {course.thumbnailUrl ? (
+                        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+                          <img 
+                            src={course.thumbnailUrl} 
+                            alt={course.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 rounded-xl bg-[#703DFA]/10 flex items-center justify-center flex-shrink-0">
+                          <GraduationCap className="w-8 h-8 text-[#703DFA]" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">
+                        <h3 className="font-semibold text-gray-900 line-clamp-2">
                           {course.title}
                         </h3>
-                        {course.description && (
-                          <p className="text-sm text-gray-500 line-clamp-2">
-                            {course.description}
-                          </p>
-                        )}
                       </div>
                       <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
                     </div>
