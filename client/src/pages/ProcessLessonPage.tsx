@@ -153,7 +153,7 @@ export default function ProcessLessonPage() {
 
         <div className="p-4 space-y-6">
           {lesson.description && (
-            <p className="text-muted-foreground" data-testid="text-lesson-description">
+            <p className="text-muted-foreground whitespace-pre-line" data-testid="text-lesson-description">
               {lesson.description}
             </p>
           )}

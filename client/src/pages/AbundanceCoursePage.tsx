@@ -89,7 +89,7 @@ export default function AbundanceCoursePage() {
           )}
 
           {course.description && (
-            <p className="text-muted-foreground" data-testid="text-course-description">
+            <p className="text-muted-foreground whitespace-pre-line" data-testid="text-course-description">
               {course.description}
             </p>
           )}
