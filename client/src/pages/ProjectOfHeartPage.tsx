@@ -1149,48 +1149,62 @@ export default function ProjectOfHeartPage() {
                   letterSpacing: "0.8px",
                   textTransform: "uppercase",
                   color: "#703DFA",
-                  marginBottom: "12px"
+                  marginBottom: "16px"
                 }}
               >
-                My Top 3 Actions Today
+                My Top Action Today
               </p>
 
-              {/* Action List - Always show 3 slots */}
-              <div className="space-y-3 mb-8">
-                {[0, 1, 2].map((index) => {
-                  const existingAction = pohState.active?.actions?.[index];
-                  return (
-                    <div key={index} className="flex items-center gap-3 group" data-testid={`action-${index}`}>
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: "rgba(112, 61, 250, 0.8)" }} />
-                      {editingAction === index ? (
-                        <div className="flex-1 flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={editActionText}
-                            onChange={(e) => setEditActionText(e.target.value)}
-                            placeholder="Enter action..."
-                            className="flex-1 text-sm px-2 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
-                            autoFocus
-                            onBlur={saveAction}
-                            onKeyDown={(e) => e.key === "Enter" && saveAction()}
-                          />
-                          {savingActions && <Loader2 className="w-4 h-4 animate-spin" />}
+              {/* Single Action Textbox */}
+              <div className="mb-8" data-testid="action-container">
+                {(() => {
+                  const existingAction = pohState.active?.actions?.[0];
+                  return editingAction === 0 ? (
+                    <div className="relative">
+                      <textarea
+                        value={editActionText}
+                        onChange={(e) => setEditActionText(e.target.value)}
+                        placeholder="What's your most important action today?"
+                        className="w-full min-h-[100px] p-4 text-base text-gray-700 bg-gradient-to-br from-purple-50 to-white border-2 border-purple-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 resize-none transition-all"
+                        style={{ 
+                          boxShadow: "inset 0 2px 4px rgba(112, 61, 250, 0.05)",
+                          lineHeight: "1.6"
+                        }}
+                        autoFocus
+                        onBlur={saveAction}
+                        data-testid="input-top-action"
+                      />
+                      {savingActions && (
+                        <div className="absolute top-3 right-3">
+                          <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
                         </div>
-                      ) : existingAction ? (
-                        <>
-                          <span className="text-sm text-gray-700 flex-1">{existingAction.text}</span>
-                          <button onClick={() => { setEditingAction(index); setEditActionText(existingAction.text); }} className="opacity-0 group-hover:opacity-100 p-1">
-                            <Edit3 className="w-3.5 h-3.5 text-gray-400" />
-                          </button>
-                        </>
-                      ) : (
-                        <button onClick={() => { setEditingAction(index); setEditActionText(""); }} className="text-sm text-gray-400 hover:text-gray-600">
-                          + Add action
-                        </button>
                       )}
                     </div>
+                  ) : existingAction ? (
+                    <div 
+                      onClick={() => { setEditingAction(0); setEditActionText(existingAction.text); }}
+                      className="w-full min-h-[100px] p-4 text-base text-gray-700 bg-gradient-to-br from-purple-50 to-white border-2 border-purple-100 rounded-xl cursor-pointer hover:border-purple-200 hover:shadow-md transition-all group"
+                      style={{ 
+                        boxShadow: "0 2px 8px rgba(112, 61, 250, 0.08)",
+                        lineHeight: "1.6"
+                      }}
+                      data-testid="display-top-action"
+                    >
+                      <p className="whitespace-pre-wrap">{existingAction.text}</p>
+                      <div className="flex justify-end mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Edit3 className="w-4 h-4 text-purple-400" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div 
+                      onClick={() => { setEditingAction(0); setEditActionText(""); }}
+                      className="w-full min-h-[100px] p-4 text-base text-gray-400 bg-gradient-to-br from-purple-50 to-white border-2 border-dashed border-purple-200 rounded-xl cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition-all flex items-center justify-center"
+                      data-testid="add-top-action"
+                    >
+                      <span>Tap to add your top action for today...</span>
+                    </div>
                   );
-                })}
+                })()}
               </div>
 
               {/* Divider */}
