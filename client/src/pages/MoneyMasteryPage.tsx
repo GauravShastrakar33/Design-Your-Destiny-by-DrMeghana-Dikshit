@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Calendar, Brain, CheckCircle, ChevronLeft, ChevronRight, BookOpen, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Brain,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
+  Loader2,
+} from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -35,6 +44,13 @@ interface AbundanceFeatureResponse {
   courses: AbundanceCourse[];
 }
 
+const formatINR = (value: number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(value);
+
 export default function MoneyMasteryPage() {
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState(new Date());
@@ -43,20 +59,25 @@ export default function MoneyMasteryPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [earningAmount, setEarningAmount] = useState("");
 
-  const { data: abundanceData, isLoading: isLoadingCourses } = useQuery<AbundanceFeatureResponse>({
-    queryKey: ["/api/public/v1/features", "ABUNDANCE"],
-    queryFn: async () => {
-      const response = await fetch("/api/public/v1/features/ABUNDANCE");
-      if (!response.ok) throw new Error("Failed to fetch abundance courses");
-      return response.json();
-    },
-  });
+  const { data: abundanceData, isLoading: isLoadingCourses } =
+    useQuery<AbundanceFeatureResponse>({
+      queryKey: ["/api/public/v1/features", "ABUNDANCE"],
+      queryFn: async () => {
+        const response = await fetch("/api/public/v1/features/ABUNDANCE");
+        if (!response.ok) throw new Error("Failed to fetch abundance courses");
+        return response.json();
+      },
+    });
 
-  const { data: beliefs = [], isLoading: isLoadingBeliefs } = useQuery<RewiringBelief[]>({
+  const { data: beliefs = [], isLoading: isLoadingBeliefs } = useQuery<
+    RewiringBelief[]
+  >({
     queryKey: ["/api/v1/rewiring-beliefs"],
   });
 
-  const mappedCourses = (abundanceData?.courses || []).sort((a, b) => a.position - b.position);
+  const mappedCourses = (abundanceData?.courses || []).sort(
+    (a, b) => a.position - b.position,
+  );
 
   useEffect(() => {
     const savedEarnings = localStorage.getItem("@app:money_earnings");
@@ -83,8 +104,8 @@ export default function MoneyMasteryPage() {
 
   const formatDate = (day: number): string => {
     const year = selectedMonth.getFullYear();
-    const month = String(selectedMonth.getMonth() + 1).padStart(2, '0');
-    const dayStr = String(day).padStart(2, '0');
+    const month = String(selectedMonth.getMonth() + 1).padStart(2, "0");
+    const dayStr = String(day).padStart(2, "0");
     return `${year}-${month}-${dayStr}`;
   };
 
@@ -97,7 +118,7 @@ export default function MoneyMasteryPage() {
 
   const handleSave = () => {
     if (!selectedDate) return;
-    
+
     const amount = parseFloat(earningAmount);
     if (isNaN(amount)) {
       alert("Please enter a valid number");
@@ -127,17 +148,21 @@ export default function MoneyMasteryPage() {
   };
 
   const previousMonth = () => {
-    setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1));
+    setSelectedMonth(
+      new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1),
+    );
   };
 
   const nextMonth = () => {
-    setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1));
+    setSelectedMonth(
+      new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1),
+    );
   };
 
   const getEarningColor = (amount: number): string => {
     const maxEarning = Math.max(...Object.values(earnings), 1);
     const intensity = amount / maxEarning;
-    
+
     if (intensity > 0.75) return "bg-green-600 text-white";
     if (intensity > 0.5) return "bg-green-500 text-white";
     if (intensity > 0.25) return "bg-green-400 text-green-900";
@@ -146,19 +171,26 @@ export default function MoneyMasteryPage() {
 
   const calculateMonthlySummary = () => {
     const currentMonthEarnings = Object.entries(earnings).filter(([date]) => {
-      const [year, month] = date.split('-');
-      return parseInt(year) === selectedMonth.getFullYear() && 
-             parseInt(month) === selectedMonth.getMonth() + 1;
+      const [year, month] = date.split("-");
+      return (
+        parseInt(year) === selectedMonth.getFullYear() &&
+        parseInt(month) === selectedMonth.getMonth() + 1
+      );
     });
 
-    const total = currentMonthEarnings.reduce((sum, [, amount]) => sum + amount, 0);
-    const highest = currentMonthEarnings.length > 0 
-      ? Math.max(...currentMonthEarnings.map(([, amount]) => amount))
-      : 0;
-    const average = currentMonthEarnings.length > 0 
-      ? total / currentMonthEarnings.length 
-      : 0;
-    const highestDay = currentMonthEarnings.find(([, amount]) => amount === highest)?.[0];
+    const total = currentMonthEarnings.reduce(
+      (sum, [, amount]) => sum + amount,
+      0,
+    );
+    const highest =
+      currentMonthEarnings.length > 0
+        ? Math.max(...currentMonthEarnings.map(([, amount]) => amount))
+        : 0;
+    const average =
+      currentMonthEarnings.length > 0 ? total / currentMonthEarnings.length : 0;
+    const highestDay = currentMonthEarnings.find(
+      ([, amount]) => amount === highest,
+    )?.[0];
 
     return { total, highest, average, highestDay };
   };
@@ -166,9 +198,11 @@ export default function MoneyMasteryPage() {
   const summary = calculateMonthlySummary();
   const today = new Date();
   const isToday = (day: number) => {
-    return selectedMonth.getFullYear() === today.getFullYear() &&
-           selectedMonth.getMonth() === today.getMonth() &&
-           day === today.getDate();
+    return (
+      selectedMonth.getFullYear() === today.getFullYear() &&
+      selectedMonth.getMonth() === today.getMonth() &&
+      day === today.getDate()
+    );
   };
 
   return (
@@ -183,7 +217,12 @@ export default function MoneyMasteryPage() {
             >
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
-            <h1 className="text-lg font-bold text-gray-600 tracking-widest" style={{ fontFamily: "Montserrat" }}>DAILY ABUNDANCE</h1>
+            <h1
+              className="text-lg font-bold text-gray-600 tracking-widest"
+              style={{ fontFamily: "Montserrat" }}
+            >
+              DAILY ABUNDANCE
+            </h1>
           </div>
         </div>
 
@@ -192,9 +231,11 @@ export default function MoneyMasteryPage() {
           <Card className="p-4 bg-white" data-testid="card-money-calendar">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="w-5 h-5" style={{ color: "#703DFA" }} />
-              <h2 className="text-lg font-semibold text-foreground">Money Calendar</h2>
+              <h2 className="text-lg font-semibold text-foreground">
+                Money Calendar
+              </h2>
             </div>
-            
+
             {/* Month Navigation */}
             <div className="flex items-center justify-between mb-4">
               <Button
@@ -206,7 +247,10 @@ export default function MoneyMasteryPage() {
                 <ChevronLeft className="w-4 h-4" />
               </Button>
               <h3 className="font-semibold text-foreground">
-                {selectedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                {selectedMonth.toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
               </h3>
               <Button
                 variant="ghost"
@@ -220,8 +264,11 @@ export default function MoneyMasteryPage() {
 
             {/* Day Headers */}
             <div className="grid grid-cols-7 gap-1 mb-2">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                <div key={i} className="text-center text-xs font-medium text-muted-foreground py-1">
+              {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
+                <div
+                  key={i}
+                  className="text-center text-xs font-medium text-muted-foreground py-1"
+                >
                   {day}
                 </div>
               ))}
@@ -230,32 +277,34 @@ export default function MoneyMasteryPage() {
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-1">
               {emptyDays.map((_, i) => (
-                <div key={`empty-${i}`} className="aspect-square" />
+                <div key={i} className="aspect-square" />
               ))}
               {days.map((day) => {
                 const dateKey = formatDate(day);
                 const earning = earnings[dateKey];
                 const hasEarning = earning !== undefined;
-                
+
                 return (
                   <button
                     key={day}
                     onClick={() => handleDayClick(day)}
                     className={`aspect-square rounded-lg hover-elevate active-elevate-2 flex flex-col items-center justify-center p-1 ${
-                      hasEarning 
+                      hasEarning
                         ? getEarningColor(earning)
                         : isToday(day)
-                        ? 'bg-primary/10 border border-primary'
-                        : 'bg-muted'
+                          ? "bg-primary/10 border border-primary"
+                          : "bg-muted"
                     }`}
                     data-testid={`day-${day}`}
                   >
-                    <span className={`text-xs font-medium ${hasEarning ? '' : 'text-foreground'}`}>
+                    <span
+                      className={`text-xs font-medium ${hasEarning ? "" : "text-foreground"}`}
+                    >
                       {day}
                     </span>
                     {hasEarning && (
                       <span className="text-[10px] font-semibold">
-                        ${earning}
+                        {formatINR(earning)}
                       </span>
                     )}
                   </button>
@@ -265,21 +314,34 @@ export default function MoneyMasteryPage() {
 
             {/* Monthly Summary */}
             <div className="mt-4 pt-4 border-t border-border space-y-2">
-              <h3 className="text-sm font-semibold text-foreground mb-2">Monthly Summary</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-2">
+                Monthly Summary
+              </h3>
+
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total Earnings:</span>
-                <span className="text-lg font-bold text-green-600">${summary.total.toFixed(0)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Highest Day:</span>
-                <span className="text-sm font-semibold text-foreground">
-                  {summary.highest > 0 ? `$${summary.highest.toFixed(0)}` : '-'}
+                <span className="text-sm text-muted-foreground">
+                  Total Earnings:
+                </span>
+                <span className="text-lg font-bold text-green-600">
+                  {formatINR(summary.total)}
                 </span>
               </div>
+
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Average/Day:</span>
+                <span className="text-sm text-muted-foreground">
+                  Highest Day:
+                </span>
                 <span className="text-sm font-semibold text-foreground">
-                  {summary.average > 0 ? `$${summary.average.toFixed(0)}` : '-'}
+                  {summary.highest > 0 ? formatINR(summary.highest) : "-"}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Average/Day:
+                </span>
+                <span className="text-sm font-semibold text-foreground">
+                  {summary.average > 0 ? formatINR(summary.average) : "-"}
                 </span>
               </div>
             </div>
@@ -290,13 +352,15 @@ export default function MoneyMasteryPage() {
             <DialogContent data-testid="dialog-earning">
               <DialogHeader>
                 <DialogTitle>
-                  {selectedDate && earnings[selectedDate] ? 'Edit Earning' : 'Add Earning'}
+                  {selectedDate && earnings[selectedDate]
+                    ? "Edit Earning"
+                    : "Add Earning"}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
-                    Amount ($)
+                    Amount (₹)
                   </label>
                   <input
                     type="number"
@@ -332,14 +396,19 @@ export default function MoneyMasteryPage() {
           {/* Rewiring Belief Cards */}
           {isLoadingBeliefs ? (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#703DFA" }} />
+              <Loader2
+                className="w-6 h-6 animate-spin"
+                style={{ color: "#703DFA" }}
+              />
             </div>
           ) : beliefs.length > 0 ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Brain className="w-5 h-5" style={{ color: "#703DFA" }} />
-                  <h2 className="text-lg font-semibold text-foreground">My Rewired Beliefs</h2>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    My Rewired Beliefs
+                  </h2>
                 </div>
                 <Button
                   variant="ghost"
@@ -362,15 +431,15 @@ export default function MoneyMasteryPage() {
                 >
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start gap-3">
-                      <div 
-                        className="w-2 h-2 rounded-full mt-2 flex-shrink-0" 
+                      <div
+                        className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
                         style={{ backgroundColor: "#EF4444" }}
                       />
                       <div className="flex-1">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
                           Limiting
                         </p>
-                        <p 
+                        <p
                           className="text-sm text-foreground line-through opacity-60"
                           data-testid={`display-limiting-${belief.id}`}
                         >
@@ -379,15 +448,15 @@ export default function MoneyMasteryPage() {
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div 
-                        className="w-2 h-2 rounded-full mt-2 flex-shrink-0" 
+                      <div
+                        className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
                         style={{ backgroundColor: "#10B981" }}
                       />
                       <div className="flex-1">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
                           Rewired
                         </p>
-                        <p 
+                        <p
                           className="text-sm font-medium text-foreground"
                           data-testid={`display-uplifting-${belief.id}`}
                         >
@@ -401,17 +470,22 @@ export default function MoneyMasteryPage() {
             </div>
           ) : (
             /* Rewiring Belief CTA Card - show only when no beliefs exist */
-            <Card 
+            <Card
               className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md h-[140px]"
               onClick={() => setLocation("/rewiring-belief")}
               data-testid="card-rewiring-belief"
             >
               <div className="flex flex-col h-full">
                 <div className="flex items-start gap-3 mb-1 flex-1">
-                  <Brain className="w-7 h-7 flex-shrink-0" style={{ color: "#703DFA" }} />
+                  <Brain
+                    className="w-7 h-7 flex-shrink-0"
+                    style={{ color: "#703DFA" }}
+                  />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h2 className="text-foreground text-lg font-bold">Rewiring Belief</h2>
+                      <h2 className="text-foreground text-lg font-bold">
+                        Rewiring Belief
+                      </h2>
                     </div>
                     <p className="text-muted-foreground text-sm">
                       Transform limiting beliefs into empowering ones
@@ -419,9 +493,9 @@ export default function MoneyMasteryPage() {
                   </div>
                 </div>
                 <div className="flex justify-end">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="bg-white text-black border-border"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -439,23 +513,33 @@ export default function MoneyMasteryPage() {
           {/* Mapped CMS Courses */}
           {isLoadingCourses && (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#703DFA" }} />
+              <Loader2
+                className="w-6 h-6 animate-spin"
+                style={{ color: "#703DFA" }}
+              />
             </div>
           )}
 
           {!isLoadingCourses && mappedCourses.length > 0 && (
             <div className="space-y-4">
               {mappedCourses.map((course) => (
-                <Card 
+                <Card
                   key={course.id}
                   className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
-                  onClick={() => setLocation(`/abundance-mastery/course/${course.id}`)}
+                  onClick={() =>
+                    setLocation(`/abundance-mastery/course/${course.id}`)
+                  }
                   data-testid={`card-course-${course.id}`}
                 >
                   <div className="flex items-start gap-3">
-                    <BookOpen className="w-7 h-7 flex-shrink-0" style={{ color: "#703DFA" }} />
+                    <BookOpen
+                      className="w-7 h-7 flex-shrink-0"
+                      style={{ color: "#703DFA" }}
+                    />
                     <div className="flex-1">
-                      <h2 className="text-foreground text-lg font-bold mb-1">{course.title}</h2>
+                      <h2 className="text-foreground text-lg font-bold mb-1">
+                        {course.title}
+                      </h2>
                       {course.description && (
                         <p className="text-muted-foreground text-sm line-clamp-2">
                           {course.description}

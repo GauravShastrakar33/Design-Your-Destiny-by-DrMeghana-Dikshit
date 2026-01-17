@@ -7,7 +7,7 @@ import {
   Users,
   Wind,
   ListMusic,
-  DollarSign,
+  IndianRupee,
   CheckSquare,
   Bell,
   Search,
@@ -167,7 +167,7 @@ export default function HomePage() {
     },
     {
       title: "Daily Abundance",
-      icon: DollarSign,
+      icon: IndianRupee,
       gradient: "bg-gradient-forest",
       path: "/money-mastery",
       testId: "card-money-mastery",
