@@ -22,7 +22,7 @@ export default function ProcessLessonPage() {
   const [hasLoggedActivity, setHasLoggedActivity] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  
+
   const searchString = useSearch();
   const searchParams = new URLSearchParams(searchString);
   const fromAbundance = searchParams.get("from") === "abundance";
@@ -34,9 +34,10 @@ export default function ProcessLessonPage() {
     if (isMasterclass && courseId) {
       setLocation(`/masterclasses/course/${courseId}`);
     } else if (moduleId) {
-      const moduleUrl = fromAbundance && courseId
-        ? `/processes/module/${moduleId}?from=abundance&courseId=${courseId}`
-        : `/processes/module/${moduleId}`;
+      const moduleUrl =
+        fromAbundance && courseId
+          ? `/processes/module/${moduleId}?from=abundance&courseId=${courseId}`
+          : `/processes/module/${moduleId}`;
       setLocation(moduleUrl);
     } else {
       setLocation("/processes");
@@ -51,23 +52,24 @@ export default function ProcessLessonPage() {
         lessonId: params.lessonId,
         lessonName: params.lessonName,
         featureType: "PROCESS",
-        activityDate: new Date().toISOString().split('T')[0],
+        activityDate: new Date().toISOString().split("T")[0],
       });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        predicate: (query) => 
-          Array.isArray(query.queryKey) && 
-          query.queryKey[0] === "/api/v1/activity/monthly-stats"
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
+          query.queryKey[0] === "/api/v1/activity/monthly-stats",
       });
     },
   });
 
   const logActivity = (lessonId: number, lessonName: string) => {
     // Only track activity from "All Processes" route (not from Masterclasses, Abundance, etc.)
-    const isFromAllProcesses = location.startsWith("/processes/lesson") && !fromAbundance;
-    
+    const isFromAllProcesses =
+      location.startsWith("/processes/lesson") && !fromAbundance;
+
     if (!hasLoggedActivity && isAuthenticated && isFromAllProcesses) {
       setHasLoggedActivity(true);
       logActivityMutation.mutate({ lessonId, lessonName });
@@ -81,7 +83,7 @@ export default function ProcessLessonPage() {
   const handleTimeUpdate = (
     element: HTMLVideoElement | HTMLAudioElement,
     lessonId: number,
-    lessonName: string
+    lessonName: string,
   ) => {
     if (element.duration && element.currentTime >= element.duration * 0.5) {
       logActivity(lessonId, lessonName);
@@ -117,7 +119,10 @@ export default function ProcessLessonPage() {
           >
             <ArrowLeft className="w-6 h-6 text-foreground" />
           </button>
-          <div className="text-center py-12 text-muted-foreground" data-testid="text-error">
+          <div
+            className="text-center py-12 text-muted-foreground"
+            data-testid="text-error"
+          >
             Lesson not found
           </div>
         </div>
@@ -126,16 +131,20 @@ export default function ProcessLessonPage() {
   }
 
   const { lesson, files } = data;
-  const videoFile = files.find(f => f.fileType === "video");
-  const audioFile = files.find(f => f.fileType === "audio");
-  const scriptFile = files.find(f => f.fileType === "script");
+  const videoFile = files.find((f) => f.fileType === "video");
+  const audioFile = files.find((f) => f.fileType === "audio");
+  const scriptFile = files.find((f) => f.fileType === "script");
 
   const getFileIcon = (type: string) => {
     switch (type) {
-      case "video": return <Video className="w-5 h-5" />;
-      case "audio": return <Music className="w-5 h-5" />;
-      case "script": return <FileText className="w-5 h-5" />;
-      default: return <FileText className="w-5 h-5" />;
+      case "video":
+        return <Video className="w-5 h-5" />;
+      case "audio":
+        return <Music className="w-5 h-5" />;
+      case "script":
+        return <FileText className="w-5 h-5" />;
+      default:
+        return <FileText className="w-5 h-5" />;
     }
   };
 
@@ -151,7 +160,10 @@ export default function ProcessLessonPage() {
             >
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
-            <h1 className="text-lg font-semibold text-foreground truncate" data-testid="text-lesson-title">
+            <h1
+              className="text-lg font-semibold text-foreground truncate"
+              data-testid="text-lesson-title"
+            >
               {lesson.title}
             </h1>
           </div>
@@ -159,7 +171,10 @@ export default function ProcessLessonPage() {
 
         <div className="p-4 space-y-6">
           {lesson.description && (
-            <p className="text-muted-foreground whitespace-pre-line" data-testid="text-lesson-description">
+            <p
+              className="text-muted-foreground whitespace-pre-line"
+              data-testid="text-lesson-description"
+            >
               {lesson.description}
             </p>
           )}
@@ -168,15 +183,18 @@ export default function ProcessLessonPage() {
             <Card className="overflow-hidden">
               <video
                 ref={videoRef}
-                controls
-                className="w-full aspect-video bg-black"
                 src={videoFile.signedUrl}
+                controls
+                controlsList="nodownload noremoteplayback"
+                disablePictureInPicture
+                playsInline
+                className="w-full aspect-video bg-black"
                 data-testid="video-player"
                 onPlay={() => handlePlay(lesson.id, lesson.title)}
-                onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget, lesson.id, lesson.title)}
-              >
-                Your browser does not support the video tag.
-              </video>
+                onTimeUpdate={(e) =>
+                  handleTimeUpdate(e.currentTarget, lesson.id, lesson.title)
+                }
+              />
             </Card>
           )}
 
@@ -188,40 +206,42 @@ export default function ProcessLessonPage() {
               </div>
               <audio
                 ref={audioRef}
-                controls
-                className="w-full"
                 src={audioFile.signedUrl}
+                controls
+                controlsList="nodownload"
+                className="w-full"
                 data-testid="audio-player"
                 onPlay={() => handlePlay(lesson.id, lesson.title)}
-                onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget, lesson.id, lesson.title)}
-              >
-                Your browser does not support the audio tag.
-              </audio>
+                onTimeUpdate={(e) =>
+                  handleTimeUpdate(e.currentTarget, lesson.id, lesson.title)
+                }
+              />
             </Card>
           )}
 
-          {scriptFile && (scriptFile.scriptHtml || scriptFile.extractedText) && (
-            <Card className="p-4">
-              <div className="flex items-center gap-3 mb-4">
-                <FileText className="w-5 h-5 text-amber-600" />
-                <span className="font-medium text-foreground">Script</span>
-              </div>
-              {scriptFile.scriptHtml ? (
-                <div 
-                  className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground"
-                  data-testid="text-script-content"
-                  dangerouslySetInnerHTML={{ __html: scriptFile.scriptHtml }}
-                />
-              ) : (
-                <div 
-                  className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap"
-                  data-testid="text-script-content"
-                >
-                  {scriptFile.extractedText}
+          {scriptFile &&
+            (scriptFile.scriptHtml || scriptFile.extractedText) && (
+              <Card className="p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <FileText className="w-5 h-5 text-amber-600" />
+                  <span className="font-medium text-foreground">Script</span>
                 </div>
-              )}
-            </Card>
-          )}
+                {scriptFile.scriptHtml ? (
+                  <div
+                    className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground"
+                    data-testid="text-script-content"
+                    dangerouslySetInnerHTML={{ __html: scriptFile.scriptHtml }}
+                  />
+                ) : (
+                  <div
+                    className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap"
+                    data-testid="text-script-content"
+                  >
+                    {scriptFile.extractedText}
+                  </div>
+                )}
+              </Card>
+            )}
 
           {files.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
