@@ -20,7 +20,6 @@ import RewiringScreen from "@/pages/RewiringScreen";
 import VideoPlayerPage from "@/pages/VideoPlayerPage";
 import UserLoginPage from "@/pages/UserLoginPage";
 import SearchPage from "@/pages/SearchPage";
-import ProcessModulePage from "@/pages/ProcessModulePage";
 import ProcessLessonPage from "@/pages/ProcessLessonPage";
 import SpiritualBreathLessonPage from "@/pages/SpiritualBreathLessonPage";
 import AbundanceCoursePage from "@/pages/AbundanceCoursePage";
@@ -60,7 +59,6 @@ export default function AppRoutes() {
       <Route path="/rewiring-belief" component={RewiringScreen} />
       <Route path="/login" component={UserLoginPage} />
       <Route path="/search" component={SearchPage} />
-      <Route path="/processes/module/:moduleId" component={ProcessModulePage} />
       <Route path="/processes/lesson/:lessonId" component={ProcessLessonPage} />
       <Route path="/spiritual-breaths/lesson/:lessonId" component={SpiritualBreathLessonPage} />
       <Route path="/abundance-mastery/course/:courseId" component={AbundanceCoursePage} />

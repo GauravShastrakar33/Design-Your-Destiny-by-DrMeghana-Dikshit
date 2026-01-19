@@ -33,12 +33,6 @@ export default function ProcessLessonPage() {
   const handleBack = () => {
     if (isMasterclass && courseId) {
       setLocation(`/masterclasses/course/${courseId}`);
-    } else if (moduleId) {
-      const moduleUrl =
-        fromAbundance && courseId
-          ? `/processes/module/${moduleId}?from=abundance&courseId=${courseId}`
-          : `/processes/module/${moduleId}`;
-      setLocation(moduleUrl);
     } else {
       setLocation("/processes");
     }
