@@ -1,11 +1,28 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, Loader2, ChevronDown, ChevronRight, Sparkles, Play } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  ChevronDown,
+  ChevronRight,
+  Sparkles,
+  Play,
+} from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import type { CmsModule, CmsCourse, FrontendFeature, CmsLesson } from "@shared/schema";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import type {
+  CmsModule,
+  CmsCourse,
+  FrontendFeature,
+  CmsLesson,
+  CmsModuleFolder,
+} from "@shared/schema";
 
 interface FeatureResponse {
   feature: FrontendFeature;
@@ -15,16 +32,106 @@ interface FeatureResponse {
 
 interface ModuleLessonsResponse {
   module: CmsModule;
+  folders: CmsModuleFolder[];
   lessons: CmsLesson[];
 }
 
-function ModuleAccordion({ 
-  module, 
+function LessonItem({
+  lesson,
   index,
-  isOpen, 
-  onToggle 
-}: { 
-  module: CmsModule; 
+  moduleId,
+  onClick,
+}: {
+  lesson: CmsLesson;
+  index: number;
+  moduleId: number;
+  onClick: (lessonId: number, moduleId: number) => void;
+}) {
+  return (
+    <div
+      className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-3"
+      onClick={() => onClick(lesson.id, moduleId)}
+      data-testid={`lesson-item-${lesson.id}`}
+    >
+      <div className="w-6 h-6 rounded-full bg-brand/15 text-brand text-[11px] font-medium flex items-center justify-center flex-shrink-0">
+        {index + 1}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-foreground font-medium truncate">
+          {lesson.title}
+        </p>
+      </div>
+      <div className="w-6 h-6 rounded-full border border-muted-foreground/30 flex items-center justify-center flex-shrink-0">
+        <Play className="w-3 h-3 text-muted-foreground" />
+      </div>
+    </div>
+  );
+}
+
+function FolderAccordion({
+  folder,
+  index,
+  lessons,
+  moduleId,
+  onLessonClick,
+}: {
+  folder: CmsModuleFolder;
+  index: number;
+  lessons: CmsLesson[];
+  moduleId: number;
+  onLessonClick: (lessonId: number, moduleId: number) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger asChild>
+        <div className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-[11px] font-medium flex items-center justify-center flex-shrink-0">
+            {index + 1}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-foreground font-medium truncate">
+              {folder.title}
+            </p>
+          </div>
+          {isOpen ? (
+            <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          )}
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="pl-6 border-l-2 border-brand/20 ml-7">
+          {lessons.length === 0 ? (
+            <div className="py-3 px-4 text-sm text-muted-foreground">
+              No content available yet
+            </div>
+          ) : (
+            lessons.map((lesson, lessonIndex) => (
+              <LessonItem
+                key={lesson.id}
+                lesson={lesson}
+                index={lessonIndex}
+                moduleId={moduleId}
+                onClick={onLessonClick}
+              />
+            ))
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function ModuleAccordion({
+  module,
+  index,
+  isOpen,
+  onToggle,
+}: {
+  module: CmsModule;
   index: number;
   isOpen: boolean;
   onToggle: () => void;
@@ -41,24 +148,36 @@ function ModuleAccordion({
     enabled: isOpen,
   });
 
-  const lessons = data?.lessons || [];
+  const folders = data?.folders || [];
+  const allLessons = data?.lessons || [];
+  
+  // Separate lessons without folders (root lessons) from lessons in folders
+  const rootLessons = allLessons.filter(l => !l.folderId);
+  const getLessonsForFolder = (folderId: number) => 
+    allLessons.filter(l => l.folderId === folderId);
+
+  const handleLessonClick = (lessonId: number, moduleId: number) => {
+    setLocation(`/processes/lesson/${lessonId}?moduleId=${moduleId}`);
+  };
+
+  const hasContent = folders.length > 0 || rootLessons.length > 0;
 
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle}>
-      <Card className="overflow-hidden" data-testid={`card-module-${module.id}`}>
+      <Card
+        className="overflow-hidden"
+        data-testid={`card-module-${module.id}`}
+      >
         <CollapsibleTrigger asChild>
-          <div 
-            className="p-4 hover-elevate active-elevate-2 cursor-pointer flex items-center gap-4"
-            data-testid={`trigger-module-${module.id}`}
-          >
-            <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-lg font-bold"
-              style={{ backgroundColor: "#F3F0FF", color: "#703DFA" }}
-            >
+          <div className="py-3 px-4 hover-elevate active-elevate-2 cursor-pointer flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full border border-brand/30 text-brand text-xs font-semibold flex items-center justify-center flex-shrink-0">
               {index + 1}
             </div>
+
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground truncate">{module.title}</h3>
+              <h3 className="text-sm font-semibold text-foreground truncate">
+                {module.title}
+              </h3>
             </div>
             {isOpen ? (
               <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0 transition-transform" />
@@ -67,34 +186,40 @@ function ModuleAccordion({
             )}
           </div>
         </CollapsibleTrigger>
-        
+
         <CollapsibleContent>
           <div className="border-t border-border">
             {isLoading ? (
               <div className="flex items-center justify-center py-6">
                 <Loader2 className="w-5 h-5 animate-spin text-brand" />
               </div>
-            ) : lessons.length === 0 ? (
+            ) : !hasContent ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 No content available yet
               </div>
             ) : (
               <div className="py-2">
-                {lessons.map((lesson, index) => (
-                  <div
+                {/* Render root lessons first (lessons without a folder) */}
+                {rootLessons.map((lesson, lessonIndex) => (
+                  <LessonItem
                     key={lesson.id}
-                    className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-3"
-                    onClick={() => setLocation(`/processes/lesson/${lesson.id}?moduleId=${module.id}`)}
-                    data-testid={`lesson-item-${lesson.id}`}
-                  >
-                    <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center text-brand font-medium text-xs flex-shrink-0">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground font-medium truncate">{lesson.title}</p>
-                    </div>
-                    <Play className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                  </div>
+                    lesson={lesson}
+                    index={lessonIndex}
+                    moduleId={module.id}
+                    onClick={handleLessonClick}
+                  />
+                ))}
+                
+                {/* Render folders with their nested lessons */}
+                {folders.map((folder, folderIndex) => (
+                  <FolderAccordion
+                    key={folder.id}
+                    folder={folder}
+                    index={folderIndex}
+                    lessons={getLessonsForFolder(folder.id)}
+                    moduleId={module.id}
+                    onLessonClick={handleLessonClick}
+                  />
                 ))}
               </div>
             )}
@@ -105,14 +230,14 @@ function ModuleAccordion({
   );
 }
 
-function ModulesList({ 
-  modules, 
-  isLoading, 
+function ModulesList({
+  modules,
+  isLoading,
   error,
-  featureLabel 
-}: { 
-  modules: CmsModule[]; 
-  isLoading: boolean; 
+  featureLabel,
+}: {
+  modules: CmsModule[];
+  isLoading: boolean;
   error: Error | null;
   featureLabel: string;
 }) {
@@ -140,7 +265,9 @@ function ModulesList({
         <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mb-4">
           <Sparkles className="w-8 h-8 text-brand" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">No Content Yet</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          No Content Yet
+        </h3>
         <p className="text-muted-foreground text-sm max-w-xs">
           {featureLabel} content is being prepared. Check back soon!
         </p>
@@ -156,7 +283,9 @@ function ModulesList({
           module={module}
           index={index}
           isOpen={openModuleId === module.id}
-          onToggle={() => setOpenModuleId(openModuleId === module.id ? null : module.id)}
+          onToggle={() =>
+            setOpenModuleId(openModuleId === module.id ? null : module.id)
+          }
         />
       ))}
     </div>
@@ -167,7 +296,11 @@ export default function ProcessesPage() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("DYD");
 
-  const { data: dydData, isLoading: dydLoading, error: dydError } = useQuery<FeatureResponse>({
+  const {
+    data: dydData,
+    isLoading: dydLoading,
+    error: dydError,
+  } = useQuery<FeatureResponse>({
     queryKey: ["/api/public/v1/features", "DYD"],
     queryFn: async () => {
       const response = await fetch("/api/public/v1/features/DYD");
@@ -176,7 +309,11 @@ export default function ProcessesPage() {
     },
   });
 
-  const { data: usmData, isLoading: usmLoading, error: usmError } = useQuery<FeatureResponse>({
+  const {
+    data: usmData,
+    isLoading: usmLoading,
+    error: usmError,
+  } = useQuery<FeatureResponse>({
     queryKey: ["/api/public/v1/features", "USM"],
     queryFn: async () => {
       const response = await fetch("/api/public/v1/features/USM");
@@ -205,16 +342,23 @@ export default function ProcessesPage() {
         </div>
 
         <div className="px-4 pt-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full grid grid-cols-2 mb-4" data-testid="tabs-processes">
-              <TabsTrigger 
-                value="DYD" 
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList
+              className="w-full grid grid-cols-2 mb-4"
+              data-testid="tabs-processes"
+            >
+              <TabsTrigger
+                value="DYD"
                 className="data-[state=active]:bg-brand data-[state=active]:text-white"
                 data-testid="tab-dyd"
               >
                 DYD Processes
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="USM"
                 className="data-[state=active]:bg-brand data-[state=active]:text-white"
                 data-testid="tab-usm"
