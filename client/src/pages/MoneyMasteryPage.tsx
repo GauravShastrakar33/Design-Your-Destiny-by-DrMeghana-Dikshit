@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   ArrowLeft,
   Calendar,
@@ -20,10 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { RewiringBelief } from "@shared/schema";
-
-interface MoneyEarnings {
-  [date: string]: number;
-}
+import { useMoneyCalendar, useSaveMoneyEntry } from "@/hooks/use-money-calendar";
 
 interface AbundanceCourse {
   id: number;
@@ -54,10 +51,15 @@ const formatINR = (value: number) =>
 export default function MoneyMasteryPage() {
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [earnings, setEarnings] = useState<MoneyEarnings>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [earningAmount, setEarningAmount] = useState("");
+
+  const monthKey = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}`;
+  const { data: calendarData, isLoading: isLoadingCalendar } = useMoneyCalendar(monthKey);
+  const saveEntryMutation = useSaveMoneyEntry();
+
+  const earnings = calendarData?.days || {};
 
   const { data: abundanceData, isLoading: isLoadingCourses } =
     useQuery<AbundanceFeatureResponse>({
@@ -78,17 +80,6 @@ export default function MoneyMasteryPage() {
   const mappedCourses = (abundanceData?.courses || []).sort(
     (a, b) => a.position - b.position,
   );
-
-  useEffect(() => {
-    const savedEarnings = localStorage.getItem("@app:money_earnings");
-    if (savedEarnings) {
-      try {
-        setEarnings(JSON.parse(savedEarnings));
-      } catch (error) {
-        console.error("Error loading earnings:", error);
-      }
-    }
-  }, []);
 
   const getDaysInMonth = () => {
     const year = selectedMonth.getFullYear();
@@ -129,22 +120,29 @@ export default function MoneyMasteryPage() {
       return;
     }
 
-    const newEarnings = { ...earnings, [selectedDate]: amount };
-    setEarnings(newEarnings);
-    localStorage.setItem("@app:money_earnings", JSON.stringify(newEarnings));
-    setModalOpen(false);
-    setEarningAmount("");
+    saveEntryMutation.mutate(
+      { date: selectedDate, amount },
+      {
+        onSuccess: () => {
+          setModalOpen(false);
+          setEarningAmount("");
+        },
+      }
+    );
   };
 
   const handleDelete = () => {
     if (!selectedDate) return;
 
-    const newEarnings = { ...earnings };
-    delete newEarnings[selectedDate];
-    setEarnings(newEarnings);
-    localStorage.setItem("@app:money_earnings", JSON.stringify(newEarnings));
-    setModalOpen(false);
-    setEarningAmount("");
+    saveEntryMutation.mutate(
+      { date: selectedDate, amount: 0 },
+      {
+        onSuccess: () => {
+          setModalOpen(false);
+          setEarningAmount("");
+        },
+      }
+    );
   };
 
   const previousMonth = () => {
@@ -169,33 +167,7 @@ export default function MoneyMasteryPage() {
     return "bg-green-200 text-green-900";
   };
 
-  const calculateMonthlySummary = () => {
-    const currentMonthEarnings = Object.entries(earnings).filter(([date]) => {
-      const [year, month] = date.split("-");
-      return (
-        parseInt(year) === selectedMonth.getFullYear() &&
-        parseInt(month) === selectedMonth.getMonth() + 1
-      );
-    });
-
-    const total = currentMonthEarnings.reduce(
-      (sum, [, amount]) => sum + amount,
-      0,
-    );
-    const highest =
-      currentMonthEarnings.length > 0
-        ? Math.max(...currentMonthEarnings.map(([, amount]) => amount))
-        : 0;
-    const average =
-      currentMonthEarnings.length > 0 ? total / currentMonthEarnings.length : 0;
-    const highestDay = currentMonthEarnings.find(
-      ([, amount]) => amount === highest,
-    )?.[0];
-
-    return { total, highest, average, highestDay };
-  };
-
-  const summary = calculateMonthlySummary();
+  const summary = calendarData?.summary || { total: 0, highest: 0, average: 0 };
   const today = new Date();
   const isToday = (day: number) => {
     return (
