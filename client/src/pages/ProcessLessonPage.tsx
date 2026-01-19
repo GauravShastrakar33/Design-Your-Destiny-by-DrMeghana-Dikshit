@@ -148,6 +148,18 @@ export default function ProcessLessonPage() {
     }
   };
 
+  const pauseAudioIfPlaying = () => {
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause();
+    }
+  };
+
+  const pauseVideoIfPlaying = () => {
+    if (videoRef.current && !videoRef.current.paused) {
+      videoRef.current.pause();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
@@ -170,15 +182,6 @@ export default function ProcessLessonPage() {
         </div>
 
         <div className="p-4 space-y-6">
-          {lesson.description && (
-            <p
-              className="text-muted-foreground whitespace-pre-line"
-              data-testid="text-lesson-description"
-            >
-              {lesson.description}
-            </p>
-          )}
-
           {videoFile && videoFile.signedUrl && (
             <Card className="overflow-hidden">
               <video
@@ -190,12 +193,24 @@ export default function ProcessLessonPage() {
                 playsInline
                 className="w-full aspect-video bg-black"
                 data-testid="video-player"
-                onPlay={() => handlePlay(lesson.id, lesson.title)}
+                onPlay={() => {
+                  pauseAudioIfPlaying();
+                  handlePlay(lesson.id, lesson.title);
+                }}
                 onTimeUpdate={(e) =>
                   handleTimeUpdate(e.currentTarget, lesson.id, lesson.title)
                 }
               />
             </Card>
+          )}
+
+          {lesson.description && (
+            <p
+              className="text-muted-foreground whitespace-pre-line"
+              data-testid="text-lesson-description"
+            >
+              {lesson.description}
+            </p>
           )}
 
           {audioFile && audioFile.signedUrl && (
@@ -211,7 +226,10 @@ export default function ProcessLessonPage() {
                 controlsList="nodownload"
                 className="w-full"
                 data-testid="audio-player"
-                onPlay={() => handlePlay(lesson.id, lesson.title)}
+                onPlay={() => {
+                  pauseVideoIfPlaying();
+                  handlePlay(lesson.id, lesson.title);
+                }}
                 onTimeUpdate={(e) =>
                   handleTimeUpdate(e.currentTarget, lesson.id, lesson.title)
                 }
