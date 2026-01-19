@@ -49,7 +49,7 @@ function LessonItem({
 }) {
   return (
     <div
-      className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-3"
+      className="px-4 py-2.5 flex items-center gap-3 cursor-pointer transition-colors hover:bg-muted/50 border-b border-border/40 last:border-b-0"
       onClick={() => onClick(lesson.id, moduleId)}
       data-testid={`lesson-item-${lesson.id}`}
     >
@@ -96,9 +96,9 @@ function FolderAccordion({
             </p>
           </div>
           {isOpen ? (
-            <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground/70 transition-transform" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground/70 transition-transform" />
           )}
         </div>
       </CollapsibleTrigger>
@@ -150,11 +150,11 @@ function ModuleAccordion({
 
   const folders = data?.folders || [];
   const allLessons = data?.lessons || [];
-  
+
   // Separate lessons without folders (root lessons) from lessons in folders
-  const rootLessons = allLessons.filter(l => !l.folderId);
-  const getLessonsForFolder = (folderId: number) => 
-    allLessons.filter(l => l.folderId === folderId);
+  const rootLessons = allLessons.filter((l) => !l.folderId);
+  const getLessonsForFolder = (folderId: number) =>
+    allLessons.filter((l) => l.folderId === folderId);
 
   const handleLessonClick = (lessonId: number, moduleId: number) => {
     setLocation(`/processes/lesson/${lessonId}?moduleId=${moduleId}`);
@@ -165,7 +165,7 @@ function ModuleAccordion({
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle}>
       <Card
-        className="overflow-hidden"
+        className="overflow-hidden bg-white border border-border/60"
         data-testid={`card-module-${module.id}`}
       >
         <CollapsibleTrigger asChild>
@@ -209,7 +209,7 @@ function ModuleAccordion({
                     onClick={handleLessonClick}
                   />
                 ))}
-                
+
                 {/* Render folders with their nested lessons */}
                 {folders.map((folder, folderIndex) => (
                   <FolderAccordion
@@ -323,7 +323,7 @@ export default function ProcessesPage() {
   });
 
   return (
-    <div className="min-h-screen pb-20 bg-page-bg">
+    <div className="min-h-screen pb-20 bg-[#F2F3F5]">
       <div className="max-w-md mx-auto">
         <div className="sticky top-0 bg-white border-b z-10">
           <div className="py-4 relative flex items-center">
@@ -348,19 +348,46 @@ export default function ProcessesPage() {
             className="w-full"
           >
             <TabsList
-              className="w-full grid grid-cols-2 mb-4"
+              className="
+                w-full
+                h-11
+                grid grid-cols-2
+                rounded-2xl
+                bg-white
+                border border-border/60
+                p-0.5
+                mb-4
+              "
               data-testid="tabs-processes"
             >
               <TabsTrigger
                 value="DYD"
-                className="data-[state=active]:bg-brand data-[state=active]:text-white"
+                className="
+                  h-full
+                  rounded-xl
+                  text-sm
+                  font-semibold
+                  text-muted-foreground
+                  transition-all
+                  data-[state=active]:bg-brand
+                  data-[state=active]:text-white
+                "
                 data-testid="tab-dyd"
               >
                 DYD Processes
               </TabsTrigger>
               <TabsTrigger
                 value="USM"
-                className="data-[state=active]:bg-brand data-[state=active]:text-white"
+                className="
+                  h-full
+                  rounded-xl
+                  text-sm
+                  font-semibold
+                  text-muted-foreground
+                  transition-all
+                  data-[state=active]:bg-brand
+                  data-[state=active]:text-white
+                "
                 data-testid="tab-usm"
               >
                 USM Processes
