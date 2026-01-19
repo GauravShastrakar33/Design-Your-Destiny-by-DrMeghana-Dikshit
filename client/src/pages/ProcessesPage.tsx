@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, Loader2, BookOpen, ChevronDown, ChevronRight, Sparkles, Play } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, ChevronRight, Sparkles, Play } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -50,10 +50,10 @@ function ModuleAccordion({
             data-testid={`trigger-module-${module.id}`}
           >
             <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: "#F3F0FF" }}
+              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-lg font-bold"
+              style={{ backgroundColor: "#F3F0FF", color: "#703DFA" }}
             >
-              <BookOpen className="w-6 h-6" style={{ color: "#703DFA" }} />
+              {module.position !== undefined ? module.position + 1 : 1}
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-foreground truncate">{module.title}</h3>
