@@ -20,10 +20,12 @@ interface ModuleLessonsResponse {
 
 function ModuleAccordion({ 
   module, 
+  index,
   isOpen, 
   onToggle 
 }: { 
   module: CmsModule; 
+  index: number;
   isOpen: boolean;
   onToggle: () => void;
 }) {
@@ -53,7 +55,7 @@ function ModuleAccordion({
               className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-lg font-bold"
               style={{ backgroundColor: "#F3F0FF", color: "#703DFA" }}
             >
-              {module.position !== undefined ? module.position + 1 : 1}
+              {index + 1}
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-foreground truncate">{module.title}</h3>
@@ -148,10 +150,11 @@ function ModulesList({
 
   return (
     <div className="space-y-3">
-      {modules.map((module) => (
+      {modules.map((module, index) => (
         <ModuleAccordion
           key={module.id}
           module={module}
+          index={index}
           isOpen={openModuleId === module.id}
           onToggle={() => setOpenModuleId(openModuleId === module.id ? null : module.id)}
         />
