@@ -1,15 +1,106 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, Loader2, BookOpen, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpen, ChevronDown, ChevronRight, Sparkles, Play } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import type { CmsModule, CmsCourse, FrontendFeature } from "@shared/schema";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import type { CmsModule, CmsCourse, FrontendFeature, CmsLesson } from "@shared/schema";
 
 interface FeatureResponse {
   feature: FrontendFeature;
   course: CmsCourse | null;
   modules: CmsModule[];
+}
+
+interface ModuleLessonsResponse {
+  module: CmsModule;
+  lessons: CmsLesson[];
+}
+
+function ModuleAccordion({ 
+  module, 
+  isOpen, 
+  onToggle 
+}: { 
+  module: CmsModule; 
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const [, setLocation] = useLocation();
+
+  const { data, isLoading } = useQuery<ModuleLessonsResponse>({
+    queryKey: ["/api/public/v1/modules", module.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/public/v1/modules/${module.id}`);
+      if (!response.ok) throw new Error("Failed to fetch module");
+      return response.json();
+    },
+    enabled: isOpen,
+  });
+
+  const lessons = data?.lessons || [];
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={onToggle}>
+      <Card className="overflow-hidden" data-testid={`card-module-${module.id}`}>
+        <CollapsibleTrigger asChild>
+          <div 
+            className="p-4 hover-elevate active-elevate-2 cursor-pointer flex items-center gap-4"
+            data-testid={`trigger-module-${module.id}`}
+          >
+            <div 
+              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: "#F3F0FF" }}
+            >
+              <BookOpen className="w-6 h-6" style={{ color: "#703DFA" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-foreground truncate">{module.title}</h3>
+            </div>
+            {isOpen ? (
+              <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0 transition-transform" />
+            ) : (
+              <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0 transition-transform" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent>
+          <div className="border-t border-border">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-brand" />
+              </div>
+            ) : lessons.length === 0 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                No content available yet
+              </div>
+            ) : (
+              <div className="py-2">
+                {lessons.map((lesson, index) => (
+                  <div
+                    key={lesson.id}
+                    className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-3"
+                    onClick={() => setLocation(`/processes/lesson/${lesson.id}?moduleId=${module.id}`)}
+                    data-testid={`lesson-item-${lesson.id}`}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center text-brand font-medium text-xs flex-shrink-0">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground font-medium truncate">{lesson.title}</p>
+                    </div>
+                    <Play className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
 }
 
 function ModulesList({ 
@@ -23,7 +114,7 @@ function ModulesList({
   error: Error | null;
   featureLabel: string;
 }) {
-  const [, setLocation] = useLocation();
+  const [openModuleId, setOpenModuleId] = useState<number | null>(null);
 
   if (isLoading) {
     return (
@@ -47,7 +138,7 @@ function ModulesList({
         <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mb-4">
           <Sparkles className="w-8 h-8 text-brand" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">No Modules Yet</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-2">No Content Yet</h3>
         <p className="text-muted-foreground text-sm max-w-xs">
           {featureLabel} content is being prepared. Check back soon!
         </p>
@@ -57,26 +148,13 @@ function ModulesList({
 
   return (
     <div className="space-y-3">
-      {modules.map((module, index) => (
-        <Card
+      {modules.map((module) => (
+        <ModuleAccordion
           key={module.id}
-          className="p-4 hover-elevate active-elevate-2 cursor-pointer"
-          onClick={() => setLocation(`/processes/module/${module.id}`)}
-          data-testid={`card-module-${module.id}`}
-        >
-          <div className="flex items-center gap-4">
-            <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: "#F3F0FF" }}
-            >
-              <BookOpen className="w-6 h-6" style={{ color: "#703DFA" }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground truncate">{module.title}</h3>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-          </div>
-        </Card>
+          module={module}
+          isOpen={openModuleId === module.id}
+          onToggle={() => setOpenModuleId(openModuleId === module.id ? null : module.id)}
+        />
       ))}
     </div>
   );
