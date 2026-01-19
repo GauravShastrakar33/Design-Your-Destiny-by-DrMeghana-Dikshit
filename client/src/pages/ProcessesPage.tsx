@@ -21,6 +21,7 @@ import type {
   CmsCourse,
   FrontendFeature,
   CmsLesson,
+  CmsModuleFolder,
 } from "@shared/schema";
 
 interface FeatureResponse {
@@ -31,7 +32,97 @@ interface FeatureResponse {
 
 interface ModuleLessonsResponse {
   module: CmsModule;
+  folders: CmsModuleFolder[];
   lessons: CmsLesson[];
+}
+
+function LessonItem({
+  lesson,
+  index,
+  moduleId,
+  onClick,
+}: {
+  lesson: CmsLesson;
+  index: number;
+  moduleId: number;
+  onClick: (lessonId: number, moduleId: number) => void;
+}) {
+  return (
+    <div
+      className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-3"
+      onClick={() => onClick(lesson.id, moduleId)}
+      data-testid={`lesson-item-${lesson.id}`}
+    >
+      <div className="w-6 h-6 rounded-full bg-brand/15 text-brand text-[11px] font-medium flex items-center justify-center flex-shrink-0">
+        {index + 1}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-foreground font-medium truncate">
+          {lesson.title}
+        </p>
+      </div>
+      <div className="w-6 h-6 rounded-full border border-muted-foreground/30 flex items-center justify-center flex-shrink-0">
+        <Play className="w-3 h-3 text-muted-foreground" />
+      </div>
+    </div>
+  );
+}
+
+function FolderAccordion({
+  folder,
+  index,
+  lessons,
+  moduleId,
+  onLessonClick,
+}: {
+  folder: CmsModuleFolder;
+  index: number;
+  lessons: CmsLesson[];
+  moduleId: number;
+  onLessonClick: (lessonId: number, moduleId: number) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger asChild>
+        <div className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-[11px] font-medium flex items-center justify-center flex-shrink-0">
+            {index + 1}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-foreground font-medium truncate">
+              {folder.title}
+            </p>
+          </div>
+          {isOpen ? (
+            <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          )}
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="pl-6 border-l-2 border-brand/20 ml-7">
+          {lessons.length === 0 ? (
+            <div className="py-3 px-4 text-sm text-muted-foreground">
+              No content available yet
+            </div>
+          ) : (
+            lessons.map((lesson, lessonIndex) => (
+              <LessonItem
+                key={lesson.id}
+                lesson={lesson}
+                index={lessonIndex}
+                moduleId={moduleId}
+                onClick={onLessonClick}
+              />
+            ))
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
 }
 
 function ModuleAccordion({
@@ -57,7 +148,19 @@ function ModuleAccordion({
     enabled: isOpen,
   });
 
-  const lessons = data?.lessons || [];
+  const folders = data?.folders || [];
+  const allLessons = data?.lessons || [];
+  
+  // Separate lessons without folders (root lessons) from lessons in folders
+  const rootLessons = allLessons.filter(l => !l.folderId);
+  const getLessonsForFolder = (folderId: number) => 
+    allLessons.filter(l => l.folderId === folderId);
+
+  const handleLessonClick = (lessonId: number, moduleId: number) => {
+    setLocation(`/processes/lesson/${lessonId}?moduleId=${moduleId}`);
+  };
+
+  const hasContent = folders.length > 0 || rootLessons.length > 0;
 
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle}>
@@ -90,36 +193,33 @@ function ModuleAccordion({
               <div className="flex items-center justify-center py-6">
                 <Loader2 className="w-5 h-5 animate-spin text-brand" />
               </div>
-            ) : lessons.length === 0 ? (
+            ) : !hasContent ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 No content available yet
               </div>
             ) : (
               <div className="py-2">
-                {lessons.map((lesson, index) => (
-                  <div
+                {/* Render root lessons first (lessons without a folder) */}
+                {rootLessons.map((lesson, lessonIndex) => (
+                  <LessonItem
                     key={lesson.id}
-                    className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-3"
-                    onClick={() =>
-                      setLocation(
-                        `/processes/lesson/${lesson.id}?moduleId=${module.id}`,
-                      )
-                    }
-                    data-testid={`lesson-item-${lesson.id}`}
-                  >
-                    <div className="w-6 h-6 rounded-full bg-brand/15 text-brand text-[11px] font-medium flex items-center justify-center flex-shrink-0">
-                      {index + 1}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground font-medium truncate">
-                        {lesson.title}
-                      </p>
-                    </div>
-                    <div className="w-6 h-6 rounded-full border border-muted-foreground/30 flex items-center justify-center flex-shrink-0">
-                      <Play className="w-3 h-3 text-muted-foreground" />
-                    </div>
-                  </div>
+                    lesson={lesson}
+                    index={lessonIndex}
+                    moduleId={module.id}
+                    onClick={handleLessonClick}
+                  />
+                ))}
+                
+                {/* Render folders with their nested lessons */}
+                {folders.map((folder, folderIndex) => (
+                  <FolderAccordion
+                    key={folder.id}
+                    folder={folder}
+                    index={folderIndex}
+                    lessons={getLessonsForFolder(folder.id)}
+                    moduleId={module.id}
+                    onLessonClick={handleLessonClick}
+                  />
                 ))}
               </div>
             )}
