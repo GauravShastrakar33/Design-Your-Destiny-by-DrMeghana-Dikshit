@@ -211,7 +211,7 @@ export default function HomePage() {
         >
           <div className="flex-1">
             <h1 className="text-lg font-bold" style={{ fontFamily: "Inter" }}>
-              Welcome back, Champion 🏆
+              Welcome Designer 💫
             </h1>
             <p className="text-sm text-gray-600 mt-0.5">
               How's your energy today?
