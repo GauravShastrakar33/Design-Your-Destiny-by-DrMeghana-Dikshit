@@ -3,18 +3,19 @@ import { PushNotifications } from "@capacitor/push-notifications";
 import { apiRequest } from "@/lib/queryClient";
 import { setUnread } from "./notificationState";
 
-
 // Check if we're running in a native Capacitor environment
 export function isNativePlatform(): boolean {
   return Capacitor.isNativePlatform();
 }
 
 // Check current permission status without requesting
-export async function checkNativePermissionStatus(): Promise<"granted" | "denied" | "prompt"> {
+export async function checkNativePermissionStatus(): Promise<
+  "granted" | "denied" | "prompt"
+> {
   if (!isNativePlatform()) {
     return "denied";
   }
-  
+
   try {
     const status = await PushNotifications.checkPermissions();
     console.log("📱 Native permission status:", status.receive);
@@ -75,7 +76,10 @@ export function setupNativePushListeners() {
 
   // Handle successful registration - this is called after PushNotifications.register()
   PushNotifications.addListener("registration", async (token) => {
-    console.log("🔥 Native FCM token received:", token.value.substring(0, 20) + "...");
+    console.log(
+      "🔥 Native FCM token received:",
+      token.value.substring(0, 20) + "...",
+    );
 
     try {
       await apiRequest("POST", "/api/v1/notifications/register-device", {
@@ -83,18 +87,26 @@ export function setupNativePushListeners() {
         platform: "native",
       });
       console.log("✅ Native FCM token registered with backend");
-      
+
       // Dispatch custom event so ProfilePage can update its state
-      window.dispatchEvent(new CustomEvent("nativePushRegistered", { detail: { success: true } }));
+      window.dispatchEvent(
+        new CustomEvent("nativePushRegistered", { detail: { success: true } }),
+      );
     } catch (error) {
       console.error("❌ Failed to register native token with backend:", error);
-      window.dispatchEvent(new CustomEvent("nativePushRegistered", { detail: { success: false } }));
+      window.dispatchEvent(
+        new CustomEvent("nativePushRegistered", { detail: { success: false } }),
+      );
     }
   });
 
   PushNotifications.addListener("registrationError", (error) => {
     console.error("❌ Push registration error:", error);
-    window.dispatchEvent(new CustomEvent("nativePushRegistered", { detail: { success: false, error } }));
+    window.dispatchEvent(
+      new CustomEvent("nativePushRegistered", {
+        detail: { success: false, error },
+      }),
+    );
   });
 
   // Handle notification tap (deep linking)
@@ -106,23 +118,25 @@ export function setupNativePushListeners() {
       if (eventId) {
         window.location.href = `/events/${eventId}`;
       }
-      
+
       const questionId = notification.notification.data?.questionId;
       if (questionId) {
         window.location.href = `/dr-m/questions/${questionId}`;
       }
-    }
+    },
   );
 
   // Handle foreground notifications
-PushNotifications.addListener(
-  "pushNotificationReceived",
-  async (notification) => {
+  PushNotifications.addListener("pushNotificationReceived", (notification) => {
     console.log("📱 Foreground notification received:", notification);
-    await setUnread(true);
-  }
-);
 
+    // Fire-and-forget ONLY
+    setUnread(true);
+
+    // ❌ no async
+    // ❌ no await
+    // ❌ no return
+  });
 
   console.log("📱 Native push listeners set up");
 }
@@ -130,7 +144,7 @@ PushNotifications.addListener(
 // Legacy function for backwards compatibility
 export async function initializeNativePush() {
   setupNativePushListeners();
-  
+
   // Check if already has permission
   const status = await checkNativePermissionStatus();
   if (status === "granted") {
