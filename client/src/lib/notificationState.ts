@@ -7,6 +7,9 @@ export async function setUnread(value: boolean) {
     key: UNREAD_KEY,
     value: JSON.stringify(value),
   });
+
+  // 🔴 Notify UI immediately
+  window.dispatchEvent(new Event("unread-changed"));
 }
 
 export async function getUnread(): Promise<boolean> {

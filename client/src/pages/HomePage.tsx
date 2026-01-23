@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor } from "@capacitor/core";
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -28,7 +28,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useEvaluateBadgesOnMount } from "@/hooks/useBadges";
 import { BadgeToastManager } from "@/components/BadgeEarnedToast";
 import { getUnread } from "@/lib/notificationState";
-
 
 interface BannerData {
   banner: {
@@ -65,7 +64,20 @@ export default function HomePage() {
   const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
-    getUnread().then(setHasUnread);
+    const loadUnread = async () => {
+      const value = await getUnread();
+      setHasUnread(value);
+    };
+
+    // Initial load when Home opens
+    loadUnread();
+
+    // 🔔 Listen for live updates (push received)
+    window.addEventListener("unread-changed", loadUnread);
+
+    return () => {
+      window.removeEventListener("unread-changed", loadUnread);
+    };
   }, []);
 
   const { evaluate } = useEvaluateBadgesOnMount({
@@ -193,10 +205,10 @@ export default function HomePage() {
       <div className="max-w-md mx-auto">
         {/* Header with Search and Notification */}
         <div
-  className={`bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3 ${
-    isNative ? 'pt-[env(safe-area-inset-top)]' : ''
-  }`}
->
+          className={`bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3 ${
+            isNative ? "pt-[env(safe-area-inset-top)]" : ""
+          }`}
+        >
           <div className="flex-1">
             <h1 className="text-lg font-bold" style={{ fontFamily: "Inter" }}>
               Welcome back, Champion 🏆
@@ -213,20 +225,19 @@ export default function HomePage() {
             >
               <Search className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
             </button>
-           <div className="relative">
-  <button
-    onClick={() => setLocation("/notifications")}
-    className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
-    data-testid="button-notifications"
-  >
-    <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
-  </button>
+            <div className="relative">
+              <button
+                onClick={() => setLocation("/notifications")}
+                className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
+                data-testid="button-notifications"
+              >
+                <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
+              </button>
 
-  {hasUnread && (
-    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-  )}
-</div>
-
+              {hasUnread && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              )}
+            </div>
           </div>
         </div>
 
