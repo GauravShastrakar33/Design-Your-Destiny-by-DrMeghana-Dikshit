@@ -27,6 +27,8 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useEvaluateBadgesOnMount } from "@/hooks/useBadges";
 import { BadgeToastManager } from "@/components/BadgeEarnedToast";
+import { getUnread } from "@/lib/notificationState";
+
 
 interface BannerData {
   banner: {
@@ -59,6 +61,12 @@ export default function HomePage() {
   const [markAttempted, setMarkAttempted] = useState(false);
   const [newBadges, setNewBadges] = useState<string[]>([]);
   const [badgeEvaluated, setBadgeEvaluated] = useState(false);
+
+  const [hasUnread, setHasUnread] = useState(false);
+
+  useEffect(() => {
+    getUnread().then(setHasUnread);
+  }, []);
 
   const { evaluate } = useEvaluateBadgesOnMount({
     onNewBadges: (badgeKeys) => {
@@ -205,13 +213,20 @@ export default function HomePage() {
             >
               <Search className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
             </button>
-            <button
-              onClick={() => setLocation("/notifications")}
-              className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
-              data-testid="button-notifications"
-            >
-              <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
-            </button>
+           <div className="relative">
+  <button
+    onClick={() => setLocation("/notifications")}
+    className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
+    data-testid="button-notifications"
+  >
+    <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
+  </button>
+
+  {hasUnread && (
+    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+  )}
+</div>
+
           </div>
         </div>
 

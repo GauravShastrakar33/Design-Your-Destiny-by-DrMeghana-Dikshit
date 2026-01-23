@@ -376,7 +376,7 @@ var init_schema = __esm({
       id: true,
       createdAt: true
     });
-    featureTypeEnum = ["PROCESS", "BREATH", "CHECKLIST"];
+    featureTypeEnum = ["PROCESS", "PLAYLIST"];
     dailyQuotes = pgTable("daily_quotes", {
       id: serial("id").primaryKey(),
       quoteText: text("quote_text").notNull(),
@@ -2356,6 +2356,9 @@ var requireSuperAdmin = (req, res, next) => {
   res.status(403).json({ error: "Super Admin access required" });
 };
 async function registerRoutes(app2) {
+  app2.get("/api/health", (req, res) => {
+    res.status(200).json({ status: "ok" });
+  });
   app2.get("/api/sessions", async (req, res) => {
     try {
       const sessions = await storage.getAllCommunitySessions();

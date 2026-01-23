@@ -3,6 +3,9 @@ import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { useEffect } from "react";
+import { clearUnread } from "@/lib/notificationState";
+
 
 interface InAppNotification {
   id: number;
@@ -15,6 +18,13 @@ interface InAppNotification {
 
 export default function NotificationsPage() {
   const [, setLocation] = useLocation();
+
+
+  // 🔵 CLEAR RED DOT WHEN PAGE OPENS
+  useEffect(() => {
+    clearUnread();
+  }, []);
+
 
   const userToken = localStorage.getItem("@app:user_token");
 
