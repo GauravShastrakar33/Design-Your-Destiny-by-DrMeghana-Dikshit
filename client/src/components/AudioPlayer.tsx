@@ -112,6 +112,9 @@ export function AudioPlayer({
     setHasTracked90Percent(false);
     audio.load();
 
+    // Re-apply playback rate after loading (audio.load() resets it to 1x)
+    audio.playbackRate = playbackRate;
+
     // Set initial time if provided (for resume feature)
     if (initialTime > 0) {
       audio.currentTime = initialTime;
@@ -121,7 +124,7 @@ export function AudioPlayer({
     if (autoPlay) {
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
     }
-  }, [src, autoPlay, initialTime]);
+  }, [src, autoPlay, initialTime, playbackRate]);
 
   const trackProgress = async () => {
     if (!userId || !audioId || !playlistId) return;
