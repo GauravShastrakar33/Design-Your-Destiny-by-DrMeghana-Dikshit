@@ -1,6 +1,8 @@
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { apiRequest } from "@/lib/queryClient";
+import { setUnread } from "./notificationState";
+
 
 // Check if we're running in a native Capacitor environment
 export function isNativePlatform(): boolean {
@@ -113,9 +115,14 @@ export function setupNativePushListeners() {
   );
 
   // Handle foreground notifications
-  PushNotifications.addListener("pushNotificationReceived", (notification) => {
+PushNotifications.addListener(
+  "pushNotificationReceived",
+  async (notification) => {
     console.log("📱 Foreground notification received:", notification);
-  });
+    await setUnread(true);
+  }
+);
+
 
   console.log("📱 Native push listeners set up");
 }
