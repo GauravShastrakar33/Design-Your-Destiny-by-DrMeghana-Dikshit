@@ -4293,8 +4293,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!module) {
         return res.status(404).json({ error: "Module not found" });
       }
+      const folders = await db.select().from(cmsModuleFolders).where(eq2(cmsModuleFolders.moduleId, moduleId)).orderBy(asc2(cmsModuleFolders.position));
       const lessons = await db.select().from(cmsLessons).where(eq2(cmsLessons.moduleId, moduleId)).orderBy(asc2(cmsLessons.position));
-      res.json({ module, lessons });
+      res.json({ module, folders, lessons });
     } catch (error) {
       console.error("Error fetching module:", error);
       res.status(500).json({ error: "Failed to fetch module" });
