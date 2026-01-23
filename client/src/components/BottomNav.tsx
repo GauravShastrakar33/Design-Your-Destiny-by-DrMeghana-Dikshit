@@ -20,9 +20,9 @@ export default function BottomNav() {
   const [location] = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-white border-t border-gray-200 dark:border-gray-200 z-50 safe-area-bottom">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center justify-around h-16 px-2">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-white border-t border-gray-200 dark:border-gray-200 z-50 pb-safe">
+      <div className="w-full">
+        <div className="flex items-center justify-around min-h-[64px] px-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location === item.path;
@@ -33,7 +33,7 @@ export default function BottomNav() {
                 href={item.path}
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
               >
-                <button className="flex flex-col items-center justify-center min-w-[60px] py-1 hover-elevate active-elevate-2 rounded-lg px-2">
+                <button className="flex flex-col items-center justify-center min-h-[48px] min-w-[60px] py-2 hover-elevate active-elevate-2 rounded-lg px-2">
                   {item.label === "Dr.M" ? (
                     <img
                       src={chatIcon}
