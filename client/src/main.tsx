@@ -14,12 +14,19 @@ if (Capacitor.isNativePlatform()) {
 
     // 🔙 Android back button handling
     CapacitorApp.addListener("backButton", ({ canGoBack }) => {
-      console.log("🔙 Back button pressed, canGoBack:", canGoBack);
+      const currentPath = window.location.pathname;
+      console.log("🔙 Back button pressed, canGoBack:", canGoBack, "path:", currentPath);
+
+      // Exit app if on login screen (no further back to go)
+      if (currentPath === "/login" || currentPath === "/") {
+        CapacitorApp.exitApp();
+        return;
+      }
 
       if (canGoBack) {
         window.history.back();
       } else {
-        CapacitorApp.minimizeApp();
+        CapacitorApp.exitApp();
       }
     });
     console.log("✅ Android back button handler registered");
