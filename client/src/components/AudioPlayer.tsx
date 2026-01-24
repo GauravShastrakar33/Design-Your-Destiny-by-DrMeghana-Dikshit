@@ -124,7 +124,14 @@ export function AudioPlayer({
     if (autoPlay) {
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
     }
-  }, [src, autoPlay, initialTime, playbackRate]);
+  }, [src, autoPlay, initialTime]);
+
+  // Apply playback rate changes without reloading audio
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.playbackRate = playbackRate;
+  }, [playbackRate]);
 
   const trackProgress = async () => {
     if (!userId || !audioId || !playlistId) return;
