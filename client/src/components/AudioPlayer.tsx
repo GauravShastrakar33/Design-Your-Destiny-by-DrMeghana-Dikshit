@@ -190,7 +190,7 @@ export function AudioPlayer({
     <div className="w-full bg-white border border-gray-200 rounded-lg p-4 space-y-3" data-testid="audio-player">
       <audio ref={audioRef} src={src} preload="metadata" />
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <Button
           size="icon"
           onClick={togglePlayPause}
@@ -204,9 +204,22 @@ export function AudioPlayer({
           )}
         </Button>
 
-        <div className="flex-1 space-y-2">
-          <div className="text-sm font-medium text-gray-900 truncate" data-testid="text-audio-title">
-            {title}
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0 text-sm font-medium text-gray-900 truncate" data-testid="text-audio-title">
+              {title}
+            </div>
+            <Select value={playbackRate.toString()} onValueChange={handleSpeedChange}>
+              <SelectTrigger className="w-14 h-7 text-xs flex-shrink-0" data-testid="select-speed">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1x</SelectItem>
+                <SelectItem value="1.25">1.25x</SelectItem>
+                <SelectItem value="1.5">1.5x</SelectItem>
+                <SelectItem value="2">2x</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1">
@@ -228,18 +241,6 @@ export function AudioPlayer({
             </div>
           </div>
         </div>
-
-        <Select value={playbackRate.toString()} onValueChange={handleSpeedChange}>
-          <SelectTrigger className="w-20 h-9" data-testid="select-speed">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">1x</SelectItem>
-            <SelectItem value="1.25">1.25x</SelectItem>
-            <SelectItem value="1.5">1.5x</SelectItem>
-            <SelectItem value="2">2x</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
     </div>
   );
