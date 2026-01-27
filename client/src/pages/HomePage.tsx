@@ -167,30 +167,33 @@ export default function HomePage() {
     {
       title: "My Playlist",
       icon: ListMusic,
-      gradient: "bg-gradient-harmony",
       path: "/playlist",
       testId: "card-my-playlist",
     },
     {
       title: "All Processes",
       icon: Sparkles,
-      gradient: "bg-gradient-ocean",
       path: "/processes",
       testId: "card-processes",
     },
     {
       title: "Community Practices",
       icon: Users,
-      gradient: "bg-gradient-sunrise",
       path: "/community-practices",
       testId: "card-community-practices",
     },
     {
       title: "Daily Abundance",
       icon: IndianRupee,
-      gradient: "bg-gradient-forest",
       path: "/money-mastery",
       testId: "card-money-mastery",
+    },
+    {
+      title: "Masterclasses",
+      icon: GraduationCap,
+      path: "/masterclasses",
+      testId: "card-masterclasses",
+      fullWidth: true, // 👈 key change
     },
   ];
 
@@ -330,54 +333,56 @@ export default function HomePage() {
 
         {/* Content Container */}
         <div className="px-4 pb-4 space-y-4">
-          {/* Compact Quick Actions Grid */}
-          <div className="-mx-2 px-2">
+          {/* Quick Actions + Masterclasses */}
+          <div className="-mx-2 px-2 space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              {actionCards.map((card) => (
+              {actionCards
+                .filter((c) => !c.fullWidth)
+                .map((card) => (
+                  <button
+                    key={card.path}
+                    onClick={() => setLocation(card.path)}
+                    className="bg-white border border-[#232A34]/10 rounded-2xl p-3 
+                               flex items-center gap-3 shadow-sm 
+                               hover:shadow-md active:scale-[0.98] transition h-[60px]"
+                    data-testid={card.testId}
+                  >
+                    <card.icon
+                      className="w-[20px] h-[20px] text-[#703DFA] flex-shrink-0"
+                      strokeWidth={1.6}
+                    />
+                    <span className="text-sm font-semibold text-[#232A34] flex-1 text-left line-clamp-2">
+                      {card.title}
+                    </span>
+                  </button>
+                ))}
+            </div>
+
+            {actionCards
+              .filter((c) => c.fullWidth)
+              .map((card) => (
                 <button
                   key={card.path}
                   onClick={() => setLocation(card.path)}
-                  className="bg-white border border-[#232A34]/10 rounded-2xl p-3 flex items-center gap-3 shadow-sm hover:shadow-md active:scale-[0.98] transition h-[60px]"
+                  className="w-full bg-white border border-[#232A34]/10 rounded-2xl p-3 
+                             flex items-center gap-3 shadow-sm 
+                             hover:shadow-md active:scale-[0.98] transition h-[60px]"
                   data-testid={card.testId}
                 >
-                  <div className="flex items-center justify-center flex-shrink-0">
-                    <card.icon
-                      className="w-[20px] h-[20px] text-[#703DFA]"
-                      strokeWidth={1.6}
-                    />
-                  </div>
-
-                  <span className="text-sm font-semibold text-[#232A34] text-left flex-1 line-clamp-2">
+                  <card.icon
+                    className="w-[20px] h-[20px] text-[#703DFA] flex-shrink-0"
+                    strokeWidth={1.6}
+                  />
+                  <span className="text-sm font-semibold text-[#232A34] flex-1 text-left">
                     {card.title}
                   </span>
                 </button>
               ))}
-            </div>
           </div>
 
-          {/* Masterclasses Card */}
-          <button
-            onClick={() => setLocation("/masterclasses")}
-            className="w-full bg-white border border-[#232A34]/10 rounded-2xl p-4 
-                       shadow-sm hover:shadow-md active:scale-[0.98] transition"
-            data-testid="card-masterclasses"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center">
-                  <GraduationCap
-                    className="w-5 h-5 text-[#703DFA]"
-                    strokeWidth={1.8}
-                  />
-                </div>
-                <h3 className="text-base font-semibold text-[#232A34]">
-                  Masterclasses
-                </h3>
-              </div>
-
-              <ChevronRight className="w-5 h-5 text-[#232A34]/60" />
-            </div>
-          </button>
+          <p className="px-1 text-xs font-semibold text-gray-400 tracking-wide mt-4">
+            My Progress
+          </p>
 
           {/* 7-Day Streak Tracker - Only show when authenticated */}
           {isAuthenticated && (

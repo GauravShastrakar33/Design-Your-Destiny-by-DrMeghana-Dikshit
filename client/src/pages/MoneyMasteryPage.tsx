@@ -20,7 +20,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { RewiringBelief } from "@shared/schema";
-import { useMoneyCalendar, useSaveMoneyEntry } from "@/hooks/use-money-calendar";
+import {
+  useMoneyCalendar,
+  useSaveMoneyEntry,
+} from "@/hooks/use-money-calendar";
+import { formatAmountCompact } from "@/utils/formatAmountCompact";
 
 interface AbundanceCourse {
   id: number;
@@ -56,7 +60,8 @@ export default function MoneyMasteryPage() {
   const [earningAmount, setEarningAmount] = useState("");
 
   const monthKey = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}`;
-  const { data: calendarData, isLoading: isLoadingCalendar } = useMoneyCalendar(monthKey);
+  const { data: calendarData, isLoading: isLoadingCalendar } =
+    useMoneyCalendar(monthKey);
   const saveEntryMutation = useSaveMoneyEntry();
 
   const earnings = calendarData?.days || {};
@@ -127,7 +132,7 @@ export default function MoneyMasteryPage() {
           setModalOpen(false);
           setEarningAmount("");
         },
-      }
+      },
     );
   };
 
@@ -141,7 +146,7 @@ export default function MoneyMasteryPage() {
           setModalOpen(false);
           setEarningAmount("");
         },
-      }
+      },
     );
   };
 
@@ -159,12 +164,15 @@ export default function MoneyMasteryPage() {
 
   const getEarningColor = (amount: number): string => {
     const maxEarning = Math.max(...Object.values(earnings), 1);
-    const intensity = amount / maxEarning;
+    const ratio = amount / maxEarning;
 
-    if (intensity > 0.75) return "bg-green-600 text-white";
-    if (intensity > 0.5) return "bg-green-500 text-white";
-    if (intensity > 0.25) return "bg-green-400 text-green-900";
-    return "bg-green-200 text-green-900";
+    // Highest day → filled
+    if (ratio > 0.75) {
+      return "bg-emerald-600 text-white";
+    }
+
+    // Normal money days → white with green border
+    return "bg-white border border-gray-200";
   };
 
   const summary = calendarData?.summary || { total: 0, highest: 0, average: 0 };
@@ -190,7 +198,7 @@ export default function MoneyMasteryPage() {
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
             <h1
-              className="text-lg font-bold text-gray-600 tracking-widest"
+              className="text-lg font-semibold text-gray-500 tracking-[0.2em]"
               style={{ fontFamily: "Montserrat" }}
             >
               DAILY ABUNDANCE
@@ -255,28 +263,47 @@ export default function MoneyMasteryPage() {
                 const dateKey = formatDate(day);
                 const earning = earnings[dateKey];
                 const hasEarning = earning !== undefined;
+                const isHighestDay =
+                  hasEarning &&
+                  earning === summary.highest &&
+                  summary.highest > 0;
 
                 return (
                   <button
                     key={day}
                     onClick={() => handleDayClick(day)}
-                    className={`aspect-square rounded-lg hover-elevate active-elevate-2 flex flex-col items-center justify-center p-1 ${
-                      hasEarning
-                        ? getEarningColor(earning)
-                        : isToday(day)
-                          ? "bg-primary/10 border border-primary"
-                          : "bg-muted"
-                    }`}
+                    className={`aspect-square rounded-lg flex flex-col items-center justify-center p-2
+                      transition-all duration-150
+                      hover:scale-[1.03]
+                      active:scale-[0.97]
+                      ${
+                        hasEarning
+                          ? `${getEarningColor(earning)} ${
+                              isHighestDay
+                                ? "ring-2 ring-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.25)]"
+                                : ""
+                            }`
+                          : isToday(day)
+                            ? "bg-[#703DFA]/5 ring-1 ring-[#703DFA]/40 text-[#703DFA]"
+                            : "bg-gray-200 text-gray-800"
+                      }
+                    `}
                     data-testid={`day-${day}`}
                   >
                     <span
-                      className={`text-xs font-medium ${hasEarning ? "" : "text-foreground"}`}
+                      className={`text-[11px] font-medium ${hasEarning ? "" : "text-foreground"}`}
                     >
                       {day}
                     </span>
                     {hasEarning && (
-                      <span className="text-[10px] font-semibold">
-                        {formatINR(earning)}
+                      <span
+                        className={`text-[11px] font-bold tracking-tight ${
+                          isHighestDay
+                            ? "text-amber-200 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {formatAmountCompact(earning)}
                       </span>
                     )}
                   </button>
@@ -285,36 +312,36 @@ export default function MoneyMasteryPage() {
             </div>
 
             {/* Monthly Summary */}
-            <div className="mt-4 pt-4 border-t border-border space-y-2">
-              <h3 className="text-sm font-semibold text-foreground mb-2">
+            <div className="mt-8 pt-4 border-t border-border">
+              <h3 className="text-sm font-medium text-gray-900 mb-4">
                 Monthly Summary
               </h3>
 
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  Total Earnings:
-                </span>
-                <span className="text-lg font-bold text-green-600">
+              {/* Total Earnings */}
+              <div className="mb-4">
+                <p className="text-xs tracking-wide text-gray-900 mb-1">
+                  Total Earnings
+                </p>
+                <p className="text-lg font-extrabold text-green-600 tracking-tight">
                   {formatINR(summary.total)}
-                </span>
+                </p>
               </div>
 
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  Highest Day:
-                </span>
-                <span className="text-sm font-semibold text-foreground">
-                  {summary.highest > 0 ? formatINR(summary.highest) : "-"}
-                </span>
-              </div>
+              {/* Supporting stats */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-900 mb-1">Highest Day</p>
+                  <p className="text-base font-semibold text-green-600">
+                    {summary.highest > 0 ? formatINR(summary.highest) : "-"}
+                  </p>
+                </div>
 
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  Average/Day:
-                </span>
-                <span className="text-sm font-semibold text-foreground">
-                  {summary.average > 0 ? formatINR(summary.average) : "-"}
-                </span>
+                <div>
+                  <p className="text-xs text-gray-900 mb-1">Average / Day</p>
+                  <p className="text-base font-semibold text-green-600">
+                    {summary.average > 0 ? formatINR(summary.average) : "-"}
+                  </p>
+                </div>
               </div>
             </div>
           </Card>

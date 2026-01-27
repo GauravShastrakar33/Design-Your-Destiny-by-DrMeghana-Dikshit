@@ -931,15 +931,28 @@ export class DbStorage implements IStorage {
       if (amount > highest) highest = amount;
     }
 
-    const entryCount = entries.length;
-    const average = entryCount > 0 ? total / entryCount : 0;
+    // Calculate average per calendar day
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    let daysToAverage: number;
+    if (year === currentYear && month === currentMonth) {
+      // Current month: divide by today's date (day of month)
+      daysToAverage = now.getDate();
+    } else {
+      // Past month: divide by total days in that month
+      daysToAverage = lastDay;
+    }
+    
+    const average = daysToAverage > 0 ? Math.round(total / daysToAverage) : 0;
 
     return {
       days,
       summary: {
         total: Math.round(total * 100) / 100,
         highest: Math.round(highest * 100) / 100,
-        average: Math.round(average * 100) / 100,
+        average,
       },
     };
   }
