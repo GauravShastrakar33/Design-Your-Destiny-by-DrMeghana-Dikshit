@@ -44,6 +44,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBadges } from "@/hooks/useBadges";
 import { BadgeIcon } from "@/components/BadgeIcon";
 import { Award } from "lucide-react";
+import { App } from "@capacitor/app";
 
 interface PrescriptionData {
   morning?: string[];
@@ -58,6 +59,22 @@ export default function ProfilePage() {
   const [userName, setUserName] = useState("UserName");
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+
+  const [appVersion, setAppVersion] = useState<string>("");
+
+  useEffect(() => {
+    const loadVersion = async () => {
+      try {
+        const info = await App.getInfo();
+        setAppVersion(`Version ${info.version} (Build ${info.build})`);
+      } catch {
+        // Web fallback
+        setAppVersion("Web Version");
+      }
+    };
+
+    loadVersion();
+  }, []);
 
   const userToken = localStorage.getItem("@app:user_token");
   const { data: wellnessProfile, isLoading: isLoadingProfile } = useQuery<
@@ -102,7 +119,7 @@ export default function ProfilePage() {
     const checkNotificationStatus = async () => {
       // First check backend status (DB source of truth for enabled state)
       const backendEnabled = await getNotificationStatus();
-      
+
       // On native platform, also verify OS permission is still granted
       if (isNativePlatform()) {
         const osPermission = await checkNativePermissionStatus();
@@ -110,7 +127,8 @@ export default function ProfilePage() {
         setNotificationsEnabled(backendEnabled && osPermission === "granted");
       } else {
         // On web, check browser permission too
-        const browserGranted = "Notification" in window && Notification.permission === "granted";
+        const browserGranted =
+          "Notification" in window && Notification.permission === "granted";
         setNotificationsEnabled(backendEnabled && browserGranted);
       }
     };
@@ -131,7 +149,10 @@ export default function ProfilePage() {
     window.addEventListener("nativePushRegistered", handleNativePushRegistered);
 
     return () => {
-      window.removeEventListener("nativePushRegistered", handleNativePushRegistered);
+      window.removeEventListener(
+        "nativePushRegistered",
+        handleNativePushRegistered,
+      );
     };
   }, []);
 
@@ -154,7 +175,7 @@ export default function ProfilePage() {
           // Native (Android/iOS): use Capacitor push notifications
           console.log("📱 Requesting native push permission...");
           const success = await requestNativePushPermission();
-          
+
           if (!success) {
             // Permission denied or error
             setNotificationsLoading(false);
@@ -163,7 +184,7 @@ export default function ProfilePage() {
             );
             return;
           }
-          
+
           // On native, the token registration happens async in the listener
           // The UI will update when we receive the 'nativePushRegistered' event
           // Keep loading state active until event is received (or timeout)
@@ -183,10 +204,11 @@ export default function ProfilePage() {
           const success = await requestNotificationPermission();
           // Re-fetch status from DB regardless to ensure UI matches DB state
           const enabled = await getNotificationStatus();
-          const browserGranted = "Notification" in window && Notification.permission === "granted";
+          const browserGranted =
+            "Notification" in window && Notification.permission === "granted";
           setNotificationsEnabled(enabled && browserGranted);
           setNotificationsLoading(false);
-          
+
           if (!success && !enabled) {
             alert(
               "Unable to enable notifications. Please check your browser settings.",
@@ -204,12 +226,15 @@ export default function ProfilePage() {
   };
 
   const getInitials = (name: string) => {
-    const words = name.trim().split(/\s+/).filter(w => w.length > 0);
+    const words = name
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w.length > 0);
     if (words.length === 0) return "";
     if (words.length === 1) {
       return words[0][0].toUpperCase();
     }
-    return words.map(w => w[0].toUpperCase()).join("");
+    return words.map((w) => w[0].toUpperCase()).join("");
   };
 
   return (
@@ -232,7 +257,10 @@ export default function ProfilePage() {
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-sm font-bold border border-white/30 shadow-sm flex-shrink-0">
               {getInitials(userName)}
             </div>
-            <h2 className="text-lg font-['Poppins'] font-semibold text-gray-600 dark:text-gray-200 tracking-tight" data-testid="text-username">
+            <h2
+              className="text-lg font-['Poppins'] font-semibold text-gray-600 dark:text-gray-200 tracking-tight"
+              data-testid="text-username"
+            >
               {userName}
             </h2>
           </div>
@@ -243,8 +271,12 @@ export default function ProfilePage() {
               <div className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-[#703DFA] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Karmic Affirmation</p>
-                  <p className="text-sm text-gray-700 italic">"{wellnessProfile.karmicAffirmation}"</p>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Karmic Affirmation
+                  </p>
+                  <p className="text-sm text-gray-700 italic">
+                    "{wellnessProfile.karmicAffirmation}"
+                  </p>
                 </div>
               </div>
             </div>
@@ -437,7 +469,9 @@ export default function ProfilePage() {
                     <BellOff className="w-5 h-5 text-muted-foreground" />
                   )}
                   <div className="text-left">
-                    <p className="font-medium text-foreground">Enable Notifications</p>
+                    <p className="font-medium text-foreground">
+                      Enable Notifications
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {notificationsLoading
                         ? "Enabling..."
@@ -497,6 +531,19 @@ export default function ProfilePage() {
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
+
+              <div className="w-full flex items-center justify-between p-3 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Circle className="w-5 h-5 text-[#703DFA]" />
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">App Version</p>
+                    <p className="text-xs text-muted-foreground">
+                      {appVersion || "Loading..."}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground opacity-40" />
+              </div>
             </div>
           </div>
         </div>
