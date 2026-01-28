@@ -348,45 +348,75 @@ export default function MoneyMasteryPage() {
 
           {/* Earning Modal */}
           <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-            <DialogContent data-testid="dialog-earning">
+            <DialogContent
+              className="sm:max-w-md w-[94%]
+                 rounded-2xl
+                 bg-white
+                 px-5 pt-6 pb-5
+                 shadow-[0_20px_40px_rgba(0,0,0,0.25)]
+                 border border-gray-100
+                 [&>button]:hidden"
+            >
+              {/* Close */}
+              <div className="flex justify-end mb-2">
+                <button
+                  onClick={() => setModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-gray-100
+                             flex items-center justify-center
+                             text-gray-600 active:bg-gray-200"
+                >
+                  ✕
+                </button>
+              </div>
+
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-base font-semibold">
                   {selectedDate && earnings[selectedDate]
                     ? "Edit Earning"
                     : "Add Earning"}
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+
+              <div className="space-y-5 py-2">
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
+                  <label className="text-xs font-medium text-gray-600 mb-1 block uppercase tracking-wide">
                     Amount (₹)
                   </label>
                   <input
+                    autoFocus
+                    inputMode="numeric"
                     type="number"
                     value={earningAmount}
                     onChange={(e) => setEarningAmount(e.target.value)}
                     placeholder="Enter amount"
-                    className="w-full h-10 px-3 rounded-lg bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    data-testid="input-earning-amount"
+                    className="w-full h-12 px-4 rounded-xl bg-gray-100
+                               text-lg font-semibold text-foreground
+                               placeholder:text-gray-400
+                               focus:outline-none focus:ring-2 focus:ring-[#703DFA]/40"
                   />
                 </div>
-                <div className="flex gap-2">
+
+                <div className="flex flex-col gap-3 pt-2">
                   <Button
                     onClick={handleSave}
-                    className="flex-1"
-                    data-testid="button-save-earning"
+                    className="w-full h-11 rounded-xl text-base font-semibold
+                               bg-[#703DFA] hover:bg-[#5E2FEA] active:bg-[#4F26D6]
+                               text-white"
                   >
                     Save
                   </Button>
-                  {selectedDate && earnings[selectedDate] && (
-                    <Button
-                      onClick={handleDelete}
-                      variant="destructive"
-                      data-testid="button-delete-earning"
-                    >
-                      Delete
-                    </Button>
-                  )}
+
+                  {selectedDate &&
+                    typeof earnings[selectedDate] === "number" &&
+                    earnings[selectedDate] > 0 && (
+                      <Button
+                        onClick={handleDelete}
+                        variant="ghost"
+                        className="w-full h-11 text-red-600 hover:bg-red-50"
+                      >
+                        Delete Entry
+                      </Button>
+                    )}
                 </div>
               </div>
             </DialogContent>
