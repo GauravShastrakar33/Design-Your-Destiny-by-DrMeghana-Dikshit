@@ -1,0 +1,84 @@
+We want to upgrade the lesson screen to support adaptive multi-resource lessons WITHOUT removing the existing lesson journey UI.
+
+Each lesson may include:
+- video
+- audio
+- script PDF
+
+Currently the UI assumes video-only. We need dynamic rendering based on available content while preserving the existing lesson flow and journey list.
+
+--------------------------------
+CORE PLAYER LOGIC
+--------------------------------
+
+1. If video exists → show video player at the top (primary experience)
+2. Else if audio exists → show audio player at the top
+3. Else → show a PDF-only lesson view
+
+When BOTH video and audio exist:
+- video remains the primary player
+- audio appears as an optional alternate format in Resources
+
+The lesson screen must NEVER show:
+- empty player area
+- video errors if video is missing
+- broken UI states
+
+--------------------------------
+RESOURCE SECTION
+--------------------------------
+
+Directly BELOW the player, insert a section titled:
+
+"Resources"
+
+Render conditionally:
+
+- If script PDF exists:
+  show row → "Script (PDF)"
+  tapping opens PDF in in-app viewer or new tab
+
+- If audio exists AND video exists:
+  show row → "Audio Version"
+  tapping opens audio player
+
+Only show resources that exist.
+Do not auto-download files.
+Do not autoplay audio when video is active.
+
+--------------------------------
+EXISTING LESSON JOURNEY UI
+--------------------------------
+
+After the Resources section:
+- Keep the existing lesson journey list exactly as implemented
+- Do NOT remove or redesign the Day 1 / Day 2 / locked lessons UI
+- Resources should appear ABOVE the journey list
+- The journey remains the main navigation system
+
+--------------------------------
+UI RULES
+--------------------------------
+
+- Screen must adapt based on lesson content
+- No placeholder errors
+- No empty UI states
+- Layout should feel intentional whether lesson is:
+  video-only
+  audio-only
+  PDF-only
+  mixed content
+
+--------------------------------
+GOAL
+--------------------------------
+
+Users should see:
+
+Player
+→ Resources
+→ Lesson Journey
+
+in that order.
+
+All lesson materials must be accessible from one clean screen while preserving the existing challenge flow.

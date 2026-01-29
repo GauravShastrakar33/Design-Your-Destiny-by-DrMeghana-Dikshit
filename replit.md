@@ -41,6 +41,11 @@ Core pages include Home, Courses, Profile, Progress Insights, Project of Heart, 
   - Bottom 40%: Compact timeline navigator showing all days
   - Lesson title as "Day X – Title"
   - No dropdowns, no nested module screens
+- **Adaptive Multi-Resource Lessons**: Each lesson can include video, audio, and/or PDF
+  - Primary Player: Video if exists, else audio, else PDF-only view
+  - Resources Section (below player): Shows "Script (PDF)" and "Audio Version" if available
+  - Audio appears as resource only when video is primary (switch to audio without leaving screen)
+  - PDF opens in new tab/viewer
 - **Timeline Navigator**: ✓ completed (green), ▶ current (highlighted), 🔒 locked (future)
 - **Auto-Completion Logic**: Triggers at 90% video/audio progress, shows success toast, auto-advances
 - **Completion Screen**: Trophy celebration when all lessons done, "Rewatch from Day 1" option

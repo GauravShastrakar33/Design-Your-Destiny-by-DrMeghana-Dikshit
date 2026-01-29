@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Loader2, Check, Lock, Play, Sparkles, Trophy } from "lucide-react";
+import { ArrowLeft, Loader2, Check, Lock, Play, Sparkles, Trophy, FileText, Headphones, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -50,6 +50,7 @@ export default function VideoFirstChallengePage() {
   const [allDays, setAllDays] = useState<FlattenedDay[]>([]);
   const [watchProgress, setWatchProgress] = useState(0);
   const [hasReached90, setHasReached90] = useState(false);
+  const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -225,6 +226,7 @@ export default function VideoFirstChallengePage() {
   useEffect(() => {
     setWatchProgress(0);
     setHasReached90(false);
+    setShowAudioPlayer(false);
   }, [currentDay?.lessonId]);
 
   // Day click handler
@@ -334,14 +336,44 @@ export default function VideoFirstChallengePage() {
     );
   }
 
-  // Get video/audio file
+  // Get video/audio/PDF files
   const videoFile = lessonData?.files?.find(f => f.fileType === "video" && f.signedUrl);
   const audioFile = lessonData?.files?.find(f => f.fileType === "audio" && f.signedUrl);
+  const pdfFile = lessonData?.files?.find(f => f.fileType === "pdf" && f.signedUrl);
+  
+  // Determine primary player type
+  const primaryPlayerType = videoFile ? "video" : audioFile ? "audio" : pdfFile ? "pdf" : "none";
   const hasMedia = videoFile || audioFile;
+  
+  // Resources to show (PDF always, audio only if video exists as primary)
+  const hasResources = pdfFile || (videoFile && audioFile);
 
   // Calculate first incomplete for locking logic
   const firstIncompleteIndex = allDays.findIndex(d => !completedLessonIds.has(d.lessonId));
   const isCurrentLessonCompleted = currentDay ? completedLessonIds.has(currentDay.lessonId) : false;
+
+  // Handle opening PDF in new tab
+  const handleOpenPdf = () => {
+    if (pdfFile?.signedUrl) {
+      window.open(pdfFile.signedUrl, "_blank");
+    }
+  };
+
+  // Handle switching to audio player
+  const handleSwitchToAudio = () => {
+    setShowAudioPlayer(true);
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+  };
+
+  // Handle switching back to video
+  const handleSwitchToVideo = () => {
+    setShowAudioPlayer(false);
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -367,16 +399,16 @@ export default function VideoFirstChallengePage() {
 
       {/* Main Content - Video First */}
       <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
-        {/* Top 60% - Video Player */}
+        {/* Top Section - Adaptive Player */}
         <div className="flex-[6] min-h-0 bg-black relative">
           {lessonLoading ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-white" />
             </div>
-          ) : videoFile ? (
+          ) : primaryPlayerType === "video" && !showAudioPlayer ? (
             <video
               ref={videoRef}
-              src={videoFile.signedUrl!}
+              src={videoFile!.signedUrl!}
               controls
               autoPlay
               className="w-full h-full object-contain"
@@ -384,10 +416,10 @@ export default function VideoFirstChallengePage() {
               onEnded={handleMediaEnded}
               data-testid="video-player"
             />
-          ) : audioFile ? (
+          ) : (primaryPlayerType === "audio" || showAudioPlayer) && audioFile ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-amber-900 to-amber-950 p-6">
               <div className="w-32 h-32 bg-amber-500/20 rounded-full flex items-center justify-center mb-6">
-                <Play className="w-12 h-12 text-amber-400" />
+                <Headphones className="w-12 h-12 text-amber-400" />
               </div>
               <audio
                 ref={audioRef}
@@ -399,15 +431,50 @@ export default function VideoFirstChallengePage() {
                 onEnded={handleMediaEnded}
                 data-testid="audio-player"
               />
+              {showAudioPlayer && videoFile && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-4 text-amber-300 hover:text-amber-100"
+                  onClick={handleSwitchToVideo}
+                  data-testid="button-switch-to-video"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Switch to Video
+                </Button>
+              )}
+            </div>
+          ) : primaryPlayerType === "pdf" ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 p-6">
+              <div className="w-32 h-32 bg-slate-500/20 rounded-full flex items-center justify-center mb-6">
+                <FileText className="w-12 h-12 text-slate-300" />
+              </div>
+              <p className="text-white/80 text-center mb-4">This lesson contains a script document</p>
+              <Button
+                className="bg-amber-500 hover:bg-amber-600 text-white"
+                onClick={handleOpenPdf}
+                data-testid="button-open-pdf"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open Script (PDF)
+              </Button>
             </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-white/60">
-              <p className="text-sm">No media for this lesson</p>
+              <p className="text-sm">No content for this lesson</p>
             </div>
           )}
 
           {/* Progress indicator overlay */}
-          {hasMedia && (
+          {hasMedia && !showAudioPlayer && primaryPlayerType === "video" && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
+              <div 
+                className="h-full bg-amber-500 transition-all duration-300"
+                style={{ width: `${watchProgress}%` }}
+              />
+            </div>
+          )}
+          {hasMedia && (showAudioPlayer || primaryPlayerType === "audio") && (
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
               <div 
                 className="h-full bg-amber-500 transition-all duration-300"
@@ -448,7 +515,50 @@ export default function VideoFirstChallengePage() {
           </div>
         </div>
 
-        {/* Bottom 40% - Timeline Navigator */}
+        {/* Resources Section - only show if resources exist */}
+        {hasResources && (
+          <div className="px-4 py-3 bg-card/50 border-b border-border">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              Resources
+            </p>
+            <div className="space-y-2">
+              {pdfFile && (
+                <button
+                  onClick={handleOpenPdf}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover-elevate active-elevate-2 transition-colors"
+                  data-testid="button-resource-pdf"
+                >
+                  <div className="w-9 h-9 rounded-full bg-slate-500/20 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-foreground">Script (PDF)</p>
+                    <p className="text-xs text-muted-foreground">Open lesson transcript</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                </button>
+              )}
+              {videoFile && audioFile && !showAudioPlayer && (
+                <button
+                  onClick={handleSwitchToAudio}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover-elevate active-elevate-2 transition-colors"
+                  data-testid="button-resource-audio"
+                >
+                  <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center">
+                    <Headphones className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-foreground">Audio Version</p>
+                    <p className="text-xs text-muted-foreground">Listen without video</p>
+                  </div>
+                  <Play className="w-4 h-4 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Bottom Section - Timeline Navigator (Lesson Journey) */}
         <div className="flex-[4] min-h-0 overflow-y-auto bg-muted/30 px-4 py-4">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
             Your Journey
