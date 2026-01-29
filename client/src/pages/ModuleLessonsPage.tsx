@@ -109,7 +109,7 @@ export default function ModuleLessonsPage() {
 
   const handleBack = () => {
     if (courseId) {
-      setLocation(`/abundance-mastery/course/${courseId}`);
+      setLocation(`/challenge/${courseId}`);
     } else {
       setLocation("/money-mastery");
     }

@@ -556,7 +556,7 @@ export default function MoneyMasteryPage() {
                   key={course.id}
                   className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
                   onClick={() =>
-                    setLocation(`/abundance-mastery/course/${course.id}`)
+                    setLocation(`/challenge/${course.id}`)
                   }
                   data-testid={`card-course-${course.id}`}
                 >

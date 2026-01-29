@@ -3360,7 +3360,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                 feature: feature.code,
                 id: course.id,
                 title: course.title,
-                navigate_to: `/abundance-mastery/course/${course.id}`,
+                navigate_to: `/challenge/${course.id}`,
               });
             }
           }

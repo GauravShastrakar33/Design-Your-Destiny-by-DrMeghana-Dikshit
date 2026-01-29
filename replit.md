@@ -27,10 +27,24 @@ Core pages include Home, Courses, Profile, Progress Insights, Project of Heart, 
 
 **Progress Insights**: Tracks only PROCESS and PLAYLIST activity types.
 
-**Lesson Progress (Daily Abundance)**: Tracks completed lessons in Daily Abundance courses.
-- **Backend**: `lesson_progress` table stores user and lesson IDs.
-- **API**: Endpoints to get completed lesson IDs and mark lessons as complete.
-- **UI**: Displays modules and lessons with expandable cards. Videos/audios are played from R2. Completed lessons show a green checkmark; incomplete ones have a play icon and a manual "Mark as Complete" button.
+**Daily Abundance Challenge (Video-First Guided Journey)**: Netflix-like immersive learning experience for Money Manifestation Challenge and similar courses.
+- **Database**: `lesson_progress` table stores userId, lessonId, completedAt.
+- **Routes**:
+  - `/challenge/:courseId` - Video-first experience (auto-opens first incomplete lesson)
+  - `/abundance-mastery/course/:courseId` - Legacy module browser (fallback)
+  - `/course/:courseId/module/:moduleId` - Individual module lessons
+- **API Endpoints** (JWT authentication required):
+  - `GET /api/v1/lesson-progress` - Returns {completedLessonIds: number[]}
+  - `POST /api/v1/lesson-progress/:lessonId/complete` - Mark lesson complete
+- **UI Layout (VideoFirstChallengePage)**:
+  - Top 60%: Large video/audio player with auto-play
+  - Bottom 40%: Compact timeline navigator showing all days
+  - Lesson title as "Day X – Title"
+  - No dropdowns, no nested module screens
+- **Timeline Navigator**: ✓ completed (green), ▶ current (highlighted), 🔒 locked (future)
+- **Auto-Completion Logic**: Triggers at 90% video/audio progress, shows success toast, auto-advances
+- **Completion Screen**: Trophy celebration when all lessons done, "Rewatch from Day 1" option
+- **CMS Compatibility**: Flattens courses → modules → lessons into linear "days" on frontend only
 
 **Event Calendar**: Displays live sessions and recordings.
 - **Tabs**: "Upcoming" for current/future events, "Latest" for completed events with recordings.
