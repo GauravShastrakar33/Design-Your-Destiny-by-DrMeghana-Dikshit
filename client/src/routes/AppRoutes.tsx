@@ -23,6 +23,8 @@ import SearchPage from "@/pages/SearchPage";
 import ProcessLessonPage from "@/pages/ProcessLessonPage";
 import SpiritualBreathLessonPage from "@/pages/SpiritualBreathLessonPage";
 import AbundanceCoursePage from "@/pages/AbundanceCoursePage";
+import ModuleLessonsPage from "@/pages/ModuleLessonsPage";
+import VideoFirstChallengePage from "@/pages/VideoFirstChallengePage";
 import MasterclassesPage from "@/pages/MasterclassesPage";
 import MasterclassCourseOverviewPage from "@/pages/MasterclassCourseOverviewPage";
 import BadgesPage from "@/pages/BadgesPage";
@@ -62,6 +64,8 @@ export default function AppRoutes() {
       <Route path="/processes/lesson/:lessonId" component={ProcessLessonPage} />
       <Route path="/spiritual-breaths/lesson/:lessonId" component={SpiritualBreathLessonPage} />
       <Route path="/abundance-mastery/course/:courseId" component={AbundanceCoursePage} />
+      <Route path="/challenge/:courseId" component={VideoFirstChallengePage} />
+      <Route path="/course/:courseId/module/:moduleId" component={ModuleLessonsPage} />
       <Route path="/masterclasses" component={MasterclassesPage} />
       <Route path="/masterclasses/course/:courseId" component={MasterclassCourseOverviewPage} />
       <Route path="/masterclasses/lesson/:lessonId" component={ProcessLessonPage} />

@@ -53,6 +53,7 @@ export default function RewiringScreen() {
       toast({
         title: "Beautiful progress, Champion!",
         description: "Your belief is saved.",
+        variant: "success",
       });
     },
     onError: () => {
@@ -75,7 +76,7 @@ export default function RewiringScreen() {
       const res = await apiRequest(
         "PUT",
         `/api/v1/rewiring-beliefs/${id}`,
-        data
+        data,
       );
       return res.json();
     },
@@ -87,6 +88,7 @@ export default function RewiringScreen() {
       toast({
         title: "Beautiful progress, Champion!",
         description: "Your belief is updated.",
+        variant: "success",
       });
     },
     onError: () => {
@@ -105,8 +107,9 @@ export default function RewiringScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/v1/rewiring-beliefs"] });
       toast({
-        title: "Belief removed",
-        description: "Your belief has been deleted.",
+        title: "Beautiful progress, Champion!",
+        description: "Your belief is updated.",
+        variant: "success",
       });
     },
     onError: () => {

@@ -53,13 +53,13 @@ export function AudioPlayer({
 
     const updateTime = () => {
       setCurrentTime(audio.currentTime);
-      
+
       // Call onProgressUpdate for playlist mode
       if (mode === "playlist" && onProgressUpdate) {
         onProgressUpdate(audio.currentTime, audio.duration);
       }
     };
-    
+
     const updateDuration = () => setDuration(audio.duration);
     const handleEnded = () => {
       setIsPlaying(false);
@@ -85,7 +85,7 @@ export function AudioPlayer({
       if (progress >= 90) {
         trackProgress();
         setHasTracked90Percent(true);
-        
+
         // Call onComplete callback for 90% completion
         if (onComplete) {
           onComplete();
@@ -122,7 +122,10 @@ export function AudioPlayer({
     }
 
     if (autoPlay) {
-      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {});
     }
   }, [src, autoPlay, initialTime]);
 
@@ -135,7 +138,7 @@ export function AudioPlayer({
 
   const trackProgress = async () => {
     if (!userId || !audioId || !playlistId) return;
-    
+
     try {
       await fetch("/api/track-progress", {
         method: "POST",
@@ -194,7 +197,10 @@ export function AudioPlayer({
   };
 
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-lg p-4 space-y-3" data-testid="audio-player">
+    <div
+      className="w-full bg-white border border-gray-200 rounded-lg p-4 space-y-3"
+      data-testid="audio-player"
+    >
       <audio ref={audioRef} src={src} preload="metadata" />
 
       <div className="flex items-center gap-3">
@@ -213,11 +219,27 @@ export function AudioPlayer({
 
         <div className="flex-1 min-w-0 space-y-2">
           <div className="flex items-center gap-2">
-            <div className="flex-1 min-w-0 text-sm font-medium text-gray-900 truncate" data-testid="text-audio-title">
+            <div
+              className="flex-1 min-w-0 text-sm font-medium text-gray-900 truncate"
+              data-testid="text-audio-title"
+            >
               {title}
             </div>
-            <Select value={playbackRate.toString()} onValueChange={handleSpeedChange}>
-              <SelectTrigger className="w-14 h-7 text-xs flex-shrink-0" data-testid="select-speed">
+            <Select
+              value={playbackRate.toString()}
+              onValueChange={handleSpeedChange}
+            >
+              <SelectTrigger
+                className="
+                    w-[4.5rem] h-7 text-xs flex-shrink-0
+                    focus:outline-none
+                    focus:ring-2
+                    focus:ring-[#703DFA]
+                    focus:border-[#703DFA]
+                    focus-visible:ring-[#703DFA]
+                  "
+                data-testid="select-speed"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -243,7 +265,9 @@ export function AudioPlayer({
               data-testid="input-audio-seek"
             />
             <div className="flex items-center justify-between text-xs text-gray-600">
-              <span data-testid="text-current-time">{formatTime(currentTime)}</span>
+              <span data-testid="text-current-time">
+                {formatTime(currentTime)}
+              </span>
               <span data-testid="text-duration">{formatTime(duration)}</span>
             </div>
           </div>

@@ -847,6 +847,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Lesson Progress APIs (for Daily Abundance courses)
+  
+  // GET /api/v1/lesson-progress - Get all completed lesson IDs for current user
+  app.get("/api/v1/lesson-progress", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const completedLessonIds = await storage.getCompletedLessonIds(req.user.sub);
+      res.json({ completedLessonIds });
+    } catch (error) {
+      console.error("Error fetching lesson progress:", error);
+      res.status(500).json({ error: "Failed to fetch lesson progress" });
+    }
+  });
+
+  // POST /api/v1/lesson-progress/:lessonId/complete - Mark a lesson as complete
+  app.post("/api/v1/lesson-progress/:lessonId/complete", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const lessonId = parseInt(req.params.lessonId);
+      if (isNaN(lessonId)) {
+        return res.status(400).json({ error: "Invalid lesson ID" });
+      }
+
+      const result = await storage.markLessonComplete(req.user.sub, lessonId);
+      res.json({ success: true, alreadyCompleted: result.alreadyCompleted });
+    } catch (error) {
+      console.error("Error marking lesson complete:", error);
+      res.status(500).json({ error: "Failed to mark lesson complete" });
+    }
+  });
+
   // Admin routes: Get all sessions (including inactive)
   app.get("/api/admin/sessions", requireAdmin, async (req, res) => {
     try {
@@ -3323,7 +3360,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                 feature: feature.code,
                 id: course.id,
                 title: course.title,
-                navigate_to: `/abundance-mastery/course/${course.id}`,
+                navigate_to: `/challenge/${course.id}`,
               });
             }
           }

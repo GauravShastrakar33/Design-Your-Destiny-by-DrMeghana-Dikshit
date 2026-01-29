@@ -24,6 +24,7 @@ import {
   type NotificationLog, type InsertNotificationLog,
   type UserBadge, type InsertUserBadge, type BadgeKey,
   type DrmQuestion, type InsertDrmQuestion,
+  type LessonProgress,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -43,7 +44,8 @@ import {
   notificationLogs as notificationLogsTable,
   deviceTokens as deviceTokensTable,
   userBadges as userBadgesTable,
-  drmQuestions as drmQuestionsTable
+  drmQuestions as drmQuestionsTable,
+  lessonProgress as lessonProgressTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -1379,6 +1381,42 @@ export class DbStorage implements IStorage {
     result.PLAYLIST.sort((a, b) => b.count - a.count);
 
     return result;
+  }
+
+  // ===== LESSON PROGRESS (Daily Abundance) =====
+
+  async getCompletedLessonIds(userId: number): Promise<number[]> {
+    const progress = await db
+      .select({ lessonId: lessonProgressTable.lessonId })
+      .from(lessonProgressTable)
+      .where(eq(lessonProgressTable.userId, userId));
+    return progress.map(p => p.lessonId);
+  }
+
+  async markLessonComplete(userId: number, lessonId: number): Promise<{ alreadyCompleted: boolean; progress: LessonProgress }> {
+    // Check if already completed
+    const [existing] = await db
+      .select()
+      .from(lessonProgressTable)
+      .where(and(
+        eq(lessonProgressTable.userId, userId),
+        eq(lessonProgressTable.lessonId, lessonId)
+      ));
+
+    if (existing) {
+      return { alreadyCompleted: true, progress: existing };
+    }
+
+    // Insert new progress record
+    const [newProgress] = await db
+      .insert(lessonProgressTable)
+      .values({
+        userId,
+        lessonId,
+      })
+      .returning();
+
+    return { alreadyCompleted: false, progress: newProgress };
   }
 
   // ===== REWIRING BELIEFS =====
