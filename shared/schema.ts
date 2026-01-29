@@ -389,6 +389,24 @@ export type ActivityLog = typeof activityLogs.$inferSelect;
 export const featureTypeEnum = ["PROCESS", "PLAYLIST"] as const;
 export type FeatureType = typeof featureTypeEnum[number];
 
+// Lesson Progress Table - tracks completed lessons for Daily Abundance courses
+export const lessonProgress = pgTable("lesson_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lessonId: integer("lesson_id").notNull().references(() => cmsLessons.id, { onDelete: 'cascade' }),
+  completedAt: timestamp("completed_at", { mode: "date" }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueUserLesson: unique("unique_user_lesson_progress").on(table.userId, table.lessonId),
+}));
+
+export const insertLessonProgressSchema = createInsertSchema(lessonProgress).omit({
+  id: true,
+  completedAt: true,
+});
+
+export type InsertLessonProgress = z.infer<typeof insertLessonProgressSchema>;
+export type LessonProgress = typeof lessonProgress.$inferSelect;
+
 // Daily Quotes Table - for displaying one quote per day with round-robin rotation
 export const dailyQuotes = pgTable("daily_quotes", {
   id: serial("id").primaryKey(),
