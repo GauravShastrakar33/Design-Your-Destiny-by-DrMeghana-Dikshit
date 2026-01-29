@@ -113,7 +113,7 @@ export default function AbundanceCoursePage() {
                   <Card
                     key={module.id}
                     className="p-4 hover-elevate active-elevate-2 cursor-pointer"
-                    onClick={() => setLocation(`/processes/module/${module.id}?from=abundance&courseId=${courseId}`)}
+                    onClick={() => setLocation(`/course/${courseId}/module/${module.id}`)}
                     data-testid={`module-card-${module.id}`}
                   >
                     <div className="flex items-center gap-3">
