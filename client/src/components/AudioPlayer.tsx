@@ -217,7 +217,7 @@ export function AudioPlayer({
               {title}
             </div>
             <Select value={playbackRate.toString()} onValueChange={handleSpeedChange}>
-              <SelectTrigger className="w-14 h-7 text-xs flex-shrink-0" data-testid="select-speed">
+              <SelectTrigger className="w-[4.5rem] h-7 text-xs flex-shrink-0" data-testid="select-speed">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
