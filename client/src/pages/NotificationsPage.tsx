@@ -1,11 +1,11 @@
 import { ArrowLeft, Bell, Calendar, Loader2 } from "lucide-react";
+import { Header } from "@/components/Header";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect } from "react";
 import { clearUnread } from "@/lib/notificationState";
-
 
 interface InAppNotification {
   id: number;
@@ -19,31 +19,31 @@ interface InAppNotification {
 export default function NotificationsPage() {
   const [, setLocation] = useLocation();
 
-
   // 🔵 CLEAR RED DOT WHEN PAGE OPENS
   useEffect(() => {
     clearUnread();
   }, []);
 
-
   const userToken = localStorage.getItem("@app:user_token");
 
-  const { data: notifications = [], isLoading } = useQuery<InAppNotification[]>({
-    queryKey: ["/api/v1/notifications"],
-    queryFn: async () => {
-      if (!userToken) return [];
-      const response = await fetch("/api/v1/notifications", {
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch notifications");
-      }
-      return response.json();
-    },
-    enabled: !!userToken,
-  });
+  const { data: notifications = [], isLoading } = useQuery<InAppNotification[]>(
+    {
+      queryKey: ["/api/v1/notifications"],
+      queryFn: async () => {
+        if (!userToken) return [];
+        const response = await fetch("/api/v1/notifications", {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch notifications");
+        }
+        return response.json();
+      },
+      enabled: !!userToken,
+    }
+  );
 
   const handleNotificationClick = (notification: InAppNotification) => {
     // Deep link to event page if relatedEventId exists
@@ -75,18 +75,11 @@ export default function NotificationsPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
-            <button
-              onClick={() => setLocation("/")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
-          </div>
-        </div>
+        <Header
+          title="Notifications"
+          hasBackButton={true}
+          onBack={() => setLocation("/")}
+        />
 
         <div className="px-4 py-6">
           {isLoading ? (
@@ -100,9 +93,7 @@ export default function NotificationsPage() {
                 <h2 className="text-xl font-semibold text-foreground mb-2">
                   No Notifications
                 </h2>
-                <p className="text-muted-foreground">
-                  You're all caught up!
-                </p>
+                <p className="text-muted-foreground">You're all caught up!</p>
               </div>
             </div>
           ) : (

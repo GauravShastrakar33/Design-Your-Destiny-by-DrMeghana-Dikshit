@@ -1,4 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Header } from "@/components/Header";
 import { useParams, useLocation, useSearch } from "wouter";
 import { ArrowLeft, Loader2, Video, Music, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -77,7 +78,7 @@ export default function ProcessLessonPage() {
   const handleTimeUpdate = (
     element: HTMLVideoElement | HTMLAudioElement,
     lessonId: number,
-    lessonName: string,
+    lessonName: string
   ) => {
     if (element.duration && element.currentTime >= element.duration * 0.5) {
       logActivity(lessonId, lessonName);
@@ -157,23 +158,7 @@ export default function ProcessLessonPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-3">
-            <button
-              onClick={handleBack}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <h1
-              className="text-lg font-semibold text-foreground truncate"
-              data-testid="text-lesson-title"
-            >
-              {lesson.title}
-            </h1>
-          </div>
-        </div>
+        <Header title={lesson.title} hasBackButton={true} onBack={handleBack} />
 
         <div className="p-4 space-y-6">
           {videoFile && videoFile.signedUrl && (

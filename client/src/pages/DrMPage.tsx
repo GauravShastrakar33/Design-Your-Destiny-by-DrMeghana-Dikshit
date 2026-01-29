@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Header } from "@/components/Header";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -6,7 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, MessageCircle, CheckCircle2, Clock, Play, Pause, Volume2 } from "lucide-react";
+import {
+  Loader2,
+  MessageCircle,
+  CheckCircle2,
+  Clock,
+  Play,
+  Pause,
+  Volume2,
+} from "lucide-react";
 import { format } from "date-fns";
 import type { DrmQuestion } from "@shared/schema";
 
@@ -24,9 +33,11 @@ export default function DrMPage() {
   const { toast } = useToast();
   const params = useParams<{ id?: string }>();
   const urlQuestionId = params.id ? parseInt(params.id) : null;
-  
+
   const [questionText, setQuestionText] = useState("");
-  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(urlQuestionId);
+  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
+    urlQuestionId
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -41,14 +52,17 @@ export default function DrMPage() {
     queryKey: ["/api/v1/drm/questions"],
   });
 
-  const { data: questionDetails, isLoading: isLoadingDetails } = useQuery<QuestionWithAudio>({
-    queryKey: ["/api/v1/drm/questions", selectedQuestionId],
-    enabled: selectedQuestionId !== null,
-  });
+  const { data: questionDetails, isLoading: isLoadingDetails } =
+    useQuery<QuestionWithAudio>({
+      queryKey: ["/api/v1/drm/questions", selectedQuestionId],
+      enabled: selectedQuestionId !== null,
+    });
 
   const submitMutation = useMutation({
     mutationFn: async (text: string) => {
-      return apiRequest("POST", "/api/v1/drm/questions", { questionText: text });
+      return apiRequest("POST", "/api/v1/drm/questions", {
+        questionText: text,
+      });
     },
     onSuccess: () => {
       toast({
@@ -95,7 +109,10 @@ export default function DrMPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" data-testid="loading-drm">
+      <div
+        className="flex items-center justify-center min-h-screen"
+        data-testid="loading-drm"
+      >
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -115,21 +132,23 @@ export default function DrMPage() {
     currentMonthYear: "",
   };
 
-  const currentMonthQuestion = questions.find((q) => q.monthYear === currentMonthYear);
-  const pastQuestions = questions.filter((q) => q.monthYear !== currentMonthYear);
+  const currentMonthQuestion = questions.find(
+    (q) => q.monthYear === currentMonthYear
+  );
+  const pastQuestions = questions.filter(
+    (q) => q.monthYear !== currentMonthYear
+  );
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      <Header title="Ask Dr. M" />
       <div className="max-w-md mx-auto p-4 space-y-6">
-        {/* Header */}
-        <div className="text-center pt-4">
-          <h1 className="text-2xl font-semibold" data-testid="text-drm-title">
-            Ask Dr. M
-          </h1>
-          <p className="text-muted-foreground mt-2" data-testid="text-drm-subtitle">
-            One question per month, answered personally
-          </p>
-        </div>
+        <p
+          className="text-muted-foreground text-center"
+          data-testid="text-drm-subtitle"
+        >
+          One question per month, answered personally
+        </p>
 
         {/* Question Form or Status */}
         <Card data-testid="card-question-form">
@@ -146,15 +165,24 @@ export default function DrMPage() {
                   <>
                     <div className="flex items-center gap-2 text-green-600">
                       <CheckCircle2 className="w-5 h-5" />
-                      <span className="font-medium" data-testid="text-question-answered">
+                      <span
+                        className="font-medium"
+                        data-testid="text-question-answered"
+                      >
                         Dr. M has answered!
                       </span>
                     </div>
-                    <div className="bg-muted rounded-lg p-3" data-testid="text-my-question">
-                      <p className="text-sm text-muted-foreground mb-1">Your question:</p>
+                    <div
+                      className="bg-muted rounded-lg p-3"
+                      data-testid="text-my-question"
+                    >
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Your question:
+                      </p>
                       <p>{currentMonthQuestion.questionText}</p>
                     </div>
-                    {selectedQuestionId === currentMonthQuestion.id && questionDetails?.audioUrl ? (
+                    {selectedQuestionId === currentMonthQuestion.id &&
+                    questionDetails?.audioUrl ? (
                       <div className="space-y-3">
                         <div className="bg-primary/5 rounded-lg p-4">
                           <div className="flex items-center gap-3 mb-3">
@@ -162,8 +190,12 @@ export default function DrMPage() {
                               <Volume2 className="w-5 h-5 text-primary" />
                             </div>
                             <div>
-                              <p className="font-medium text-sm">Dr. M's Response</p>
-                              <p className="text-xs text-muted-foreground">Personal voice message</p>
+                              <p className="font-medium text-sm">
+                                Dr. M's Response
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Personal voice message
+                              </p>
                             </div>
                           </div>
                           <audio
@@ -178,7 +210,9 @@ export default function DrMPage() {
                       </div>
                     ) : (
                       <Button
-                        onClick={() => setSelectedQuestionId(currentMonthQuestion.id)}
+                        onClick={() =>
+                          setSelectedQuestionId(currentMonthQuestion.id)
+                        }
                         className="w-full"
                         data-testid="button-load-audio"
                         disabled={isLoadingDetails}
@@ -196,12 +230,20 @@ export default function DrMPage() {
                   <>
                     <div className="flex items-center gap-2 text-amber-600">
                       <Clock className="w-5 h-5" />
-                      <span className="font-medium" data-testid="text-question-pending">
+                      <span
+                        className="font-medium"
+                        data-testid="text-question-pending"
+                      >
                         Awaiting Dr. M's response
                       </span>
                     </div>
-                    <div className="bg-muted rounded-lg p-3" data-testid="text-pending-question">
-                      <p className="text-sm text-muted-foreground mb-1">Your question:</p>
+                    <div
+                      className="bg-muted rounded-lg p-3"
+                      data-testid="text-pending-question"
+                    >
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Your question:
+                      </p>
                       <p>{currentMonthQuestion?.questionText}</p>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -245,11 +287,17 @@ export default function DrMPage() {
         {/* Past Questions */}
         {pastQuestions.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-medium" data-testid="text-past-questions-title">
+            <h2
+              className="text-lg font-medium"
+              data-testid="text-past-questions-title"
+            >
               Past Questions
             </h2>
             {pastQuestions.map((question) => (
-              <Card key={question.id} data-testid={`card-question-${question.id}`}>
+              <Card
+                key={question.id}
+                data-testid={`card-question-${question.id}`}
+              >
                 <CardContent className="pt-4">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -269,7 +317,8 @@ export default function DrMPage() {
                     <p className="text-sm">{question.questionText}</p>
                     {question.status === "ANSWERED" && (
                       <>
-                        {selectedQuestionId === question.id && questionDetails?.audioUrl ? (
+                        {selectedQuestionId === question.id &&
+                        questionDetails?.audioUrl ? (
                           <div className="bg-primary/5 rounded-lg p-3">
                             <audio
                               ref={audioRef}
@@ -287,9 +336,13 @@ export default function DrMPage() {
                             variant="outline"
                             className="w-full"
                             data-testid={`button-load-${question.id}`}
-                            disabled={isLoadingDetails && selectedQuestionId === question.id}
+                            disabled={
+                              isLoadingDetails &&
+                              selectedQuestionId === question.id
+                            }
                           >
-                            {isLoadingDetails && selectedQuestionId === question.id ? (
+                            {isLoadingDetails &&
+                            selectedQuestionId === question.id ? (
                               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             ) : (
                               <Volume2 className="w-4 h-4 mr-2" />

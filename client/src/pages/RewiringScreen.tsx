@@ -1,6 +1,15 @@
 import { useState } from "react";
-import { ArrowLeft, Brain, Zap, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Brain,
+  Zap,
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+} from "lucide-react";
 import { useLocation } from "wouter";
+import { Header } from "@/components/Header";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +29,9 @@ export default function RewiringScreen() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
-  const [editingBelief, setEditingBelief] = useState<RewiringBelief | null>(null);
+  const [editingBelief, setEditingBelief] = useState<RewiringBelief | null>(
+    null
+  );
   const [formData, setFormData] = useState({ limiting: "", uplifting: "" });
 
   const { data: beliefs = [], isLoading } = useQuery<RewiringBelief[]>({
@@ -28,7 +39,10 @@ export default function RewiringScreen() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: { limitingBelief: string; upliftingBelief: string }) => {
+    mutationFn: async (data: {
+      limitingBelief: string;
+      upliftingBelief: string;
+    }) => {
       const res = await apiRequest("POST", "/api/v1/rewiring-beliefs", data);
       return res.json();
     },
@@ -51,8 +65,18 @@ export default function RewiringScreen() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: { limitingBelief: string; upliftingBelief: string } }) => {
-      const res = await apiRequest("PUT", `/api/v1/rewiring-beliefs/${id}`, data);
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: { limitingBelief: string; upliftingBelief: string };
+    }) => {
+      const res = await apiRequest(
+        "PUT",
+        `/api/v1/rewiring-beliefs/${id}`,
+        data
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -102,7 +126,10 @@ export default function RewiringScreen() {
 
   const handleOpenEditModal = (belief: RewiringBelief) => {
     setEditingBelief(belief);
-    setFormData({ limiting: belief.limitingBelief, uplifting: belief.upliftingBelief });
+    setFormData({
+      limiting: belief.limitingBelief,
+      uplifting: belief.upliftingBelief,
+    });
     setShowModal(true);
   };
 
@@ -149,23 +176,11 @@ export default function RewiringScreen() {
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        {/* White Header Section */}
-        <div className="bg-white border-b py-4 px-4">
-          <div className="flex items-center">
-            <button
-              onClick={() => setLocation("/money-mastery")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
-            </button>
-            <div className="flex-1 text-center pr-10">
-              <h1 className="text-xl font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase">
-                REWIRING BELIEFS
-              </h1>
-            </div>
-          </div>
-        </div>
+        <Header
+          title="Rewiring Beliefs"
+          hasBackButton={true}
+          onBack={() => setLocation("/money-mastery")}
+        />
 
         {/* Motivational Card */}
         <div className="px-4 mt-4">
@@ -197,9 +212,7 @@ export default function RewiringScreen() {
           ) : beliefs.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-md p-8 text-center">
               <Brain className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 font-medium mb-1">
-                No beliefs yet
-              </p>
+              <p className="text-gray-600 font-medium mb-1">No beliefs yet</p>
               <p className="text-sm text-gray-400">
                 Tap the + button below to add your first belief pair
               </p>
@@ -319,7 +332,9 @@ export default function RewiringScreen() {
               <Input
                 id="modal-limiting"
                 value={formData.limiting}
-                onChange={(e) => setFormData({ ...formData, limiting: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, limiting: e.target.value })
+                }
                 placeholder="e.g., I never have enough money"
                 className="border-gray-200"
                 data-testid="input-modal-limiting"
@@ -337,7 +352,9 @@ export default function RewiringScreen() {
               <Input
                 id="modal-uplifting"
                 value={formData.uplifting}
-                onChange={(e) => setFormData({ ...formData, uplifting: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, uplifting: e.target.value })
+                }
                 placeholder="e.g., Abundance flows to me effortlessly"
                 className="border-gray-200"
                 data-testid="input-modal-uplifting"

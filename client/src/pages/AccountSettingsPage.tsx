@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { Header } from "@/components/Header";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -142,24 +143,11 @@ export default function AccountSettingsPage() {
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: "#F3F3F3" }}>
-      {/* Header */}
-      <div className="bg-white border-b py-4 px-4">
-        <div className="flex items-center">
-          <button
-            onClick={() => setLocation("/profile")}
-            className="p-2 -ml-2 hover:bg-gray-100 rounded-lg transition"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </button>
-          <div className="flex-1 text-center">
-            <h1 className="text-xl font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase">
-              ACCOUNT
-            </h1>
-          </div>
-          <div className="w-9" />
-        </div>
-      </div>
+      <Header
+        title="Account"
+        hasBackButton={true}
+        onBack={() => setLocation("/profile")}
+      />
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
         {/* Username Section */}
@@ -202,7 +190,10 @@ export default function AccountSettingsPage() {
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <p className="text-foreground font-medium" data-testid="text-username">
+                <p
+                  className="text-foreground font-medium"
+                  data-testid="text-username"
+                >
                   {userName}
                 </p>
                 <Button
@@ -233,7 +224,9 @@ export default function AccountSettingsPage() {
 
         {/* Change Password Section */}
         <div className="bg-white rounded-2xl shadow-md p-5">
-          <Label className="text-sm font-medium text-gray-700">Change Password</Label>
+          <Label className="text-sm font-medium text-gray-700">
+            Change Password
+          </Label>
           <div className="mt-2">
             {!showPasswordForm ? (
               <Button
@@ -310,7 +303,9 @@ export default function AccountSettingsPage() {
                   <p className="text-sm text-red-500">{passwordError}</p>
                 )}
                 {passwordSuccess && (
-                  <p className="text-sm text-green-500">Password changed successfully!</p>
+                  <p className="text-sm text-green-500">
+                    Password changed successfully!
+                  </p>
                 )}
                 <div className="flex gap-2">
                   <Button
@@ -348,7 +343,9 @@ export default function AccountSettingsPage() {
         <div className="bg-white rounded-2xl shadow-md p-5">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-4 h-4 text-[#703DFA]" />
-            <Label className="text-sm font-medium text-gray-700">Karmic Affirmation</Label>
+            <Label className="text-sm font-medium text-gray-700">
+              Karmic Affirmation
+            </Label>
           </div>
           <p className="text-xs text-muted-foreground mb-2">Assigned by Dr.M</p>
           {isLoadingProfile ? (

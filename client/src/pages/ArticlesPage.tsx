@@ -1,4 +1,5 @@
 import { ArrowLeft } from "lucide-react";
+import { Header } from "@/components/Header";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import ArticleCard from "@/components/ArticleCard";
@@ -11,11 +12,15 @@ interface ArticleWithCategory extends Article {
 export default function ArticlesPage() {
   const [, setLocation] = useLocation();
 
-  const { data: articles = [], isLoading: articlesLoading } = useQuery<Article[]>({
+  const { data: articles = [], isLoading: articlesLoading } = useQuery<
+    Article[]
+  >({
     queryKey: ["/api/articles"],
   });
 
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<
+    Category[]
+  >({
     queryKey: ["/api/categories"],
   });
 
@@ -23,7 +28,7 @@ export default function ArticlesPage() {
 
   const groupedArticles = categories.reduce((acc, category) => {
     const categoryArticles = articles.filter(
-      article => article.categoryId === category.id
+      (article) => article.categoryId === category.id
     );
     if (categoryArticles.length > 0) {
       acc.push({
@@ -37,24 +42,11 @@ export default function ArticlesPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center justify-between">
-            <button
-              onClick={() => setLocation("/")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <h1
-              className="text-xl font-bold text-gray-600 absolute left-1/2 -translate-x-1/2 tracking-widest"
-              style={{ fontFamily: "Montserrat" }}
-            >
-              ARTICLES
-            </h1>
-            <div className="w-10"></div>
-          </div>
-        </div>
+        <Header
+          title="Articles"
+          hasBackButton={true}
+          onBack={() => setLocation("/")}
+        />
 
         <div className="relative h-52 overflow-hidden">
           <img
@@ -77,7 +69,9 @@ export default function ArticlesPage() {
             {groupedArticles.map(({ category, articles: categoryArticles }) => (
               <div
                 key={category.id}
-                data-testid={`category-${category.name.toLowerCase().replace(/\s+/g, "-")}`}
+                data-testid={`category-${category.name
+                  .toLowerCase()
+                  .replace(/\s+/g, "-")}`}
               >
                 <h3 className="text-xl font-semibold text-foreground px-4 mb-4">
                   {category.name}

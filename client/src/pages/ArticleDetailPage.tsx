@@ -1,4 +1,5 @@
 import { ArrowLeft } from "lucide-react";
+import { Header } from "@/components/Header";
 import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,11 @@ export default function ArticleDetailPage() {
   const [, params] = useRoute("/articles/:id");
   const articleId = params?.id ? parseInt(params.id) : 0;
 
-  const { data: article, isLoading: articleLoading, error } = useQuery<Article | null>({
+  const {
+    data: article,
+    isLoading: articleLoading,
+    error,
+  } = useQuery<Article | null>({
     queryKey: ["/api/articles", articleId],
     queryFn: async () => {
       const response = await fetch(`/api/articles/${articleId}`);
@@ -26,7 +31,7 @@ export default function ArticleDetailPage() {
     queryKey: ["/api/categories"],
   });
 
-  const category = categories.find(c => c.id === article?.categoryId);
+  const category = categories.find((c) => c.id === article?.categoryId);
 
   if (articleLoading) {
     return (
@@ -69,23 +74,11 @@ export default function ArticleDetailPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-3">
-            <button
-              onClick={() => setLocation("/articles")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <h1
-              className="text-xl font-bold text-gray-600 tracking-widest"
-              style={{ fontFamily: "Montserrat" }}
-            >
-              ARTICLE
-            </h1>
-          </div>
-        </div>
+        <Header
+          title="Article"
+          hasBackButton={true}
+          onBack={() => setLocation("/articles")}
+        />
 
         <div className="relative h-64 overflow-hidden">
           <img
@@ -115,7 +108,10 @@ export default function ArticleDetailPage() {
             {article.title}
           </h2>
 
-          <p className="text-sm text-muted-foreground" data-testid="text-article-date">
+          <p
+            className="text-sm text-muted-foreground"
+            data-testid="text-article-date"
+          >
             {new Date(article.createdAt).toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",

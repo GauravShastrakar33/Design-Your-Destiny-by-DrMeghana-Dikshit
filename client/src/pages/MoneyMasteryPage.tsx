@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Header } from "@/components/Header";
 import {
   ArrowLeft,
   Calendar,
@@ -59,7 +60,9 @@ export default function MoneyMasteryPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [earningAmount, setEarningAmount] = useState("");
 
-  const monthKey = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}`;
+  const monthKey = `${selectedMonth.getFullYear()}-${String(
+    selectedMonth.getMonth() + 1
+  ).padStart(2, "0")}`;
   const { data: calendarData, isLoading: isLoadingCalendar } =
     useMoneyCalendar(monthKey);
   const saveEntryMutation = useSaveMoneyEntry();
@@ -83,7 +86,7 @@ export default function MoneyMasteryPage() {
   });
 
   const mappedCourses = (abundanceData?.courses || []).sort(
-    (a, b) => a.position - b.position,
+    (a, b) => a.position - b.position
   );
 
   const getDaysInMonth = () => {
@@ -132,7 +135,7 @@ export default function MoneyMasteryPage() {
           setModalOpen(false);
           setEarningAmount("");
         },
-      },
+      }
     );
   };
 
@@ -146,19 +149,19 @@ export default function MoneyMasteryPage() {
           setModalOpen(false);
           setEarningAmount("");
         },
-      },
+      }
     );
   };
 
   const previousMonth = () => {
     setSelectedMonth(
-      new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1),
+      new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1)
     );
   };
 
   const nextMonth = () => {
     setSelectedMonth(
-      new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1),
+      new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1)
     );
   };
 
@@ -188,23 +191,11 @@ export default function MoneyMasteryPage() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-white backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
-            <button
-              onClick={() => setLocation("/")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <h1
-              className="text-lg font-semibold text-gray-500 tracking-[0.2em]"
-              style={{ fontFamily: "Montserrat" }}
-            >
-              DAILY ABUNDANCE
-            </h1>
-          </div>
-        </div>
+        <Header
+          title="Daily Abundance"
+          hasBackButton={true}
+          onBack={() => setLocation("/")}
+        />
 
         <div className="px-4 py-6 space-y-6">
           {/* Money Calendar */}
@@ -284,14 +275,16 @@ export default function MoneyMasteryPage() {
                                 : ""
                             }`
                           : isToday(day)
-                            ? "bg-[#703DFA]/5 ring-1 ring-[#703DFA]/40 text-[#703DFA]"
-                            : "bg-gray-200 text-gray-800"
+                          ? "bg-[#703DFA]/5 ring-1 ring-[#703DFA]/40 text-[#703DFA]"
+                          : "bg-gray-200 text-gray-800"
                       }
                     `}
                     data-testid={`day-${day}`}
                   >
                     <span
-                      className={`text-[11px] font-medium ${hasEarning ? "" : "text-foreground"}`}
+                      className={`text-[11px] font-medium ${
+                        hasEarning ? "" : "text-foreground"
+                      }`}
                     >
                       {day}
                     </span>

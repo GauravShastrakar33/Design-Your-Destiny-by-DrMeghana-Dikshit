@@ -1,4 +1,5 @@
 import { Search, Bell, ChevronRight, GraduationCap } from "lucide-react";
+import { Header } from "@/components/Header";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -32,45 +33,28 @@ export default function MasterclassesPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-white border-b border-border z-10">
-          <div className="px-6 py-4 flex items-center justify-between">
-            <h1
-              className="text-xl font-bold text-gray-500 tracking-wider"
-              style={{ fontFamily: "Montserrat, sans-serif" }}
-              data-testid="text-page-title"
-            >
-              Masterclasses
-            </h1>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setLocation("/search")}
-                className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
-                data-testid="button-search"
-              >
-                <Search className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
-              </button>
-              <button
-                onClick={() => setLocation("/notifications")}
-                className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
-                data-testid="button-notifications"
-              >
-                <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
-              </button>
-            </div>
-          </div>
-        </div>
+        <Header
+          title="Masterclasses"
+          hasBackButton={true}
+          onBack={() => setLocation("/")}
+        />
 
         <div className="px-4 py-6">
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-24 bg-gray-100 rounded-2xl animate-pulse" />
+                <div
+                  key={i}
+                  className="h-24 bg-gray-100 rounded-2xl animate-pulse"
+                />
               ))}
             </div>
           ) : courses.length === 0 ? (
             <div className="text-center py-12">
               <GraduationCap className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">No Masterclasses Yet</h3>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                No Masterclasses Yet
+              </h3>
               <p className="text-gray-500 text-sm">
                 Check back later for new masterclasses!
               </p>
@@ -78,34 +62,36 @@ export default function MasterclassesPage() {
           ) : (
             <div className="space-y-4">
               {courses.map((course) => (
-                  <Card
-                    key={course.id}
-                    className="overflow-hidden cursor-pointer hover-elevate active-elevate-2"
-                    onClick={() => setLocation(`/masterclasses/course/${course.id}`)}
-                    data-testid={`card-masterclass-course-${course.id}`}
-                  >
-                    {/* Wide thumbnail */}
-                    <div className="aspect-[2/1] w-full bg-gray-100">
-                      {course.thumbnailUrl ? (
-                        <img 
-                          src={course.thumbnailUrl} 
-                          alt={course.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-[#703DFA]/10 flex items-center justify-center">
-                          <GraduationCap className="w-10 h-10 text-[#703DFA]" />
-                        </div>
-                      )}
-                    </div>
-                    {/* Title below thumbnail */}
-                    <div className="p-3">
-                      <h3 className="font-semibold text-gray-900">
-                        {course.title}
-                      </h3>
-                    </div>
-                  </Card>
-                ))}
+                <Card
+                  key={course.id}
+                  className="overflow-hidden cursor-pointer hover-elevate active-elevate-2"
+                  onClick={() =>
+                    setLocation(`/masterclasses/course/${course.id}`)
+                  }
+                  data-testid={`card-masterclass-course-${course.id}`}
+                >
+                  {/* Wide thumbnail */}
+                  <div className="aspect-[2/1] w-full bg-gray-100">
+                    {course.thumbnailUrl ? (
+                      <img
+                        src={course.thumbnailUrl}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-[#703DFA]/10 flex items-center justify-center">
+                        <GraduationCap className="w-10 h-10 text-[#703DFA]" />
+                      </div>
+                    )}
+                  </div>
+                  {/* Title below thumbnail */}
+                  <div className="p-3">
+                    <h3 className="font-semibold text-gray-900">
+                      {course.title}
+                    </h3>
+                  </div>
+                </Card>
+              ))}
             </div>
           )}
         </div>

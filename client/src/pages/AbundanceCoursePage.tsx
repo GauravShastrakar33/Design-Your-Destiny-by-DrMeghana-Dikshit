@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Header } from "@/components/Header";
 import { useParams, useLocation } from "wouter";
 import { ArrowLeft, Loader2, Play, DollarSign, BookOpen } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -17,9 +18,11 @@ export default function AbundanceCoursePage() {
   const params = useParams();
   const courseId = params.courseId;
   const [location, setLocation] = useLocation();
-  
+
   // Determine back destination based on current URL path
-  const backPath = location.startsWith("/masterclasses") ? "/masterclasses" : "/money-mastery";
+  const backPath = location.startsWith("/masterclasses")
+    ? "/masterclasses"
+    : "/money-mastery";
 
   const { data, isLoading, error } = useQuery<CourseResponse>({
     queryKey: ["/api/public/v1/courses", courseId],
@@ -50,7 +53,10 @@ export default function AbundanceCoursePage() {
           >
             <ArrowLeft className="w-6 h-6 text-foreground" />
           </button>
-          <div className="text-center py-12 text-muted-foreground" data-testid="text-error">
+          <div
+            className="text-center py-12 text-muted-foreground"
+            data-testid="text-error"
+          >
             Course not found
           </div>
         </div>
@@ -63,21 +69,11 @@ export default function AbundanceCoursePage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-3">
-            <button
-              onClick={() => setLocation(backPath)}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <DollarSign className="w-5 h-5 text-amber-500" />
-            <h1 className="text-lg font-semibold text-foreground truncate" data-testid="text-course-title">
-              {course.title}
-            </h1>
-          </div>
-        </div>
+        <Header
+          title={course.title}
+          hasBackButton={true}
+          onBack={() => setLocation(backPath)}
+        />
 
         <div className="p-4 space-y-6">
           {course.thumbnailUrl && (
@@ -92,7 +88,10 @@ export default function AbundanceCoursePage() {
           )}
 
           {course.description && (
-            <p className="text-muted-foreground whitespace-pre-line" data-testid="text-course-description">
+            <p
+              className="text-muted-foreground whitespace-pre-line"
+              data-testid="text-course-description"
+            >
               {course.description}
             </p>
           )}
@@ -113,7 +112,11 @@ export default function AbundanceCoursePage() {
                   <Card
                     key={module.id}
                     className="p-4 hover-elevate active-elevate-2 cursor-pointer"
-                    onClick={() => setLocation(`/processes/module/${module.id}?from=abundance&courseId=${courseId}`)}
+                    onClick={() =>
+                      setLocation(
+                        `/processes/module/${module.id}?from=abundance&courseId=${courseId}`
+                      )
+                    }
                     data-testid={`module-card-${module.id}`}
                   >
                     <div className="flex items-center gap-3">
@@ -121,7 +124,9 @@ export default function AbundanceCoursePage() {
                         {index + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-foreground font-medium truncate">{module.title}</p>
+                        <p className="text-foreground font-medium truncate">
+                          {module.title}
+                        </p>
                       </div>
                       <Play className="w-5 h-5 text-muted-foreground" />
                     </div>

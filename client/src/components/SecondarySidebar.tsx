@@ -21,6 +21,8 @@ import {
   Quote,
   Calendar,
   Video,
+  Bell,
+  MessageCircle,
 } from "lucide-react";
 
 const menuIcons: Record<string, React.ElementType> = {
@@ -35,20 +37,25 @@ const menuIcons: Record<string, React.ElementType> = {
   process: BookOpen,
   project: Heart,
   quotes: Quote,
+  notifications: Bell,
+  "drm-questions": MessageCircle,
 };
 
 const menuContent: Record<
   string,
   {
     title: string;
-    items: { path: string; label: string; icon?: React.ElementType; disableActiveHighlight?: boolean }[];
+    items: {
+      path: string;
+      label: string;
+      icon?: React.ElementType;
+      disableActiveHighlight?: boolean;
+    }[];
   }
 > = {
   dashboard: {
     title: "Dashboard",
-    items: [
-      { path: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    ],
+    items: [{ path: "/admin", label: "Dashboard", icon: LayoutDashboard }],
   },
   users: {
     title: "User Management",
@@ -60,19 +67,25 @@ const menuContent: Record<
   banner: {
     title: "Session Banner",
     items: [
-      { path: "/admin/session-banner/banners", label: "All Banners", icon: List },
+      {
+        path: "/admin/session-banner/banners",
+        label: "All Banners",
+        icon: List,
+      },
     ],
   },
   events: {
     title: "Event Calendar",
-    items: [
-      { path: "/admin/events", label: "All Events", icon: List },
-    ],
+    items: [{ path: "/admin/events", label: "All Events", icon: List }],
   },
   sessions: {
     title: "Community Practices",
     items: [
-      { path: "/admin/sessions", label: "Community Practices", icon: UsersRound },
+      {
+        path: "/admin/sessions",
+        label: "Community Practices",
+        icon: UsersRound,
+      },
     ],
   },
   workshops: {
@@ -94,21 +107,37 @@ const menuContent: Record<
     title: "Process Library",
     items: [
       { path: "/admin/processes", label: "Processes", icon: Sparkles },
-      { path: "/admin/abundance-mastery", label: "Abundance Mastery", icon: DollarSign },
+      {
+        path: "/admin/abundance-mastery",
+        label: "Abundance Mastery",
+        icon: DollarSign,
+      },
       { path: "/admin/masterclasses", label: "Masterclasses", icon: Video },
       { path: "/admin/my-processes", label: "My Playlist", icon: Music },
     ],
   },
   project: {
     title: "Project of Heart",
-    items: [
-      { path: "/admin/project-heart", label: "Overview", icon: Heart },
-    ],
+    items: [{ path: "/admin/project-heart", label: "Overview", icon: Heart }],
   },
   quotes: {
     title: "Daily Quotes",
+    items: [{ path: "/admin/quotes", label: "Daily Quotes", icon: Quote }],
+  },
+  notifications: {
+    title: "Notifications",
     items: [
-      { path: "/admin/quotes", label: "Daily Quotes", icon: Quote },
+      { path: "/admin/notifications", label: "Notifications", icon: Bell },
+    ],
+  },
+  "drm-questions": {
+    title: "Dr.M Questions",
+    items: [
+      {
+        path: "/admin/drm-questions",
+        label: "Dr.M Questions",
+        icon: MessageCircle,
+      },
     ],
   },
 };
@@ -141,12 +170,15 @@ export default function SecondarySidebar() {
           {content.items.map((item, index) => {
             const ItemIcon = item.icon || List;
             const isActive =
-              !item.disableActiveHighlight && (location === item.path || location.startsWith(item.path + "/"));
+              !item.disableActiveHighlight &&
+              (location === item.path || location.startsWith(item.path + "/"));
 
             return (
               <Link key={`${item.path}-${index}`} href={item.path}>
                 <button
-                  data-testid={`secondary-nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
+                  data-testid={`secondary-nav-${item.label
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")}`}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors text-sm ${
                     isActive
                       ? "bg-brand/10 text-brand font-medium"
