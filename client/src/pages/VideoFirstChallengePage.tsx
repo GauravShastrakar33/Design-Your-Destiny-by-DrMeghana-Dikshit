@@ -336,10 +336,10 @@ export default function VideoFirstChallengePage() {
     );
   }
 
-  // Get video/audio/PDF files
+  // Get video/audio/PDF files (PDF can be stored as "pdf" or "script" type)
   const videoFile = lessonData?.files?.find(f => f.fileType === "video" && f.signedUrl);
   const audioFile = lessonData?.files?.find(f => f.fileType === "audio" && f.signedUrl);
-  const pdfFile = lessonData?.files?.find(f => f.fileType === "pdf" && f.signedUrl);
+  const pdfFile = lessonData?.files?.find(f => (f.fileType === "pdf" || f.fileType === "script") && f.signedUrl);
   
   // Determine primary player type
   const primaryPlayerType = videoFile ? "video" : audioFile ? "audio" : pdfFile ? "pdf" : "none";
