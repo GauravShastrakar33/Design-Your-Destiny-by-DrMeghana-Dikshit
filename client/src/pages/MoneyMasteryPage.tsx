@@ -556,9 +556,7 @@ export default function MoneyMasteryPage() {
                 <Card
                   key={course.id}
                   className="overflow-hidden bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
-                  onClick={() =>
-                    setLocation(`/challenge/${course.id}`)
-                  }
+                  onClick={() => setLocation(`/challenge/${course.id}`)}
                   data-testid={`card-course-${course.id}`}
                 >
                   {course.thumbnailUrl ? (
@@ -569,7 +567,7 @@ export default function MoneyMasteryPage() {
                         className="w-full h-40 object-cover"
                         data-testid={`img-course-thumbnail-${course.id}`}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
                       <div className="absolute bottom-0 left-0 right-0 p-4">
                         <h2 className="text-white text-lg font-bold mb-1">
                           {course.title}
