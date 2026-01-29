@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { Header } from "@/components/Header";
 import {
   ArrowLeft,
   Loader2,
@@ -325,21 +326,11 @@ export default function ProcessesPage() {
   return (
     <div className="min-h-screen pb-20 bg-[#F2F3F5]">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-white border-b z-10">
-          <div className="py-4 relative flex items-center">
-            <button
-              onClick={() => setLocation("/")}
-              className="absolute left-4 hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-gray-500" />
-            </button>
-
-            <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase whitespace-nowrap">
-              PROCESSES
-            </h1>
-          </div>
-        </div>
+        <Header
+          title="Processes"
+          hasBackButton={true}
+          onBack={() => setLocation("/")}
+        />
 
         <div className="px-4 pt-4">
           <Tabs

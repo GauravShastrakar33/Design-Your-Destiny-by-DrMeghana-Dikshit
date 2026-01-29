@@ -12,7 +12,7 @@ const app = express();
 app.get("/firebase-messaging-sw.js", (req, res) => {
   const swPath = path.join(
     process.cwd(),
-    "client/public/firebase-messaging-sw.js",
+    "client/public/firebase-messaging-sw.js"
   );
 
   if (!fs.existsSync(swPath)) {
@@ -33,7 +33,7 @@ app.use(
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
-  }),
+  })
 );
 app.use(express.urlencoded({ extended: false }));
 
@@ -102,10 +102,9 @@ app.use((req, res, next) => {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
     },
     () => {
       log(`serving on port ${port}`);
-    },
+    }
   );
 })();

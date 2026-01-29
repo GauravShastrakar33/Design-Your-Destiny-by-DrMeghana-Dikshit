@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { Header } from "@/components/Header";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -92,7 +93,7 @@ export default function DesignYourPracticePage() {
     setShowNameDialog(false);
     setPlaylistName("");
     setSelectedPractices([]);
-    
+
     setTimeout(() => {
       setLocation("/playlist");
     }, 500);
@@ -101,23 +102,15 @@ export default function DesignYourPracticePage() {
   return (
     <div className="min-h-screen bg-background pb-32">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
-            <button
-              onClick={() => setLocation("/")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Design Your Practice</h1>
-              <p className="text-sm text-muted-foreground">
-                {selectedPractices.length} selected
-              </p>
-            </div>
-          </div>
-        </div>
+        <Header
+          title="Design Your Practice"
+          hasBackButton={true}
+          onBack={() => setLocation("/")}
+        >
+          <p className="text-sm text-muted-foreground">
+            {selectedPractices.length} selected
+          </p>
+        </Header>
 
         <div className="px-4 py-6 space-y-4">
           <div className="bg-card border border-card-border rounded-lg overflow-hidden">
@@ -126,7 +119,9 @@ export default function DesignYourPracticePage() {
               className="w-full p-4 flex items-center justify-between hover-elevate active-elevate-2"
               data-testid="button-toggle-usm"
             >
-              <h2 className="text-lg font-semibold text-foreground">USM Practices</h2>
+              <h2 className="text-lg font-semibold text-foreground">
+                USM Practices
+              </h2>
               {usmExpanded ? (
                 <ChevronUp className="w-5 h-5 text-muted-foreground" />
               ) : (
@@ -146,14 +141,18 @@ export default function DesignYourPracticePage() {
                       <div
                         key={practice}
                         className={`flex items-center gap-3 px-4 py-3 hover-elevate ${
-                          index !== usmPractices.length - 1 ? "border-b border-border" : ""
+                          index !== usmPractices.length - 1
+                            ? "border-b border-border"
+                            : ""
                         }`}
                       >
                         <Checkbox
                           id={`usm-${practice}`}
                           checked={selectedPractices.includes(practice)}
                           onCheckedChange={() => togglePractice(practice)}
-                          data-testid={`checkbox-${practice.toLowerCase().replace(/\s+/g, '-')}`}
+                          data-testid={`checkbox-${practice
+                            .toLowerCase()
+                            .replace(/\s+/g, "-")}`}
                         />
                         <label
                           htmlFor={`usm-${practice}`}
@@ -175,7 +174,9 @@ export default function DesignYourPracticePage() {
               className="w-full p-4 flex items-center justify-between hover-elevate active-elevate-2"
               data-testid="button-toggle-dyd"
             >
-              <h2 className="text-lg font-semibold text-foreground">DYD Practices</h2>
+              <h2 className="text-lg font-semibold text-foreground">
+                DYD Practices
+              </h2>
               {dydExpanded ? (
                 <ChevronUp className="w-5 h-5 text-muted-foreground" />
               ) : (
@@ -195,14 +196,18 @@ export default function DesignYourPracticePage() {
                       <div
                         key={practice}
                         className={`flex items-center gap-3 px-4 py-3 hover-elevate ${
-                          index !== dydPractices.length - 1 ? "border-b border-border" : ""
+                          index !== dydPractices.length - 1
+                            ? "border-b border-border"
+                            : ""
                         }`}
                       >
                         <Checkbox
                           id={`dyd-${practice}`}
                           checked={selectedPractices.includes(practice)}
                           onCheckedChange={() => togglePractice(practice)}
-                          data-testid={`checkbox-${practice.toLowerCase().replace(/\s+/g, '-')}`}
+                          data-testid={`checkbox-${practice
+                            .toLowerCase()
+                            .replace(/\s+/g, "-")}`}
                         />
                         <label
                           htmlFor={`dyd-${practice}`}
@@ -251,7 +256,7 @@ export default function DesignYourPracticePage() {
               value={playlistName}
               onChange={(e) => setPlaylistName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   handleConfirmSave();
                 }
               }}

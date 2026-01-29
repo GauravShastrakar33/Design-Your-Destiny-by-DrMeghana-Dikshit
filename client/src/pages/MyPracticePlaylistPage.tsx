@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Header } from "@/components/Header";
 import {
   ListMusic,
   Trash2,
@@ -70,47 +71,63 @@ export default function MyPracticePlaylistPage() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const [expandedPlaylistId, setExpandedPlaylistId] = useState<number | null>(null);
+  const [expandedPlaylistId, setExpandedPlaylistId] = useState<number | null>(
+    null
+  );
   const [playlistToDelete, setPlaylistToDelete] = useState<number | null>(null);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [playlistToRename, setPlaylistToRename] = useState<Playlist | null>(null);
+  const [playlistToRename, setPlaylistToRename] = useState<Playlist | null>(
+    null
+  );
   const [newTitle, setNewTitle] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [lessonPickerOpen, setLessonPickerOpen] = useState(false);
-  const [editingPlaylistId, setEditingPlaylistId] = useState<number | null>(null);
+  const [editingPlaylistId, setEditingPlaylistId] = useState<number | null>(
+    null
+  );
   const [selectedLessonIds, setSelectedLessonIds] = useState<number[]>([]);
   const [editMode, setEditMode] = useState<number | null>(null);
 
-  const [currentPlaylistId, setCurrentPlaylistId] = useState<number | null>(null);
+  const [currentPlaylistId, setCurrentPlaylistId] = useState<number | null>(
+    null
+  );
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlayingPlaylist, setIsPlayingPlaylist] = useState(false);
   const [initialTime, setInitialTime] = useState(0);
-  
-  // Store playing playlist items snapshot - independent of UI expansion state
-  const [playingItems, setPlayingItems] = useState<PlaylistWithItems["items"]>([]);
 
-  const { data: playlists = [], isLoading: playlistsLoading } = useQuery<Playlist[]>({
+  // Store playing playlist items snapshot - independent of UI expansion state
+  const [playingItems, setPlayingItems] = useState<PlaylistWithItems["items"]>(
+    []
+  );
+
+  const { data: playlists = [], isLoading: playlistsLoading } = useQuery<
+    Playlist[]
+  >({
     queryKey: ["/api/public/v1/playlists"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: isAuthenticated,
   });
 
-  const { data: expandedPlaylistData, isLoading: expandedLoading } = useQuery<PlaylistWithItems>({
-    queryKey: ["/api/public/v1/playlists", expandedPlaylistId],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-    enabled: !!expandedPlaylistId && isAuthenticated,
-  });
+  const { data: expandedPlaylistData, isLoading: expandedLoading } =
+    useQuery<PlaylistWithItems>({
+      queryKey: ["/api/public/v1/playlists", expandedPlaylistId],
+      queryFn: getQueryFn({ on401: "returnNull" }),
+      enabled: !!expandedPlaylistId && isAuthenticated,
+    });
 
-  const { data: playlistSource, isLoading: sourceLoading } = useQuery<PlaylistSourceData>({
-    queryKey: ["/api/public/v1/playlist/source"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-    enabled: lessonPickerOpen && isAuthenticated,
-  });
+  const { data: playlistSource, isLoading: sourceLoading } =
+    useQuery<PlaylistSourceData>({
+      queryKey: ["/api/public/v1/playlist/source"],
+      queryFn: getQueryFn({ on401: "returnNull" }),
+      enabled: lessonPickerOpen && isAuthenticated,
+    });
 
   const createPlaylistMutation = useMutation({
     mutationFn: async (title: string) => {
-      const res = await apiRequest("POST", "/api/public/v1/playlists", { title });
+      const res = await apiRequest("POST", "/api/public/v1/playlists", {
+        title,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -126,7 +143,9 @@ export default function MyPracticePlaylistPage() {
 
   const renamePlaylistMutation = useMutation({
     mutationFn: async ({ id, title }: { id: number; title: string }) => {
-      const res = await apiRequest("PATCH", `/api/public/v1/playlists/${id}`, { title });
+      const res = await apiRequest("PATCH", `/api/public/v1/playlists/${id}`, {
+        title,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -159,13 +178,25 @@ export default function MyPracticePlaylistPage() {
   });
 
   const setItemsMutation = useMutation({
-    mutationFn: async ({ playlistId, lessonIds }: { playlistId: number; lessonIds: number[] }) => {
-      const res = await apiRequest("POST", `/api/public/v1/playlists/${playlistId}/items`, { lessonIds });
+    mutationFn: async ({
+      playlistId,
+      lessonIds,
+    }: {
+      playlistId: number;
+      lessonIds: number[];
+    }) => {
+      const res = await apiRequest(
+        "POST",
+        `/api/public/v1/playlists/${playlistId}/items`,
+        { lessonIds }
+      );
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists", editingPlaylistId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/public/v1/playlists", editingPlaylistId],
+      });
       setLessonPickerOpen(false);
       setEditingPlaylistId(null);
       setSelectedLessonIds([]);
@@ -177,11 +208,22 @@ export default function MyPracticePlaylistPage() {
   });
 
   const removeItemMutation = useMutation({
-    mutationFn: async ({ playlistId, itemId }: { playlistId: number; itemId: number }) => {
-      await apiRequest("DELETE", `/api/public/v1/playlists/${playlistId}/items/${itemId}`);
+    mutationFn: async ({
+      playlistId,
+      itemId,
+    }: {
+      playlistId: number;
+      itemId: number;
+    }) => {
+      await apiRequest(
+        "DELETE",
+        `/api/public/v1/playlists/${playlistId}/items/${itemId}`
+      );
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists", variables.playlistId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/public/v1/playlists", variables.playlistId],
+      });
       toast({ title: "Item removed!" });
     },
     onError: () => {
@@ -190,11 +232,23 @@ export default function MyPracticePlaylistPage() {
   });
 
   const reorderItemsMutation = useMutation({
-    mutationFn: async ({ playlistId, orderedItemIds }: { playlistId: number; orderedItemIds: number[] }) => {
-      await apiRequest("PATCH", `/api/public/v1/playlists/${playlistId}/items/reorder`, { orderedItemIds });
+    mutationFn: async ({
+      playlistId,
+      orderedItemIds,
+    }: {
+      playlistId: number;
+      orderedItemIds: number[];
+    }) => {
+      await apiRequest(
+        "PATCH",
+        `/api/public/v1/playlists/${playlistId}/items/reorder`,
+        { orderedItemIds }
+      );
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists", variables.playlistId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/public/v1/playlists", variables.playlistId],
+      });
     },
     onError: () => {
       toast({ title: "Failed to reorder items", variant: "destructive" });
@@ -208,15 +262,15 @@ export default function MyPracticePlaylistPage() {
         lessonId: params.lessonId,
         lessonName: params.lessonName,
         featureType: "PLAYLIST",
-        activityDate: new Date().toISOString().split('T')[0],
+        activityDate: new Date().toISOString().split("T")[0],
       });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        predicate: (query) => 
-          Array.isArray(query.queryKey) && 
-          query.queryKey[0] === "/api/v1/activity/monthly-stats"
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
+          query.queryKey[0] === "/api/v1/activity/monthly-stats",
       });
     },
   });
@@ -227,7 +281,7 @@ export default function MyPracticePlaylistPage() {
   const logPlaylistActivity = (lessonId: number, lessonName: string) => {
     if (!isAuthenticated) return;
     if (loggedLessonsRef.current.has(lessonId)) return;
-    
+
     loggedLessonsRef.current.add(lessonId);
     logActivityMutation.mutate({ lessonId, lessonName });
   };
@@ -240,7 +294,10 @@ export default function MyPracticePlaylistPage() {
 
   const handleRename = () => {
     if (!playlistToRename || !newTitle.trim()) return;
-    renamePlaylistMutation.mutate({ id: playlistToRename.id, title: newTitle.trim() });
+    renamePlaylistMutation.mutate({
+      id: playlistToRename.id,
+      title: newTitle.trim(),
+    });
   };
 
   const handleCreate = () => {
@@ -257,13 +314,18 @@ export default function MyPracticePlaylistPage() {
 
   const handleToggleLesson = (lessonId: number) => {
     setSelectedLessonIds((prev) =>
-      prev.includes(lessonId) ? prev.filter((id) => id !== lessonId) : [...prev, lessonId]
+      prev.includes(lessonId)
+        ? prev.filter((id) => id !== lessonId)
+        : [...prev, lessonId]
     );
   };
 
   const handleSaveLessons = () => {
     if (!editingPlaylistId) return;
-    setItemsMutation.mutate({ playlistId: editingPlaylistId, lessonIds: selectedLessonIds });
+    setItemsMutation.mutate({
+      playlistId: editingPlaylistId,
+      lessonIds: selectedLessonIds,
+    });
   };
 
   const handlePlayPlaylist = (playlistId: number) => {
@@ -289,10 +351,11 @@ export default function MyPracticePlaylistPage() {
     // Log the track that just completed
     const completedItem = playingItems[currentTrackIndex];
     if (completedItem) {
-      const lessonName = completedItem.lesson?.title || `Lesson ${completedItem.lessonId}`;
+      const lessonName =
+        completedItem.lesson?.title || `Lesson ${completedItem.lessonId}`;
       logPlaylistActivity(completedItem.lessonId, lessonName);
     }
-    
+
     // Advance to next track or stop
     if (currentTrackIndex < playingItems.length - 1) {
       setCurrentTrackIndex(currentTrackIndex + 1);
@@ -318,12 +381,18 @@ export default function MyPracticePlaylistPage() {
   const handleReorder = (newOrder: PlaylistWithItems["items"]) => {
     if (!expandedPlaylistId || !expandedPlaylistData) return;
     const orderedItemIds = newOrder.map((item) => item.id);
-    reorderItemsMutation.mutate({ playlistId: expandedPlaylistId, orderedItemIds });
+    reorderItemsMutation.mutate({
+      playlistId: expandedPlaylistId,
+      orderedItemIds,
+    });
   };
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F3F3F3" }}>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#F3F3F3" }}
+      >
         <Loader2 className="w-8 h-8 animate-spin text-brand" />
       </div>
     );
@@ -331,35 +400,32 @@ export default function MyPracticePlaylistPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
+      <div
+        className="min-h-screen pb-20"
+        style={{ backgroundColor: "#F3F3F3" }}
+      >
         <div className="max-w-md mx-auto">
-          <div className="sticky top-0 bg-white border-b border-border z-10">
-            <div className="px-4 py-4 flex items-center gap-4">
-              <button
-                onClick={() => setLocation("/")}
-                className="hover-elevate active-elevate-2 rounded-lg p-2"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-6 h-6 text-foreground" />
-              </button>
-              <div className="flex-1 text-center">
-                <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
-                  MY PROCESS
-                </h1>
-              </div>
-              <div className="w-10"></div>
-            </div>
-          </div>
+          <Header
+            title="My Playlist"
+            hasBackButton={true}
+            onBack={() => setLocation("/")}
+          />
 
           <div className="px-4 py-12 flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mb-4">
               <ListMusic className="w-8 h-8 text-brand" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Login Required</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Login Required
+            </h2>
             <p className="text-gray-600 max-w-xs mb-4">
               Please log in to create and manage your practice playlists.
             </p>
-            <Button onClick={() => setLocation("/login")} style={{ backgroundColor: "#703DFA" }} data-testid="button-login">
+            <Button
+              onClick={() => setLocation("/login")}
+              style={{ backgroundColor: "#703DFA" }}
+              data-testid="button-login"
+            >
               Log In
             </Button>
           </div>
@@ -370,7 +436,10 @@ export default function MyPracticePlaylistPage() {
 
   if (playlistsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F3F3F3" }}>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#F3F3F3" }}
+      >
         <Loader2 className="w-8 h-8 animate-spin text-brand" />
       </div>
     );
@@ -378,34 +447,35 @@ export default function MyPracticePlaylistPage() {
 
   if (playlists.length === 0) {
     return (
-      <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
+      <div
+        className="min-h-screen pb-20"
+        style={{ backgroundColor: "#F3F3F3" }}
+      >
         <div className="max-w-md mx-auto">
-          <div className="sticky top-0 bg-white border-b border-border z-10">
-            <div className="px-4 py-4 flex items-center gap-4">
-              <button
-                onClick={() => setLocation("/")}
-                className="hover-elevate active-elevate-2 rounded-lg p-2"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-6 h-6 text-foreground" />
-              </button>
-              <div className="flex-1 text-center">
-                <h1 className="text-xl font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
-                  MY PROCESS
-                </h1>
-              </div>
-              <div className="w-10"></div>
-            </div>
-          </div>
+          <Header
+            title="My Playlist"
+            hasBackButton={true}
+            onBack={() => setLocation("/")}
+          />
 
           <div className="px-4 py-6">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center space-y-4">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: "#F3F0FF" }}>
-                  <ListMusic className="w-10 h-10" style={{ color: "#703DFA" }} />
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
+                  style={{ backgroundColor: "#F3F0FF" }}
+                >
+                  <ListMusic
+                    className="w-10 h-10"
+                    style={{ color: "#703DFA" }}
+                  />
                 </div>
-                <h2 className="text-xl font-semibold text-foreground">No Processes Yet</h2>
-                <p className="text-muted-foreground max-w-xs">Create your first custom practice playlist</p>
+                <h2 className="text-xl font-semibold text-foreground">
+                  No Playlists yet
+                </h2>
+                <p className="text-muted-foreground max-w-xs">
+                  Create your first custom practice playlist
+                </p>
                 <Button
                   onClick={() => setCreateDialogOpen(true)}
                   className="mt-4 border-0"
@@ -421,10 +491,15 @@ export default function MyPracticePlaylistPage() {
         </div>
 
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogContent className="max-w-md" data-testid="dialog-create-playlist">
+          <DialogContent
+            className="max-w-md"
+            data-testid="dialog-create-playlist"
+          >
             <DialogHeader>
               <DialogTitle>Create New Playlist</DialogTitle>
-              <DialogDescription>Give your playlist a name to get started.</DialogDescription>
+              <DialogDescription>
+                Give your playlist a name to get started.
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <Input
@@ -435,16 +510,26 @@ export default function MyPracticePlaylistPage() {
               />
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateDialogOpen(false)} data-testid="button-cancel-create">
+              <Button
+                variant="outline"
+                onClick={() => setCreateDialogOpen(false)}
+                data-testid="button-cancel-create"
+              >
                 Cancel
               </Button>
               <Button
                 onClick={handleCreate}
-                disabled={!createTitle.trim() || createPlaylistMutation.isPending}
+                disabled={
+                  !createTitle.trim() || createPlaylistMutation.isPending
+                }
                 style={{ backgroundColor: "#703DFA" }}
                 data-testid="button-confirm-create"
               >
-                {createPlaylistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+                {createPlaylistMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Create"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -456,20 +541,11 @@ export default function MyPracticePlaylistPage() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-white border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
-            <button
-              onClick={() => setLocation("/")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <div className="flex-1 text-center">
-              <h1 className="text-base font-semibold text-gray-500" style={{ fontFamily: "Montserrat" }}>
-                MY PROCESS
-              </h1>
-            </div>
+        <Header
+          title="My Playlist"
+          hasBackButton={true}
+          onBack={() => setLocation("/")}
+          rightContent={
             <button
               onClick={() => setCreateDialogOpen(true)}
               className="hover-elevate active-elevate-2 rounded-lg p-2"
@@ -477,22 +553,35 @@ export default function MyPracticePlaylistPage() {
             >
               <Plus className="w-6 h-6" style={{ color: "#703DFA" }} />
             </button>
-          </div>
-        </div>
+          }
+        />
 
         <div className="px-4 py-6 space-y-3">
           {playlists.map((playlist) => (
-            <Card key={playlist.id} className="overflow-hidden bg-white" data-testid={`playlist-${playlist.id}`}>
+            <Card
+              key={playlist.id}
+              className="overflow-hidden bg-white"
+              data-testid={`playlist-${playlist.id}`}
+            >
               <div className="p-4 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F3F0FF" }}>
+                <div
+                  className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: "#F3F0FF" }}
+                >
                   <ListMusic className="w-6 h-6" style={{ color: "#703DFA" }} />
                 </div>
                 <button
-                  onClick={() => setExpandedPlaylistId(expandedPlaylistId === playlist.id ? null : playlist.id)}
+                  onClick={() =>
+                    setExpandedPlaylistId(
+                      expandedPlaylistId === playlist.id ? null : playlist.id
+                    )
+                  }
                   className="flex-1 text-left hover-elevate active-elevate-2 rounded-lg py-1"
                   data-testid={`button-expand-${playlist.id}`}
                 >
-                  <h3 className="font-semibold text-foreground">{playlist.title}</h3>
+                  <h3 className="font-semibold text-foreground">
+                    {playlist.title}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     Created {new Date(playlist.createdAt).toLocaleDateString()}
                   </p>
@@ -506,7 +595,11 @@ export default function MyPracticePlaylistPage() {
                     <Pencil className="w-4 h-4" style={{ color: "#703DFA" }} />
                   </button>
                   <button
-                    onClick={() => setExpandedPlaylistId(expandedPlaylistId === playlist.id ? null : playlist.id)}
+                    onClick={() =>
+                      setExpandedPlaylistId(
+                        expandedPlaylistId === playlist.id ? null : playlist.id
+                      )
+                    }
                     className="p-2 hover-elevate active-elevate-2 rounded-lg"
                     data-testid={`button-toggle-${playlist.id}`}
                   >
@@ -537,15 +630,19 @@ export default function MyPracticePlaylistPage() {
                         <>
                           {expandedPlaylistData?.items.length === 0 ? (
                             <div className="text-center py-2">
-                              <p className="text-muted-foreground text-sm">No items in this playlist yet.</p>
+                              <p className="text-muted-foreground text-sm">
+                                No items in this playlist yet.
+                              </p>
                             </div>
-                          ) : expandedPlaylistData?.items && expandedPlaylistData.items.length > 0 ? (
+                          ) : expandedPlaylistData?.items &&
+                            expandedPlaylistData.items.length > 0 ? (
                             <div className="space-y-2">
                               {expandedPlaylistData.items.map((item, index) => (
                                 <div
                                   key={item.id}
                                   className={`flex items-center gap-2 text-sm ${
-                                    currentPlaylistId === playlist.id && currentTrackIndex === index
+                                    currentPlaylistId === playlist.id &&
+                                    currentTrackIndex === index
                                       ? "text-brand font-semibold"
                                       : "text-foreground"
                                   }`}
@@ -555,32 +652,42 @@ export default function MyPracticePlaylistPage() {
                                     className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                                     style={{ backgroundColor: "#703DFA" }}
                                   />
-                                  <span className="font-medium">{item.lesson?.title || `Lesson ${item.lessonId}`}</span>
+                                  <span className="font-medium">
+                                    {item.lesson?.title ||
+                                      `Lesson ${item.lessonId}`}
+                                  </span>
                                 </div>
                               ))}
                             </div>
                           ) : null}
 
-                          {currentPlaylistId === playlist.id && isPlayingPlaylist && currentAudio && (
-                            <div className="pt-2">
-                              <AudioPlayer
-                                src={currentAudio.url || ""}
-                                title={currentAudio.title}
-                                mode="playlist"
-                                autoPlay={true}
-                                initialTime={initialTime}
-                                onEnded={handleTrackEnded}
-                              />
-                            </div>
-                          )}
+                          {currentPlaylistId === playlist.id &&
+                            isPlayingPlaylist &&
+                            currentAudio && (
+                              <div className="pt-2">
+                                <AudioPlayer
+                                  src={currentAudio.url || ""}
+                                  title={currentAudio.title}
+                                  mode="playlist"
+                                  autoPlay={true}
+                                  initialTime={initialTime}
+                                  onEnded={handleTrackEnded}
+                                />
+                              </div>
+                            )}
 
                           <div className="flex gap-2 pt-2 flex-wrap">
                             {(expandedPlaylistData?.items?.length || 0) > 0 && (
                               <Button
                                 className="flex-1 border-0"
-                                style={{ backgroundColor: "#703DFA", color: "white" }}
+                                style={{
+                                  backgroundColor: "#703DFA",
+                                  color: "white",
+                                }}
                                 onClick={() =>
-                                  currentPlaylistId === playlist.id ? handleStopPlaylist() : handlePlayPlaylist(playlist.id)
+                                  currentPlaylistId === playlist.id
+                                    ? handleStopPlaylist()
+                                    : handlePlayPlaylist(playlist.id)
                                 }
                                 data-testid={`button-play-${playlist.id}`}
                               >
@@ -600,10 +707,15 @@ export default function MyPracticePlaylistPage() {
                             <Button
                               variant="outline"
                               size="icon"
-                              onClick={() => handleOpenLessonPicker(playlist.id)}
+                              onClick={() =>
+                                handleOpenLessonPicker(playlist.id)
+                              }
                               data-testid={`button-edit-items-${playlist.id}`}
                             >
-                              <Plus className="w-4 h-4" style={{ color: "#703DFA" }} />
+                              <Plus
+                                className="w-4 h-4"
+                                style={{ color: "#703DFA" }}
+                              />
                             </Button>
                             <Button
                               variant="outline"
@@ -611,7 +723,10 @@ export default function MyPracticePlaylistPage() {
                               onClick={() => setPlaylistToDelete(playlist.id)}
                               data-testid={`button-delete-${playlist.id}`}
                             >
-                              <Trash2 className="w-4 h-4" style={{ color: "#703DFA" }} />
+                              <Trash2
+                                className="w-4 h-4"
+                                style={{ color: "#703DFA" }}
+                              />
                             </Button>
                           </div>
                         </>
@@ -625,30 +740,50 @@ export default function MyPracticePlaylistPage() {
         </div>
       </div>
 
-      <AlertDialog open={!!playlistToDelete} onOpenChange={() => setPlaylistToDelete(null)}>
+      <AlertDialog
+        open={!!playlistToDelete}
+        onOpenChange={() => setPlaylistToDelete(null)}
+      >
         <AlertDialogContent data-testid="dialog-confirm-delete">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Playlist?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone. This will permanently delete your playlist.</AlertDialogDescription>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your
+              playlist.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-cancel-delete">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => playlistToDelete && deletePlaylistMutation.mutate(playlistToDelete)}
+              onClick={() =>
+                playlistToDelete &&
+                deletePlaylistMutation.mutate(playlistToDelete)
+              }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="button-confirm-delete"
             >
-              {deletePlaylistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+              {deletePlaylistMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-        <DialogContent className="max-w-md" data-testid="dialog-rename-playlist">
+        <DialogContent
+          className="max-w-md"
+          data-testid="dialog-rename-playlist"
+        >
           <DialogHeader>
             <DialogTitle>Rename Playlist</DialogTitle>
-            <DialogDescription>Enter a new name for your playlist.</DialogDescription>
+            <DialogDescription>
+              Enter a new name for your playlist.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Input
@@ -659,7 +794,11 @@ export default function MyPracticePlaylistPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameDialogOpen(false)} data-testid="button-cancel-rename">
+            <Button
+              variant="outline"
+              onClick={() => setRenameDialogOpen(false)}
+              data-testid="button-cancel-rename"
+            >
               Cancel
             </Button>
             <Button
@@ -668,17 +807,26 @@ export default function MyPracticePlaylistPage() {
               style={{ backgroundColor: "#703DFA" }}
               data-testid="button-confirm-rename"
             >
-              {renamePlaylistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Rename"}
+              {renamePlaylistMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Rename"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="max-w-md" data-testid="dialog-create-playlist">
+        <DialogContent
+          className="max-w-sm"
+          data-testid="dialog-create-playlist"
+        >
           <DialogHeader>
             <DialogTitle>Create New Playlist</DialogTitle>
-            <DialogDescription>Give your playlist a name to get started.</DialogDescription>
+            <DialogDescription>
+              Give your playlist a name to get started.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Input
@@ -689,7 +837,11 @@ export default function MyPracticePlaylistPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)} data-testid="button-cancel-create">
+            <Button
+              variant="outline"
+              onClick={() => setCreateDialogOpen(false)}
+              data-testid="button-cancel-create"
+            >
               Cancel
             </Button>
             <Button
@@ -698,17 +850,26 @@ export default function MyPracticePlaylistPage() {
               style={{ backgroundColor: "#703DFA" }}
               data-testid="button-confirm-create"
             >
-              {createPlaylistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+              {createPlaylistMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Create"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={lessonPickerOpen} onOpenChange={setLessonPickerOpen}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col" data-testid="dialog-lesson-picker">
+        <DialogContent
+          className="max-w-md max-h-[80vh] overflow-hidden flex flex-col"
+          data-testid="dialog-lesson-picker"
+        >
           <DialogHeader>
             <DialogTitle>Select Lessons</DialogTitle>
-            <DialogDescription>Choose audio lessons to add to your playlist.</DialogDescription>
+            <DialogDescription>
+              Choose audio lessons to add to your playlist.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto py-4">
             {sourceLoading ? (
@@ -717,16 +878,22 @@ export default function MyPracticePlaylistPage() {
               </div>
             ) : !playlistSource?.course ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No content available yet. Please check back later.</p>
+                <p className="text-muted-foreground">
+                  No content available yet. Please check back later.
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {playlistSource.modules.map((module) => (
                   <div key={module.id} className="space-y-2">
-                    <h4 className="font-semibold text-sm text-gray-700">{module.title}</h4>
+                    <h4 className="font-semibold text-sm text-gray-700">
+                      {module.title}
+                    </h4>
                     <div className="space-y-1">
                       {module.lessons.map((lesson) => {
-                        const selectionIndex = selectedLessonIds.indexOf(lesson.id);
+                        const selectionIndex = selectedLessonIds.indexOf(
+                          lesson.id
+                        );
                         const isSelected = selectionIndex !== -1;
                         const hasAudio = lesson.audioFiles.length > 0;
                         if (!hasAudio) return null;
@@ -735,14 +902,18 @@ export default function MyPracticePlaylistPage() {
                             key={lesson.id}
                             onClick={() => handleToggleLesson(lesson.id)}
                             className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                              isSelected ? "bg-brand/10 border border-brand" : "bg-gray-50 hover:bg-gray-100"
+                              isSelected
+                                ? "bg-brand/10 border border-brand"
+                                : "bg-gray-50 hover:bg-gray-100"
                             }`}
                             data-testid={`lesson-option-${lesson.id}`}
                           >
                             <Music className="w-4 h-4 text-brand flex-shrink-0" />
-                            <span className="flex-1 text-left text-sm">{lesson.title}</span>
+                            <span className="flex-1 text-left text-sm">
+                              {lesson.title}
+                            </span>
                             {isSelected && (
-                              <div 
+                              <div
                                 className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                                 style={{ backgroundColor: "#703DFA" }}
                               >
@@ -759,12 +930,18 @@ export default function MyPracticePlaylistPage() {
             )}
           </div>
           <DialogFooter className="border-t pt-4">
-            <Button variant="outline" onClick={() => setLessonPickerOpen(false)} data-testid="button-cancel-lessons">
+            <Button
+              variant="outline"
+              onClick={() => setLessonPickerOpen(false)}
+              data-testid="button-cancel-lessons"
+            >
               Cancel
             </Button>
             <Button
               onClick={handleSaveLessons}
-              disabled={selectedLessonIds.length === 0 || setItemsMutation.isPending}
+              disabled={
+                selectedLessonIds.length === 0 || setItemsMutation.isPending
+              }
               style={{ backgroundColor: "#703DFA" }}
               data-testid="button-save-lessons"
             >

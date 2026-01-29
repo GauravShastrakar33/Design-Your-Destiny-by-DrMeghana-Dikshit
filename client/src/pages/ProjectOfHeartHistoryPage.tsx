@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { Header } from "@/components/Header";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { ChevronLeft, Check, Quote, Loader2 } from "lucide-react";
@@ -51,12 +52,15 @@ export default function ProjectOfHeartHistoryPage() {
 
   const formatPeriod = (startedAt: string | null, endedAt: string | null) => {
     if (!startedAt && !endedAt) return null;
-    
+
     const formatDate = (dateStr: string) => {
       const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      });
     };
-    
+
     if (startedAt && endedAt) {
       return `${formatDate(startedAt)} - ${formatDate(endedAt)}`;
     }
@@ -68,7 +72,10 @@ export default function ProjectOfHeartHistoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F8F9FA" }}>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#F8F9FA" }}
+      >
         <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     );
@@ -76,24 +83,11 @@ export default function ProjectOfHeartHistoryPage() {
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: "#F8F9FA" }}>
-      {/* Header */}
-      <div className="bg-white border-b py-4 px-4 sticky top-0 z-50">
-        <div className="flex items-center max-w-md mx-auto">
-          <button
-            onClick={() => setLocation("/project-of-heart")}
-            className="p-2 rounded-lg hover:bg-gray-100"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
-          </button>
-          <div className="flex-1 text-center">
-            <h1 className="text-xs font-semibold tracking-widest text-gray-400">
-              POH HISTORY
-            </h1>
-          </div>
-          <div className="w-9" />
-        </div>
-      </div>
+      <Header
+        title="POH History"
+        hasBackButton={true}
+        onBack={() => setLocation("/project-of-heart")}
+      />
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         {/* Header Message */}
@@ -107,7 +101,8 @@ export default function ProjectOfHeartHistoryPage() {
             <div
               className="w-14 h-14 rounded-full flex items-center justify-center"
               style={{
-                background: "radial-gradient(circle, rgba(95, 183, 125, 0.2) 0%, transparent 70%)",
+                background:
+                  "radial-gradient(circle, rgba(95, 183, 125, 0.2) 0%, transparent 70%)",
               }}
             >
               <HeartChakraIcon className="w-12 h-12" />
@@ -117,7 +112,8 @@ export default function ProjectOfHeartHistoryPage() {
             Project of Heart History
           </h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            You don't restart your life.<br />
+            You don't restart your life.
+            <br />
             You build it in phases.
           </p>
         </motion.div>
@@ -130,7 +126,7 @@ export default function ProjectOfHeartHistoryPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
           >
-            <Card 
+            <Card
               className="p-5 border-0 shadow-sm overflow-hidden"
               data-testid={`card-past-poh-${project.id}`}
             >
@@ -143,7 +139,9 @@ export default function ProjectOfHeartHistoryPage() {
                       : "bg-amber-50 text-amber-600"
                   }`}
                 >
-                  {project.status === "completed" ? "Completed" : "Closed Early"}
+                  {project.status === "completed"
+                    ? "Completed"
+                    : "Closed Early"}
                 </span>
                 {formatPeriod(project.started_at, project.ended_at) && (
                   <span className="text-xs text-gray-400">
@@ -153,15 +151,18 @@ export default function ProjectOfHeartHistoryPage() {
               </div>
 
               {/* Category */}
-              <span 
+              <span
                 className="text-xs px-2 py-0.5 rounded-full mb-2 inline-block capitalize"
-                style={{ backgroundColor: "rgba(112, 61, 250, 0.1)", color: "#703DFA" }}
+                style={{
+                  backgroundColor: "rgba(112, 61, 250, 0.1)",
+                  color: "#703DFA",
+                }}
               >
                 {project.category}
               </span>
 
               {/* Title */}
-              <h3 
+              <h3
                 className="text-base font-semibold text-gray-800 mb-4"
                 data-testid={`text-past-poh-title-${project.id}`}
               >
@@ -172,17 +173,17 @@ export default function ProjectOfHeartHistoryPage() {
               {project.milestones.length > 0 && (
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Check className="w-3.5 h-3.5" style={{ color: "#5FB77D" }} />
+                    <Check
+                      className="w-3.5 h-3.5"
+                      style={{ color: "#5FB77D" }}
+                    />
                     <span className="text-xs font-medium text-gray-500">
                       Milestones achieved ({project.milestones.length})
                     </span>
                   </div>
                   <div className="space-y-1.5 pl-5">
                     {project.milestones.map((milestone, mIndex) => (
-                      <div
-                        key={mIndex}
-                        className="flex items-start gap-2"
-                      >
+                      <div key={mIndex} className="flex items-start gap-2">
                         <div
                           className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
                           style={{ backgroundColor: "#5FB77D" }}
@@ -198,20 +199,20 @@ export default function ProjectOfHeartHistoryPage() {
 
               {/* Reflection */}
               {project.closing_reflection && (
-                <div 
+                <div
                   className="p-3 rounded-lg"
                   style={{ backgroundColor: "rgba(229, 172, 25, 0.06)" }}
                 >
                   <div className="flex items-start gap-2">
-                    <Quote 
-                      className="w-4 h-4 mt-0.5 flex-shrink-0" 
+                    <Quote
+                      className="w-4 h-4 mt-0.5 flex-shrink-0"
                       style={{ color: "#E5AC19" }}
                     />
                     <div>
                       <p className="text-xs font-medium text-gray-500 mb-1">
                         Reflection
                       </p>
-                      <p 
+                      <p
                         className="text-sm text-gray-600 italic leading-relaxed"
                         data-testid={`text-past-poh-reflection-${project.id}`}
                       >
@@ -234,7 +235,8 @@ export default function ProjectOfHeartHistoryPage() {
             className="text-center py-12"
           >
             <p className="text-gray-400">
-              No past projects yet.<br />
+              No past projects yet.
+              <br />
               Your journey is just beginning.
             </p>
           </motion.div>

@@ -9,6 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { Header } from "@/components/Header";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ export default function RewiringScreen() {
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [editingBelief, setEditingBelief] = useState<RewiringBelief | null>(
-    null,
+    null
   );
   const [formData, setFormData] = useState({ limiting: "", uplifting: "" });
 
@@ -178,23 +179,11 @@ export default function RewiringScreen() {
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        {/* White Header Section */}
-        <div className="bg-white border-b py-4 px-4">
-          <div className="flex items-center">
-            <button
-              onClick={() => setLocation("/money-mastery")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
-            </button>
-            <div className="flex-1 text-center pr-10">
-              <h1 className="text-xl font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase">
-                REWIRING BELIEFS
-              </h1>
-            </div>
-          </div>
-        </div>
+        <Header
+          title="Rewiring Beliefs"
+          hasBackButton={true}
+          onBack={() => setLocation("/money-mastery")}
+        />
 
         {/* Motivational Card */}
         <div className="px-4 mt-4">

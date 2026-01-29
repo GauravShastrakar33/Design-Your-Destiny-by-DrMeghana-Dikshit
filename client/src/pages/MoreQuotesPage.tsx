@@ -1,20 +1,21 @@
 import { ArrowLeft } from "lucide-react";
+import { Header } from "@/components/Header";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 
 const quotes = [
   {
     text: "How you do anything is how you do everything",
-    author: "Dr.M"
+    author: "Dr.M",
   },
   {
     text: "The secret of success is learning how to use pain and pleasure instead of having pain and pleasure use you.",
-    author: "Tony Robbins"
+    author: "Tony Robbins",
   },
   {
     text: "Don't let yesterday take up too much of today.",
-    author: "Will Rogers"
-  }
+    author: "Will Rogers",
+  },
 ];
 
 export default function MoreQuotesPage() {
@@ -23,18 +24,11 @@ export default function MoreQuotesPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
-            <button
-              onClick={() => setLocation("/")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <h1 className="text-2xl font-bold text-foreground">Daily Quotes</h1>
-          </div>
-        </div>
+        <Header
+          title="Daily Quotes"
+          hasBackButton={true}
+          onBack={() => setLocation("/")}
+        />
 
         <div className="px-4 py-6 space-y-4">
           {quotes.map((quote, index) => (

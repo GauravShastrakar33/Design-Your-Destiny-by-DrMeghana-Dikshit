@@ -1,4 +1,5 @@
 import { ArrowLeft, Trophy, TrendingUp, Flame } from "lucide-react";
+import { Header } from "@/components/Header";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,20 +9,20 @@ const challenges = [
     id: "7-day",
     title: "7-Day Calm Mind",
     description: "Build a foundation of daily mindfulness practice",
-    duration: 7
+    duration: 7,
   },
   {
     id: "21-day",
     title: "21-Day Mind Discipline",
     description: "Develop mental strength and consistency",
-    duration: 21
+    duration: 21,
   },
   {
     id: "90-day",
     title: "90-Day Life Transformation",
     description: "Complete transformation of habits and mindset",
-    duration: 90
-  }
+    duration: 90,
+  },
 ];
 
 export default function LevelUpPage() {
@@ -30,43 +31,47 @@ export default function LevelUpPage() {
   return (
     <div className="min-h-screen bg-page-bg pb-20">
       <div className="max-w-md mx-auto">
-        <div className="sticky top-0 bg-white border-b z-10">
-          <div className="py-4 relative flex items-center">
-            <button
-              onClick={() => setLocation("/")}
-              className="absolute left-4 top-1/2 translate-y-[4px] hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-gray-500" />
-            </button>
-
-            <h1 className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase whitespace-nowrap">
-              LEVEL UP CHALLENGE
-            </h1>
-          </div>
-        </div>
+        <Header
+          title="Level Up Challenge"
+          hasBackButton={true}
+          onBack={() => setLocation("/")}
+        />
 
         <div className="px-4 py-6 space-y-6">
           <Card className="p-6 bg-white border border-gray-200">
             <div className="flex items-center gap-3">
               <Trophy className="w-10 h-10 text-brand" />
               <div>
-                <h2 className="text-gray-900 text-xl font-bold">Choose Your Challenge</h2>
-                <p className="text-gray-600 text-sm">Commit to growth and transformation</p>
+                <h2 className="text-gray-900 text-xl font-bold">
+                  Choose Your Challenge
+                </h2>
+                <p className="text-gray-600 text-sm">
+                  Commit to growth and transformation
+                </p>
               </div>
             </div>
           </Card>
 
           <div className="space-y-4">
             {challenges.map((challenge) => (
-              <Card key={challenge.id} className="bg-white border border-gray-200 p-5" data-testid={`challenge-${challenge.id}`}>
+              <Card
+                key={challenge.id}
+                className="bg-white border border-gray-200 p-5"
+                data-testid={`challenge-${challenge.id}`}
+              >
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-gray-900 text-xl font-bold mb-2">{challenge.title}</h3>
-                    <p className="text-gray-600 text-sm mb-3">{challenge.description}</p>
+                    <h3 className="text-gray-900 text-xl font-bold mb-2">
+                      {challenge.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      {challenge.description}
+                    </p>
                     <div className="flex items-center gap-2 text-brand">
                       <Flame className="w-4 h-4" />
-                      <span className="text-sm font-medium">{challenge.duration} Days</span>
+                      <span className="text-sm font-medium">
+                        {challenge.duration} Days
+                      </span>
                     </div>
                   </div>
                   <Button
@@ -85,7 +90,9 @@ export default function LevelUpPage() {
             <div className="flex items-start gap-3">
               <TrendingUp className="w-6 h-6 text-brand flex-shrink-0 mt-1" />
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Challenge History</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Challenge History
+                </h3>
                 <p className="text-sm text-gray-600 mb-3">
                   View your completed challenges and achievements
                 </p>

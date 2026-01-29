@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, CheckCircle2, Edit, Sparkles, Check } from "lucide-react";
+import { Header } from "@/components/Header";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ export default function ProcessChecklistPage() {
   // Edit mode
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [tempSelectedPractices, setTempSelectedPractices] = useState<string[]>(
-    [],
+    []
   );
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export default function ProcessChecklistPage() {
     // Load today's completed practices
     const today = new Date().toISOString().split("T")[0];
     const dailyLogs: DailyLog[] = JSON.parse(
-      localStorage.getItem("dailyLogs") || "[]",
+      localStorage.getItem("dailyLogs") || "[]"
     );
     const todayLog = dailyLogs.find((log) => log.date === today);
     if (todayLog) {
@@ -90,7 +91,7 @@ export default function ProcessChecklistPage() {
     setTempSelectedPractices((prev) =>
       prev.includes(practice)
         ? prev.filter((p) => p !== practice)
-        : [...prev, practice],
+        : [...prev, practice]
     );
   };
 
@@ -106,20 +107,20 @@ export default function ProcessChecklistPage() {
 
     localStorage.setItem(
       "userChecklist",
-      JSON.stringify(tempSelectedPractices),
+      JSON.stringify(tempSelectedPractices)
     );
     setUserChecklist(tempSelectedPractices);
 
     // Filter completedToday to only include practices still in the updated checklist
     const filteredCompleted = completedToday.filter((practice) =>
-      tempSelectedPractices.includes(practice),
+      tempSelectedPractices.includes(practice)
     );
     setCompletedToday(filteredCompleted);
 
     // Update today's daily log to remove practices no longer in checklist
     const today = new Date().toISOString().split("T")[0];
     const dailyLogs: DailyLog[] = JSON.parse(
-      localStorage.getItem("dailyLogs") || "[]",
+      localStorage.getItem("dailyLogs") || "[]"
     );
     const filteredLogs = dailyLogs.filter((log) => log.date !== today);
 
@@ -145,7 +146,7 @@ export default function ProcessChecklistPage() {
     setCompletedToday((prev) =>
       prev.includes(practice)
         ? prev.filter((p) => p !== practice)
-        : [...prev, practice],
+        : [...prev, practice]
     );
     setSaved(false);
   };
@@ -153,7 +154,7 @@ export default function ProcessChecklistPage() {
   const handleSaveToday = () => {
     const today = new Date().toISOString().split("T")[0];
     const dailyLogs: DailyLog[] = JSON.parse(
-      localStorage.getItem("dailyLogs") || "[]",
+      localStorage.getItem("dailyLogs") || "[]"
     );
 
     // Remove existing entry for today
@@ -196,9 +197,7 @@ export default function ProcessChecklistPage() {
 
           <Card className="p-6 bg-white border border-gray-200 shadow-xl">
             <div className="space-y-4 text-left">
-              <p className="font-semibold text-gray-900">
-                This will help you:
-              </p>
+              <p className="font-semibold text-gray-900">This will help you:</p>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
@@ -212,9 +211,7 @@ export default function ProcessChecklistPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-600">
-                    See your growth clearly
-                  </span>
+                  <span className="text-gray-600">See your growth clearly</span>
                 </li>
               </ul>
             </div>
@@ -251,7 +248,9 @@ export default function ProcessChecklistPage() {
                 <div
                   key={practice}
                   className="flex items-center gap-3 p-4 rounded-xl hover-elevate active-elevate-2 transition-all"
-                  data-testid={`select-practice-${practice.toLowerCase().replace(/\s+/g, "-")}`}
+                  data-testid={`select-practice-${practice
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")}`}
                 >
                   <Checkbox
                     id={`select-${practice}`}
@@ -296,27 +295,11 @@ export default function ProcessChecklistPage() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
       <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
-            <button
-              onClick={() => setLocation("/")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <div className="flex-1">
-              <h1
-                className="text-lg font-semibold text-gray-500"
-                style={{ fontFamily: "Montserrat" }}
-              >
-                MY PRACTICE LOG
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {completedToday.length} of {userChecklist.length} completed
-              </p>
-            </div>
+        <Header
+          title="My Practice Log"
+          hasBackButton={true}
+          onBack={() => setLocation("/")}
+          rightContent={
             <Button
               variant="ghost"
               size="sm"
@@ -327,8 +310,12 @@ export default function ProcessChecklistPage() {
               <Edit className="w-4 h-4 text-[#703DFA]" />
               <span className="hidden sm:inline">Edit</span>
             </Button>
-          </div>
-        </div>
+          }
+        >
+          <p className="text-sm text-muted-foreground">
+            {completedToday.length} of {userChecklist.length} completed
+          </p>
+        </Header>
 
         <div className="px-4 py-6 space-y-6">
           {/* Today's Practices Header Card */}
@@ -356,7 +343,9 @@ export default function ProcessChecklistPage() {
                 <div
                   key={practice}
                   className="flex items-center gap-4 p-4 rounded-xl hover-elevate active-elevate-2 transition-all"
-                  data-testid={`practice-${practice.toLowerCase().replace(/\s+/g, "-")}`}
+                  data-testid={`practice-${practice
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")}`}
                 >
                   <Checkbox
                     id={practice}
@@ -419,7 +408,9 @@ export default function ProcessChecklistPage() {
               <div
                 key={practice}
                 className="flex items-center gap-3 p-4 rounded-xl hover-elevate active-elevate-2 transition-all"
-                data-testid={`edit-practice-${practice.toLowerCase().replace(/\s+/g, "-")}`}
+                data-testid={`edit-practice-${practice
+                  .toLowerCase()
+                  .replace(/\s+/g, "-")}`}
               >
                 <Checkbox
                   id={`edit-${practice}`}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { Header } from "@/components/Header";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChevronRight,
@@ -151,7 +152,7 @@ export default function ProfilePage() {
     return () => {
       window.removeEventListener(
         "nativePushRegistered",
-        handleNativePushRegistered,
+        handleNativePushRegistered
       );
     };
   }, []);
@@ -180,7 +181,7 @@ export default function ProfilePage() {
             // Permission denied or error
             setNotificationsLoading(false);
             alert(
-              "Unable to enable notifications. Please check your device settings.",
+              "Unable to enable notifications. Please check your device settings."
             );
             return;
           }
@@ -211,7 +212,7 @@ export default function ProfilePage() {
 
           if (!success && !enabled) {
             alert(
-              "Unable to enable notifications. Please check your browser settings.",
+              "Unable to enable notifications. Please check your browser settings."
             );
           }
         }
@@ -240,15 +241,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: "#F3F3F3" }}>
       {/* White Header Section */}
-      <div className="bg-white border-b py-4 px-4">
-        <div className="flex items-center">
-          <div className="flex-1 text-center">
-            <h1 className="text-xl font-bold text-gray-500 tracking-wider font-['Montserrat'] uppercase">
-              PROFILE
-            </h1>
-          </div>
-        </div>
-      </div>
+      <Header title="Profile" />
 
       {/* Profile Card */}
       <div className="max-w-md mx-auto px-4 mt-2">
@@ -336,7 +329,9 @@ export default function ProfilePage() {
             </div>
             <div className="flex items-center justify-end mt-3">
               <ChevronDown
-                className={`w-5 h-5 text-[#703DFA] transition-transform ${prescriptionExpanded ? "rotate-180" : ""}`}
+                className={`w-5 h-5 text-[#703DFA] transition-transform ${
+                  prescriptionExpanded ? "rotate-180" : ""
+                }`}
               />
             </div>
           </button>
@@ -476,8 +471,8 @@ export default function ProfilePage() {
                       {notificationsLoading
                         ? "Enabling..."
                         : notificationsEnabled
-                          ? "Push notifications enabled"
-                          : "Tap to enable push notifications"}
+                        ? "Push notifications enabled"
+                        : "Tap to enable push notifications"}
                     </p>
                   </div>
                 </div>

@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Bell, Calendar, Clock, Video, Copy, ExternalLink } from "lucide-react";
+import {
+  Search,
+  Bell,
+  Calendar,
+  Clock,
+  Video,
+  Copy,
+  ExternalLink,
+} from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -15,10 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import type { Event } from "@shared/schema";
+import { Header } from "@/components/Header";
 
 type Tab = "upcoming" | "latest";
 
-type EventWithSignedUrl = Event & { 
+type EventWithSignedUrl = Event & {
   thumbnailSignedUrl?: string | null;
 };
 
@@ -37,7 +46,7 @@ function CountdownTimer({ startTime }: { startTime: Date }) {
 
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor(
-        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
       );
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
@@ -60,7 +69,9 @@ export default function EventCalendarPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>("upcoming");
-  const [selectedEvent, setSelectedEvent] = useState<EventWithSignedUrl | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<EventWithSignedUrl | null>(
+    null
+  );
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Auto-update current time every 30 seconds to check for live events (critical for mobile app)
@@ -71,14 +82,18 @@ export default function EventCalendarPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const { data: upcomingEvents = [], isLoading: upcomingLoading } = useQuery<EventWithSignedUrl[]>({
+  const { data: upcomingEvents = [], isLoading: upcomingLoading } = useQuery<
+    EventWithSignedUrl[]
+  >({
     queryKey: ["/api/events/upcoming"],
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
 
-  const { data: latestEvents = [], isLoading: latestLoading } = useQuery<EventWithSignedUrl[]>({
+  const { data: latestEvents = [], isLoading: latestLoading } = useQuery<
+    EventWithSignedUrl[]
+  >({
     queryKey: ["/api/events/latest"],
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: true,
@@ -104,11 +119,14 @@ export default function EventCalendarPage() {
   };
 
   // Use currentTime state to check if event is live (auto-updates via timer)
-  const isEventLive = useCallback((event: EventWithSignedUrl): boolean => {
-    const start = new Date(event.startDatetime);
-    const end = new Date(event.endDatetime);
-    return currentTime >= start && currentTime <= end;
-  }, [currentTime]);
+  const isEventLive = useCallback(
+    (event: EventWithSignedUrl): boolean => {
+      const start = new Date(event.startDatetime);
+      const end = new Date(event.endDatetime);
+      return currentTime >= start && currentTime <= end;
+    },
+    [currentTime]
+  );
 
   // Filter upcoming events client-side to hide ended events (in case backend hasn't updated yet)
   const visibleUpcomingEvents = upcomingEvents.filter(
@@ -123,15 +141,10 @@ export default function EventCalendarPage() {
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
         {/* Top Navigation */}
-        <div className="sticky top-0 bg-white border-b border-border z-10">
-          <div className="px-6 py-4 flex items-center justify-between">
-            <h1
-              className="text-xl font-bold text-gray-500 tracking-wider"
-              style={{ fontFamily: "Montserrat, sans-serif" }}
-            >
-              Event Calendar
-            </h1>
-            <div className="flex items-center gap-2">
+        <Header
+          title="Event Calendar"
+          rightContent={
+            <>
               <button
                 onClick={() => setLocation("/search")}
                 className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
@@ -146,12 +159,9 @@ export default function EventCalendarPage() {
               >
                 <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
               </button>
-            </div>
-          </div>
-
-          {/* Horizontal Line */}
-          <div className="border-t border-gray-200" />
-
+            </>
+          }
+        >
           {/* Horizontal Tab Selector */}
           <div className="overflow-x-auto scrollbar-hide bg-white">
             <div className="flex gap-2 px-4 pb-3 pt-3 min-w-max">
@@ -171,7 +181,7 @@ export default function EventCalendarPage() {
               ))}
             </div>
           </div>
-        </div>
+        </Header>
 
         {/* Tab Content */}
         <div className="px-4 py-6">
@@ -179,11 +189,15 @@ export default function EventCalendarPage() {
           {activeTab === "upcoming" && (
             <div className="space-y-5">
               {upcomingLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading...
+                </div>
               ) : visibleUpcomingEvents.length === 0 ? (
                 <Card className="p-8 text-center">
                   <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No upcoming events scheduled</p>
+                  <p className="text-muted-foreground">
+                    No upcoming events scheduled
+                  </p>
                 </Card>
               ) : (
                 visibleUpcomingEvents.map((event) => {
@@ -225,12 +239,18 @@ export default function EventCalendarPage() {
                               strokeWidth={2}
                             />
                             <span className="text-sm font-medium">
-                              {format(new Date(event.startDatetime), "MMM d, yyyy")}
+                              {format(
+                                new Date(event.startDatetime),
+                                "MMM d, yyyy"
+                              )}
                             </span>
                           </div>
                           <span className="flex items-center gap-1 text-xs">
                             <Clock className="w-3 h-3" />
-                            {format(new Date(event.startDatetime), "h:mm a")} - {format(new Date(event.endDatetime), "h:mm a")}
+                            {format(
+                              new Date(event.startDatetime),
+                              "h:mm a"
+                            )} - {format(new Date(event.endDatetime), "h:mm a")}
                           </span>
                         </div>
 
@@ -260,11 +280,15 @@ export default function EventCalendarPage() {
                         </div>
 
                         {/* Countdown for events that haven't started yet */}
-                        {!live && new Date(event.startDatetime) > currentTime && (
-                          <div className="text-xs text-muted-foreground">
-                            Starts in <CountdownTimer startTime={new Date(event.startDatetime)} />
-                          </div>
-                        )}
+                        {!live &&
+                          new Date(event.startDatetime) > currentTime && (
+                            <div className="text-xs text-muted-foreground">
+                              Starts in{" "}
+                              <CountdownTimer
+                                startTime={new Date(event.startDatetime)}
+                              />
+                            </div>
+                          )}
                       </div>
                     </div>
                   );
@@ -277,11 +301,15 @@ export default function EventCalendarPage() {
           {activeTab === "latest" && (
             <div className="space-y-4">
               {latestLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading...
+                </div>
               ) : eventsWithRecordings.length === 0 ? (
                 <Card className="p-8 text-center">
                   <Video className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No recordings available yet</p>
+                  <p className="text-muted-foreground">
+                    No recordings available yet
+                  </p>
                 </Card>
               ) : (
                 eventsWithRecordings.map((event) => (
@@ -316,7 +344,11 @@ export default function EventCalendarPage() {
                         </h3>
                         {event.recordingExpiryDate && (
                           <Badge className="bg-amber-500 text-white shrink-0 text-xs">
-                            Expires {format(new Date(event.recordingExpiryDate), "MMM d")}
+                            Expires{" "}
+                            {format(
+                              new Date(event.recordingExpiryDate),
+                              "MMM d"
+                            )}
                           </Badge>
                         )}
                       </div>
@@ -338,19 +370,22 @@ export default function EventCalendarPage() {
       </div>
 
       {/* Recording Access Dialog */}
-      <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
+      <Dialog
+        open={!!selectedEvent}
+        onOpenChange={() => setSelectedEvent(null)}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-lg">Access Recording</DialogTitle>
-            <DialogDescription>
-              {selectedEvent?.title}
-            </DialogDescription>
+            <DialogDescription>{selectedEvent?.title}</DialogDescription>
           </DialogHeader>
-          
+
           {selectedEvent && (
             <div className="space-y-4 py-4">
               <div className="rounded-lg bg-muted p-4">
-                <div className="text-sm text-muted-foreground mb-1">Recording Passcode</div>
+                <div className="text-sm text-muted-foreground mb-1">
+                  Recording Passcode
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xl font-mono font-bold tracking-wider">
                     {selectedEvent.recordingPasscode || "N/A"}
@@ -359,7 +394,9 @@ export default function EventCalendarPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleCopyPasscode(selectedEvent.recordingPasscode!)}
+                      onClick={() =>
+                        handleCopyPasscode(selectedEvent.recordingPasscode!)
+                      }
                       data-testid="button-copy-passcode"
                     >
                       <Copy className="w-4 h-4 mr-1" />
@@ -371,7 +408,11 @@ export default function EventCalendarPage() {
 
               {selectedEvent.recordingExpiryDate && (
                 <div className="text-sm text-amber-600">
-                  This recording expires on {format(new Date(selectedEvent.recordingExpiryDate), "MMMM d, yyyy")}
+                  This recording expires on{" "}
+                  {format(
+                    new Date(selectedEvent.recordingExpiryDate),
+                    "MMMM d, yyyy"
+                  )}
                 </div>
               )}
 

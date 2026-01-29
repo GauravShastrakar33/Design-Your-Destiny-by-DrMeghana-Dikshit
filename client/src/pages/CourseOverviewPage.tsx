@@ -1,4 +1,5 @@
 import { ArrowLeft, Play } from "lucide-react";
+import { Header } from "@/components/Header";
 import { useLocation, useRoute } from "wouter";
 import { Card } from "@/components/ui/card";
 
@@ -431,20 +432,11 @@ export default function CourseOverviewPage() {
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto">
         {/* Top App Bar */}
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-          <div className="px-4 py-4 flex items-center gap-4">
-            <button
-              onClick={() => setLocation("/workshops")}
-              className="hover-elevate active-elevate-2 rounded-lg p-2"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <h1 className="text-2xl font-bold text-foreground">
-              Course Overview
-            </h1>
-          </div>
-        </div>
+        <Header
+          title="Course Overview"
+          hasBackButton={true}
+          onBack={() => setLocation("/workshops")}
+        />
 
         <div className="px-4 py-6 space-y-6">
           {/* Hero Banner Card */}
