@@ -31,6 +31,7 @@ interface AbundanceCourse {
   title: string;
   description: string | null;
   thumbnailKey: string | null;
+  thumbnailUrl: string | null;
   position: number;
   isBuiltIn: boolean;
 }
@@ -554,28 +555,52 @@ export default function MoneyMasteryPage() {
               {mappedCourses.map((course) => (
                 <Card
                   key={course.id}
-                  className="p-5 bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
+                  className="overflow-hidden bg-white cursor-pointer hover-elevate active-elevate-2 shadow-md"
                   onClick={() =>
                     setLocation(`/challenge/${course.id}`)
                   }
                   data-testid={`card-course-${course.id}`}
                 >
-                  <div className="flex items-start gap-3">
-                    <BookOpen
-                      className="w-7 h-7 flex-shrink-0"
-                      style={{ color: "#703DFA" }}
-                    />
-                    <div className="flex-1">
-                      <h2 className="text-foreground text-lg font-bold mb-1">
-                        {course.title}
-                      </h2>
-                      {course.description && (
-                        <p className="text-muted-foreground text-sm line-clamp-2">
-                          {course.description}
-                        </p>
-                      )}
+                  {course.thumbnailUrl ? (
+                    <div className="relative">
+                      <img
+                        src={course.thumbnailUrl}
+                        alt={course.title}
+                        className="w-full h-40 object-cover"
+                        data-testid={`img-course-thumbnail-${course.id}`}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <h2 className="text-white text-lg font-bold mb-1">
+                          {course.title}
+                        </h2>
+                        {course.description && (
+                          <p className="text-white/80 text-sm line-clamp-2">
+                            {course.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="p-5">
+                      <div className="flex items-start gap-3">
+                        <BookOpen
+                          className="w-7 h-7 flex-shrink-0"
+                          style={{ color: "#703DFA" }}
+                        />
+                        <div className="flex-1">
+                          <h2 className="text-foreground text-lg font-bold mb-1">
+                            {course.title}
+                          </h2>
+                          {course.description && (
+                            <p className="text-muted-foreground text-sm line-clamp-2">
+                              {course.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>
