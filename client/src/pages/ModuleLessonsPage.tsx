@@ -1,7 +1,8 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Loader2, Play, Check, Video, Music, FileText, DollarSign } from "lucide-react";
+import { ArrowLeft, Loader2, Play, Check, Video, Music, FileText, DollarSign, CheckCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useRef, useEffect } from "react";
 import type { CmsModule, CmsLesson, CmsLessonFile } from "@shared/schema";
@@ -220,36 +221,62 @@ export default function ModuleLessonsPage() {
                     {isSelected && lessonData && !lessonLoading && (
                       <div className="mt-2 p-4 bg-muted/50 rounded-lg space-y-4" data-testid={`lesson-content-${lesson.id}`}>
                         {lessonData.files && lessonData.files.length > 0 ? (
-                          lessonData.files.map((file) => (
-                            <div key={file.id} className="space-y-2">
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                {getFileIcon(file.fileType)}
-                                <span className="truncate capitalize">{file.fileType}</span>
+                          <>
+                            {lessonData.files.map((file) => (
+                              <div key={file.id} className="space-y-2">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  {getFileIcon(file.fileType)}
+                                  <span className="truncate capitalize">{file.fileType}</span>
+                                </div>
+
+                                {file.fileType === "video" && file.signedUrl && (
+                                  <video
+                                    ref={videoRef}
+                                    src={file.signedUrl}
+                                    controls
+                                    className="w-full rounded-lg"
+                                    onEnded={() => handleVideoEnded(lesson.id)}
+                                    data-testid={`video-player-${file.id}`}
+                                  />
+                                )}
+
+                                {file.fileType === "audio" && file.signedUrl && (
+                                  <audio
+                                    ref={audioRef}
+                                    src={file.signedUrl}
+                                    controls
+                                    className="w-full"
+                                    onEnded={() => handleAudioEnded(lesson.id)}
+                                    data-testid={`audio-player-${file.id}`}
+                                  />
+                                )}
+
+                                {file.fileType === "script" && (
+                                  <div className="text-sm text-muted-foreground bg-background p-3 rounded border">
+                                    Script content available
+                                  </div>
+                                )}
                               </div>
-
-                              {file.fileType === "video" && file.signedUrl && (
-                                <video
-                                  ref={videoRef}
-                                  src={file.signedUrl}
-                                  controls
-                                  className="w-full rounded-lg"
-                                  onEnded={() => handleVideoEnded(lesson.id)}
-                                  data-testid={`video-player-${file.id}`}
-                                />
-                              )}
-
-                              {file.fileType === "audio" && file.signedUrl && (
-                                <audio
-                                  ref={audioRef}
-                                  src={file.signedUrl}
-                                  controls
-                                  className="w-full"
-                                  onEnded={() => handleAudioEnded(lesson.id)}
-                                  data-testid={`audio-player-${file.id}`}
-                                />
-                              )}
-                            </div>
-                          ))
+                            ))}
+                            
+                            {isAuthenticated && !isCompleted && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full mt-2"
+                                onClick={() => markCompleteMutation.mutate(lesson.id)}
+                                disabled={markCompleteMutation.isPending}
+                                data-testid={`button-mark-complete-${lesson.id}`}
+                              >
+                                {markCompleteMutation.isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                ) : (
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                )}
+                                Mark as Complete
+                              </Button>
+                            )}
+                          </>
                         ) : (
                           <div className="text-center py-4 text-muted-foreground text-sm">
                             No media files for this lesson
