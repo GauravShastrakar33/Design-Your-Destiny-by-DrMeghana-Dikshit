@@ -156,7 +156,9 @@ export default function AdminEventFormPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/events"] });
       toast({ title: "Event created successfully" });
-      setLocation("/admin/events");
+      const searchParams = new URLSearchParams(window.location.search);
+      const tab = searchParams.get("tab");
+      setLocation(tab ? `/admin/events?tab=${tab}` : "/admin/events");
     },
     onError: () => {
       toast({ title: "Failed to create event", variant: "destructive" });
@@ -186,7 +188,9 @@ export default function AdminEventFormPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/events"] });
       toast({ title: "Event updated successfully" });
-      setLocation("/admin/events");
+      const searchParams = new URLSearchParams(window.location.search);
+      const tab = searchParams.get("tab");
+      setLocation(tab ? `/admin/events?tab=${tab}` : "/admin/events");
     },
     onError: () => {
       toast({ title: "Failed to update event", variant: "destructive" });
@@ -251,7 +255,11 @@ export default function AdminEventFormPage() {
     <div className="p-6 max-w-3xl mx-auto">
       <Button
         variant="ghost"
-        onClick={() => setLocation("/admin/events")}
+        onClick={() => {
+          const searchParams = new URLSearchParams(window.location.search);
+          const tab = searchParams.get("tab");
+          setLocation(tab ? `/admin/events?tab=${tab}` : "/admin/events");
+        }}
         className="mb-4"
         data-testid="button-back"
       >

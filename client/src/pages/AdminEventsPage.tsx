@@ -82,7 +82,14 @@ function needsRecordingDecision(event: Event): boolean {
 export default function AdminEventsPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("upcoming");
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab && ["upcoming", "latest", "all"].includes(tab)) {
+      return tab;
+    }
+    return "upcoming";
+  });
   const [recordingDialogEvent, setRecordingDialogEvent] =
     useState<EventWithSignedUrl | null>(null);
   const [recordingUrl, setRecordingUrl] = useState("");
@@ -95,6 +102,13 @@ export default function AdminEventsPage() {
     const token = localStorage.getItem("@app:admin_token");
     if (!token) {
       setLocation("/admin/login");
+      return;
+    }
+
+    // Clean up the 'tab' query param after it's been used to set initial state
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("tab")) {
+      window.history.replaceState(null, "", window.location.pathname);
     }
   }, [setLocation]);
 
@@ -338,7 +352,9 @@ export default function AdminEventsPage() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setLocation(`/admin/events/${event.id}/edit`)}
+                onClick={() =>
+                  setLocation(`/admin/events/${event.id}/edit?tab=${activeTab}`)
+                }
                 data-testid={`button-edit-event-${event.id}`}
               >
                 <Edit className="w-4 h-4 mr-1" />
@@ -379,7 +395,7 @@ export default function AdminEventsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Event Calendar</h1>
         <Button
-          onClick={() => setLocation("/admin/events/new")}
+          onClick={() => setLocation(`/admin/events/new?tab=${activeTab}`)}
           className="bg-brand hover:bg-brand/90"
           data-testid="button-add-event"
         >
