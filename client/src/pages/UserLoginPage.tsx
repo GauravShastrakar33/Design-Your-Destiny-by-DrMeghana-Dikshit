@@ -49,7 +49,12 @@ export default function UserLoginPage() {
           title: "Welcome back!",
           description: `Hello, ${data.user.name}!`,
         });
-        setLocation("/");
+        // Redirect to account settings if password change is required
+        if (data.user.forcePasswordChange) {
+          setLocation("/account");
+        } else {
+          setLocation("/");
+        }
       } else {
         toast({
           title: "Login failed",
