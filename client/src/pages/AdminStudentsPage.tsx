@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreVertical, Edit, Trash2, Ban, CheckCircle, ChevronLeft, ChevronRight, Upload, Download, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Search, MoreVertical, Edit, Trash2, Ban, CheckCircle, ChevronLeft, ChevronRight, Upload, Download, AlertCircle, CheckCircle2, KeyRound, Loader2 } from "lucide-react";
 import type { UserWithPrograms, Program } from "@shared/schema";
 
 interface StudentsResponse {
@@ -63,6 +63,8 @@ export default function AdminStudentsPage() {
   const [editingStudent, setEditingStudent] = useState<UserWithPrograms | null>(null);
   const [deletingStudent, setDeletingStudent] = useState<UserWithPrograms | null>(null);
   const [statusStudent, setStatusStudent] = useState<{ student: UserWithPrograms; newStatus: string } | null>(null);
+  const [resetPasswordStudent, setResetPasswordStudent] = useState<UserWithPrograms | null>(null);
+  const [newPassword, setNewPassword] = useState("");
   
   // Bulk upload state
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
@@ -219,6 +221,33 @@ export default function AdminStudentsPage() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to delete student", variant: "destructive" });
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ id, password }: { id: number; password: string }) => {
+      const response = await fetch(`/admin/v1/students/${id}/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ password }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to reset password");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/admin/v1/students"] });
+      toast({ title: "Password reset successfully", description: "User will be required to change password on next login" });
+      setResetPasswordStudent(null);
+      setNewPassword("");
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
@@ -497,6 +526,13 @@ export default function AdminStudentsPage() {
                               <Edit className="w-4 h-4 mr-2" />
                               Edit
                             </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => setResetPasswordStudent(student)}
+                              data-testid={`button-reset-password-${student.id}`}
+                            >
+                              <KeyRound className="w-4 h-4 mr-2" />
+                              Reset Password
+                            </DropdownMenuItem>
                             {student.status === "active" ? (
                               <DropdownMenuItem
                                 onClick={() => setStatusStudent({ student, newStatus: "blocked" })}
@@ -734,6 +770,70 @@ export default function AdminStudentsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Reset Password Modal */}
+      <Dialog open={!!resetPasswordStudent} onOpenChange={(open) => {
+        if (!open) {
+          setResetPasswordStudent(null);
+          setNewPassword("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-md" data-testid="dialog-reset-password">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Reset password for <span className="font-medium text-foreground">{resetPasswordStudent?.name}</span>
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password *</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password (min 6 characters)"
+                data-testid="input-new-password"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              The user will be required to change their password on next login.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setResetPasswordStudent(null);
+                setNewPassword("");
+              }}
+              data-testid="button-reset-password-cancel"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (resetPasswordStudent && newPassword.length >= 6) {
+                  resetPasswordMutation.mutate({ id: resetPasswordStudent.id, password: newPassword });
+                }
+              }}
+              disabled={newPassword.length < 6 || resetPasswordMutation.isPending}
+              className="bg-brand hover:bg-brand/90"
+              data-testid="button-reset-password-confirm"
+            >
+              {resetPasswordMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Resetting...
+                </>
+              ) : (
+                "Reset Password"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Bulk Upload Modal */}
       <Dialog open={isBulkUploadOpen} onOpenChange={(open) => !open && handleBulkUploadClose()}>
