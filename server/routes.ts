@@ -1255,6 +1255,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes: Reset student password
+  app.post("/admin/v1/students/:id/reset-password", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { password } = req.body;
+
+      if (!password || typeof password !== "string" || password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      }
+
+      const user = await storage.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await storage.resetUserPassword(id, hashedPassword);
+
+      res.json({ success: true, message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
   // Admin routes: Get student badges
   app.get("/admin/v1/students/:id/badges", requireAdmin, async (req, res) => {
     try {
