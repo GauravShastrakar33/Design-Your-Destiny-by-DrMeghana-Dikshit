@@ -60,6 +60,8 @@ export interface IStorage {
   updateUserLastLogin(id: number): Promise<void>;
   updateUserPassword(id: number, hashedPassword: string): Promise<void>;
   updateUserName(id: number, name: string): Promise<User | undefined>;
+  resetUserPassword(id: number, hashedPassword: string): Promise<void>;
+  clearForcePasswordChange(id: number): Promise<void>;
   
   getAllCommunitySessions(): Promise<CommunitySession[]>;
   getCommunitySession(id: number): Promise<CommunitySession | undefined>;
@@ -175,6 +177,7 @@ export class MemStorage implements IStorage {
       phone: insertUser.phone || null,
       role: insertUser.role || "USER",
       status: insertUser.status || "active",
+      forcePasswordChange: false,
       lastLogin: null,
       lastActivity: null,
       createdAt: new Date()
@@ -195,6 +198,23 @@ export class MemStorage implements IStorage {
     const user = await this.getUserById(id);
     if (user) {
       user.passwordHash = hashedPassword;
+      this.users.set(id.toString(), user);
+    }
+  }
+
+  async resetUserPassword(id: number, hashedPassword: string): Promise<void> {
+    const user = await this.getUserById(id);
+    if (user) {
+      user.passwordHash = hashedPassword;
+      user.forcePasswordChange = true;
+      this.users.set(id.toString(), user);
+    }
+  }
+
+  async clearForcePasswordChange(id: number): Promise<void> {
+    const user = await this.getUserById(id);
+    if (user) {
+      user.forcePasswordChange = false;
       this.users.set(id.toString(), user);
     }
   }
@@ -467,6 +487,17 @@ export class DbStorage implements IStorage {
 
   async updateUserPassword(id: number, hashedPassword: string): Promise<void> {
     await db.update(usersTable).set({ passwordHash: hashedPassword }).where(eq(usersTable.id, id));
+  }
+
+  async resetUserPassword(id: number, hashedPassword: string): Promise<void> {
+    await db.update(usersTable).set({ 
+      passwordHash: hashedPassword, 
+      forcePasswordChange: true 
+    }).where(eq(usersTable.id, id));
+  }
+
+  async clearForcePasswordChange(id: number): Promise<void> {
+    await db.update(usersTable).set({ forcePasswordChange: false }).where(eq(usersTable.id, id));
   }
 
   async updateUserName(id: number, name: string): Promise<User | undefined> {

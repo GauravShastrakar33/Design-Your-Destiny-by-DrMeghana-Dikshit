@@ -11,6 +11,7 @@ export const users = pgTable("users", {
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   role: varchar("role", { length: 20 }).notNull().default("USER"),
   status: varchar("status", { length: 20 }).notNull().default("active"),
+  forcePasswordChange: boolean("force_password_change").notNull().default(false),
   lastLogin: timestamp("last_login", { mode: "date" }),
   lastActivity: timestamp("last_activity", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
@@ -18,6 +19,7 @@ export const users = pgTable("users", {
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
+  forcePasswordChange: true,
   lastLogin: true,
   lastActivity: true,
   createdAt: true,

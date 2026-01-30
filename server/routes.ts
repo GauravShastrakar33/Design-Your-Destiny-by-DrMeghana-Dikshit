@@ -483,6 +483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: user.name,
           email: user.email,
           role: user.role,
+          forcePasswordChange: user.forcePasswordChange || false,
         },
       });
     } catch (error) {
@@ -1252,6 +1253,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting student:", error);
       res.status(500).json({ error: "Failed to delete student" });
+    }
+  });
+
+  // Admin routes: Reset student password
+  app.post("/admin/v1/students/:id/reset-password", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { password } = req.body;
+
+      if (!password || typeof password !== "string" || password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      }
+
+      const user = await storage.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await storage.resetUserPassword(id, hashedPassword);
+
+      res.json({ success: true, message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ error: "Failed to reset password" });
     }
   });
 
@@ -4298,6 +4324,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Hash new password and update
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await storage.updateUserPassword(req.user.sub, hashedPassword);
+      
+      // Clear forcePasswordChange flag if it was set
+      await storage.clearForcePasswordChange(req.user.sub);
 
       res.json({ success: true, message: "Password changed successfully" });
     } catch (error) {

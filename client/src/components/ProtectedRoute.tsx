@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
@@ -7,7 +7,8 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, requiresPasswordChange } = useAuth();
+  const [location] = useLocation();
 
   if (isLoading) {
     return (
@@ -26,6 +27,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!user || !["USER", "COACH"].includes(user.role)) {
     return <Redirect to="/login" />;
+  }
+
+  // Redirect to account settings if password change is required
+  // But allow access to account settings page itself
+  if (requiresPasswordChange && location !== "/account-settings") {
+    return <Redirect to="/account-settings" />;
   }
 
   return <>{children}</>;
