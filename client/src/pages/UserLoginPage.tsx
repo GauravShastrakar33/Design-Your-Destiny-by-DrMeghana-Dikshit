@@ -51,7 +51,7 @@ export default function UserLoginPage() {
         });
         // Redirect to account settings if password change is required
         if (data.user.forcePasswordChange) {
-          setLocation("/account");
+          setLocation("/account-settings");
         } else {
           setLocation("/");
         }

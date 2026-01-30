@@ -31,8 +31,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Redirect to account settings if password change is required
   // But allow access to account settings page itself
-  if (requiresPasswordChange && location !== "/account") {
-    return <Redirect to="/account" />;
+  if (requiresPasswordChange && location !== "/account-settings") {
+    return <Redirect to="/account-settings" />;
   }
 
   return <>{children}</>;
