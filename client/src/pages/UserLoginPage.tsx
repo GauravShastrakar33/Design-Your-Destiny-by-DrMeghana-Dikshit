@@ -81,10 +81,10 @@ export default function UserLoginPage() {
             <User className="w-8 h-8 text-brand" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome Back
+            Design Your Destiny by Dr. Meghana Dikshit
           </h1>
           <p className="text-gray-600">
-            Sign in to continue your wellness journey
+            Sign in to continue your holistic wellness journey
           </p>
         </div>
 
@@ -133,15 +133,6 @@ export default function UserLoginPage() {
             {isLoading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
-
-        <div className="mt-6 text-center space-y-2">
-          <p className="text-sm text-gray-500">
-            Don't have an account?{" "}
-            <span className="text-brand font-medium">
-              Contact admin to register
-            </span>
-          </p>
-        </div>
       </Card>
     </div>
   );
