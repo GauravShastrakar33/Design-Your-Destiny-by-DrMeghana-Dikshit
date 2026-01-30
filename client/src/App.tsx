@@ -14,6 +14,9 @@ import AdminRoutes from "@/routes/AdminRoutes";
 import NetworkStatus from "@/components/NetworkStatus";
 import { useEffect } from "react";
 import { setUnread } from "@/lib/notificationState";
+import { App as CapacitorApp } from "@capacitor/app";
+import { Toast } from "@capacitor/toast";
+import { Capacitor } from "@capacitor/core";
 
 function App() {
   const [location] = useLocation();
@@ -47,6 +50,40 @@ function App() {
     };
 
     checkUnreadOnLaunch();
+  }, []);
+
+  // 🔵 Android double-back to exit app
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== "android") return;
+
+    let lastBackPress = 0;
+
+    const listener = CapacitorApp.addListener(
+      "backButton",
+      async (event: any) => {
+        const now = Date.now();
+        const canGoBack = event?.canGoBack;
+
+        if (canGoBack) {
+          window.history.back();
+          return;
+        }
+
+        if (now - lastBackPress < 2000) {
+          CapacitorApp.exitApp();
+        } else {
+          lastBackPress = now;
+          await Toast.show({
+            text: "Press back again to exit",
+            duration: "short",
+          });
+        }
+      },
+    );
+
+    return () => {
+      listener.then((l: any) => l.remove());
+    };
   }, []);
 
   return (
