@@ -1,12 +1,29 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Loader2, Check, Lock, Play, Sparkles, Trophy, FileText, Headphones, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Check,
+  Lock,
+  Play,
+  Sparkles,
+  Trophy,
+  FileText,
+  Headphones,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import type { CmsCourse, CmsModule, CmsLesson, CmsLessonFile } from "@shared/schema";
+import type {
+  CmsCourse,
+  CmsModule,
+  CmsLesson,
+  CmsLessonFile,
+} from "@shared/schema";
+import { Header } from "@/components/Header";
 
 interface LessonFileWithUrl extends CmsLessonFile {
   signedUrl: string | null;
@@ -45,7 +62,7 @@ export default function VideoFirstChallengePage() {
   const courseId = params.courseId;
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const [currentDayIndex, setCurrentDayIndex] = useState<number | null>(null);
   const [allDays, setAllDays] = useState<FlattenedDay[]>([]);
   const [watchProgress, setWatchProgress] = useState(0);
@@ -57,18 +74,21 @@ export default function VideoFirstChallengePage() {
   const isAuthenticated = !!localStorage.getItem("@app:user_token");
 
   // Fetch course with modules
-  const { data: courseData, isLoading: courseLoading } = useQuery<CourseResponse>({
-    queryKey: ["/api/public/v1/courses", courseId],
-    queryFn: async () => {
-      const response = await fetch(`/api/public/v1/courses/${courseId}`);
-      if (!response.ok) throw new Error("Failed to fetch course");
-      return response.json();
-    },
-    enabled: !!courseId,
-  });
+  const { data: courseData, isLoading: courseLoading } =
+    useQuery<CourseResponse>({
+      queryKey: ["/api/public/v1/courses", courseId],
+      queryFn: async () => {
+        const response = await fetch(`/api/public/v1/courses/${courseId}`);
+        if (!response.ok) throw new Error("Failed to fetch course");
+        return response.json();
+      },
+      enabled: !!courseId,
+    });
 
   // Fetch all modules with their lessons
-  const { data: modulesData, isLoading: modulesLoading } = useQuery<ModuleResponse[]>({
+  const { data: modulesData, isLoading: modulesLoading } = useQuery<
+    ModuleResponse[]
+  >({
     queryKey: ["/api/public/v1/course-modules-lessons", courseId],
     queryFn: async () => {
       if (!courseData?.modules) return [];
@@ -83,7 +103,9 @@ export default function VideoFirstChallengePage() {
   });
 
   // Fetch lesson progress
-  const { data: progressData, isLoading: progressLoading } = useQuery<{ completedLessonIds: number[] }>({
+  const { data: progressData, isLoading: progressLoading } = useQuery<{
+    completedLessonIds: number[];
+  }>({
     queryKey: ["/api/v1/lesson-progress"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/v1/lesson-progress");
@@ -99,7 +121,7 @@ export default function VideoFirstChallengePage() {
     if (modulesData && modulesData.length > 0) {
       const days: FlattenedDay[] = [];
       let dayNumber = 1;
-      
+
       modulesData.forEach((moduleData) => {
         moduleData.lessons.forEach((lesson) => {
           days.push({
@@ -112,7 +134,7 @@ export default function VideoFirstChallengePage() {
           dayNumber++;
         });
       });
-      
+
       setAllDays(days);
     }
   }, [modulesData]);
@@ -123,7 +145,7 @@ export default function VideoFirstChallengePage() {
       const firstIncompleteIndex = allDays.findIndex(
         (day) => !completedLessonIds.has(day.lessonId)
       );
-      
+
       if (firstIncompleteIndex >= 0) {
         setCurrentDayIndex(firstIncompleteIndex);
       } else {
@@ -134,34 +156,41 @@ export default function VideoFirstChallengePage() {
   }, [allDays, completedLessonIds, currentDayIndex]);
 
   // Current day info
-  const currentDay = currentDayIndex !== null && currentDayIndex < allDays.length 
-    ? allDays[currentDayIndex] 
-    : null;
+  const currentDay =
+    currentDayIndex !== null && currentDayIndex < allDays.length
+      ? allDays[currentDayIndex]
+      : null;
 
   // Fetch current lesson content
-  const { data: lessonData, isLoading: lessonLoading } = useQuery<LessonResponse>({
-    queryKey: ["/api/public/v1/lessons", currentDay?.lessonId],
-    queryFn: async () => {
-      const response = await fetch(`/api/public/v1/lessons/${currentDay?.lessonId}`);
-      if (!response.ok) throw new Error("Failed to fetch lesson");
-      return response.json();
-    },
-    enabled: !!currentDay?.lessonId,
-  });
+  const { data: lessonData, isLoading: lessonLoading } =
+    useQuery<LessonResponse>({
+      queryKey: ["/api/public/v1/lessons", currentDay?.lessonId],
+      queryFn: async () => {
+        const response = await fetch(
+          `/api/public/v1/lessons/${currentDay?.lessonId}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch lesson");
+        return response.json();
+      },
+      enabled: !!currentDay?.lessonId,
+    });
 
   // Mark complete mutation
   const markCompleteMutation = useMutation({
     mutationFn: async (lessonId: number) => {
-      const res = await apiRequest("POST", `/api/v1/lesson-progress/${lessonId}/complete`);
+      const res = await apiRequest(
+        "POST",
+        `/api/v1/lesson-progress/${lessonId}/complete`
+      );
       return res.json();
     },
     onSuccess: (_data, lessonId) => {
       queryClient.invalidateQueries({ queryKey: ["/api/v1/lesson-progress"] });
-      
+
       // Find the next lesson
-      const currentIndex = allDays.findIndex(d => d.lessonId === lessonId);
+      const currentIndex = allDays.findIndex((d) => d.lessonId === lessonId);
       const nextIndex = currentIndex + 1;
-      
+
       if (nextIndex < allDays.length) {
         toast({
           title: "Day complete! 🎉",
@@ -191,14 +220,25 @@ export default function VideoFirstChallengePage() {
       const video = videoRef.current;
       const progress = (video.currentTime / video.duration) * 100;
       setWatchProgress(progress);
-      
+
       // Auto-complete at 90% if not already completed
-      if (progress >= 90 && !hasReached90 && isAuthenticated && !completedLessonIds.has(currentDay.lessonId)) {
+      if (
+        progress >= 90 &&
+        !hasReached90 &&
+        isAuthenticated &&
+        !completedLessonIds.has(currentDay.lessonId)
+      ) {
         setHasReached90(true);
         markCompleteMutation.mutate(currentDay.lessonId);
       }
     }
-  }, [hasReached90, currentDay, isAuthenticated, completedLessonIds, markCompleteMutation]);
+  }, [
+    hasReached90,
+    currentDay,
+    isAuthenticated,
+    completedLessonIds,
+    markCompleteMutation,
+  ]);
 
   // Audio progress tracking - triggers auto-complete at 90%
   const handleAudioTimeUpdate = useCallback(() => {
@@ -206,21 +246,43 @@ export default function VideoFirstChallengePage() {
       const audio = audioRef.current;
       const progress = (audio.currentTime / audio.duration) * 100;
       setWatchProgress(progress);
-      
+
       // Auto-complete at 90% if not already completed
-      if (progress >= 90 && !hasReached90 && isAuthenticated && !completedLessonIds.has(currentDay.lessonId)) {
+      if (
+        progress >= 90 &&
+        !hasReached90 &&
+        isAuthenticated &&
+        !completedLessonIds.has(currentDay.lessonId)
+      ) {
         setHasReached90(true);
         markCompleteMutation.mutate(currentDay.lessonId);
       }
     }
-  }, [hasReached90, currentDay, isAuthenticated, completedLessonIds, markCompleteMutation]);
+  }, [
+    hasReached90,
+    currentDay,
+    isAuthenticated,
+    completedLessonIds,
+    markCompleteMutation,
+  ]);
 
   // Handle video/audio ended - no-op if already completed at 90%
   const handleMediaEnded = useCallback(() => {
-    if (currentDay && isAuthenticated && !completedLessonIds.has(currentDay.lessonId) && !hasReached90) {
+    if (
+      currentDay &&
+      isAuthenticated &&
+      !completedLessonIds.has(currentDay.lessonId) &&
+      !hasReached90
+    ) {
       markCompleteMutation.mutate(currentDay.lessonId);
     }
-  }, [currentDay, isAuthenticated, completedLessonIds, hasReached90, markCompleteMutation]);
+  }, [
+    currentDay,
+    isAuthenticated,
+    completedLessonIds,
+    hasReached90,
+    markCompleteMutation,
+  ]);
 
   // Reset progress when changing lessons
   useEffect(() => {
@@ -233,11 +295,13 @@ export default function VideoFirstChallengePage() {
   const handleDayClick = (index: number) => {
     const day = allDays[index];
     const isCompleted = completedLessonIds.has(day.lessonId);
-    
+
     // Check if this day is unlocked (completed or is the current incomplete)
-    const firstIncompleteIndex = allDays.findIndex(d => !completedLessonIds.has(d.lessonId));
+    const firstIncompleteIndex = allDays.findIndex(
+      (d) => !completedLessonIds.has(d.lessonId)
+    );
     const isUnlocked = isCompleted || index === firstIncompleteIndex;
-    
+
     if (isUnlocked) {
       setCurrentDayIndex(index);
       setWatchProgress(0);
@@ -255,7 +319,9 @@ export default function VideoFirstChallengePage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="w-8 h-8 animate-spin text-amber-500 mx-auto" />
-          <p className="text-muted-foreground text-sm">Loading your journey...</p>
+          <p className="text-muted-foreground text-sm">
+            Loading your journey...
+          </p>
         </div>
       </div>
     );
@@ -295,7 +361,9 @@ export default function VideoFirstChallengePage() {
               >
                 <ArrowLeft className="w-5 h-5 text-foreground" />
               </button>
-              <span className="text-sm font-medium text-muted-foreground">Challenge Complete</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                Challenge Complete
+              </span>
             </div>
           </div>
 
@@ -307,9 +375,10 @@ export default function VideoFirstChallengePage() {
               Congratulations!
             </h1>
             <p className="text-muted-foreground mb-8 max-w-xs">
-              You've completed all {allDays.length} days of the Money Manifestation Challenge!
+              You've completed all {allDays.length} days of the Money
+              Manifestation Challenge!
             </p>
-            
+
             <div className="w-full space-y-3">
               <Button
                 size="lg"
@@ -337,20 +406,36 @@ export default function VideoFirstChallengePage() {
   }
 
   // Get video/audio/PDF files (PDF can be stored as "pdf" or "script" type)
-  const videoFile = lessonData?.files?.find(f => f.fileType === "video" && f.signedUrl);
-  const audioFile = lessonData?.files?.find(f => f.fileType === "audio" && f.signedUrl);
-  const pdfFile = lessonData?.files?.find(f => (f.fileType === "pdf" || f.fileType === "script") && f.signedUrl);
-  
+  const videoFile = lessonData?.files?.find(
+    (f) => f.fileType === "video" && f.signedUrl
+  );
+  const audioFile = lessonData?.files?.find(
+    (f) => f.fileType === "audio" && f.signedUrl
+  );
+  const pdfFile = lessonData?.files?.find(
+    (f) => (f.fileType === "pdf" || f.fileType === "script") && f.signedUrl
+  );
+
   // Determine primary player type
-  const primaryPlayerType = videoFile ? "video" : audioFile ? "audio" : pdfFile ? "pdf" : "none";
+  const primaryPlayerType = videoFile
+    ? "video"
+    : audioFile
+    ? "audio"
+    : pdfFile
+    ? "pdf"
+    : "none";
   const hasMedia = videoFile || audioFile;
-  
+
   // Resources to show (PDF always, audio only if video exists as primary)
   const hasResources = pdfFile || (videoFile && audioFile);
 
   // Calculate first incomplete for locking logic
-  const firstIncompleteIndex = allDays.findIndex(d => !completedLessonIds.has(d.lessonId));
-  const isCurrentLessonCompleted = currentDay ? completedLessonIds.has(currentDay.lessonId) : false;
+  const firstIncompleteIndex = allDays.findIndex(
+    (d) => !completedLessonIds.has(d.lessonId)
+  );
+  const isCurrentLessonCompleted = currentDay
+    ? completedLessonIds.has(currentDay.lessonId)
+    : false;
 
   // Handle opening PDF in new tab
   const handleOpenPdf = () => {
@@ -378,23 +463,12 @@ export default function VideoFirstChallengePage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header - minimal */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-lg border-b border-border/50 z-20">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={handleBack}
-            className="hover-elevate active-elevate-2 rounded-lg p-2"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-medium text-muted-foreground">
-              Day {currentDay?.dayNumber} of {allDays.length}
-            </span>
-          </div>
-          <div className="w-9" /> {/* Spacer for centering */}
-        </div>
+      <div className="sticky top-0 bg-background/80 z-20">
+        <Header
+          title={`Day ${currentDay?.dayNumber} of ${allDays.length}`}
+          hasBackButton={true}
+          onBack={handleBack}
+        />
       </div>
 
       {/* Main Content - Video First */}
@@ -410,13 +484,13 @@ export default function VideoFirstChallengePage() {
               ref={videoRef}
               src={videoFile!.signedUrl!}
               controls
-              autoPlay
               className="w-full h-full object-contain"
               onTimeUpdate={handleTimeUpdate}
               onEnded={handleMediaEnded}
               data-testid="video-player"
             />
-          ) : (primaryPlayerType === "audio" || showAudioPlayer) && audioFile ? (
+          ) : (primaryPlayerType === "audio" || showAudioPlayer) &&
+            audioFile ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-amber-900 to-amber-950 p-6">
               <div className="w-32 h-32 bg-amber-500/20 rounded-full flex items-center justify-center mb-6">
                 <Headphones className="w-12 h-12 text-amber-400" />
@@ -425,7 +499,6 @@ export default function VideoFirstChallengePage() {
                 ref={audioRef}
                 src={audioFile.signedUrl!}
                 controls
-                autoPlay
                 className="w-full max-w-xs"
                 onTimeUpdate={handleAudioTimeUpdate}
                 onEnded={handleMediaEnded}
@@ -449,7 +522,9 @@ export default function VideoFirstChallengePage() {
               <div className="w-32 h-32 bg-slate-500/20 rounded-full flex items-center justify-center mb-6">
                 <FileText className="w-12 h-12 text-slate-300" />
               </div>
-              <p className="text-white/80 text-center mb-4">This lesson contains a script document</p>
+              <p className="text-white/80 text-center mb-4">
+                This lesson contains a script document
+              </p>
               <Button
                 className="bg-amber-500 hover:bg-amber-600 text-white"
                 onClick={handleOpenPdf}
@@ -468,7 +543,7 @@ export default function VideoFirstChallengePage() {
           {/* Progress indicator overlay */}
           {hasMedia && !showAudioPlayer && primaryPlayerType === "video" && (
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
-              <div 
+              <div
                 className="h-full bg-amber-500 transition-all duration-300"
                 style={{ width: `${watchProgress}%` }}
               />
@@ -476,7 +551,7 @@ export default function VideoFirstChallengePage() {
           )}
           {hasMedia && (showAudioPlayer || primaryPlayerType === "audio") && (
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
-              <div 
+              <div
                 className="h-full bg-amber-500 transition-all duration-300"
                 style={{ width: `${watchProgress}%` }}
               />
@@ -488,7 +563,10 @@ export default function VideoFirstChallengePage() {
         <div className="px-4 py-3 bg-card border-b border-border">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-foreground text-base leading-tight" data-testid="text-lesson-title">
+              <h2
+                className="font-semibold text-foreground text-base leading-tight"
+                data-testid="text-lesson-title"
+              >
                 Day {currentDay?.dayNumber} – {currentDay?.title}
               </h2>
             </div>
@@ -501,7 +579,9 @@ export default function VideoFirstChallengePage() {
               <Button
                 size="sm"
                 className="bg-amber-500 hover:bg-amber-600 text-white text-xs"
-                onClick={() => currentDay && markCompleteMutation.mutate(currentDay.lessonId)}
+                onClick={() =>
+                  currentDay && markCompleteMutation.mutate(currentDay.lessonId)
+                }
                 disabled={markCompleteMutation.isPending}
                 data-testid="button-complete-now"
               >
@@ -532,8 +612,12 @@ export default function VideoFirstChallengePage() {
                     <FileText className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">Script (PDF)</p>
-                    <p className="text-xs text-muted-foreground">Open lesson transcript</p>
+                    <p className="text-sm font-medium text-foreground">
+                      Script (PDF)
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Open lesson transcript
+                    </p>
                   </div>
                   <ExternalLink className="w-4 h-4 text-muted-foreground" />
                 </button>
@@ -548,8 +632,12 @@ export default function VideoFirstChallengePage() {
                     <Headphones className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">Audio Version</p>
-                    <p className="text-xs text-muted-foreground">Listen without video</p>
+                    <p className="text-sm font-medium text-foreground">
+                      Audio Version
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Listen without video
+                    </p>
                   </div>
                   <Play className="w-4 h-4 text-muted-foreground" />
                 </button>
@@ -563,36 +651,42 @@ export default function VideoFirstChallengePage() {
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
             Your Journey
           </p>
-          
+
           <div className="space-y-2">
             {allDays.map((day, index) => {
               const isCompleted = completedLessonIds.has(day.lessonId);
               const isCurrent = index === currentDayIndex;
-              const isLocked = !isCompleted && index !== firstIncompleteIndex && firstIncompleteIndex !== -1 && index > firstIncompleteIndex;
-              
+              const isLocked =
+                !isCompleted &&
+                index !== firstIncompleteIndex &&
+                firstIncompleteIndex !== -1 &&
+                index > firstIncompleteIndex;
+
               return (
                 <Card
                   key={day.lessonId}
                   className={`p-3 transition-all cursor-pointer ${
-                    isCurrent 
-                      ? "ring-2 ring-amber-500 bg-amber-50 dark:bg-amber-950/30" 
-                      : isLocked 
-                        ? "opacity-50 cursor-not-allowed" 
-                        : "hover-elevate active-elevate-2"
+                    isCurrent
+                      ? "ring-2 ring-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                      : isLocked
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover-elevate active-elevate-2"
                   }`}
                   onClick={() => !isLocked && handleDayClick(index)}
                   data-testid={`timeline-day-${day.dayNumber}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      isCompleted 
-                        ? "bg-green-500 text-white"
-                        : isCurrent 
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        isCompleted
+                          ? "bg-green-500 text-white"
+                          : isCurrent
                           ? "bg-amber-500 text-white"
-                          : isLocked 
-                            ? "bg-muted text-muted-foreground"
-                            : "bg-amber-500/20 text-amber-600"
-                    }`}>
+                          : isLocked
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-amber-500/20 text-amber-600"
+                      }`}
+                    >
                       {isCompleted ? (
                         <Check className="w-4 h-4" />
                       ) : isLocked ? (
@@ -604,9 +698,11 @@ export default function VideoFirstChallengePage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium truncate ${
-                        isLocked ? "text-muted-foreground" : "text-foreground"
-                      }`}>
+                      <p
+                        className={`text-sm font-medium truncate ${
+                          isLocked ? "text-muted-foreground" : "text-foreground"
+                        }`}
+                      >
                         Day {day.dayNumber}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
