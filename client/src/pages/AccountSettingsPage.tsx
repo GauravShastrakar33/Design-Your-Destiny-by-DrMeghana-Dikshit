@@ -20,7 +20,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function AccountSettingsPage() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, clearPasswordChangeRequirement, requiresPasswordChange } = useAuth();
   const userToken = localStorage.getItem("@app:user_token");
 
   const [userName, setUserName] = useState("");
@@ -64,6 +64,13 @@ export default function AccountSettingsPage() {
     setUserName(savedUserName);
     setOriginalUserName(savedUserName);
   }, []);
+
+  // Auto-open password form if user needs to change password
+  useEffect(() => {
+    if (requiresPasswordChange) {
+      setShowPasswordForm(true);
+    }
+  }, [requiresPasswordChange]);
 
   const handleSaveName = async () => {
     if (!userName.trim()) return;
@@ -134,6 +141,9 @@ export default function AccountSettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
       setShowPasswordForm(false);
+      
+      // Clear forced password change requirement if it was set
+      clearPasswordChangeRequirement();
     } catch (error) {
       setPasswordError("Failed to change password. Please try again.");
     } finally {
@@ -150,6 +160,21 @@ export default function AccountSettingsPage() {
       />
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
+        {/* Forced Password Change Warning */}
+        {requiresPasswordChange && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+            <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-amber-600 text-lg">⚠</span>
+            </div>
+            <div>
+              <p className="font-medium text-amber-800">Password Change Required</p>
+              <p className="text-sm text-amber-700 mt-1">
+                Your password has been reset by an administrator. Please change your password to continue using the app.
+              </p>
+            </div>
+          </div>
+        )}
+        
         {/* Username Section */}
         <div className="bg-white rounded-2xl shadow-md p-5">
           <Label className="text-sm font-medium text-gray-700">Username</Label>

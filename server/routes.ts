@@ -483,6 +483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: user.name,
           email: user.email,
           role: user.role,
+          forcePasswordChange: user.forcePasswordChange || false,
         },
       });
     } catch (error) {
@@ -4323,6 +4324,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Hash new password and update
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await storage.updateUserPassword(req.user.sub, hashedPassword);
+      
+      // Clear forcePasswordChange flag if it was set
+      await storage.clearForcePasswordChange(req.user.sub);
 
       res.json({ success: true, message: "Password changed successfully" });
     } catch (error) {
