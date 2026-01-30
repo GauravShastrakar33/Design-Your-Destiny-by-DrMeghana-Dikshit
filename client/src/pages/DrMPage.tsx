@@ -202,6 +202,7 @@ export default function DrMPage() {
                             ref={audioRef}
                             src={questionDetails.audioUrl}
                             controls
+                            controlsList="nodownload noplaybackrate"
                             className="w-full h-10"
                             onEnded={handleAudioEnded}
                             data-testid="audio-response"

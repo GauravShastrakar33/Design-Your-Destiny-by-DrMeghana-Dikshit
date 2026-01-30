@@ -316,7 +316,7 @@ export default function RewiringScreen() {
 
       {/* Add/Edit Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-md bg-white">
+        <DialogContent className="max-w-sm rounded-lg bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-gray-800 font-['Poppins']">
               {editingBelief ? "Edit Belief Pair" : "Add New Belief Pair"}
@@ -339,7 +339,6 @@ export default function RewiringScreen() {
                   setFormData({ ...formData, limiting: e.target.value })
                 }
                 placeholder="e.g., I never have enough money"
-                className="border-gray-200"
                 data-testid="input-modal-limiting"
               />
             </div>
@@ -359,7 +358,6 @@ export default function RewiringScreen() {
                   setFormData({ ...formData, uplifting: e.target.value })
                 }
                 placeholder="e.g., Abundance flows to me effortlessly"
-                className="border-gray-200"
                 data-testid="input-modal-uplifting"
               />
             </div>

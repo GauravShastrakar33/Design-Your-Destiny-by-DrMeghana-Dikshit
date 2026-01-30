@@ -6,7 +6,13 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
@@ -17,7 +23,7 @@ export default function AdminSessionBannerFormPage() {
   const params = useParams<{ id: string }>();
   const { toast } = useToast();
   const isEdit = !!params.id;
-  
+
   const [formData, setFormData] = useState({
     type: "session" as "session" | "advertisement",
     thumbnailKey: "",
@@ -50,17 +56,21 @@ export default function AdminSessionBannerFormPage() {
 
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
-  const { data: existingBanner, isLoading: isLoadingBanner } = useQuery<SessionBanner>({
-    queryKey: ["/api/admin/v1/session-banners", params.id],
-    queryFn: async () => {
-      const response = await fetch(`/api/admin/v1/session-banners/${params.id}`, {
-        headers: { "Authorization": `Bearer ${adminToken}` },
-      });
-      if (!response.ok) throw new Error("Failed to fetch banner");
-      return response.json();
-    },
-    enabled: isEdit,
-  });
+  const { data: existingBanner, isLoading: isLoadingBanner } =
+    useQuery<SessionBanner>({
+      queryKey: ["/api/admin/v1/session-banners", params.id],
+      queryFn: async () => {
+        const response = await fetch(
+          `/api/admin/v1/session-banners/${params.id}`,
+          {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          }
+        );
+        if (!response.ok) throw new Error("Failed to fetch banner");
+        return response.json();
+      },
+      enabled: isEdit,
+    });
 
   // Convert UTC date to local datetime-local format (YYYY-MM-DDTHH:MM)
   const formatDateForInput = (date: Date | string | null) => {
@@ -68,10 +78,10 @@ export default function AdminSessionBannerFormPage() {
     const d = new Date(date);
     // Get local date/time components
     const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
@@ -93,25 +103,32 @@ export default function AdminSessionBannerFormPage() {
     }
   }, [existingBanner]);
 
+  const minDate = formatDateForInput(new Date());
+
   const handleLiveToggleChange = (checked: boolean) => {
     if (!checked) {
-      setFormData(prev => ({ 
-        ...prev, 
+      setFormData((prev) => ({
+        ...prev,
         liveEnabled: false,
         liveStartAt: "",
         liveEndAt: "",
       }));
     } else {
-      setFormData(prev => ({ ...prev, liveEnabled: true }));
+      setFormData((prev) => ({ ...prev, liveEnabled: true }));
     }
   };
 
-  const uploadFile = async (file: File, type: "thumbnail" | "video" | "poster") => {
+  const uploadFile = async (
+    file: File,
+    type: "thumbnail" | "video" | "poster"
+  ) => {
     setIsUploading(true);
     try {
       const urlRes = await fetch(
-        `/api/admin/v1/session-banners/upload-url?filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type)}`,
-        { headers: { "Authorization": `Bearer ${adminToken}` } }
+        `/api/admin/v1/session-banners/upload-url?filename=${encodeURIComponent(
+          file.name
+        )}&contentType=${encodeURIComponent(file.type)}`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
       );
       if (!urlRes.ok) throw new Error("Failed to get upload URL");
       const { key, signedUrl } = await urlRes.json();
@@ -124,17 +141,21 @@ export default function AdminSessionBannerFormPage() {
       if (!uploadRes.ok) throw new Error("Upload failed");
 
       if (type === "thumbnail") {
-        setFormData(prev => ({ ...prev, thumbnailKey: key }));
+        setFormData((prev) => ({ ...prev, thumbnailKey: key }));
         setThumbnailPreview(URL.createObjectURL(file));
       } else if (type === "video") {
-        setFormData(prev => ({ ...prev, videoKey: key }));
+        setFormData((prev) => ({ ...prev, videoKey: key }));
         setVideoPreview(URL.createObjectURL(file));
       } else {
-        setFormData(prev => ({ ...prev, posterKey: key }));
+        setFormData((prev) => ({ ...prev, posterKey: key }));
         setPosterPreview(URL.createObjectURL(file));
       }
 
-      toast({ title: `${type === "thumbnail" ? "Banner" : type} uploaded successfully` });
+      toast({
+        title: `${
+          type === "thumbnail" ? "Banner" : type
+        } uploaded successfully`,
+      });
     } catch (error) {
       console.error("Upload error:", error);
       toast({ title: `Failed to upload ${type}`, variant: "destructive" });
@@ -143,7 +164,10 @@ export default function AdminSessionBannerFormPage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "thumbnail" | "video" | "poster") => {
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "thumbnail" | "video" | "poster"
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       uploadFile(file, type);
@@ -202,7 +226,7 @@ export default function AdminSessionBannerFormPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({
           ...data,
@@ -221,7 +245,9 @@ export default function AdminSessionBannerFormPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/session-banners"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/v1/session-banners"],
+      });
       toast({ title: "Banner created successfully" });
       setLocation("/admin/session-banner/banners");
     },
@@ -232,30 +258,35 @@ export default function AdminSessionBannerFormPage() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch(`/api/admin/v1/session-banners/${params.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminToken}`,
-        },
-        body: JSON.stringify({
-          ...data,
-          thumbnailKey: data.thumbnailKey || null,
-          videoKey: data.videoKey || null,
-          posterKey: data.posterKey || null,
-          ctaText: data.ctaText || null,
-          ctaLink: data.ctaLink || null,
-          startAt: toISOString(data.startAt),
-          endAt: toISOString(data.endAt),
-          liveStartAt: toISOString(data.liveStartAt),
-          liveEndAt: toISOString(data.liveEndAt),
-        }),
-      });
+      const response = await fetch(
+        `/api/admin/v1/session-banners/${params.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({
+            ...data,
+            thumbnailKey: data.thumbnailKey || null,
+            videoKey: data.videoKey || null,
+            posterKey: data.posterKey || null,
+            ctaText: data.ctaText || null,
+            ctaLink: data.ctaLink || null,
+            startAt: toISOString(data.startAt),
+            endAt: toISOString(data.endAt),
+            liveStartAt: toISOString(data.liveStartAt),
+            liveEndAt: toISOString(data.liveEndAt),
+          }),
+        }
+      );
       if (!response.ok) throw new Error("Failed to update banner");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/session-banners"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/v1/session-banners"],
+      });
       toast({ title: "Banner updated successfully" });
       setLocation("/admin/session-banner/banners");
     },
@@ -313,8 +344,8 @@ export default function AdminSessionBannerFormPage() {
             <Label htmlFor="type">Banner Type</Label>
             <Select
               value={formData.type}
-              onValueChange={(value: "session" | "advertisement") => 
-                setFormData(prev => ({ ...prev, type: value }))
+              onValueChange={(value: "session" | "advertisement") =>
+                setFormData((prev) => ({ ...prev, type: value }))
               }
             >
               <SelectTrigger data-testid="select-type" className="mt-1.5">
@@ -322,7 +353,9 @@ export default function AdminSessionBannerFormPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="session">Session Banner</SelectItem>
-                <SelectItem value="advertisement">Advertisement Video</SelectItem>
+                <SelectItem value="advertisement">
+                  Advertisement Video
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -343,7 +376,11 @@ export default function AdminSessionBannerFormPage() {
                   <div className="mt-2 relative inline-block">
                     <div className="w-64 h-40 bg-muted rounded-lg overflow-hidden">
                       {thumbnailPreview ? (
-                        <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
+                        <img
+                          src={thumbnailPreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
                           Uploaded
@@ -356,7 +393,7 @@ export default function AdminSessionBannerFormPage() {
                       variant="destructive"
                       className="absolute -top-2 -right-2 w-6 h-6"
                       onClick={() => {
-                        setFormData(prev => ({ ...prev, thumbnailKey: "" }));
+                        setFormData((prev) => ({ ...prev, thumbnailKey: "" }));
                         setThumbnailPreview(null);
                       }}
                     >
@@ -372,7 +409,11 @@ export default function AdminSessionBannerFormPage() {
                     disabled={isUploading}
                     data-testid="button-upload-banner"
                   >
-                    {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                    {isUploading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
                     Upload Banner
                   </Button>
                 )}
@@ -386,9 +427,15 @@ export default function AdminSessionBannerFormPage() {
                     id="startAt"
                     type="datetime-local"
                     value={formData.startAt}
-                    onChange={(e) => setFormData(prev => ({ ...prev, startAt: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        startAt: e.target.value,
+                      }))
+                    }
                     className="mt-1.5"
                     data-testid="input-start-at"
+                    min={minDate}
                   />
                 </div>
                 <div>
@@ -397,9 +444,15 @@ export default function AdminSessionBannerFormPage() {
                     id="endAt"
                     type="datetime-local"
                     value={formData.endAt}
-                    onChange={(e) => setFormData(prev => ({ ...prev, endAt: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        endAt: e.target.value,
+                      }))
+                    }
                     className="mt-1.5"
                     data-testid="input-end-at"
+                    min={formData.startAt || minDate}
                   />
                 </div>
               </div>
@@ -412,7 +465,9 @@ export default function AdminSessionBannerFormPage() {
                   onCheckedChange={handleLiveToggleChange}
                   data-testid="switch-live-enabled"
                 />
-                <Label htmlFor="liveEnabled" className="cursor-pointer">Enable LIVE</Label>
+                <Label htmlFor="liveEnabled" className="cursor-pointer">
+                  Enable LIVE
+                </Label>
               </div>
 
               {/* 5. LIVE Date Fields (conditional) */}
@@ -424,11 +479,19 @@ export default function AdminSessionBannerFormPage() {
                       id="liveStartAt"
                       type="datetime-local"
                       value={formData.liveStartAt}
-                      onChange={(e) => setFormData(prev => ({ ...prev, liveStartAt: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          liveStartAt: e.target.value,
+                        }))
+                      }
                       className="mt-1.5"
                       data-testid="input-live-start-at"
+                      min={minDate}
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Must be within banner visibility window</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Must be within banner visibility window
+                    </p>
                   </div>
                   <div>
                     <Label htmlFor="liveEndAt">Live End Date & Time</Label>
@@ -436,9 +499,15 @@ export default function AdminSessionBannerFormPage() {
                       id="liveEndAt"
                       type="datetime-local"
                       value={formData.liveEndAt}
-                      onChange={(e) => setFormData(prev => ({ ...prev, liveEndAt: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          liveEndAt: e.target.value,
+                        }))
+                      }
                       className="mt-1.5"
                       data-testid="input-live-end-at"
+                      min={formData.liveStartAt || minDate}
                     />
                   </div>
                 </div>
@@ -450,7 +519,12 @@ export default function AdminSessionBannerFormPage() {
                 <Input
                   id="ctaText"
                   value={formData.ctaText}
-                  onChange={(e) => setFormData(prev => ({ ...prev, ctaText: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      ctaText: e.target.value,
+                    }))
+                  }
                   placeholder="e.g., Join Now"
                   className="mt-1.5"
                   data-testid="input-cta-text"
@@ -463,7 +537,12 @@ export default function AdminSessionBannerFormPage() {
                 <Input
                   id="ctaLink"
                   value={formData.ctaLink}
-                  onChange={(e) => setFormData(prev => ({ ...prev, ctaLink: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      ctaLink: e.target.value,
+                    }))
+                  }
                   placeholder="e.g., https://example.com/join"
                   className="mt-1.5"
                   data-testid="input-cta-link"
@@ -487,9 +566,14 @@ export default function AdminSessionBannerFormPage() {
                   <div className="mt-2 relative inline-block">
                     <div className="w-64 h-40 bg-muted rounded-lg overflow-hidden flex items-center justify-center">
                       {videoPreview ? (
-                        <video src={videoPreview} className="w-full h-full object-cover" />
+                        <video
+                          src={videoPreview}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <span className="text-muted-foreground text-sm">Video uploaded</span>
+                        <span className="text-muted-foreground text-sm">
+                          Video uploaded
+                        </span>
                       )}
                     </div>
                     <Button
@@ -498,7 +582,7 @@ export default function AdminSessionBannerFormPage() {
                       variant="destructive"
                       className="absolute -top-2 -right-2 w-6 h-6"
                       onClick={() => {
-                        setFormData(prev => ({ ...prev, videoKey: "" }));
+                        setFormData((prev) => ({ ...prev, videoKey: "" }));
                         setVideoPreview(null);
                       }}
                     >
@@ -514,7 +598,11 @@ export default function AdminSessionBannerFormPage() {
                     disabled={isUploading}
                     data-testid="button-upload-video"
                   >
-                    {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                    {isUploading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
                     Upload Video
                   </Button>
                 )}
@@ -533,7 +621,11 @@ export default function AdminSessionBannerFormPage() {
                   <div className="mt-2 relative inline-block">
                     <div className="w-64 h-40 bg-muted rounded-lg overflow-hidden">
                       {posterPreview ? (
-                        <img src={posterPreview} alt="Poster" className="w-full h-full object-cover" />
+                        <img
+                          src={posterPreview}
+                          alt="Poster"
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
                           Uploaded
@@ -546,7 +638,7 @@ export default function AdminSessionBannerFormPage() {
                       variant="destructive"
                       className="absolute -top-2 -right-2 w-6 h-6"
                       onClick={() => {
-                        setFormData(prev => ({ ...prev, posterKey: "" }));
+                        setFormData((prev) => ({ ...prev, posterKey: "" }));
                         setPosterPreview(null);
                       }}
                     >
@@ -562,7 +654,11 @@ export default function AdminSessionBannerFormPage() {
                     disabled={isUploading}
                     data-testid="button-upload-poster"
                   >
-                    {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                    {isUploading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
                     Upload Poster
                   </Button>
                 )}
@@ -575,9 +671,15 @@ export default function AdminSessionBannerFormPage() {
                     id="startAt"
                     type="datetime-local"
                     value={formData.startAt}
-                    onChange={(e) => setFormData(prev => ({ ...prev, startAt: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        startAt: e.target.value,
+                      }))
+                    }
                     className="mt-1.5"
                     data-testid="input-start-at"
+                    min={minDate}
                   />
                 </div>
                 <div>
@@ -586,9 +688,15 @@ export default function AdminSessionBannerFormPage() {
                     id="endAt"
                     type="datetime-local"
                     value={formData.endAt}
-                    onChange={(e) => setFormData(prev => ({ ...prev, endAt: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        endAt: e.target.value,
+                      }))
+                    }
                     className="mt-1.5"
                     data-testid="input-end-at"
+                    min={formData.startAt || minDate}
                   />
                 </div>
               </div>
@@ -598,7 +706,12 @@ export default function AdminSessionBannerFormPage() {
                 <Input
                   id="ctaText"
                   value={formData.ctaText}
-                  onChange={(e) => setFormData(prev => ({ ...prev, ctaText: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      ctaText: e.target.value,
+                    }))
+                  }
                   placeholder="e.g., Learn More"
                   className="mt-1.5"
                   data-testid="input-cta-text"
@@ -610,7 +723,12 @@ export default function AdminSessionBannerFormPage() {
                 <Input
                   id="ctaLink"
                   value={formData.ctaLink}
-                  onChange={(e) => setFormData(prev => ({ ...prev, ctaLink: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      ctaLink: e.target.value,
+                    }))
+                  }
                   placeholder="e.g., https://example.com"
                   className="mt-1.5"
                   data-testid="input-cta-link"
@@ -629,8 +747,15 @@ export default function AdminSessionBannerFormPage() {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || isUploading} data-testid="button-submit">
-              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Button
+              type="submit"
+              disabled={isSubmitting || isUploading}
+              data-testid="button-submit"
+              className="bg-brand hover:bg-brand/90"
+            >
+              {isSubmitting && (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              )}
               {isEdit ? "Update Banner" : "Create Banner"}
             </Button>
           </div>

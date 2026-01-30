@@ -53,7 +53,7 @@ interface StudentsResponse {
 export default function AdminStudentsPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const [search, setSearch] = useState("");
   const [programFilter, setProgramFilter] = useState("ALL");
   const [page, setPage] = useState(1);
@@ -101,7 +101,7 @@ export default function AdminStudentsPage() {
     queryFn: async () => {
       const response = await fetch("/admin/v1/programs", {
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to fetch programs");
@@ -117,11 +117,12 @@ export default function AdminStudentsPage() {
         limit: limit.toString(),
       });
       if (search) params.set("search", search);
-      if (programFilter && programFilter !== "ALL") params.set("program", programFilter);
+      if (programFilter && programFilter !== "ALL")
+        params.set("program", programFilter);
 
       const response = await fetch(`/admin/v1/students?${params}`, {
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to fetch students");
@@ -135,7 +136,7 @@ export default function AdminStudentsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify(data),
       });
@@ -152,17 +153,27 @@ export default function AdminStudentsPage() {
       resetForm();
     },
     onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<typeof formData> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<typeof formData>;
+    }) => {
       const response = await fetch(`/admin/v1/students/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify(data),
       });
@@ -176,7 +187,11 @@ export default function AdminStudentsPage() {
       resetForm();
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to update student", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to update student",
+        variant: "destructive",
+      });
     },
   });
 
@@ -186,7 +201,7 @@ export default function AdminStudentsPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ status }),
       });
@@ -199,7 +214,11 @@ export default function AdminStudentsPage() {
       setStatusStudent(null);
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to update status", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive",
+      });
     },
   });
 
@@ -208,7 +227,7 @@ export default function AdminStudentsPage() {
       const response = await fetch(`/admin/v1/students/${id}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to delete student");
@@ -220,7 +239,11 @@ export default function AdminStudentsPage() {
       setDeletingStudent(null);
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to delete student", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to delete student",
+        variant: "destructive",
+      });
     },
   });
 
@@ -301,7 +324,11 @@ export default function AdminStudentsPage() {
   };
 
   const students = studentsData?.data || [];
-  const pagination = studentsData?.pagination || { total: 0, page: 1, pages: 1 };
+  const pagination = studentsData?.pagination || {
+    total: 0,
+    page: 1,
+    pages: 1,
+  };
   const startItem = (pagination.page - 1) * limit + 1;
   const endItem = Math.min(pagination.page * limit, pagination.total);
 
@@ -317,7 +344,7 @@ export default function AdminStudentsPage() {
     try {
       const response = await fetch("/api/admin/students/sample-csv", {
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to download sample");
@@ -353,7 +380,7 @@ export default function AdminStudentsPage() {
       const response = await fetch("/api/admin/students/bulk-upload", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: formData,
       });
@@ -388,8 +415,15 @@ export default function AdminStudentsPage() {
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">Students</h1>
-          <p className="text-gray-600 mt-1">Manage student accounts and programs</p>
+          <h1
+            className="text-2xl font-bold text-gray-900"
+            data-testid="text-page-title"
+          >
+            Students
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage student accounts and programs
+          </p>
         </div>
         <div className="flex gap-3">
           <Button
@@ -426,11 +460,17 @@ export default function AdminStudentsPage() {
               data-testid="input-search"
             />
           </div>
-          <Select value={programFilter} onValueChange={(value) => {
-            setProgramFilter(value);
-            setPage(1);
-          }}>
-            <SelectTrigger className="w-[180px]" data-testid="select-program-filter">
+          <Select
+            value={programFilter}
+            onValueChange={(value) => {
+              setProgramFilter(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger
+              className="w-[180px]"
+              data-testid="select-program-filter"
+            >
               <SelectValue placeholder="All Programs" />
             </SelectTrigger>
             <SelectContent>
@@ -459,39 +499,65 @@ export default function AdminStudentsPage() {
               <table className="w-full" data-testid="table-students">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Name</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Email</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Phone</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Program</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Last Login</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Created</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Name
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Email
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Phone
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Program
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Last Login
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Created
+                    </th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {students.map((student) => (
-                    <tr 
-                      key={student.id} 
+                    <tr
+                      key={student.id}
                       className="border-b border-gray-100 hover:bg-gray-50"
                       data-testid={`row-student-${student.id}`}
                     >
                       <td className="py-3 px-4">
                         <button
-                          onClick={() => setLocation(`/admin/students/${student.id}`)}
+                          onClick={() =>
+                            setLocation(`/admin/students/${student.id}`)
+                          }
                           className="font-medium text-primary hover:underline text-left"
                           data-testid={`link-student-name-${student.id}`}
                         >
                           {student.name}
                         </button>
                       </td>
-                      <td className="py-3 px-4 text-gray-600">{student.email}</td>
-                      <td className="py-3 px-4 text-gray-600">{student.phone || "-"}</td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {student.email}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {student.phone || "-"}
+                      </td>
                       <td className="py-3 px-4">
                         {student.programs.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {student.programs.map((prog) => (
-                              <Badge key={prog} variant="secondary" className="text-xs">
+                              <Badge
+                                key={prog}
+                                variant="secondary"
+                                className="text-xs"
+                              >
                                 {prog}
                               </Badge>
                             ))}
@@ -502,24 +568,40 @@ export default function AdminStudentsPage() {
                       </td>
                       <td className="py-3 px-4">
                         <Badge
-                          variant={student.status === "active" ? "default" : "destructive"}
-                          className={student.status === "active" ? "bg-green-100 text-green-700 hover:bg-green-100" : ""}
+                          variant={
+                            student.status === "active"
+                              ? "default"
+                              : "destructive"
+                          }
+                          className={
+                            student.status === "active"
+                              ? "bg-green-100 text-green-700 hover:bg-green-100"
+                              : ""
+                          }
                           data-testid={`badge-status-${student.id}`}
                         >
                           {student.status === "active" ? "Active" : "Blocked"}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">{formatDate(student.lastLogin)}</td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">{formatDate(student.createdAt)}</td>
+                      <td className="py-3 px-4 text-gray-600 text-sm">
+                        {formatDate(student.lastLogin)}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600 text-sm">
+                        {formatDate(student.createdAt)}
+                      </td>
                       <td className="py-3 px-4 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" data-testid={`button-actions-${student.id}`}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              data-testid={`button-actions-${student.id}`}
+                            >
                               <MoreVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => handleEdit(student)}
                               data-testid={`button-edit-${student.id}`}
                             >
@@ -535,7 +617,12 @@ export default function AdminStudentsPage() {
                             </DropdownMenuItem>
                             {student.status === "active" ? (
                               <DropdownMenuItem
-                                onClick={() => setStatusStudent({ student, newStatus: "blocked" })}
+                                onClick={() =>
+                                  setStatusStudent({
+                                    student,
+                                    newStatus: "blocked",
+                                  })
+                                }
                                 className="text-orange-600"
                                 data-testid={`button-block-${student.id}`}
                               >
@@ -544,7 +631,12 @@ export default function AdminStudentsPage() {
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem
-                                onClick={() => setStatusStudent({ student, newStatus: "active" })}
+                                onClick={() =>
+                                  setStatusStudent({
+                                    student,
+                                    newStatus: "active",
+                                  })
+                                }
                                 className="text-green-600"
                                 data-testid={`button-unblock-${student.id}`}
                               >
@@ -570,7 +662,10 @@ export default function AdminStudentsPage() {
             </div>
 
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-              <p className="text-sm text-gray-600" data-testid="text-pagination-info">
+              <p
+                className="text-sm text-gray-600"
+                data-testid="text-pagination-info"
+              >
                 Showing {startItem}-{endItem} of {pagination.total} students
               </p>
               <div className="flex items-center gap-2">
@@ -589,7 +684,9 @@ export default function AdminStudentsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
+                  onClick={() =>
+                    setPage((p) => Math.min(pagination.pages, p + 1))
+                  }
                   disabled={page === pagination.pages}
                   data-testid="button-next-page"
                 >
@@ -601,16 +698,24 @@ export default function AdminStudentsPage() {
         )}
       </Card>
 
-      <Dialog open={isAddDialogOpen || !!editingStudent} onOpenChange={(open) => {
-        if (!open) {
-          setIsAddDialogOpen(false);
-          setEditingStudent(null);
-          resetForm();
-        }
-      }}>
-        <DialogContent className="sm:max-w-md" data-testid="dialog-student-form">
+      <Dialog
+        open={isAddDialogOpen || !!editingStudent}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsAddDialogOpen(false);
+            setEditingStudent(null);
+            resetForm();
+          }
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-md"
+          data-testid="dialog-student-form"
+        >
           <DialogHeader>
-            <DialogTitle>{editingStudent ? "Edit Student" : "Add New Student"}</DialogTitle>
+            <DialogTitle>
+              {editingStudent ? "Edit Student" : "Add New Student"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -618,7 +723,9 @@ export default function AdminStudentsPage() {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Enter full name"
                 data-testid="input-name"
               />
@@ -629,7 +736,9 @@ export default function AdminStudentsPage() {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="Enter email address"
                 data-testid="input-email"
               />
@@ -639,7 +748,9 @@ export default function AdminStudentsPage() {
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 placeholder="Enter phone number"
                 data-testid="input-phone"
               />
@@ -651,7 +762,9 @@ export default function AdminStudentsPage() {
                   id="password"
                   type="password"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   placeholder="Leave empty for default (User@123)"
                   data-testid="input-password"
                 />
@@ -659,9 +772,11 @@ export default function AdminStudentsPage() {
             )}
             <div className="space-y-2">
               <Label htmlFor="program">Program</Label>
-              <Select 
-                value={formData.programCode} 
-                onValueChange={(value) => setFormData({ ...formData, programCode: value })}
+              <Select
+                value={formData.programCode}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, programCode: value })
+                }
               >
                 <SelectTrigger data-testid="select-program">
                   <SelectValue placeholder="Select program" />
@@ -678,9 +793,11 @@ export default function AdminStudentsPage() {
             {editingStudent && (
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, status: value })
+                  }
                 >
                   <SelectTrigger data-testid="select-status">
                     <SelectValue placeholder="Select status" />
@@ -707,21 +824,35 @@ export default function AdminStudentsPage() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!formData.name || !formData.email || createMutation.isPending || updateMutation.isPending}
+              disabled={
+                !formData.name ||
+                !formData.email ||
+                createMutation.isPending ||
+                updateMutation.isPending
+              }
               className="bg-brand hover:bg-brand/90"
               data-testid="button-submit"
             >
-              {createMutation.isPending || updateMutation.isPending ? "Saving..." : editingStudent ? "Update" : "Add Student"}
+              {createMutation.isPending || updateMutation.isPending
+                ? "Saving..."
+                : editingStudent
+                ? "Update"
+                : "Add Student"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!statusStudent} onOpenChange={(open) => !open && setStatusStudent(null)}>
+      <AlertDialog
+        open={!!statusStudent}
+        onOpenChange={(open) => !open && setStatusStudent(null)}
+      >
         <AlertDialogContent data-testid="dialog-status-confirm">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {statusStudent?.newStatus === "blocked" ? "Block Student" : "Unblock Student"}
+              {statusStudent?.newStatus === "blocked"
+                ? "Block Student"
+                : "Unblock Student"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {statusStudent?.newStatus === "blocked"
@@ -730,14 +861,23 @@ export default function AdminStudentsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-status-cancel">Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-status-cancel">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (statusStudent) {
-                  statusMutation.mutate({ id: statusStudent.student.id, status: statusStudent.newStatus });
+                  statusMutation.mutate({
+                    id: statusStudent.student.id,
+                    status: statusStudent.newStatus,
+                  });
                 }
               }}
-              className={statusStudent?.newStatus === "blocked" ? "bg-orange-600 hover:bg-orange-700" : "bg-green-600 hover:bg-green-700"}
+              className={
+                statusStudent?.newStatus === "blocked"
+                  ? "bg-orange-600 hover:bg-orange-700"
+                  : "bg-green-600 hover:bg-green-700"
+              }
               data-testid="button-status-confirm"
             >
               {statusStudent?.newStatus === "blocked" ? "Block" : "Unblock"}
@@ -746,16 +886,22 @@ export default function AdminStudentsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!deletingStudent} onOpenChange={(open) => !open && setDeletingStudent(null)}>
+      <AlertDialog
+        open={!!deletingStudent}
+        onOpenChange={(open) => !open && setDeletingStudent(null)}
+      >
         <AlertDialogContent data-testid="dialog-delete-confirm">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Student</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {deletingStudent?.name}? This action cannot be undone.
+              Are you sure you want to delete {deletingStudent?.name}? This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-delete-cancel">Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-delete-cancel">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (deletingStudent) {
@@ -836,7 +982,10 @@ export default function AdminStudentsPage() {
       </Dialog>
 
       {/* Bulk Upload Modal */}
-      <Dialog open={isBulkUploadOpen} onOpenChange={(open) => !open && handleBulkUploadClose()}>
+      <Dialog
+        open={isBulkUploadOpen}
+        onOpenChange={(open) => !open && handleBulkUploadClose()}
+      >
         <DialogContent className="max-w-lg" data-testid="dialog-bulk-upload">
           <DialogHeader>
             <DialogTitle>Bulk Upload Students</DialogTitle>
@@ -900,46 +1049,62 @@ export default function AdminStudentsPage() {
 
             {/* Upload Results */}
             {bulkUploadResult && (
-              <div className="space-y-3 p-4 rounded-lg bg-gray-50 border" data-testid="bulk-upload-result">
+              <div
+                className="space-y-3 p-4 rounded-lg bg-gray-50 border"
+                data-testid="bulk-upload-result"
+              >
                 <h4 className="font-medium text-gray-900">Upload Results</h4>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-2xl font-bold text-gray-900">{bulkUploadResult.totalRows}</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {bulkUploadResult.totalRows}
+                    </p>
                     <p className="text-xs text-gray-500">Total Rows</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-green-600">{bulkUploadResult.created}</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {bulkUploadResult.created}
+                    </p>
                     <p className="text-xs text-gray-500">Created</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-orange-600">{bulkUploadResult.skipped}</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {bulkUploadResult.skipped}
+                    </p>
                     <p className="text-xs text-gray-500">Skipped</p>
                   </div>
                 </div>
 
                 {bulkUploadResult.errors.length > 0 && (
                   <div className="mt-3">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Errors:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      Errors:
+                    </p>
                     <div className="max-h-40 overflow-y-auto space-y-1">
                       {bulkUploadResult.errors.map((error, index) => (
-                        <div 
-                          key={index} 
+                        <div
+                          key={index}
                           className="flex items-start gap-2 text-sm text-red-600 bg-red-50 p-2 rounded"
                         >
                           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                          <span>Row {error.row}: {error.reason}</span>
+                          <span>
+                            Row {error.row}: {error.reason}
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {bulkUploadResult.created > 0 && bulkUploadResult.skipped === 0 && (
-                  <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded">
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span className="font-medium">All students uploaded successfully!</span>
-                  </div>
-                )}
+                {bulkUploadResult.created > 0 &&
+                  bulkUploadResult.skipped === 0 && (
+                    <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded">
+                      <CheckCircle2 className="w-5 h-5" />
+                      <span className="font-medium">
+                        All students uploaded successfully!
+                      </span>
+                    </div>
+                  )}
               </div>
             )}
           </div>
