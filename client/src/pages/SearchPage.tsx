@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Search, Loader2, BookOpen, FileText, GraduationCap } from "lucide-react";
+import { ArrowLeft, Search, Loader2, FileText } from "lucide-react";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 
@@ -20,7 +20,7 @@ export default function SearchPage() {
   const [, setLocation] = useLocation();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [lessons, setLessons] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -34,7 +34,7 @@ export default function SearchPage() {
 
   const performSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
-      setResults([]);
+      setLessons([]);
       setHasSearched(false);
       return;
     }
@@ -46,10 +46,12 @@ export default function SearchPage() {
       const response = await fetch(`/api/public/v1/search?q=${encodeURIComponent(searchQuery)}`);
       if (!response.ok) throw new Error("Search failed");
       const data: SearchResponse = await response.json();
-      setResults(data.results);
+      // Filter to only include lessons
+      const lessonsOnly = data.results.filter(r => r.type === "lesson");
+      setLessons(lessonsOnly);
     } catch (error) {
       console.error("Search error:", error);
-      setResults([]);
+      setLessons([]);
     } finally {
       setIsLoading(false);
     }
@@ -63,10 +65,6 @@ export default function SearchPage() {
     setLocation(result.navigate_to);
   };
 
-  const modules = results.filter(r => r.type === "module");
-  const lessons = results.filter(r => r.type === "lesson");
-  const courses = results.filter(r => r.type === "course");
-
   const getFeatureLabel = (feature: string) => {
     switch (feature) {
       case "DYD": return "DYD Process";
@@ -74,15 +72,6 @@ export default function SearchPage() {
       case "BREATH": return "Spiritual Breaths";
       case "ABUNDANCE": return "Daily Abundance";
       default: return feature;
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "module": return <BookOpen className="w-5 h-5 text-brand" />;
-      case "lesson": return <FileText className="w-5 h-5 text-green-600" />;
-      case "course": return <GraduationCap className="w-5 h-5 text-amber-600" />;
-      default: return null;
     }
   };
 
@@ -102,7 +91,7 @@ export default function SearchPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search modules, lessons, courses..."
+                placeholder="Search lessons..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="pl-10"
@@ -118,83 +107,26 @@ export default function SearchPage() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-brand" />
             </div>
-          ) : hasSearched && results.length === 0 ? (
+          ) : hasSearched && lessons.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground" data-testid="text-no-results">
-              No matching content found
+              No lessons found
             </div>
-          ) : results.length > 0 ? (
-            <div className="space-y-6">
-              {modules.length > 0 && (
-                <div>
-                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-modules">
-                    Modules ({modules.length})
-                  </h2>
-                  <div className="space-y-2">
-                    {modules.map((result) => (
-                      <button
-                        key={`module-${result.id}`}
-                        onClick={() => handleResultClick(result)}
-                        className="w-full flex items-center gap-3 p-3 bg-card rounded-lg hover-elevate active-elevate-2 text-left"
-                        data-testid={`result-module-${result.id}`}
-                      >
-                        {getTypeIcon(result.type)}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-foreground font-medium truncate">{result.title}</p>
-                          <p className="text-xs text-muted-foreground">{getFeatureLabel(result.feature)}</p>
-                        </div>
-                      </button>
-                    ))}
+          ) : lessons.length > 0 ? (
+            <div className="space-y-2">
+              {lessons.map((result) => (
+                <button
+                  key={`lesson-${result.id}`}
+                  onClick={() => handleResultClick(result)}
+                  className="w-full flex items-center gap-3 p-3 bg-card rounded-lg hover-elevate active-elevate-2 text-left"
+                  data-testid={`result-lesson-${result.id}`}
+                >
+                  <FileText className="w-5 h-5 text-green-600" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-foreground font-medium truncate">{result.title}</p>
+                    <p className="text-xs text-muted-foreground">{getFeatureLabel(result.feature)}</p>
                   </div>
-                </div>
-              )}
-
-              {lessons.length > 0 && (
-                <div>
-                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-lessons">
-                    Lessons ({lessons.length})
-                  </h2>
-                  <div className="space-y-2">
-                    {lessons.map((result) => (
-                      <button
-                        key={`lesson-${result.id}`}
-                        onClick={() => handleResultClick(result)}
-                        className="w-full flex items-center gap-3 p-3 bg-card rounded-lg hover-elevate active-elevate-2 text-left"
-                        data-testid={`result-lesson-${result.id}`}
-                      >
-                        {getTypeIcon(result.type)}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-foreground font-medium truncate">{result.title}</p>
-                          <p className="text-xs text-muted-foreground">{getFeatureLabel(result.feature)}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {courses.length > 0 && (
-                <div>
-                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-courses">
-                    Courses ({courses.length})
-                  </h2>
-                  <div className="space-y-2">
-                    {courses.map((result) => (
-                      <button
-                        key={`course-${result.id}`}
-                        onClick={() => handleResultClick(result)}
-                        className="w-full flex items-center gap-3 p-3 bg-card rounded-lg hover-elevate active-elevate-2 text-left"
-                        data-testid={`result-course-${result.id}`}
-                      >
-                        {getTypeIcon(result.type)}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-foreground font-medium truncate">{result.title}</p>
-                          <p className="text-xs text-muted-foreground">{getFeatureLabel(result.feature)}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+                </button>
+              ))}
             </div>
           ) : !hasSearched ? (
             <div className="text-center py-12 text-muted-foreground" data-testid="text-search-prompt">
