@@ -183,11 +183,17 @@ export default function ProcessLessonPage() {
             </Card>
           )}
 
+          <p>
+            <strong>Title: </strong>
+            {lesson.title}
+          </p>
+
           {lesson.description && (
             <p
               className="text-muted-foreground whitespace-pre-line"
               data-testid="text-lesson-description"
             >
+              <strong className="text-foreground">Description: </strong>
               {lesson.description}
             </p>
           )}

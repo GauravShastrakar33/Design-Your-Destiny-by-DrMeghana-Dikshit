@@ -349,28 +349,34 @@ export default function AdminEventsPage() {
             event.recordingUrl ? null : !showDecisionActions ? ( // Recording published: No actions needed (already shows "Recording available till...")
             <>
               {/* Standard actions for non-decision cards */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  setLocation(`/admin/events/${event.id}/edit?tab=${activeTab}`)
-                }
-                data-testid={`button-edit-event-${event.id}`}
-              >
-                <Edit className="w-4 h-4 mr-1" />
-                Edit
-              </Button>
-              {event.joinUrl && event.status !== "COMPLETED" && (
+              {event.status !== "COMPLETED" && event.status !== "CANCELLED" && (
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => window.open(event.joinUrl!, "_blank")}
-                  data-testid={`button-join-event-${event.id}`}
+                  onClick={() =>
+                    setLocation(
+                      `/admin/events/${event.id}/edit?tab=${activeTab}`
+                    )
+                  }
+                  data-testid={`button-edit-event-${event.id}`}
                 >
-                  <ExternalLink className="w-4 h-4 mr-1" />
-                  Join Link
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
                 </Button>
               )}
+              {event.joinUrl &&
+                event.status !== "COMPLETED" &&
+                event.status !== "CANCELLED" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(event.joinUrl!, "_blank")}
+                    data-testid={`button-join-event-${event.id}`}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    Join Link
+                  </Button>
+                )}
               {event.status !== "CANCELLED" && event.status !== "COMPLETED" && (
                 <Button
                   size="sm"
