@@ -156,12 +156,16 @@ export default function AdminAbundanceMasteryPage() {
       <div className="mb-6">
         <div className="flex items-center gap-3">
           <DollarSign className="w-6 h-6 text-brand" />
-          <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">
+          <h1
+            className="text-2xl font-bold text-gray-900"
+            data-testid="text-page-title"
+          >
             Abundance Mastery
           </h1>
         </div>
         <p className="text-gray-600 mt-1">
-          Manage the Abundance Mastery course list with built-in items and CMS courses.
+          Manage the Abundance Mastery course list with built-in items and CMS
+          courses.
         </p>
       </div>
 
@@ -169,19 +173,24 @@ export default function AdminAbundanceMasteryPage() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Built-in Items</h3>
           <p className="text-gray-600 text-sm mb-4">
-            These items are always shown first and cannot be removed or reordered.
+            These items are always shown first and cannot be removed or
+            reordered.
           </p>
 
           <div className="space-y-2">
             <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <Calendar className="w-5 h-5 text-amber-600" />
               <span className="text-gray-900 font-medium">Money Calendar</span>
-              <span className="ml-auto text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">Built-in</span>
+              <span className="ml-auto text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">
+                Built-in
+              </span>
             </div>
             <div className="flex items-center gap-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
               <Brain className="w-5 h-5 text-purple-600" />
               <span className="text-gray-900 font-medium">Rewiring Belief</span>
-              <span className="ml-auto text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">Built-in</span>
+              <span className="ml-auto text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                Built-in
+              </span>
             </div>
           </div>
         </Card>
@@ -189,12 +198,19 @@ export default function AdminAbundanceMasteryPage() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Add CMS Course</h3>
           <p className="text-gray-600 text-sm mb-4">
-            Add CMS courses to appear after the built-in items. You can drag to reorder.
+            Add CMS courses to appear after the built-in items. You can drag to
+            reorder.
           </p>
 
           <div className="flex items-center gap-4">
-            <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
-              <SelectTrigger className="w-[300px]" data-testid="select-abundance-course">
+            <Select
+              value={selectedCourseId}
+              onValueChange={setSelectedCourseId}
+            >
+              <SelectTrigger
+                className="w-[300px]"
+                data-testid="select-abundance-course"
+              >
                 <SelectValue placeholder="Select a course to add" />
               </SelectTrigger>
               <SelectContent>
@@ -209,6 +225,7 @@ export default function AdminAbundanceMasteryPage() {
             <Button
               onClick={handleAddCourse}
               disabled={!selectedCourseId || addCourseMutation.isPending}
+              className="bg-brand hover:bg-brand/90"
               data-testid="button-add-abundance-course"
             >
               <Plus className="w-4 h-4 mr-1" />
@@ -233,7 +250,9 @@ export default function AdminAbundanceMasteryPage() {
                   onDragOver={(e) => handleDragOver(e, index)}
                   onDragEnd={handleDragEnd}
                   className={`flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-move transition-colors ${
-                    draggedIndex === index ? "bg-brand/10 border-2 border-brand" : "hover:bg-gray-100"
+                    draggedIndex === index
+                      ? "bg-brand/10 border-2 border-brand"
+                      : "hover:bg-gray-100"
                   }`}
                   data-testid={`mapped-course-${mapping.courseId}`}
                 >
@@ -241,7 +260,9 @@ export default function AdminAbundanceMasteryPage() {
                   <span className="w-6 h-6 flex items-center justify-center bg-brand/10 text-brand text-sm font-medium rounded">
                     {index + 1}
                   </span>
-                  <span className="text-gray-900 flex-1">{mapping.course.title}</span>
+                  <span className="text-gray-900 flex-1">
+                    {mapping.course.title}
+                  </span>
                   <Button
                     variant="ghost"
                     size="sm"

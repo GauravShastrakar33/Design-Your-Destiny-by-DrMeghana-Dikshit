@@ -33,15 +33,17 @@ import { Label } from "@/components/ui/label";
 
 type EventWithSignedUrl = Event & { thumbnailSignedUrl?: string | null };
 
-function getEventDisplayStatus(event: Event): "draft" | "upcoming" | "live" | "completed" | "cancelled" {
+function getEventDisplayStatus(
+  event: Event
+): "draft" | "upcoming" | "live" | "completed" | "cancelled" {
   if (event.status === "DRAFT") return "draft";
   if (event.status === "CANCELLED") return "cancelled";
   if (event.status === "COMPLETED") return "completed";
-  
+
   const now = new Date();
   const start = new Date(event.startDatetime);
   const end = new Date(event.endDatetime);
-  
+
   if (now >= start && now <= end) return "live";
   if (now < start) return "upcoming";
   return "completed";
@@ -50,7 +52,9 @@ function getEventDisplayStatus(event: Event): "draft" | "upcoming" | "live" | "c
 function getStatusBadge(status: string) {
   switch (status) {
     case "live":
-      return <Badge className="bg-red-500 text-white animate-pulse">LIVE</Badge>;
+      return (
+        <Badge className="bg-red-500 text-white animate-pulse">LIVE</Badge>
+      );
     case "upcoming":
       return <Badge className="bg-blue-500 text-white">Upcoming</Badge>;
     case "completed":
@@ -67,21 +71,25 @@ function getStatusBadge(status: string) {
 function needsRecordingDecision(event: Event): boolean {
   // Event needs decision if: COMPLETED, no recording URL, not showing recording, and NOT skipped
   // Note: recordingSkipped defaults to false, but handle null/undefined for safety
-  return event.status === "COMPLETED" && 
-         event.recordingUrl === null && 
-         event.showRecording === false &&
-         !event.recordingSkipped;
+  return (
+    event.status === "COMPLETED" &&
+    event.recordingUrl === null &&
+    event.showRecording === false &&
+    !event.recordingSkipped
+  );
 }
 
 export default function AdminEventsPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("upcoming");
-  const [recordingDialogEvent, setRecordingDialogEvent] = useState<EventWithSignedUrl | null>(null);
+  const [recordingDialogEvent, setRecordingDialogEvent] =
+    useState<EventWithSignedUrl | null>(null);
   const [recordingUrl, setRecordingUrl] = useState("");
   const [recordingPasscode, setRecordingPasscode] = useState("");
   const [recordingExpiryDate, setRecordingExpiryDate] = useState("");
-  const [skipConfirmEvent, setSkipConfirmEvent] = useState<EventWithSignedUrl | null>(null);
+  const [skipConfirmEvent, setSkipConfirmEvent] =
+    useState<EventWithSignedUrl | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("@app:admin_token");
@@ -129,12 +137,15 @@ export default function AdminEventsPage() {
 
   const skipRecordingMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/v1/events/${id}/skip-recording`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-        },
-      });
+      const response = await fetch(
+        `/api/admin/v1/events/${id}/skip-recording`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        }
+      );
       if (!response.ok) throw new Error("Failed to skip recording");
       return response.json();
     },
@@ -185,7 +196,10 @@ export default function AdminEventsPage() {
   const handleAddRecording = () => {
     if (!recordingDialogEvent) return;
     if (!recordingUrl || !recordingPasscode || !recordingExpiryDate) {
-      toast({ title: "Please fill all recording fields", variant: "destructive" });
+      toast({
+        title: "Please fill all recording fields",
+        variant: "destructive",
+      });
       return;
     }
     addRecordingMutation.mutate({
@@ -199,17 +213,18 @@ export default function AdminEventsPage() {
   };
 
   const upcomingEvents = allEvents.filter(
-    (e) => e.status === "UPCOMING" && isAfter(new Date(e.endDatetime), new Date())
+    (e) =>
+      e.status === "UPCOMING" && isAfter(new Date(e.endDatetime), new Date())
   );
 
   // Latest Events: Show COMPLETED only (never CANCELLED), hide expired recordings, hide skipped
   const latestEvents = allEvents.filter((e) => {
     // Only show COMPLETED events, never CANCELLED
     if (e.status !== "COMPLETED") return false;
-    
+
     // Hide skipped events (they only appear in All Events)
     if (e.recordingSkipped) return false;
-    
+
     // Hide events with expired recordings (but include events without expiry date or pending decision)
     if (e.recordingExpiryDate) {
       const expiryDate = new Date(e.recordingExpiryDate);
@@ -217,18 +232,21 @@ export default function AdminEventsPage() {
       now.setHours(0, 0, 0, 0);
       if (expiryDate < now) return false;
     }
-    
+
     return true;
   });
 
   const eventsNeedingDecision = latestEvents.filter(needsRecordingDecision);
-  
+
   // Events with recordings published (for display in Recent Events)
   const eventsWithRecordings = latestEvents.filter(
     (e) => e.showRecording === true && e.recordingUrl
   );
 
-  const renderEventCard = (event: EventWithSignedUrl, showDecisionActions = false) => {
+  const renderEventCard = (
+    event: EventWithSignedUrl,
+    showDecisionActions = false
+  ) => {
     const displayStatus = getEventDisplayStatus(event);
     const needsDecision = needsRecordingDecision(event);
 
@@ -247,11 +265,15 @@ export default function AdminEventsPage() {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-semibold truncate">{event.title}</h3>
+            <div className="flex items-start justify-between gap-2 overflow-x-hidden">
+              <div className="min-w-0">
+                <h3 className="font-semibold truncate" title={event.title}>
+                  {event.title}
+                </h3>
                 {event.coachName && (
-                  <p className="text-sm text-muted-foreground">by {event.coachName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    by {event.coachName}
+                  </p>
                 )}
               </div>
               {getStatusBadge(displayStatus)}
@@ -274,10 +296,12 @@ export default function AdminEventsPage() {
             {event.showRecording && event.recordingUrl && (
               <Badge variant="secondary" className="mt-2 ml-2">
                 <Video className="w-3 h-3 mr-1" />
-                {event.recordingExpiryDate 
-                  ? `Recording available till ${format(new Date(event.recordingExpiryDate), "MMM d, yyyy")}`
-                  : "Recording Available"
-                }
+                {event.recordingExpiryDate
+                  ? `Recording available till ${format(
+                      new Date(event.recordingExpiryDate),
+                      "MMM d, yyyy"
+                    )}`
+                  : "Recording Available"}
               </Badge>
             )}
           </div>
@@ -290,6 +314,7 @@ export default function AdminEventsPage() {
               <Button
                 size="sm"
                 onClick={() => setRecordingDialogEvent(event)}
+                className="bg-brand hover:bg-brand/90"
                 data-testid={`button-add-recording-${event.id}`}
               >
                 <Video className="w-4 h-4 mr-1" />
@@ -305,10 +330,9 @@ export default function AdminEventsPage() {
                 Skip Recording
               </Button>
             </>
-          ) : showDecisionActions && event.showRecording && event.recordingUrl ? (
-            // Recording published: No actions needed (already shows "Recording available till...")
-            null
-          ) : !showDecisionActions ? (
+          ) : showDecisionActions &&
+            event.showRecording &&
+            event.recordingUrl ? null : !showDecisionActions ? ( // Recording published: No actions needed (already shows "Recording available till...")
             <>
               {/* Standard actions for non-decision cards */}
               <Button
@@ -356,6 +380,7 @@ export default function AdminEventsPage() {
         <h1 className="text-2xl font-bold">Event Calendar</h1>
         <Button
           onClick={() => setLocation("/admin/events/new")}
+          className="bg-brand hover:bg-brand/90"
           data-testid="button-add-event"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -371,7 +396,9 @@ export default function AdminEventsPage() {
           <TabsTrigger value="latest" data-testid="tab-latest">
             Latest
             {eventsNeedingDecision.length > 0 && (
-              <Badge className="ml-2 bg-amber-500">{eventsNeedingDecision.length}</Badge>
+              <Badge className="ml-2 bg-amber-500">
+                {eventsNeedingDecision.length}
+              </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="all" data-testid="tab-all">
@@ -410,16 +437,22 @@ export default function AdminEventsPage() {
                     Needs Recording Decision
                   </h2>
                   <div className="space-y-4">
-                    {eventsNeedingDecision.map((event) => renderEventCard(event, true))}
+                    {eventsNeedingDecision.map((event) =>
+                      renderEventCard(event, true)
+                    )}
                   </div>
                 </div>
               )}
 
               {eventsWithRecordings.length > 0 && (
                 <div>
-                  <h2 className="text-lg font-semibold mb-3">Recording Published</h2>
+                  <h2 className="text-lg font-semibold mb-3">
+                    Recording Published
+                  </h2>
                   <div className="space-y-4">
-                    {eventsWithRecordings.map((event) => renderEventCard(event, true))}
+                    {eventsWithRecordings.map((event) =>
+                      renderEventCard(event, true)
+                    )}
                   </div>
                 </div>
               )}
@@ -432,7 +465,9 @@ export default function AdminEventsPage() {
             <div className="text-center py-8">Loading...</div>
           ) : allEvents.length === 0 ? (
             <Card className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">No events created yet</p>
+              <p className="text-muted-foreground mb-4">
+                No events created yet
+              </p>
               <Button onClick={() => setLocation("/admin/events/new")}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create First Event
@@ -446,7 +481,10 @@ export default function AdminEventsPage() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={!!recordingDialogEvent} onOpenChange={() => setRecordingDialogEvent(null)}>
+      <Dialog
+        open={!!recordingDialogEvent}
+        onOpenChange={() => setRecordingDialogEvent(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Recording</DialogTitle>
@@ -487,7 +525,10 @@ export default function AdminEventsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRecordingDialogEvent(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setRecordingDialogEvent(null)}
+            >
               Cancel
             </Button>
             <Button
@@ -502,7 +543,10 @@ export default function AdminEventsPage() {
       </Dialog>
 
       {/* Skip Recording Confirmation Modal */}
-      <Dialog open={!!skipConfirmEvent} onOpenChange={() => setSkipConfirmEvent(null)}>
+      <Dialog
+        open={!!skipConfirmEvent}
+        onOpenChange={() => setSkipConfirmEvent(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -510,8 +554,10 @@ export default function AdminEventsPage() {
               Skip Recording for this Event?
             </DialogTitle>
             <DialogDescription className="pt-2">
-              This event will not have a recording and will not appear in Latest for users.
-              <br /><br />
+              This event will not have a recording and will not appear in Latest
+              for users.
+              <br />
+              <br />
               You can still add a recording later from All Events.
             </DialogDescription>
           </DialogHeader>
@@ -533,7 +579,9 @@ export default function AdminEventsPage() {
               disabled={skipRecordingMutation.isPending}
               data-testid="button-skip-confirm"
             >
-              {skipRecordingMutation.isPending ? "Skipping..." : "Skip Recording"}
+              {skipRecordingMutation.isPending
+                ? "Skipping..."
+                : "Skip Recording"}
             </Button>
           </DialogFooter>
         </DialogContent>

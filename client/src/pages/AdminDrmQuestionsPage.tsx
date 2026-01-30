@@ -243,15 +243,22 @@ export default function AdminDrmQuestionsPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-admin-drm-title">Dr.M Questions</h1>
-          <p className="text-muted-foreground">Manage user questions and voice answers</p>
+          <h1 className="text-2xl font-bold" data-testid="text-admin-drm-title">
+            Dr.M Questions
+          </h1>
+          <p className="text-muted-foreground">
+            Manage user questions and voice answers
+          </p>
         </div>
         <div className="flex gap-2">
           <Badge variant="outline" className="gap-1">
             <Clock className="w-3 h-3" />
             {pendingQuestions.length} Pending
           </Badge>
-          <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200">
+          <Badge
+            variant="outline"
+            className="gap-1 bg-green-50 text-green-700 border-green-200"
+          >
             <CheckCircle2 className="w-3 h-3" />
             {answeredQuestions.length} Answered
           </Badge>
@@ -266,23 +273,33 @@ export default function AdminDrmQuestionsPage() {
           </h2>
           <div className="grid gap-4">
             {pendingQuestions.map((question) => (
-              <Card key={question.id} data-testid={`card-pending-question-${question.id}`}>
+              <Card
+                key={question.id}
+                data-testid={`card-pending-question-${question.id}`}
+              >
                 <CardContent className="pt-4">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">{question.userName}</span>
+                        <span className="font-medium text-foreground">
+                          {question.userName}
+                        </span>
                         <span>•</span>
                         <span>{formatMonthYear(question.monthYear)}</span>
                       </div>
                       <p className="text-base">{question.questionText}</p>
                       <p className="text-xs text-muted-foreground">
-                        Asked {format(new Date(question.askedAt), "MMM d, yyyy 'at' h:mm a")}
+                        Asked{" "}
+                        {format(
+                          new Date(question.askedAt),
+                          "MMM d, yyyy 'at' h:mm a"
+                        )}
                       </p>
                     </div>
                     <Button
                       onClick={() => openAnswerDialog(question)}
                       data-testid={`button-answer-${question.id}`}
+                      className="bg-brand hover:bg-brand/90"
                     >
                       <Mic className="w-4 h-4 mr-2" />
                       Record Answer
@@ -303,20 +320,35 @@ export default function AdminDrmQuestionsPage() {
           </h2>
           <div className="grid gap-4">
             {answeredQuestions.map((question) => (
-              <Card key={question.id} className="bg-green-50/50" data-testid={`card-answered-question-${question.id}`}>
+              <Card
+                key={question.id}
+                className="bg-green-50/50"
+                data-testid={`card-answered-question-${question.id}`}
+              >
                 <CardContent className="pt-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium text-foreground">{question.userName}</span>
+                      <span className="font-medium text-foreground">
+                        {question.userName}
+                      </span>
                       <span>•</span>
                       <span>{formatMonthYear(question.monthYear)}</span>
-                      <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-100 text-green-700"
+                      >
                         Answered
                       </Badge>
                     </div>
                     <p className="text-base">{question.questionText}</p>
                     <p className="text-xs text-muted-foreground">
-                      Answered {question.answeredAt ? format(new Date(question.answeredAt), "MMM d, yyyy 'at' h:mm a") : ""}
+                      Answered{" "}
+                      {question.answeredAt
+                        ? format(
+                            new Date(question.answeredAt),
+                            "MMM d, yyyy 'at' h:mm a"
+                          )
+                        : ""}
                     </p>
                   </div>
                 </CardContent>
@@ -331,14 +363,19 @@ export default function AdminDrmQuestionsPage() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <MessageCircle className="w-12 h-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium">No questions yet</h3>
-            <p className="text-muted-foreground">Questions from users will appear here.</p>
+            <p className="text-muted-foreground">
+              Questions from users will appear here.
+            </p>
           </CardContent>
         </Card>
       )}
 
-      <Dialog open={answerDialogOpen} onOpenChange={(open) => {
-        if (!open) closeAnswerDialog();
-      }}>
+      <Dialog
+        open={answerDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) closeAnswerDialog();
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Record Your Answer</DialogTitle>
@@ -346,7 +383,7 @@ export default function AdminDrmQuestionsPage() {
               Record a voice response for {selectedQuestion?.userName}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedQuestion && (
             <div className="space-y-4">
               <div className="bg-muted rounded-lg p-3">
@@ -363,7 +400,11 @@ export default function AdminDrmQuestionsPage() {
                     className="w-32 h-32 rounded-full"
                     data-testid="button-record"
                   >
-                    <Mic className={`w-12 h-12 ${isRecording ? "animate-pulse" : ""}`} />
+                    <Mic
+                      className={`w-12 h-12 ${
+                        isRecording ? "animate-pulse" : ""
+                      }`}
+                    />
                   </Button>
                 ) : (
                   <div className="w-full space-y-4">
@@ -375,13 +416,16 @@ export default function AdminDrmQuestionsPage() {
                         <div>
                           <p className="font-medium text-sm">Recording ready</p>
                           <p className="text-xs text-muted-foreground">
-                            Duration: {audioDuration > 0 ? formatDuration(audioDuration) : "Loading..."}
+                            Duration:{" "}
+                            {audioDuration > 0
+                              ? formatDuration(audioDuration)
+                              : "Loading..."}
                           </p>
                         </div>
                       </div>
-                      <audio 
-                        ref={audioRef} 
-                        src={audioUrl} 
+                      <audio
+                        ref={audioRef}
+                        src={audioUrl}
                         controls
                         className="w-full h-10"
                         onLoadedMetadata={(e) => {
@@ -410,11 +454,11 @@ export default function AdminDrmQuestionsPage() {
                   </div>
                 )}
                 <p className="text-sm text-muted-foreground text-center">
-                  {isRecording 
-                    ? "Recording... Click to stop" 
-                    : audioUrl 
-                      ? "Preview your recording or re-record"
-                      : "Click the microphone to start recording"}
+                  {isRecording
+                    ? "Recording... Click to stop"
+                    : audioUrl
+                    ? "Preview your recording or re-record"
+                    : "Click the microphone to start recording"}
                 </p>
               </div>
             </div>

@@ -159,7 +159,10 @@ export default function AdminMasterclassesPage() {
       <div className="mb-6">
         <div className="flex items-center gap-3">
           <GraduationCap className="w-6 h-6 text-brand" />
-          <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">
+          <h1
+            className="text-2xl font-bold text-gray-900"
+            data-testid="text-page-title"
+          >
             Masterclasses
           </h1>
         </div>
@@ -172,12 +175,19 @@ export default function AdminMasterclassesPage() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Add CMS Course</h3>
           <p className="text-gray-600 text-sm mb-4">
-            Add CMS courses to display in the Masterclasses section. You can drag to reorder.
+            Add CMS courses to display in the Masterclasses section. You can
+            drag to reorder.
           </p>
 
           <div className="flex items-center gap-4">
-            <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
-              <SelectTrigger className="w-[300px]" data-testid="select-masterclass-course">
+            <Select
+              value={selectedCourseId}
+              onValueChange={setSelectedCourseId}
+            >
+              <SelectTrigger
+                className="w-[300px]"
+                data-testid="select-masterclass-course"
+              >
                 <SelectValue placeholder="Select a course to add" />
               </SelectTrigger>
               <SelectContent>
@@ -193,6 +203,7 @@ export default function AdminMasterclassesPage() {
               onClick={handleAddCourse}
               disabled={!selectedCourseId || addCourseMutation.isPending}
               data-testid="button-add-masterclass-course"
+              className="bg-brand hover:bg-brand/90"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add Course
@@ -204,7 +215,8 @@ export default function AdminMasterclassesPage() {
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Mapped Courses</h3>
             <p className="text-gray-600 text-sm mb-4">
-              Drag to reorder. These courses will appear in the Masterclasses section of the app.
+              Drag to reorder. These courses will appear in the Masterclasses
+              section of the app.
             </p>
 
             <div className="space-y-2">
@@ -216,7 +228,9 @@ export default function AdminMasterclassesPage() {
                   onDragOver={(e) => handleDragOver(e, index)}
                   onDragEnd={handleDragEnd}
                   className={`flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-move transition-colors ${
-                    draggedIndex === index ? "bg-brand/10 border-2 border-brand" : "hover:bg-gray-100"
+                    draggedIndex === index
+                      ? "bg-brand/10 border-2 border-brand"
+                      : "hover:bg-gray-100"
                   }`}
                   data-testid={`mapped-masterclass-course-${mapping.courseId}`}
                 >
@@ -224,7 +238,9 @@ export default function AdminMasterclassesPage() {
                   <span className="w-6 h-6 flex items-center justify-center bg-brand/10 text-brand text-sm font-medium rounded">
                     {index + 1}
                   </span>
-                  <span className="text-gray-900 flex-1">{mapping.course.title}</span>
+                  <span className="text-gray-900 flex-1">
+                    {mapping.course.title}
+                  </span>
                   <Button
                     variant="ghost"
                     size="sm"

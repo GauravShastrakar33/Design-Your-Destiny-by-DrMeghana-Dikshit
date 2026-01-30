@@ -80,7 +80,9 @@ export default function AdminEventFormPage() {
     },
   });
 
-  const { data: event, isLoading: eventLoading } = useQuery<Event & { thumbnailSignedUrl?: string }>({
+  const { data: event, isLoading: eventLoading } = useQuery<
+    Event & { thumbnailSignedUrl?: string }
+  >({
     queryKey: ["/api/admin/v1/events", eventId],
     queryFn: async () => {
       const response = await fetch(`/api/admin/v1/events/${eventId}`, {
@@ -111,7 +113,7 @@ export default function AdminEventFormPage() {
     if (event && isEditing) {
       const startDt = new Date(event.startDatetime);
       const endDt = new Date(event.endDatetime);
-      
+
       form.reset({
         title: event.title,
         description: event.description || "",
@@ -124,7 +126,7 @@ export default function AdminEventFormPage() {
         requiredProgramLevel: event.requiredProgramLevel || 1,
         status: event.status as any,
       });
-      
+
       if (event.thumbnailSignedUrl) {
         setThumbnailPreview(event.thumbnailSignedUrl);
       }
@@ -195,18 +197,20 @@ export default function AdminEventFormPage() {
     setIsUploading(true);
     try {
       const response = await fetch(
-        `/api/admin/v1/events/upload-url?filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type)}`,
+        `/api/admin/v1/events/upload-url?filename=${encodeURIComponent(
+          file.name
+        )}&contentType=${encodeURIComponent(file.type)}`,
         {
           headers: {
             Authorization: `Bearer ${adminToken}`,
           },
         }
       );
-      
+
       if (!response.ok) throw new Error("Failed to get upload URL");
-      
+
       const { key, signedUrl } = await response.json();
-      
+
       const uploadResponse = await fetch(signedUrl, {
         method: "PUT",
         body: file,
@@ -214,9 +218,9 @@ export default function AdminEventFormPage() {
           "Content-Type": file.type,
         },
       });
-      
+
       if (!uploadResponse.ok) throw new Error("Failed to upload file");
-      
+
       form.setValue("thumbnailUrl", key);
       setThumbnailPreview(URL.createObjectURL(file));
       toast({ title: "Thumbnail uploaded successfully" });
@@ -357,7 +361,9 @@ export default function AdminEventFormPage() {
                     ) : (
                       <>
                         <ImageIcon className="w-8 h-8 text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">Upload Thumbnail</span>
+                        <span className="text-sm text-muted-foreground">
+                          Upload Thumbnail
+                        </span>
                       </>
                     )}
                   </label>
@@ -433,7 +439,7 @@ export default function AdminEventFormPage() {
                   <Select
                     value={field.value}
                     onValueChange={(code) => {
-                      const program = programs.find(p => p.code === code);
+                      const program = programs.find((p) => p.code === code);
                       if (!program) return;
                       form.setValue("requiredProgramCode", program.code);
                       form.setValue("requiredProgramLevel", program.level);
@@ -476,7 +482,9 @@ export default function AdminEventFormPage() {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="DRAFT">Draft</SelectItem>
-                      <SelectItem value="UPCOMING">Upcoming (Published)</SelectItem>
+                      <SelectItem value="UPCOMING">
+                        Upcoming (Published)
+                      </SelectItem>
                       {isEditing && (
                         <>
                           <SelectItem value="COMPLETED">Completed</SelectItem>
@@ -497,9 +505,10 @@ export default function AdminEventFormPage() {
               <Button
                 type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
+                className="bg-brand hover:bg-brand/90"
                 data-testid="button-save-event"
               >
-                {(createMutation.isPending || updateMutation.isPending)
+                {createMutation.isPending || updateMutation.isPending
                   ? "Saving..."
                   : isEditing
                   ? "Update Event"

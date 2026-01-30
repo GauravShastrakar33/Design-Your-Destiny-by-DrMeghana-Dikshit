@@ -46,7 +46,7 @@ export default function AdminNotificationsPage() {
       const response = await apiRequest(
         "POST",
         "/admin/api/notifications/test",
-        data,
+        data
       );
       const result = await response.json();
       console.log("[AdminNotifications] Send result:", result);
@@ -56,7 +56,9 @@ export default function AdminNotificationsPage() {
       console.log("[AdminNotifications] Success:", result);
       toast({
         title: "Notification sent",
-        description: `Successfully sent to ${result.successCount || 0} device(s)`,
+        description: `Successfully sent to ${
+          result.successCount || 0
+        } device(s)`,
       });
       setTitle("");
       setBody("");
@@ -111,8 +113,8 @@ export default function AdminNotificationsPage() {
               {isLoadingStats
                 ? "..."
                 : statsError
-                  ? "Error"
-                  : stats?.totalDevices || 0}
+                ? "Error"
+                : stats?.totalDevices || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">
               {statsError
@@ -180,7 +182,7 @@ export default function AdminNotificationsPage() {
           <Button
             onClick={handleSendNotification}
             disabled={sendMutation.isPending || !title.trim() || !body.trim()}
-            className="w-full md:w-auto"
+            className="bg-brand hover:bg-brand/90"
             data-testid="button-send-notification"
           >
             {sendMutation.isPending ? (

@@ -10,11 +10,13 @@ import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import type { SessionBanner } from "@shared/schema";
 
-function getBannerStatus(banner: SessionBanner): "scheduled" | "active" | "expired" {
+function getBannerStatus(
+  banner: SessionBanner
+): "scheduled" | "active" | "expired" {
   const now = new Date();
   const startAt = new Date(banner.startAt);
   const endAt = new Date(banner.endAt);
-  
+
   if (now < startAt) return "scheduled";
   if (now >= startAt && now < endAt) return "active";
   return "expired";
@@ -51,7 +53,7 @@ export default function AdminSessionBannersPage() {
     queryFn: async () => {
       const response = await fetch("/api/admin/v1/session-banners", {
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to fetch banners");
@@ -64,14 +66,16 @@ export default function AdminSessionBannersPage() {
       const response = await fetch(`/api/admin/v1/session-banners/${id}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to delete banner");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/session-banners"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/v1/session-banners"],
+      });
       toast({ title: "Banner deleted successfully" });
     },
     onError: () => {
@@ -81,17 +85,22 @@ export default function AdminSessionBannersPage() {
 
   const duplicateMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/v1/session-banners/${id}/duplicate`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${adminToken}`,
-        },
-      });
+      const response = await fetch(
+        `/api/admin/v1/session-banners/${id}/duplicate`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        }
+      );
       if (!response.ok) throw new Error("Failed to duplicate banner");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/session-banners"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/v1/session-banners"],
+      });
       toast({ title: "Banner duplicated successfully" });
     },
     onError: () => {
@@ -111,6 +120,7 @@ export default function AdminSessionBannersPage() {
         <h1 className="text-2xl font-bold">Session Banners</h1>
         <Button
           onClick={() => setLocation("/admin/session-banner/banners/new")}
+          className="bg-brand hover:bg-brand/90"
           data-testid="button-add-banner"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -136,14 +146,18 @@ export default function AdminSessionBannersPage() {
           {banners.map((banner) => {
             const status = getBannerStatus(banner);
             return (
-              <Card key={banner.id} className="p-4" data-testid={`card-banner-${banner.id}`}>
+              <Card
+                key={banner.id}
+                className="p-4 bg-white"
+                data-testid={`card-banner-${banner.id}`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                    <div className="w-12 h-12 border rounded flex items-center justify-center">
                       {banner.type === "session" ? (
-                        <Image className="w-6 h-6 text-muted-foreground" />
+                        <Image className="w-6 h-6 text-[#703DFA]" />
                       ) : (
-                        <Video className="w-6 h-6 text-muted-foreground" />
+                        <Video className="w-6 h-6 text-[#703DFA]" />
                       )}
                     </div>
                     <div>
@@ -157,8 +171,8 @@ export default function AdminSessionBannersPage() {
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {format(new Date(banner.startAt), "MMM d, yyyy h:mm a")} -{" "}
-                        {format(new Date(banner.endAt), "MMM d, yyyy h:mm a")}
+                        {format(new Date(banner.startAt), "MMM d, yyyy h:mm a")}{" "}
+                        - {format(new Date(banner.endAt), "MMM d, yyyy h:mm a")}
                       </p>
                       {banner.ctaText && (
                         <p className="text-sm mt-1">CTA: {banner.ctaText}</p>
@@ -178,7 +192,11 @@ export default function AdminSessionBannersPage() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => setLocation(`/admin/session-banner/banners/${banner.id}/edit`)}
+                      onClick={() =>
+                        setLocation(
+                          `/admin/session-banner/banners/${banner.id}/edit`
+                        )
+                      }
                       data-testid={`button-edit-${banner.id}`}
                     >
                       <Edit className="w-4 h-4" />
