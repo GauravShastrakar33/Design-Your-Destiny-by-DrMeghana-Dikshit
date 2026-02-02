@@ -42,58 +42,9 @@ if (Capacitor.isNativePlatform()) {
     }
 
     // 🔔 Push Notifications
-    const registerTokenWithBackend = async (token: string) => {
-      try {
-        const userToken = localStorage.getItem("@app:user_token");
-        if (!userToken) return false;
-
-        const res = await fetch("/api/v1/notifications/register-device", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${userToken}`,
-          },
-          body: JSON.stringify({ token }),
-        });
-
-        if (res.ok) {
-          window.dispatchEvent(
-            new CustomEvent("nativePushRegistered", {
-              detail: { success: true },
-            })
-          );
-          return true;
-        }
-        return false;
-      } catch (err) {
-        console.error("❌ Token registration failed", err);
-        return false;
-      }
-    };
-
-    setTimeout(async () => {
-      try {
-        const perm = await PushNotifications.requestPermissions();
-        if (perm.receive === "granted") {
-          await PushNotifications.register();
-        }
-
-        PushNotifications.addListener("registration", async (token) => {
-          console.log("🔥 FCM TOKEN:", token.value);
-          await registerTokenWithBackend(token.value);
-        });
-
-        PushNotifications.addListener("registrationError", (err) => {
-          console.error("❌ Push error", err);
-          window.dispatchEvent(
-            new CustomEvent("nativePushRegistered", {
-              detail: { success: false, error: err },
-            })
-          );
-        });
-      } catch (e) {
-        console.error("❌ Push init failed", e);
-      }
-    }, 1000);
+    const { initPushNotifications } = await import("./lib/nativePush");
+    const { enableBackgroundAudio } = await import("./lib/backgroundAudio");
+    initPushNotifications();
+    enableBackgroundAudio();
   })();
 }

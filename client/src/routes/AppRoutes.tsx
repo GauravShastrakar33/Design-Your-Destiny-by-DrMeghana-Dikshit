@@ -41,6 +41,7 @@ export default function AppRoutes() {
       <Route path="/spiritual-breaths" component={SpiritualBreathsPage} />
       <Route path="/workshops" component={EventCalendarPage} />
       <Route path="/events" component={EventCalendarPage} />
+      <Route path="/events/:id" component={EventCalendarPage} />
       <Route path="/playlist" component={MyPracticePlaylistPage} />
       <Route path="/heart" component={ProjectOfHeartPage} />
       <Route path="/project-of-heart" component={ProjectOfHeartPage} />

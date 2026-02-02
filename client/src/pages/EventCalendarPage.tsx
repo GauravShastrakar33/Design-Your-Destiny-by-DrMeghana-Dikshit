@@ -8,7 +8,7 @@ import {
   Copy,
   ExternalLink,
 } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -100,6 +100,28 @@ export default function EventCalendarPage() {
     refetchOnReconnect: true,
   });
 
+  const [match, params] = useRoute("/events/:id");
+
+  // Handle deep link from notification
+  useEffect(() => {
+    if (match && params?.id) {
+      const eventId = parseInt(params.id);
+      if (!isNaN(eventId)) {
+        const foundUpcoming = upcomingEvents.find((e) => e.id === eventId);
+        const foundLatest = latestEvents.find((e) => e.id === eventId);
+        const found = foundUpcoming || foundLatest;
+
+        if (found) {
+          setSelectedEvent(found);
+          // Auto-switch tab if the event is in "latest" (recordings)
+          if (!foundUpcoming && foundLatest) {
+            setActiveTab("latest");
+          }
+        }
+      }
+    }
+  }, [match, params?.id, upcomingEvents, latestEvents]);
+
   const tabs = [
     { id: "upcoming" as Tab, label: "Upcoming" },
     { id: "latest" as Tab, label: "Latest" },
@@ -169,11 +191,10 @@ export default function EventCalendarPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-all ${
-                    activeTab === tab.id
-                      ? "bg-[#703DFA] text-white"
-                      : "bg-[#F3F0FF] text-gray-600 hover-elevate"
-                  }`}
+                  className={`px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-all ${activeTab === tab.id
+                    ? "bg-[#703DFA] text-white"
+                    : "bg-[#F3F0FF] text-gray-600 hover-elevate"
+                    }`}
                   data-testid={`tab-${tab.id}`}
                 >
                   {tab.label}

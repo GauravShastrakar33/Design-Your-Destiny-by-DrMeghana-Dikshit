@@ -27,7 +27,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useEvaluateBadgesOnMount } from "@/hooks/useBadges";
 import { BadgeToastManager } from "@/components/BadgeEarnedToast";
-import { getUnread } from "@/lib/notificationState";
+import { getUnreadCount } from "@/lib/notificationState";
 
 interface BannerData {
   banner: {
@@ -61,12 +61,12 @@ export default function HomePage() {
   const [newBadges, setNewBadges] = useState<string[]>([]);
   const [badgeEvaluated, setBadgeEvaluated] = useState(false);
 
-  const [hasUnread, setHasUnread] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const loadUnread = async () => {
-      const value = await getUnread();
-      setHasUnread(value);
+      const count = await getUnreadCount();
+      setUnreadCount(count);
     };
 
     // Initial load when Home opens
@@ -213,7 +213,9 @@ export default function HomePage() {
           }`}
         >
           <div className="flex-1">
-            <h1 className="text-lg font-semibold text-primary-text">Welcome Designer 💫</h1>
+            <h1 className="text-lg font-semibold text-primary-text">
+              Welcome Designer 💫
+            </h1>
             <p className="text-sm text-gray-600 mt-0.5">
               How's your energy today?
             </p>
@@ -235,8 +237,10 @@ export default function HomePage() {
                 <Bell className="w-5 h-5 text-primary" strokeWidth={2} />
               </button>
 
-              {hasUnread && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold border-2 border-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
               )}
             </div>
           </div>

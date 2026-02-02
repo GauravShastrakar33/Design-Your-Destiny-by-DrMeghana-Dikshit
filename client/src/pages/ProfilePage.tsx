@@ -36,7 +36,8 @@ import {
 import {
   isNativePlatform,
   checkNativePermissionStatus,
-  requestNativePushPermission,
+  initPushNotifications,
+  setPushEnabled,
   setupNativePushListeners,
 } from "@/lib/nativePush";
 import { Card, CardContent } from "@/components/ui/card";
@@ -119,15 +120,14 @@ export default function ProfilePage() {
 
     // Check notification status - combines OS permission + backend status
     const checkNotificationStatus = async () => {
-      // First check backend status (DB source of truth for enabled state)
-      const backendEnabled = await getNotificationStatus();
-
-      // On native platform, also verify OS permission is still granted
       if (isNativePlatform()) {
+        const isEnabled = localStorage.getItem("push_enabled") === "true";
         const osPermission = await checkNativePermissionStatus();
-        // Only show as enabled if BOTH backend says enabled AND OS permission is granted
-        setNotificationsEnabled(backendEnabled && osPermission === "granted");
+        // Only show as enabled if BOTH preference is true AND OS permission is granted
+        setNotificationsEnabled(isEnabled && osPermission === "granted");
       } else {
+        // First check backend status (DB source of truth for enabled state)
+        const backendEnabled = await getNotificationStatus();
         // On web, check browser permission too
         const browserGranted =
           "Notification" in window && Notification.permission === "granted";
@@ -191,46 +191,27 @@ export default function ProfilePage() {
   const handleToggleNotifications = async () => {
     setNotificationsLoading(true);
     try {
-      if (notificationsEnabled) {
-        // Disable: unregister device tokens from backend
-        const success = await unregisterDeviceTokens();
-        if (!success) {
-          console.error("Failed to unregister device tokens");
+      if (isNativePlatform()) {
+        const targetState = !notificationsEnabled;
+        const success = await setPushEnabled(targetState);
+
+        if (success) {
+          setNotificationsEnabled(targetState);
+        } else if (targetState) {
+          alert("Unable to enable notifications. Please check your device settings.");
         }
-        // Re-fetch status from DB to update toggle
-        const enabled = await getNotificationStatus();
-        setNotificationsEnabled(enabled);
         setNotificationsLoading(false);
       } else {
-        // Enable: request permission based on platform
-        if (isNativePlatform()) {
-          // Native (Android/iOS): use Capacitor push notifications
-          console.log("📱 Requesting native push permission...");
-          const success = await requestNativePushPermission();
-
+        if (notificationsEnabled) {
+          // Disable: unregister device tokens from backend
+          const success = await unregisterDeviceTokens();
           if (!success) {
-            // Permission denied or error
-            setNotificationsLoading(false);
-            alert(
-              "Unable to enable notifications. Please check your device settings."
-            );
-            return;
+            console.error("Failed to unregister device tokens");
           }
-
-          // On native, the token registration happens async in the listener
-          // The UI will update when we receive the 'nativePushRegistered' event
-          // Keep loading state active until event is received (or timeout)
-          setTimeout(async () => {
-            // Fallback: check status after 5 seconds if event wasn't received
-            const enabled = await getNotificationStatus();
-            if (isNativePlatform()) {
-              const osPermission = await checkNativePermissionStatus();
-              setNotificationsEnabled(enabled && osPermission === "granted");
-            } else {
-              setNotificationsEnabled(enabled);
-            }
-            setNotificationsLoading(false);
-          }, 5000);
+          // Re-fetch status from DB to update toggle
+          const enabled = await getNotificationStatus();
+          setNotificationsEnabled(enabled);
+          setNotificationsLoading(false);
         } else {
           // Web: use Firebase web SDK
           const success = await requestNotificationPermission();
@@ -400,9 +381,8 @@ export default function ProfilePage() {
             </div>
             <div className="flex items-center justify-end mt-3">
               <ChevronDown
-                className={`w-5 h-5 text-[#703DFA] transition-transform ${
-                  prescriptionExpanded ? "rotate-180" : ""
-                }`}
+                className={`w-5 h-5 text-[#703DFA] transition-transform ${prescriptionExpanded ? "rotate-180" : ""
+                  }`}
               />
             </div>
           </button>
@@ -542,8 +522,8 @@ export default function ProfilePage() {
                       {notificationsLoading
                         ? "Enabling..."
                         : notificationsEnabled
-                        ? "Push notifications enabled"
-                        : "Tap to enable push notifications"}
+                          ? "Push notifications enabled"
+                          : "Tap to enable push notifications"}
                     </p>
                   </div>
                 </div>
