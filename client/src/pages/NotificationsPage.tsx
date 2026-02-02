@@ -59,6 +59,8 @@ export default function NotificationsPage() {
     // Deep link to event page if relatedEventId exists
     if (notification.relatedEventId) {
       setLocation(`/events/${notification.relatedEventId}`);
+    } else if (notification.type === "drm_answer") {
+      setLocation("/drm");
     } else {
       // For other notification types, navigate to home
       setLocation("/");
