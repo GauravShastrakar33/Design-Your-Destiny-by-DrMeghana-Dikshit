@@ -399,7 +399,11 @@ export default function HomePage() {
                 </div>
                 <span className="text-xs text-gray-500">
                   {streakData
-                    ? `${streakData.filter((d) => d.active).length} day${streakData.filter((d) => d.active).length !== 1 ? "s" : ""} this week`
+                    ? `${streakData.filter((d) => d.active).length} day${
+                        streakData.filter((d) => d.active).length !== 1
+                          ? "s"
+                          : ""
+                      } this week`
                     : ""}
                 </span>
               </div>
@@ -428,7 +432,11 @@ export default function HomePage() {
                             day.active
                               ? "bg-gradient-to-br from-orange-400 to-orange-600 shadow-sm"
                               : "bg-gray-100"
-                          } ${isToday ? "ring-2 ring-orange-300 ring-offset-1" : ""}`}
+                          } ${
+                            isToday
+                              ? "ring-2 ring-orange-300 ring-offset-1"
+                              : ""
+                          }`}
                         >
                           {day.active ? (
                             <Flame className="w-4 h-4 text-white" />
@@ -437,13 +445,17 @@ export default function HomePage() {
                           )}
                         </div>
                         <span
-                          className={`text-xs ${day.active ? "text-orange-600 font-medium" : "text-gray-400"}`}
+                          className={`text-xs ${
+                            day.active
+                              ? "text-orange-600 font-medium"
+                              : "text-gray-400"
+                          }`}
                         >
                           {dayName}
                         </span>
                       </div>
                     );
-                  },
+                  }
                 )}
               </div>
             </div>
@@ -460,11 +472,11 @@ export default function HomePage() {
                 <div className="flex-shrink-0">
                   <TrendingUp className="w-5 h-5 text-[#703DFA]" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h3 className="text-black text-sm font-bold tracking-wider uppercase mb-1">
                     PROGRESS INSIGHTS
                   </h3>
-                  <p className="text-gray-600 text-xs whitespace-nowrap">
+                  <p className="text-gray-600 text-xs truncate">
                     Receive personalised insights for your streak
                   </p>
                 </div>
