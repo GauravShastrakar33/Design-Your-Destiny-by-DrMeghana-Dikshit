@@ -46,6 +46,7 @@ __export(schema_exports, {
   insertEventSchema: () => insertEventSchema,
   insertFeatureCourseMapSchema: () => insertFeatureCourseMapSchema,
   insertFrontendFeatureSchema: () => insertFrontendFeatureSchema,
+  insertLessonProgressSchema: () => insertLessonProgressSchema,
   insertMoneyEntrySchema: () => insertMoneyEntrySchema,
   insertNotificationLogSchema: () => insertNotificationLogSchema,
   insertNotificationSchema: () => insertNotificationSchema,
@@ -64,6 +65,7 @@ __export(schema_exports, {
   insertUserStreakSchema: () => insertUserStreakSchema,
   insertUserWellnessProfileSchema: () => insertUserWellnessProfileSchema,
   lessonFileTypeEnum: () => lessonFileTypeEnum,
+  lessonProgress: () => lessonProgress,
   moneyEntries: () => moneyEntries,
   notificationLogStatusEnum: () => notificationLogStatusEnum,
   notificationLogs: () => notificationLogs,
@@ -90,7 +92,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-var users, insertUserSchema, communitySessions, insertCommunitySessionSchema, drmMessageSchema, categories, insertCategorySchema, articles, insertArticleSchema, programs, insertProgramSchema, userPrograms, insertUserProgramSchema, cmsCourses, insertCmsCourseSchema, cmsModules, insertCmsModuleSchema, cmsModuleFolders, insertCmsModuleFolderSchema, cmsLessons, insertCmsLessonSchema, lessonFileTypeEnum, cmsLessonFiles, insertCmsLessonFileSchema, frontendFeatures, insertFrontendFeatureSchema, featureCourseMap, insertFeatureCourseMapSchema, moneyEntries, insertMoneyEntrySchema, playlists, insertPlaylistSchema, playlistItems, insertPlaylistItemSchema, sessionBanners, insertSessionBannerSchema, userStreaks, insertUserStreakSchema, activityLogs, insertActivityLogSchema, featureTypeEnum, dailyQuotes, insertDailyQuoteSchema, rewiringBeliefs, insertRewiringBeliefSchema, userWellnessProfiles, insertUserWellnessProfileSchema, eventStatusEnum, events, insertEventSchema, notificationTypeEnum, notificationLogStatusEnum, notifications, insertNotificationSchema, notificationLogs, insertNotificationLogSchema, pohCategoryEnum, pohStatusEnum, projectOfHearts, insertProjectOfHeartSchema, pohDailyRatings, insertPohDailyRatingSchema, pohActions, insertPohActionSchema, pohMilestones, insertPohMilestoneSchema, deviceTokens, insertDeviceTokenSchema, userBadges, badgeKeyEnum, insertUserBadgeSchema, drmQuestionStatusEnum, drmQuestions, insertDrmQuestionSchema;
+var users, insertUserSchema, communitySessions, insertCommunitySessionSchema, drmMessageSchema, categories, insertCategorySchema, articles, insertArticleSchema, programs, insertProgramSchema, userPrograms, insertUserProgramSchema, cmsCourses, insertCmsCourseSchema, cmsModules, insertCmsModuleSchema, cmsModuleFolders, insertCmsModuleFolderSchema, cmsLessons, insertCmsLessonSchema, lessonFileTypeEnum, cmsLessonFiles, insertCmsLessonFileSchema, frontendFeatures, insertFrontendFeatureSchema, featureCourseMap, insertFeatureCourseMapSchema, moneyEntries, insertMoneyEntrySchema, playlists, insertPlaylistSchema, playlistItems, insertPlaylistItemSchema, sessionBanners, insertSessionBannerSchema, userStreaks, insertUserStreakSchema, activityLogs, insertActivityLogSchema, featureTypeEnum, lessonProgress, insertLessonProgressSchema, dailyQuotes, insertDailyQuoteSchema, rewiringBeliefs, insertRewiringBeliefSchema, userWellnessProfiles, insertUserWellnessProfileSchema, eventStatusEnum, events, insertEventSchema, notificationTypeEnum, notificationLogStatusEnum, notifications, insertNotificationSchema, notificationLogs, insertNotificationLogSchema, pohCategoryEnum, pohStatusEnum, projectOfHearts, insertProjectOfHeartSchema, pohDailyRatings, insertPohDailyRatingSchema, pohActions, insertPohActionSchema, pohMilestones, insertPohMilestoneSchema, deviceTokens, insertDeviceTokenSchema, userBadges, badgeKeyEnum, insertUserBadgeSchema, drmQuestionStatusEnum, drmQuestions, insertDrmQuestionSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -102,12 +104,14 @@ var init_schema = __esm({
       passwordHash: varchar("password_hash", { length: 255 }).notNull(),
       role: varchar("role", { length: 20 }).notNull().default("USER"),
       status: varchar("status", { length: 20 }).notNull().default("active"),
+      forcePasswordChange: boolean("force_password_change").notNull().default(false),
       lastLogin: timestamp("last_login", { mode: "date" }),
       lastActivity: timestamp("last_activity", { mode: "date" }),
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
     });
     insertUserSchema = createInsertSchema(users).omit({
       id: true,
+      forcePasswordChange: true,
       lastLogin: true,
       lastActivity: true,
       createdAt: true
@@ -377,6 +381,18 @@ var init_schema = __esm({
       createdAt: true
     });
     featureTypeEnum = ["PROCESS", "PLAYLIST"];
+    lessonProgress = pgTable("lesson_progress", {
+      id: serial("id").primaryKey(),
+      userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+      lessonId: integer("lesson_id").notNull().references(() => cmsLessons.id, { onDelete: "cascade" }),
+      completedAt: timestamp("completed_at", { mode: "date" }).notNull().defaultNow()
+    }, (table) => ({
+      uniqueUserLesson: unique("unique_user_lesson_progress").on(table.userId, table.lessonId)
+    }));
+    insertLessonProgressSchema = createInsertSchema(lessonProgress).omit({
+      id: true,
+      completedAt: true
+    });
     dailyQuotes = pgTable("daily_quotes", {
       id: serial("id").primaryKey(),
       quoteText: text("quote_text").notNull(),
@@ -691,6 +707,15 @@ var init_storage = __esm({
       }
       async updateUserPassword(id, hashedPassword) {
         await db.update(users).set({ passwordHash: hashedPassword }).where(eq(users.id, id));
+      }
+      async resetUserPassword(id, hashedPassword) {
+        await db.update(users).set({
+          passwordHash: hashedPassword,
+          forcePasswordChange: true
+        }).where(eq(users.id, id));
+      }
+      async clearForcePasswordChange(id) {
+        await db.update(users).set({ forcePasswordChange: false }).where(eq(users.id, id));
       }
       async updateUserName(id, name) {
         const [user] = await db.update(users).set({ name }).where(eq(users.id, id)).returning();
@@ -1014,14 +1039,22 @@ var init_storage = __esm({
           total += amount;
           if (amount > highest) highest = amount;
         }
-        const entryCount = entries.length;
-        const average = entryCount > 0 ? total / entryCount : 0;
+        const now = /* @__PURE__ */ new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+        let daysToAverage;
+        if (year === currentYear && month === currentMonth) {
+          daysToAverage = now.getDate();
+        } else {
+          daysToAverage = lastDay;
+        }
+        const average = daysToAverage > 0 ? Math.round(total / daysToAverage) : 0;
         return {
           days,
           summary: {
             total: Math.round(total * 100) / 100,
             highest: Math.round(highest * 100) / 100,
-            average: Math.round(average * 100) / 100
+            average
           }
         };
       }
@@ -1283,6 +1316,25 @@ var init_storage = __esm({
         result.PROCESS.sort((a, b) => b.count - a.count);
         result.PLAYLIST.sort((a, b) => b.count - a.count);
         return result;
+      }
+      // ===== LESSON PROGRESS (Daily Abundance) =====
+      async getCompletedLessonIds(userId) {
+        const progress = await db.select({ lessonId: lessonProgress.lessonId }).from(lessonProgress).where(eq(lessonProgress.userId, userId));
+        return progress.map((p) => p.lessonId);
+      }
+      async markLessonComplete(userId, lessonId) {
+        const [existing] = await db.select().from(lessonProgress).where(and(
+          eq(lessonProgress.userId, userId),
+          eq(lessonProgress.lessonId, lessonId)
+        ));
+        if (existing) {
+          return { alreadyCompleted: true, progress: existing };
+        }
+        const [newProgress] = await db.insert(lessonProgress).values({
+          userId,
+          lessonId
+        }).returning();
+        return { alreadyCompleted: false, progress: newProgress };
       }
       // ===== REWIRING BELIEFS =====
       async getRewiringBeliefsByUserId(userId) {
@@ -2454,7 +2506,8 @@ async function registerRoutes(app2) {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
+          forcePasswordChange: user.forcePasswordChange || false
         }
       });
     } catch (error) {
@@ -2729,6 +2782,34 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Error deleting rewiring belief:", error);
       res.status(500).json({ error: "Failed to delete belief" });
+    }
+  });
+  app2.get("/api/v1/lesson-progress", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const completedLessonIds = await storage.getCompletedLessonIds(req.user.sub);
+      res.json({ completedLessonIds });
+    } catch (error) {
+      console.error("Error fetching lesson progress:", error);
+      res.status(500).json({ error: "Failed to fetch lesson progress" });
+    }
+  });
+  app2.post("/api/v1/lesson-progress/:lessonId/complete", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const lessonId = parseInt(req.params.lessonId);
+      if (isNaN(lessonId)) {
+        return res.status(400).json({ error: "Invalid lesson ID" });
+      }
+      const result = await storage.markLessonComplete(req.user.sub, lessonId);
+      res.json({ success: true, alreadyCompleted: result.alreadyCompleted });
+    } catch (error) {
+      console.error("Error marking lesson complete:", error);
+      res.status(500).json({ error: "Failed to mark lesson complete" });
     }
   });
   app2.get("/api/admin/sessions", requireAdmin, async (req, res) => {
@@ -3017,6 +3098,25 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Error deleting student:", error);
       res.status(500).json({ error: "Failed to delete student" });
+    }
+  });
+  app2.post("/admin/v1/students/:id/reset-password", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { password } = req.body;
+      if (!password || typeof password !== "string" || password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      }
+      const user = await storage.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await storage.resetUserPassword(id, hashedPassword);
+      res.json({ success: true, message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ error: "Failed to reset password" });
     }
   });
   app2.get("/admin/v1/students/:id/badges", requireAdmin, async (req, res) => {
@@ -4442,7 +4542,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                 feature: feature.code,
                 id: course.id,
                 title: course.title,
-                navigate_to: `/abundance-mastery/course/${course.id}`
+                navigate_to: `/challenge/${course.id}`
               });
             }
           }
@@ -5131,6 +5231,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
       const hashedPassword = await bcrypt2.hash(newPassword, 10);
       await storage.updateUserPassword(req.user.sub, hashedPassword);
+      await storage.clearForcePasswordChange(req.user.sub);
       res.json({ success: true, message: "Password changed successfully" });
     } catch (error) {
       console.error("Error changing password:", error);
@@ -6779,8 +6880,7 @@ app.use((req, res, next) => {
   server.listen(
     {
       port,
-      host: "0.0.0.0",
-      reusePort: true
+      host: "0.0.0.0"
     },
     () => {
       log(`serving on port ${port}`);

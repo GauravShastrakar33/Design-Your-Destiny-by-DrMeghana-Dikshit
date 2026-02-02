@@ -42,7 +42,14 @@ function App() {
         const notifications = await res.json();
 
         if (Array.isArray(notifications) && notifications.length > 0) {
-          await setUnread(true);
+          const { getLastSeenId, setUnreadCount } = await import("@/lib/notificationState");
+          const lastSeenId = await getLastSeenId();
+          const latestId = notifications[0].id;
+
+          if (latestId > lastSeenId) {
+            // Found new notifications since last visit
+            await setUnreadCount(1);
+          }
         }
       } catch (err) {
         console.error("❌ Failed to check unread notifications on launch", err);

@@ -21,7 +21,9 @@ export default function NotificationsPage() {
 
   // 🔵 CLEAR RED DOT WHEN PAGE OPENS
   useEffect(() => {
-    clearUnread();
+    clearUnread().then(() => {
+      console.log("🔔 Unread notifications cleared");
+    });
   }, []);
 
   const userToken = localStorage.getItem("@app:user_token");
@@ -39,7 +41,15 @@ export default function NotificationsPage() {
         if (!response.ok) {
           throw new Error("Failed to fetch notifications");
         }
-        return response.json();
+        const data = await response.json();
+
+        // 🔵 Sync unread count and last seen ID
+        if (Array.isArray(data) && data.length > 0) {
+          const { setLastSeenId } = await import("@/lib/notificationState");
+          await setLastSeenId(data[0].id);
+        }
+
+        return data;
       },
       enabled: !!userToken,
     }

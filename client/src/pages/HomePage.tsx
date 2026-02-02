@@ -27,7 +27,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useEvaluateBadgesOnMount } from "@/hooks/useBadges";
 import { BadgeToastManager } from "@/components/BadgeEarnedToast";
-import { getUnread } from "@/lib/notificationState";
+import { getUnreadCount } from "@/lib/notificationState";
 
 interface BannerData {
   banner: {
@@ -61,12 +61,12 @@ export default function HomePage() {
   const [newBadges, setNewBadges] = useState<string[]>([]);
   const [badgeEvaluated, setBadgeEvaluated] = useState(false);
 
-  const [hasUnread, setHasUnread] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const loadUnread = async () => {
-      const value = await getUnread();
-      setHasUnread(value);
+      const count = await getUnreadCount();
+      setUnreadCount(count);
     };
 
     // Initial load when Home opens
@@ -208,9 +208,8 @@ export default function HomePage() {
       <div className="max-w-md mx-auto">
         {/* Header with Search and Notification */}
         <div
-          className={`bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3 ${
-            isNative ? "pt-[env(safe-area-inset-top)]" : ""
-          }`}
+          className={`bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3 ${isNative ? "pt-[env(safe-area-inset-top)]" : ""
+            }`}
         >
           <div className="flex-1">
             <h1 className="text-lg font-bold" style={{ fontFamily: "Inter" }}>
@@ -237,8 +236,10 @@ export default function HomePage() {
                 <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
               </button>
 
-              {hasUnread && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold border-2 border-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
               )}
             </div>
           </div>
@@ -411,8 +412,8 @@ export default function HomePage() {
                       : new Date();
                     const dayName = day.date
                       ? dayDate
-                          .toLocaleDateString("en-US", { weekday: "short" })
-                          .charAt(0)
+                        .toLocaleDateString("en-US", { weekday: "short" })
+                        .charAt(0)
                       : ["M", "T", "W", "T", "F", "S", "S"][index];
                     const isToday =
                       day.date === new Date().toISOString().split("T")[0];
@@ -424,11 +425,10 @@ export default function HomePage() {
                         data-testid={`streak-day-${index}`}
                       >
                         <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                            day.active
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${day.active
                               ? "bg-gradient-to-br from-orange-400 to-orange-600 shadow-sm"
                               : "bg-gray-100"
-                          } ${isToday ? "ring-2 ring-orange-300 ring-offset-1" : ""}`}
+                            } ${isToday ? "ring-2 ring-orange-300 ring-offset-1" : ""}`}
                         >
                           {day.active ? (
                             <Flame className="w-4 h-4 text-white" />

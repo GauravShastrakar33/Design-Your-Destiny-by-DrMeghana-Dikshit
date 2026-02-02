@@ -1,5 +1,5 @@
 import { Capacitor } from "@capacitor/core";
-import { initializeNativePush } from "@/lib/nativePush";
+import { initPushNotifications } from "@/lib/nativePush";
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { refreshPushToken, setupForegroundNotifications } from "@/lib/notifications";
@@ -30,71 +30,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
 
   useEffect(() => {
-  const token = localStorage.getItem("@app:user_token");
-  const storedUser = localStorage.getItem("@app:user");
+    const token = localStorage.getItem("@app:user_token");
+    const storedUser = localStorage.getItem("@app:user");
 
-  if (token && storedUser) {
-    try {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      
-      // Check if user needs to change password
-      if (parsedUser.forcePasswordChange) {
-        setRequiresPasswordChange(true);
+    if (token && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+
+        // Check if user needs to change password
+        if (parsedUser.forcePasswordChange) {
+          setRequiresPasswordChange(true);
+        }
+
+        if (Capacitor.isNativePlatform()) {
+          // 📱 Android / iOS
+          initPushNotifications().then(() => {
+            console.log("📱 Native push initialized");
+          });
+        } else {
+          // 🌐 Web / PWA
+          refreshPushToken().then((refreshed) => {
+            if (refreshed) {
+              console.log("🌐 Web push token refreshed");
+            }
+          });
+
+          setupForegroundNotifications();
+        }
+      } catch (error) {
+        localStorage.removeItem("@app:user_token");
+        localStorage.removeItem("@app:user");
       }
-
-      if (Capacitor.isNativePlatform()) {
-        // 📱 Android / iOS
-        initializeNativePush().then(() => {
-          console.log("📱 Native push initialized");
-        });
-      } else {
-        // 🌐 Web / PWA
-        refreshPushToken().then((refreshed) => {
-          if (refreshed) {
-            console.log("🌐 Web push token refreshed");
-          }
-        });
-
-        setupForegroundNotifications();
-      }
-    } catch (error) {
-      localStorage.removeItem("@app:user_token");
-      localStorage.removeItem("@app:user");
     }
-  }
 
-  setIsLoading(false);
-}, []);
+    setIsLoading(false);
+  }, []);
 
 
   const login = (token: string, userData: User) => {
-  localStorage.setItem("@app:user_token", token);
-  localStorage.setItem("@app:user", JSON.stringify(userData));
-  setUser(userData);
-  
-  // Check if user needs to change password
-  if (userData.forcePasswordChange) {
-    setRequiresPasswordChange(true);
-  }
+    localStorage.setItem("@app:user_token", token);
+    localStorage.setItem("@app:user", JSON.stringify(userData));
+    setUser(userData);
 
-  // 🔔 Register push AFTER login
-  if (Capacitor.isNativePlatform()) {
-    initializeNativePush().then(() => {
-      console.log("📱 Native push initialized after login");
-    });
-  }
-};
+    // Check if user needs to change password
+    if (userData.forcePasswordChange) {
+      setRequiresPasswordChange(true);
+    }
 
-const clearPasswordChangeRequirement = () => {
-  setRequiresPasswordChange(false);
-  // Update stored user to remove the flag
-  if (user) {
-    const updatedUser = { ...user, forcePasswordChange: false };
-    localStorage.setItem("@app:user", JSON.stringify(updatedUser));
-    setUser(updatedUser);
-  }
-};
+    // 🔔 Register push AFTER login
+    if (Capacitor.isNativePlatform()) {
+      initPushNotifications().then(() => {
+        console.log("📱 Native push initialized after login");
+      });
+    }
+  };
+
+  const clearPasswordChangeRequirement = () => {
+    setRequiresPasswordChange(false);
+    // Update stored user to remove the flag
+    if (user) {
+      const updatedUser = { ...user, forcePasswordChange: false };
+      localStorage.setItem("@app:user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
+  };
 
 
   const logout = () => {
