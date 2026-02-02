@@ -3,6 +3,12 @@ import { PushNotifications } from "@capacitor/push-notifications";
 import { apiRequest } from "@/lib/queryClient";
 import { setUnread } from "./notificationState";
 
+// SPA navigation helper for use outside React components
+function navigate(to: string) {
+  window.history.pushState({}, "", to);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
 // Check if we're running in a native Capacitor environment
 export function isNativePlatform(): boolean {
   return Capacitor.isNativePlatform();
@@ -25,7 +31,6 @@ export async function checkNativePermissionStatus(): Promise<
     return "denied";
   }
 }
-
 
 // Set up the registration listener - call this once on app init
 let registrationListenerActive = false;
@@ -82,17 +87,17 @@ export function setupNativePushListeners() {
       if (!data) return;
 
       if (data.eventId) {
-        window.location.href = `/events/${data.eventId}`;
+        navigate(`/events/${data.eventId}`);
         return;
       }
 
       if (data.type === "admin_test") {
-        window.location.href = "/notifications";
+        navigate("/notifications");
         return;
       }
 
       if (data.type === "drm_answer") {
-        window.location.href = "/drm";
+        navigate("/drm");
         return;
       }
     },
