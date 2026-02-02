@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/Header";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ChevronLeft,
   ChevronRight,
   ChevronDown,
   Settings as SettingsIcon,
@@ -157,6 +158,36 @@ export default function ProfilePage() {
     };
   }, []);
 
+  // Carousel Logic
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener("resize", checkScroll);
+    return () => window.removeEventListener("resize", checkScroll);
+  }, [earnedBadges]);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const scrollAmount = scrollRef.current.clientWidth;
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+      setTimeout(checkScroll, 300);
+    }
+  };
+
   const handleToggleNotifications = async () => {
     setNotificationsLoading(true);
     try {
@@ -226,7 +257,7 @@ export default function ProfilePage() {
 
       {/* Profile Card */}
       <div className="max-w-md mx-auto px-4 mt-2">
-        <div className="bg-white rounded-2xl shadow-md p-4 pb-1">
+        <div className="bg-white rounded-xl shadow-md p-4 pb-1">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-sm font-bold border border-white/30 shadow-sm flex-shrink-0">
               {getInitials(userName)}
@@ -242,12 +273,17 @@ export default function ProfilePage() {
           {/* Karmic Affirmation Section */}
           {!isLoadingProfile && wellnessProfile?.karmicAffirmation && (
             <div className="mt-3 pt-3 border-t border-gray-100">
-              <div className="flex items-start gap-2">
-                <Sparkles className="w-4 h-4 text-[#703DFA] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">
+              <div className="flex flex-col items-start gap-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles
+                    className="w-4 h-4 text-primary flex-shrink-0 mt-0.5"
+                    strokeWidth={2}
+                  />
+                  <p className="text-md text-primary font-semibold">
                     Karmic Affirmation
                   </p>
+                </div>
+                <div>
                   <p className="text-sm text-gray-700 italic">
                     "{wellnessProfile.karmicAffirmation}"
                   </p>
@@ -259,19 +295,54 @@ export default function ProfilePage() {
           {/* Earned Badges Section */}
           {!isLoadingBadges && earnedBadges.length > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-100">
-              <p className="text-xs text-muted-foreground mb-2">
-                Earned Badges
-              </p>
-              <div className="flex items-center gap-3 overflow-x-auto">
-                {earnedBadges.map((badge) => (
-                  <BadgeIcon
-                    key={badge.badgeKey}
-                    badgeKey={badge.badgeKey}
-                    size="xl"
-                    earned
-                    showTooltip
-                  />
-                ))}
+              <p className="text-sm text-muted-foreground">Earned Badges</p>
+              <div className="relative group -mx-4">
+                <button
+                  onClick={() => scroll("left")}
+                  className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-white shadow-md border hover:bg-gray-50 transition-all duration-200 ${
+                    canScrollLeft
+                      ? "opacity-100 translate-x-0"
+                      : "opacity-0 -translate-x-2 pointer-events-none"
+                  }`}
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeft className="w-4 h-4 text-gray-600" />
+                </button>
+
+                <div
+                  ref={scrollRef}
+                  onScroll={checkScroll}
+                  className="flex items-center justify-start gap-2 overflow-x-auto scroll-smooth py-2 px-10 [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                >
+                  {earnedBadges.map((badge) => (
+                    <div
+                      key={badge.badgeKey}
+                      className="flex-shrink-0 w-[calc((100%-16px)/3)] flex justify-center snap-center"
+                    >
+                      <BadgeIcon
+                        badgeKey={badge.badgeKey}
+                        size="2xl"
+                        earned
+                        showTooltip
+                        className="!w-full !h-auto aspect-square"
+                      />
+                    </div>
+                  ))}
+                  <div className="w-1 flex-shrink-0" />
+                </div>
+
+                <button
+                  onClick={() => scroll("right")}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-white shadow-md border hover:bg-gray-50 transition-all duration-200 ${
+                    canScrollRight
+                      ? "opacity-100 translate-x-0"
+                      : "opacity-0 translate-x-2 pointer-events-none"
+                  }`}
+                  aria-label="Scroll right"
+                >
+                  <ChevronRight className="w-4 h-4 text-gray-600" />
+                </button>
               </div>
             </div>
           )}
@@ -287,7 +358,7 @@ export default function ProfilePage() {
 
         {/* My Prescription Card */}
         <div
-          className="bg-white rounded-2xl shadow-md overflow-hidden"
+          className="bg-white rounded-xl shadow-md overflow-hidden"
           data-testid="card-prescription"
         >
           <button
@@ -297,15 +368,15 @@ export default function ProfilePage() {
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="text-black text-sm font-bold tracking-wider uppercase mb-2">
-                  MY PRESCRIPTION
+                <h3 className="text-md font-semibold text-primary-text mb-2">
+                  My Prescription
                 </h3>
                 <p className="text-gray-700 text-sm">
                   View your personalized daily practices
                 </p>
               </div>
               <div className="flex-shrink-0 ml-3">
-                <Heart className="w-6 h-6 text-[#703DFA]" />
+                <Heart className="w-5 h-5 text-primary" />
               </div>
             </div>
             <div className="flex items-center justify-end mt-3">
@@ -378,21 +449,21 @@ export default function ProfilePage() {
 
         {/* Settings Card */}
         <div
-          className="bg-white rounded-2xl shadow-md overflow-hidden"
+          className="bg-white rounded-xl shadow-md overflow-hidden"
           data-testid="card-settings"
         >
           <div className="p-5">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <h3 className="text-black text-sm font-bold tracking-wider uppercase mb-2">
-                  SETTINGS
+                <h3 className="text-md font-semibold text-primary-text mb-2">
+                  Settings
                 </h3>
                 <p className="text-gray-700 text-sm">
                   Manage your account and preferences
                 </p>
               </div>
               <div className="flex-shrink-0 ml-3">
-                <SettingsIcon className="w-6 h-6 text-[#703DFA]" />
+                <SettingsIcon className="w-5 h-5 text-primary" />
               </div>
             </div>
 
@@ -403,7 +474,7 @@ export default function ProfilePage() {
                 data-testid="button-account"
               >
                 <div className="flex items-center gap-3">
-                  <User className="w-5 h-5 text-[#703DFA]" />
+                  <User className="w-5 h-5 text-primary" />
                   <div className="text-left">
                     <p className="font-medium text-foreground">Account</p>
                     <p className="text-xs text-muted-foreground">
@@ -420,7 +491,7 @@ export default function ProfilePage() {
                 data-testid="button-badges-settings"
               >
                 <div className="flex items-center gap-3">
-                  <Award className="w-5 h-5 text-[#703DFA]" />
+                  <Award className="w-5 h-5 text-primary" />
                   <div className="text-left">
                     <p className="font-medium text-foreground">Badges</p>
                     <p className="text-xs text-muted-foreground">
@@ -439,9 +510,9 @@ export default function ProfilePage() {
               >
                 <div className="flex items-center gap-3">
                   {notificationsEnabled ? (
-                    <Bell className="w-5 h-5 text-[#703DFA]" />
+                    <Bell className="w-5 h-5 text-primary" />
                   ) : (
-                    <BellOff className="w-5 h-5 text-muted-foreground" />
+                    <BellOff className="w-5 h-5 text-primary" />
                   )}
                   <div className="text-left">
                     <p className="font-medium text-foreground">
@@ -471,7 +542,7 @@ export default function ProfilePage() {
                 data-testid="button-support"
               >
                 <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-[#703DFA]" />
+                  <Phone className="w-5 h-5 text-primary" />
                   <div className="text-left">
                     <p className="font-medium text-foreground">Get Support</p>
                     <p className="text-xs text-muted-foreground">
@@ -509,7 +580,7 @@ export default function ProfilePage() {
 
               <div className="w-full flex items-center justify-between p-3 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <Circle className="w-5 h-5 text-[#703DFA]" />
+                  <Circle className="w-5 h-5 text-primary" />
                   <div className="text-left">
                     <p className="font-medium text-foreground">App Version</p>
                     <p className="text-xs text-muted-foreground">
@@ -517,7 +588,6 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground opacity-40" />
               </div>
             </div>
           </div>

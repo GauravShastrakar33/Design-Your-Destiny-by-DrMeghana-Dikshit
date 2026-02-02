@@ -289,7 +289,7 @@ export default function DrMPage() {
         {pastQuestions.length > 0 && (
           <div className="space-y-4">
             <h2
-              className="text-lg font-medium"
+              className="text-md font-semibold text-primary-text"
               data-testid="text-past-questions-title"
             >
               Past Questions
@@ -320,10 +320,11 @@ export default function DrMPage() {
                       <>
                         {selectedQuestionId === question.id &&
                         questionDetails?.audioUrl ? (
-                          <div className="bg-primary/5 rounded-lg p-3">
+                          <div>
                             <audio
                               ref={audioRef}
                               src={questionDetails.audioUrl}
+                              controlsList="nodownload noplaybackrate"
                               controls
                               className="w-full h-10"
                               onEnded={handleAudioEnded}

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
   Select,
   SelectContent,
@@ -14,7 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Loader2,
+  Calendar as CalendarIcon,
+} from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import type { SessionBanner } from "@shared/schema";
 
@@ -73,7 +80,7 @@ export default function AdminSessionBannerFormPage() {
     });
 
   // Convert UTC date to local datetime-local format (YYYY-MM-DDTHH:MM)
-  const formatDateForInput = (date: Date | string | null) => {
+  const formatDateForInput = (date: Date | string | null | undefined) => {
     if (!date) return "";
     const d = new Date(date);
     // Get local date/time components
@@ -83,6 +90,12 @@ export default function AdminSessionBannerFormPage() {
     const hours = String(d.getHours()).padStart(2, "0");
     const minutes = String(d.getMinutes()).padStart(2, "0");
     return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const formatDateForDisplay = (dateStr: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleString();
   };
 
   useEffect(() => {
@@ -363,7 +376,7 @@ export default function AdminSessionBannerFormPage() {
           {formData.type === "session" && (
             <>
               {/* 2. Session Banner Upload */}
-              <div>
+              <div className="space-x-4">
                 <Label>Session Banner</Label>
                 <input
                   ref={thumbnailInputRef}
@@ -391,7 +404,7 @@ export default function AdminSessionBannerFormPage() {
                       type="button"
                       size="icon"
                       variant="destructive"
-                      className="absolute -top-2 -right-2 w-6 h-6"
+                      className="absolute -top-2 right-2 w-6 h-6"
                       onClick={() => {
                         setFormData((prev) => ({ ...prev, thumbnailKey: "" }));
                         setThumbnailPreview(null);
@@ -423,36 +436,36 @@ export default function AdminSessionBannerFormPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="startAt">Banner Start Date & Time</Label>
-                  <Input
-                    id="startAt"
-                    type="datetime-local"
-                    value={formData.startAt}
-                    onChange={(e) =>
+                  <DateTimePicker
+                    className="mt-1.5"
+                    date={
+                      formData.startAt ? new Date(formData.startAt) : undefined
+                    }
+                    setDate={(date) =>
                       setFormData((prev) => ({
                         ...prev,
-                        startAt: e.target.value,
+                        startAt: formatDateForInput(date),
                       }))
                     }
-                    className="mt-1.5"
-                    data-testid="input-start-at"
-                    min={minDate}
+                    minDate={new Date()}
+                    placeholder="Select start date & time"
                   />
                 </div>
                 <div>
                   <Label htmlFor="endAt">Banner End Date & Time</Label>
-                  <Input
-                    id="endAt"
-                    type="datetime-local"
-                    value={formData.endAt}
-                    onChange={(e) =>
+                  <DateTimePicker
+                    className="mt-1.5"
+                    date={formData.endAt ? new Date(formData.endAt) : undefined}
+                    setDate={(date) =>
                       setFormData((prev) => ({
                         ...prev,
-                        endAt: e.target.value,
+                        endAt: formatDateForInput(date),
                       }))
                     }
-                    className="mt-1.5"
-                    data-testid="input-end-at"
-                    min={formData.startAt || minDate}
+                    minDate={
+                      formData.startAt ? new Date(formData.startAt) : new Date()
+                    }
+                    placeholder="Select end date & time"
                   />
                 </div>
               </div>
@@ -475,19 +488,28 @@ export default function AdminSessionBannerFormPage() {
                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg border border-muted">
                   <div>
                     <Label htmlFor="liveStartAt">Live Start Date & Time</Label>
-                    <Input
-                      id="liveStartAt"
-                      type="datetime-local"
-                      value={formData.liveStartAt}
-                      onChange={(e) =>
+                    <DateTimePicker
+                      className="mt-1.5"
+                      date={
+                        formData.liveStartAt
+                          ? new Date(formData.liveStartAt)
+                          : undefined
+                      }
+                      setDate={(date) =>
                         setFormData((prev) => ({
                           ...prev,
-                          liveStartAt: e.target.value,
+                          liveStartAt: formatDateForInput(date),
                         }))
                       }
-                      className="mt-1.5"
-                      data-testid="input-live-start-at"
-                      min={minDate}
+                      minDate={
+                        formData.startAt
+                          ? new Date(formData.startAt)
+                          : new Date()
+                      }
+                      maxDate={
+                        formData.endAt ? new Date(formData.endAt) : undefined
+                      }
+                      placeholder="Select live start date & time"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Must be within banner visibility window
@@ -495,19 +517,30 @@ export default function AdminSessionBannerFormPage() {
                   </div>
                   <div>
                     <Label htmlFor="liveEndAt">Live End Date & Time</Label>
-                    <Input
-                      id="liveEndAt"
-                      type="datetime-local"
-                      value={formData.liveEndAt}
-                      onChange={(e) =>
+                    <DateTimePicker
+                      className="mt-1.5"
+                      date={
+                        formData.liveEndAt
+                          ? new Date(formData.liveEndAt)
+                          : undefined
+                      }
+                      setDate={(date) =>
                         setFormData((prev) => ({
                           ...prev,
-                          liveEndAt: e.target.value,
+                          liveEndAt: formatDateForInput(date),
                         }))
                       }
-                      className="mt-1.5"
-                      data-testid="input-live-end-at"
-                      min={formData.liveStartAt || minDate}
+                      minDate={
+                        formData.liveStartAt
+                          ? new Date(formData.liveStartAt)
+                          : formData.startAt
+                          ? new Date(formData.startAt)
+                          : new Date()
+                      }
+                      maxDate={
+                        formData.endAt ? new Date(formData.endAt) : undefined
+                      }
+                      placeholder="Select live end date & time"
                     />
                   </div>
                 </div>

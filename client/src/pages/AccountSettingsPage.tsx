@@ -20,7 +20,8 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function AccountSettingsPage() {
   const [, setLocation] = useLocation();
-  const { user, clearPasswordChangeRequirement, requiresPasswordChange } = useAuth();
+  const { user, clearPasswordChangeRequirement, requiresPasswordChange } =
+    useAuth();
   const userToken = localStorage.getItem("@app:user_token");
 
   const [userName, setUserName] = useState("");
@@ -141,7 +142,7 @@ export default function AccountSettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
       setShowPasswordForm(false);
-      
+
       // Clear forced password change requirement if it was set
       clearPasswordChangeRequirement();
     } catch (error) {
@@ -167,14 +168,17 @@ export default function AccountSettingsPage() {
               <span className="text-amber-600 text-lg">⚠</span>
             </div>
             <div>
-              <p className="font-medium text-amber-800">Password Change Required</p>
+              <p className="font-medium text-amber-800">
+                Password Change Required
+              </p>
               <p className="text-sm text-amber-700 mt-1">
-                Your password has been reset by an administrator. Please change your password to continue using the app.
+                Your password has been reset by an administrator. Please change
+                your password to continue using the app.
               </p>
             </div>
           </div>
         )}
-        
+
         {/* Username Section */}
         <div className="bg-white rounded-2xl shadow-md p-5">
           <Label className="text-sm font-medium text-gray-700">Username</Label>
@@ -362,36 +366,6 @@ export default function AccountSettingsPage() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Karmic Affirmation Section */}
-        <div className="bg-white rounded-2xl shadow-md p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-[#703DFA]" />
-            <Label className="text-sm font-medium text-gray-700">
-              Karmic Affirmation
-            </Label>
-          </div>
-          <p className="text-xs text-muted-foreground mb-2">Assigned by Dr.M</p>
-          {isLoadingProfile ? (
-            <div className="flex justify-center py-4">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : wellnessProfile?.karmicAffirmation ? (
-            <p
-              className="text-foreground font-['Playfair_Display'] text-base leading-normal tracking-wide"
-              data-testid="text-affirmation"
-            >
-              {wellnessProfile.karmicAffirmation}
-            </p>
-          ) : (
-            <p
-              className="text-muted-foreground italic text-sm"
-              data-testid="text-affirmation-empty"
-            >
-              Your personalized affirmation will appear here.
-            </p>
-          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Flame, Loader2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  Loader2,
+  CalendarDays,
+} from "lucide-react";
 
 interface ConsistencyDay {
   date: string;
@@ -33,7 +39,10 @@ export default function ConsistencyCalendar({
 
   const getTodayDate = () => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}-${String(now.getDate()).padStart(2, "0")}`;
   };
 
   const todayDate = useMemo(() => getTodayDate(), []);
@@ -49,7 +58,7 @@ export default function ConsistencyCalendar({
         `/api/v1/consistency/range?today=${todayDate}`,
         {
           headers: { Authorization: `Bearer ${userToken}` },
-        },
+        }
       );
       if (!response.ok) throw new Error("Failed to fetch range");
       return response.json();
@@ -64,7 +73,7 @@ export default function ConsistencyCalendar({
         `/api/v1/consistency/month?year=${viewYear}&month=${viewMonth}`,
         {
           headers: { Authorization: `Bearer ${userToken}` },
-        },
+        }
       );
       if (!response.ok) throw new Error("Failed to fetch month data");
       return response.json();
@@ -133,7 +142,10 @@ export default function ConsistencyCalendar({
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${viewYear}-${String(viewMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dateStr = `${viewYear}-${String(viewMonth).padStart(
+        2,
+        "0"
+      )}-${String(day).padStart(2, "0")}`;
       const dayData = monthData?.days.find((d) => d.date === dateStr);
       days.push({
         date: dateStr,
@@ -150,24 +162,16 @@ export default function ConsistencyCalendar({
 
   return (
     <div
-      className="bg-white rounded-2xl p-4 shadow-sm"
+      className="bg-white rounded-xl p-4 shadow-sm"
       data-testid="consistency-calendar"
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
-          Your Consistency Calendar
-        </h3>
-        {showFlame && (
-          <div
-            className="flex items-center gap-1 text-amber-500"
-            data-testid="streak-flame-indicator"
-          >
-            <Flame className="w-4 h-4" />
-            <span className="text-xs font-medium">
-              {currentStreak} day streak
-            </span>
-          </div>
-        )}
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-md font-semibold text-primary-text">
+            Your Consistency Calendar
+          </h3>
+        </div>
+          <CalendarDays className="w-5 h-5 text-primary" />
       </div>
 
       <div className="flex items-center justify-between mb-4">
@@ -231,10 +235,10 @@ export default function ConsistencyCalendar({
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-x-8 gap-y-2 place-items-center">
             {calendarDays.map((day, index) => {
               if (!day) {
-                return <div key={`empty-${index}`} className="aspect-square" />;
+                return <div key={`empty-${index}`} className="w-12 h-12" />;
               }
 
               const isFuture = day.date > todayDate;
@@ -252,21 +256,41 @@ export default function ConsistencyCalendar({
                 textColor = "text-amber-900";
               }
 
+              const dayDate = new Date(day.date);
+              const today = new Date(todayDate);
+              const diffTime = today.getTime() - dayDate.getTime();
+              const daysFromToday = Math.round(diffTime / (1000 * 3600 * 24));
+
+              // Show flame if:
+              // 1. Streak is at least 7 days (showFlame)
+              // 2. This day is active
+              // 3. This day is within the current streak window (relative to today)
+              const isPartOfStreak =
+                showFlame &&
+                isActive &&
+                daysFromToday >= 0 &&
+                daysFromToday < currentStreak;
+
               const dayNum = parseInt(day.date.split("-")[2], 10);
 
               return (
                 <div
                   key={day.date}
-                  className={`aspect-square flex items-center justify-center rounded-full relative ${bgColor} ${
-                    isToday ? "ring-2 ring-purple-500 ring-offset-1" : ""
+                  className={`aspect-square w-10 h-10 flex items-center justify-center rounded-full relative ${bgColor} ${
+                    isToday ? "ring-2 ring-primary ring-offset-1" : ""
                   }`}
                   data-testid={`day-${day.date}`}
                 >
-                  <span className={`text-xs font-medium ${textColor}`}>
+                  <span className={`text-sm font-medium ${textColor}`}>
                     {dayNum}
                   </span>
-                  {showFlame && isActive && !isFuture && (
-                    <Flame className="absolute -top-1 -right-1 w-3 h-3 text-orange-500" />
+                  {isPartOfStreak && (
+                    <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-[1px] ring-2 ring-white z-10 shadow-sm">
+                      <Flame
+                        className="w-4 h-4 text-orange-500"
+                        strokeWidth={3}
+                      />
+                    </div>
                   )}
                 </div>
               );
