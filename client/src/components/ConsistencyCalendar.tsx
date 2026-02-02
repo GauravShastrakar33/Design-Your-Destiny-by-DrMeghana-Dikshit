@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Flame, Loader2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  Loader2,
+  CalendarDays,
+} from "lucide-react";
 
 interface ConsistencyDay {
   date: string;
@@ -154,12 +160,16 @@ export default function ConsistencyCalendar({
       data-testid="consistency-calendar"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
-          Your Consistency Calendar
-        </h3>
+        <div className="flex items-center gap-2">
+          <CalendarDays className="w-5 h-5 text-primary" />
+          <h3 className="text-md font-semibold text-primary-text">
+            Your Consistency Calendar
+          </h3>
+        </div>
+
         {showFlame && (
           <div
-            className="flex items-center gap-1 text-amber-500"
+            className="flex items-center gap-1 text-orange-500"
             data-testid="streak-flame-indicator"
           >
             <Flame className="w-4 h-4" />
