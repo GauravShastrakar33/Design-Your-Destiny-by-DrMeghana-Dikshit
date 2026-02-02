@@ -208,14 +208,12 @@ export default function HomePage() {
       <div className="max-w-md mx-auto">
         {/* Header with Search and Notification */}
         <div
-          className={`bg-white px-4 py-3 shadow-sm border-b border-[#232A34]/10 flex items-center justify-between gap-3 ${
+          className={`bg-white px-4 py-3 shadow-sm border-b border-primary-text/10 flex items-center justify-between gap-3 ${
             isNative ? "pt-[env(safe-area-inset-top)]" : ""
           }`}
         >
           <div className="flex-1">
-            <h1 className="text-lg font-bold" style={{ fontFamily: "Inter" }}>
-              Welcome Designer 💫
-            </h1>
+            <h1 className="text-lg font-semibold text-primary-text">Welcome Designer 💫</h1>
             <p className="text-sm text-gray-600 mt-0.5">
               How's your energy today?
             </p>
@@ -226,7 +224,7 @@ export default function HomePage() {
               className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
               data-testid="button-search"
             >
-              <Search className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
+              <Search className="w-5 h-5 text-primary" strokeWidth={2} />
             </button>
             <div className="relative">
               <button
@@ -234,7 +232,7 @@ export default function HomePage() {
                 className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
                 data-testid="button-notifications"
               >
-                <Bell className="w-5 h-5 text-[#703DFA]" strokeWidth={2} />
+                <Bell className="w-5 h-5 text-primary" strokeWidth={2} />
               </button>
 
               {hasUnread && (
@@ -316,12 +314,7 @@ export default function HomePage() {
                         window.open(banner.ctaLink, "_blank");
                       }
                     }}
-                    className="mt-3 w-[85%] px-4 py-3 rounded-full font-bold shadow-md hover:opacity-90 transition text-xl"
-                    style={{
-                      backgroundColor: "#E5AC19",
-                      color: "#0D131F",
-                      fontFamily: "Inter",
-                    }}
+                    className="mt-3 w-[85%] px-4 py-3 rounded-full font-semibold shadow-sm hover:opacity-90 transition text-md bg-secondary text-primary-text hover:shadow-md active:scale-[0.98]"
                     data-testid="button-banner-cta"
                   >
                     {banner.ctaText}
@@ -342,16 +335,14 @@ export default function HomePage() {
                   <button
                     key={card.path}
                     onClick={() => setLocation(card.path)}
-                    className="bg-white border border-[#232A34]/10 rounded-2xl p-3 
-                               flex items-center gap-3 shadow-sm 
-                               hover:shadow-md active:scale-[0.98] transition h-[60px]"
+                    className="bg-white shadow-sm border border-gray-200 rounded-xl p-3 flex items-center gap-3 hover:shadow-md active:scale-[0.98] transition h-[60px]"
                     data-testid={card.testId}
                   >
                     <card.icon
-                      className="w-[20px] h-[20px] text-[#703DFA] flex-shrink-0"
-                      strokeWidth={1.6}
+                      className="w-[20px] h-[20px] text-primary flex-shrink-0"
+                      strokeWidth={1.75}
                     />
-                    <span className="text-sm font-semibold text-[#232A34] flex-1 text-left line-clamp-2">
+                    <span className="text-sm font-semibold text-primary-text flex-1 text-left line-clamp-2">
                       {card.title}
                     </span>
                   </button>
@@ -364,40 +355,40 @@ export default function HomePage() {
                 <button
                   key={card.path}
                   onClick={() => setLocation(card.path)}
-                  className="w-full bg-white border border-[#232A34]/10 rounded-2xl p-3 
-                             flex items-center gap-3 shadow-sm 
-                             hover:shadow-md active:scale-[0.98] transition h-[60px]"
+                  className="w-full bg-white shadow-sm border border-gray-200
+/10 rounded-xl p-3 flex items-center gap-3 hover:shadow-md active:scale-[0.98] transition h-[60px]"
                   data-testid={card.testId}
                 >
                   <card.icon
-                    className="w-[20px] h-[20px] text-[#703DFA] flex-shrink-0"
+                    className="w-[20px] h-[20px] text-primary flex-shrink-0"
                     strokeWidth={1.6}
                   />
-                  <span className="text-sm font-semibold text-[#232A34] flex-1 text-left">
+                  <span className="text-sm font-semibold text-primary-text flex-1 text-left">
                     {card.title}
                   </span>
                 </button>
               ))}
           </div>
 
-          <p className="px-1 text-xs font-semibold text-gray-400 tracking-wide mt-4">
+          <p className="px-1 text-sm font-semibold text-gray-600 tracking-wide my-4">
             My Progress
           </p>
 
           {/* 7-Day Streak Tracker - Only show when authenticated */}
           {isAuthenticated && (
             <div
-              className="bg-white rounded-2xl p-4 shadow-sm border border-[#232A34]/10 mt-4"
+              className="bg-white rounded-xl p-4 shadow-sm border border-gray-200
+/10 hover:shadow-md active:scale-[0.98]"
               data-testid="card-streak"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-orange-500" />
-                  <span className="text-sm font-semibold text-[#232A34]">
-                    7-Day Streak
+                  <Flame className="w-6 h-6 text-orange-500" />
+                  <span className="text-md font-semibold text-primary-text">
+                    7 Day Streak
                   </span>
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs font-semibold text-gray-600">
                   {streakData
                     ? `${streakData.filter((d) => d.active).length} day${
                         streakData.filter((d) => d.active).length !== 1
@@ -447,7 +438,7 @@ export default function HomePage() {
                         <span
                           className={`text-xs ${
                             day.active
-                              ? "text-orange-600 font-medium"
+                              ? "text-primary-text font-medium"
                               : "text-gray-400"
                           }`}
                         >
@@ -465,18 +456,22 @@ export default function HomePage() {
           {isAuthenticated && (
             <button
               onClick={() => setLocation("/progress-insights")}
-              className="w-full text-left bg-white rounded-2xl py-5 px-4 shadow-sm border border-[#232A34]/10 hover-elevate active-elevate-2 mt-4"
+              className="w-full text-left bg-white rounded-xl p-4 shadow-sm border border-gray-200
+/10 mt-4 hover:shadow-md active:scale-[0.98]"
               data-testid="button-progress-insights"
             >
               <div className="flex items-center gap-3">
                 <div className="flex-shrink-0">
-                  <TrendingUp className="w-5 h-5 text-[#703DFA]" />
+                  <TrendingUp className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-black text-sm font-bold tracking-wider uppercase mb-1">
-                    PROGRESS INSIGHTS
+                  <h3 className="text-md font-semibold text-primary-text mb-1">
+                    Progress Insights
                   </h3>
-                  <p className="text-gray-600 text-xs truncate">
+                  <p
+                    className="text-gray-600 text-xs truncate"
+                    title="Receive personalised insights for your streak"
+                  >
                     Receive personalised insights for your streak
                   </p>
                 </div>
@@ -488,14 +483,12 @@ export default function HomePage() {
           {/* Daily Quote Card */}
           {quoteData?.quote && (
             <div
-              className="rounded-2xl p-4 shadow-md relative mt-4"
-              style={{
-                background: "#703DFA",
-              }}
+              className="rounded-xl p-4 relative mt-4 bg-primary shadow-sm border border-gray-200
+/10"
               data-testid="card-quote"
             >
               <div className="text-center px-2">
-                <p className="text-white text-lg font-medium mb-2.5 leading-relaxed italic">
+                <p className="text-white text-md font-medium mb-2.5 leading-relaxed italic">
                   "{quoteData.quote}"
                 </p>
                 {quoteData.author && (

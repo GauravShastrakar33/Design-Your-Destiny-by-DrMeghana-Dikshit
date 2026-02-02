@@ -261,12 +261,14 @@ export default function ProfilePage() {
           {/* Karmic Affirmation Section */}
           {!isLoadingProfile && wellnessProfile?.karmicAffirmation && (
             <div className="mt-3 pt-3 border-t border-gray-100">
-              <div className="flex items-start gap-2">
-                <Sparkles className="w-4 h-4 text-[#703DFA] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">
+              <div className="flex flex-col items-start gap-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" strokeWidth={2} />
+                  <p className="text-md text-primary font-semibold">
                     Karmic Affirmation
                   </p>
+                </div>
+                <div>
                   <p className="text-sm text-gray-700 italic">
                     "{wellnessProfile.karmicAffirmation}"
                   </p>
@@ -278,7 +280,7 @@ export default function ProfilePage() {
           {/* Earned Badges Section */}
           {!isLoadingBadges && earnedBadges.length > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-100">
-              <p className="text-xs text-muted-foreground mb-2">
+              <p className="text-sm text-muted-foreground mb-2">
                 Earned Badges
               </p>
               <div className="flex items-center gap-3 overflow-x-auto">
