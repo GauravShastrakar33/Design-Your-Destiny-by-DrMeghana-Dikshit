@@ -38,8 +38,54 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreVertical, Edit, Trash2, Ban, CheckCircle, ChevronLeft, ChevronRight, Upload, Download, AlertCircle, CheckCircle2, KeyRound, Loader2 } from "lucide-react";
+import { useForm, FormProvider } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { FormInput } from "@/components/ui/form-input";
+import { FormSelect } from "@/components/ui/form-select";
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Ban,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Upload,
+  Download,
+  AlertCircle,
+  CheckCircle2,
+  KeyRound,
+  Loader2,
+} from "lucide-react";
 import type { UserWithPrograms, Program } from "@shared/schema";
+
+const studentSchema = yup.object().shape({
+  name: yup
+    .string()
+    .required("Full name is required")
+    .min(3, "Name must be at least 3 characters long")
+    .max(50, "Name must be at most 50 characters long"),
+  email: yup
+    .string()
+    .email("Invalid email address")
+    .required("Email is required"),
+  phone: yup
+    .string()
+    .test("is-indian-phone", "Enter a valid 10-digit phone number", (value) => {
+      if (!value) return true;
+      return /^[6-9]\d{9}$/.test(value);
+    })
+    .nullable()
+    .optional(),
+  password: yup.string().optional(),
+  programCode: yup.string().required("Program is required"),
+  status: yup.string().required(),
+});
+
+type StudentFormValues = yup.InferType<typeof studentSchema>;
 
 interface StudentsResponse {
   data: UserWithPrograms[];
@@ -60,12 +106,19 @@ export default function AdminStudentsPage() {
   const [limit] = useState(20);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<UserWithPrograms | null>(null);
-  const [deletingStudent, setDeletingStudent] = useState<UserWithPrograms | null>(null);
-  const [statusStudent, setStatusStudent] = useState<{ student: UserWithPrograms; newStatus: string } | null>(null);
-  const [resetPasswordStudent, setResetPasswordStudent] = useState<UserWithPrograms | null>(null);
+  const [editingStudent, setEditingStudent] = useState<UserWithPrograms | null>(
+    null
+  );
+  const [deletingStudent, setDeletingStudent] =
+    useState<UserWithPrograms | null>(null);
+  const [statusStudent, setStatusStudent] = useState<{
+    student: UserWithPrograms;
+    newStatus: string;
+  } | null>(null);
+  const [resetPasswordStudent, setResetPasswordStudent] =
+    useState<UserWithPrograms | null>(null);
   const [newPassword, setNewPassword] = useState("");
-  
+
   // Bulk upload state
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null);
@@ -78,14 +131,19 @@ export default function AdminStudentsPage() {
   } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    programCode: "",
-    status: "active",
+  const methods = useForm<StudentFormValues>({
+    resolver: yupResolver(studentSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      programCode: "",
+      status: "active",
+    },
   });
+
+  const { reset, handleSubmit: handleSubmitRHF, setValue } = methods;
 
   useEffect(() => {
     const token = localStorage.getItem("@app:admin_token");
@@ -131,7 +189,7 @@ export default function AdminStudentsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: StudentFormValues) => {
       const response = await fetch("/admin/v1/students", {
         method: "POST",
         headers: {
@@ -167,7 +225,7 @@ export default function AdminStudentsPage() {
       data,
     }: {
       id: number;
-      data: Partial<typeof formData>;
+      data: Partial<StudentFormValues>;
     }) => {
       const response = await fetch(`/admin/v1/students/${id}`, {
         method: "PUT",
@@ -253,7 +311,7 @@ export default function AdminStudentsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ password }),
       });
@@ -265,17 +323,24 @@ export default function AdminStudentsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/admin/v1/students"] });
-      toast({ title: "Password reset successfully", description: "User will be required to change password on next login" });
+      toast({
+        title: "Password reset successfully",
+        description: "User will be required to change password on next login",
+      });
       setResetPasswordStudent(null);
       setNewPassword("");
     },
     onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   const resetForm = () => {
-    setFormData({
+    reset({
       name: "",
       email: "",
       phone: "",
@@ -287,30 +352,36 @@ export default function AdminStudentsPage() {
 
   const handleEdit = (student: UserWithPrograms) => {
     setEditingStudent(student);
-    setFormData({
+    reset({
       name: student.name,
       email: student.email,
       phone: student.phone || "",
-      password: "",
+      password: "", // Password usually not populated for security, or keep empty
       programCode: student.programs[0] || "",
       status: student.status,
     });
   };
 
-  const handleSubmit = () => {
+  const onSubmit = (data: StudentFormValues) => {
     if (editingStudent) {
       updateMutation.mutate({
         id: editingStudent.id,
         data: {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          status: formData.status,
-          programCode: formData.programCode,
+          name: data.name,
+          email: data.email,
+          phone: data.phone || "",
+          status: data.status,
+          programCode: data.programCode || "",
         },
       });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate({
+        ...data,
+        // Ensure optional fields are strings if needed by backend, though schema handles it
+        phone: data.phone || "",
+        programCode: data.programCode || "",
+        status: data.status || "active",
+      });
     }
   };
 
@@ -608,7 +679,7 @@ export default function AdminStudentsPage() {
                               <Edit className="w-4 h-4 mr-2" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => setResetPasswordStudent(student)}
                               data-testid={`button-reset-password-${student.id}`}
                             >
@@ -712,134 +783,99 @@ export default function AdminStudentsPage() {
           className="sm:max-w-md"
           data-testid="dialog-student-form"
         >
-          <DialogHeader>
-            <DialogTitle>
-              {editingStudent ? "Edit Student" : "Add New Student"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+          <FormProvider {...methods}>
+            <DialogHeader>
+              <DialogTitle>
+                {editingStudent ? "Edit Student" : "Add New Student"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <FormInput
+                name="name"
+                label="Full Name"
+                required
                 placeholder="Enter full name"
                 data-testid="input-name"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
+              <FormInput
+                name="email"
+                label="Email"
                 type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                required
                 placeholder="Enter email address"
                 data-testid="input-email"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
+              <FormInput
+                name="phone"
+                label="Phone"
+                type="number"
                 placeholder="Enter phone number"
                 data-testid="input-phone"
               />
-            </div>
-            {!editingStudent && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
+
+              {!editingStudent && (
+                <FormInput
+                  name="password"
+                  label="Password"
                   type="password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
                   placeholder="Leave empty for default (User@123)"
                   data-testid="input-password"
                 />
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="program">Program</Label>
-              <Select
-                value={formData.programCode}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, programCode: value })
-                }
-              >
-                <SelectTrigger data-testid="select-program">
-                  <SelectValue placeholder="Select program" />
-                </SelectTrigger>
-                <SelectContent>
-                  {programsData.map((program) => (
-                    <SelectItem key={program.id} value={program.code}>
-                      {program.code} - {program.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              )}
+
+              <FormSelect
+                name="programCode"
+                label="Program"
+                required
+                placeholder="Select program"
+                options={programsData.map((program) => ({
+                  label: `${program.code} - ${program.name}`,
+                  value: program.code,
+                }))}
+                data-testid="select-program"
+              />
+
+              {editingStudent && (
+                <FormSelect
+                  name="status"
+                  label="Status"
+                  placeholder="Select status"
+                  options={[
+                    { label: "Active", value: "active" },
+                    { label: "Blocked", value: "blocked" },
+                  ]}
+                  data-testid="select-status"
+                  required
+                />
+              )}
             </div>
-            {editingStudent && (
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, status: value })
-                  }
-                >
-                  <SelectTrigger data-testid="select-status">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="blocked">Blocked</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsAddDialogOpen(false);
-                setEditingStudent(null);
-                resetForm();
-              }}
-              data-testid="button-cancel"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={
-                !formData.name ||
-                !formData.email ||
-                createMutation.isPending ||
-                updateMutation.isPending
-              }
-              className="bg-brand hover:bg-brand/90"
-              data-testid="button-submit"
-            >
-              {createMutation.isPending || updateMutation.isPending
-                ? "Saving..."
-                : editingStudent
-                ? "Update"
-                : "Add Student"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsAddDialogOpen(false);
+                  setEditingStudent(null);
+                  resetForm();
+                  methods.clearErrors();
+                }}
+                data-testid="button-cancel"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmitRHF(onSubmit)}
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="bg-brand hover:bg-brand/90"
+                data-testid="button-submit"
+              >
+                {createMutation.isPending || updateMutation.isPending
+                  ? "Saving..."
+                  : editingStudent
+                  ? "Update"
+                  : "Add Student"}
+              </Button>
+            </DialogFooter>
+          </FormProvider>
         </DialogContent>
       </Dialog>
 
@@ -918,19 +954,28 @@ export default function AdminStudentsPage() {
       </AlertDialog>
 
       {/* Reset Password Modal */}
-      <Dialog open={!!resetPasswordStudent} onOpenChange={(open) => {
-        if (!open) {
-          setResetPasswordStudent(null);
-          setNewPassword("");
-        }
-      }}>
-        <DialogContent className="sm:max-w-md" data-testid="dialog-reset-password">
+      <Dialog
+        open={!!resetPasswordStudent}
+        onOpenChange={(open) => {
+          if (!open) {
+            setResetPasswordStudent(null);
+            setNewPassword("");
+          }
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-md"
+          data-testid="dialog-reset-password"
+        >
           <DialogHeader>
             <DialogTitle>Reset Password</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
-              Reset password for <span className="font-medium text-foreground">{resetPasswordStudent?.name}</span>
+              Reset password for{" "}
+              <span className="font-medium text-foreground">
+                {resetPasswordStudent?.name}
+              </span>
             </p>
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password *</Label>
@@ -961,10 +1006,15 @@ export default function AdminStudentsPage() {
             <Button
               onClick={() => {
                 if (resetPasswordStudent && newPassword.length >= 6) {
-                  resetPasswordMutation.mutate({ id: resetPasswordStudent.id, password: newPassword });
+                  resetPasswordMutation.mutate({
+                    id: resetPasswordStudent.id,
+                    password: newPassword,
+                  });
                 }
               }}
-              disabled={newPassword.length < 6 || resetPasswordMutation.isPending}
+              disabled={
+                newPassword.length < 6 || resetPasswordMutation.isPending
+              }
               className="bg-brand hover:bg-brand/90"
               data-testid="button-reset-password-confirm"
             >
