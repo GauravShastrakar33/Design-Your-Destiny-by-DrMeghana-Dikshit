@@ -38,9 +38,56 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { useForm, FormProvider, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { FormInput } from "@/components/ui/form-input";
+import { FormSelect } from "@/components/ui/form-select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Search, MoreVertical, Edit, Trash2, Ban, CheckCircle, ChevronLeft, ChevronRight, ShieldCheck, UserCog } from "lucide-react";
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Ban,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  UserCog,
+} from "lucide-react";
 import type { User } from "@shared/schema";
+import { cn } from "@/lib/utils";
+
+const adminSchema = yup.object().shape({
+  name: yup
+    .string()
+    .required("Full name is required")
+    .min(3, "Name must be at least 3 characters long")
+    .max(50, "Name must be at most 50 characters long"),
+  email: yup
+    .string()
+    .email("Invalid email address")
+    .required("Email is required"),
+  phone: yup
+    .string()
+    .test(
+      "is-phone",
+      "Enter a valid phone number (digits and '+' allowed, max 15)",
+      (value) => {
+        if (!value) return true;
+        return /^\+?\d{1,14}$/.test(value) && value.length <= 15;
+      }
+    )
+    .nullable()
+    .optional(),
+  password: yup.string().optional(),
+  role: yup.string().required("Role is required"),
+  status: yup.string().required("Status is required"),
+});
+
+type AdminFormValues = yup.InferType<typeof adminSchema>;
 
 interface AdminsResponse {
   data: User[];
@@ -54,7 +101,7 @@ interface AdminsResponse {
 export default function AdminsPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
@@ -62,16 +109,24 @@ export default function AdminsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<User | null>(null);
   const [deletingAdmin, setDeletingAdmin] = useState<User | null>(null);
-  const [statusAdmin, setStatusAdmin] = useState<{ admin: User; newStatus: string } | null>(null);
+  const [statusAdmin, setStatusAdmin] = useState<{
+    admin: User;
+    newStatus: string;
+  } | null>(null);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    role: "COACH" as "SUPER_ADMIN" | "COACH",
-    status: "active",
+  const methods = useForm<AdminFormValues>({
+    resolver: yupResolver(adminSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      role: "COACH",
+      status: "active",
+    },
   });
+
+  const { reset, handleSubmit: handleSubmitRHF, control } = methods;
 
   useEffect(() => {
     const token = localStorage.getItem("@app:admin_token");
@@ -96,7 +151,7 @@ export default function AdminsPage() {
 
       const response = await fetch(`/admin/v1/admins?${params}`, {
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to fetch admins");
@@ -105,12 +160,12 @@ export default function AdminsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: AdminFormValues) => {
       const response = await fetch("/admin/v1/admins", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify(data),
       });
@@ -127,17 +182,27 @@ export default function AdminsPage() {
       resetForm();
     },
     onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<typeof formData> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<AdminFormValues>;
+    }) => {
       const response = await fetch(`/admin/v1/admins/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify(data),
       });
@@ -151,7 +216,11 @@ export default function AdminsPage() {
       resetForm();
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to update admin", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to update admin",
+        variant: "destructive",
+      });
     },
   });
 
@@ -161,7 +230,7 @@ export default function AdminsPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ status }),
       });
@@ -177,7 +246,11 @@ export default function AdminsPage() {
       setStatusAdmin(null);
     },
     onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -186,7 +259,7 @@ export default function AdminsPage() {
       const response = await fetch(`/admin/v1/admins/${id}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) {
@@ -201,12 +274,16 @@ export default function AdminsPage() {
       setDeletingAdmin(null);
     },
     onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   const resetForm = () => {
-    setFormData({
+    reset({
       name: "",
       email: "",
       phone: "",
@@ -218,29 +295,30 @@ export default function AdminsPage() {
 
   const handleEdit = (admin: User) => {
     setEditingAdmin(admin);
-    setFormData({
+    reset({
       name: admin.name,
       email: admin.email,
       phone: admin.phone || "",
       password: "",
-      role: admin.role as "SUPER_ADMIN" | "COACH",
+      role: admin.role,
       status: admin.status,
     });
   };
 
-  const handleSubmit = () => {
+  const onSubmit = (data: AdminFormValues) => {
     if (editingAdmin) {
       updateMutation.mutate({
         id: editingAdmin.id,
         data: {
-          name: formData.name,
-          email: formData.email,
-          role: formData.role,
-          status: formData.status,
+          name: data.name,
+          email: data.email,
+          phone: data.phone || "",
+          role: data.role,
+          status: data.status,
         },
       });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(data);
     }
   };
 
@@ -263,7 +341,10 @@ export default function AdminsPage() {
       );
     }
     return (
-      <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+      <Badge
+        variant="secondary"
+        className="bg-blue-100 text-blue-700 hover:bg-blue-100"
+      >
         <UserCog className="w-3 h-3 mr-1" />
         Coach
       </Badge>
@@ -279,8 +360,15 @@ export default function AdminsPage() {
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">Admins</h1>
-          <p className="text-gray-600 mt-1">Manage administrator accounts and roles</p>
+          <h1
+            className="text-2xl font-bold text-gray-900"
+            data-testid="text-page-title"
+          >
+            Admins
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage administrator accounts and roles
+          </p>
         </div>
         {isSuperAdmin && (
           <Button
@@ -326,55 +414,86 @@ export default function AdminsPage() {
               <table className="w-full" data-testid="table-admins">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Name</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Email</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Role</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Last Login</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Created</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Name
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Email
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Role
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Last Login
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                      Created
+                    </th>
                     {isSuperAdmin && (
-                      <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
+                      <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">
+                        Actions
+                      </th>
                     )}
                   </tr>
                 </thead>
                 <tbody>
                   {admins.map((admin) => (
-                    <tr 
-                      key={admin.id} 
+                    <tr
+                      key={admin.id}
                       className="border-b border-gray-100 hover:bg-gray-50"
                       data-testid={`row-admin-${admin.id}`}
                     >
                       <td className="py-3 px-4">
-                        <span className="font-medium text-gray-900" data-testid={`text-admin-name-${admin.id}`}>
+                        <span
+                          className="font-medium text-gray-900"
+                          data-testid={`text-admin-name-${admin.id}`}
+                        >
                           {admin.name}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-gray-600">{admin.email}</td>
-                      <td className="py-3 px-4">
-                        {getRoleBadge(admin.role)}
-                      </td>
+                      <td className="py-3 px-4">{getRoleBadge(admin.role)}</td>
                       <td className="py-3 px-4">
                         <Badge
-                          variant={admin.status === "active" ? "default" : "destructive"}
-                          className={admin.status === "active" ? "bg-green-100 text-green-700 hover:bg-green-100" : ""}
+                          variant={
+                            admin.status === "active"
+                              ? "default"
+                              : "destructive"
+                          }
+                          className={
+                            admin.status === "active"
+                              ? "bg-green-100 text-green-700 hover:bg-green-100"
+                              : ""
+                          }
                           data-testid={`badge-status-${admin.id}`}
                         >
                           {admin.status === "active" ? "Active" : "Blocked"}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">{formatDate(admin.lastLogin)}</td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">{formatDate(admin.createdAt)}</td>
+                      <td className="py-3 px-4 text-gray-600 text-sm">
+                        {formatDate(admin.lastLogin)}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600 text-sm">
+                        {formatDate(admin.createdAt)}
+                      </td>
                       {isSuperAdmin && (
                         <td className="py-3 px-4 text-right">
                           {currentAdmin?.id !== admin.id ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" data-testid={`button-actions-${admin.id}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  data-testid={`button-actions-${admin.id}`}
+                                >
                                   <MoreVertical className="w-4 h-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   onClick={() => handleEdit(admin)}
                                   data-testid={`button-edit-${admin.id}`}
                                 >
@@ -383,7 +502,12 @@ export default function AdminsPage() {
                                 </DropdownMenuItem>
                                 {admin.status === "active" ? (
                                   <DropdownMenuItem
-                                    onClick={() => setStatusAdmin({ admin, newStatus: "blocked" })}
+                                    onClick={() =>
+                                      setStatusAdmin({
+                                        admin,
+                                        newStatus: "blocked",
+                                      })
+                                    }
                                     className="text-orange-600"
                                     data-testid={`button-block-${admin.id}`}
                                   >
@@ -392,7 +516,12 @@ export default function AdminsPage() {
                                   </DropdownMenuItem>
                                 ) : (
                                   <DropdownMenuItem
-                                    onClick={() => setStatusAdmin({ admin, newStatus: "active" })}
+                                    onClick={() =>
+                                      setStatusAdmin({
+                                        admin,
+                                        newStatus: "active",
+                                      })
+                                    }
                                     className="text-green-600"
                                     data-testid={`button-unblock-${admin.id}`}
                                   >
@@ -411,7 +540,9 @@ export default function AdminsPage() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
-                            <span className="text-xs text-gray-400 italic">You</span>
+                            <span className="text-xs text-gray-400 italic">
+                              You
+                            </span>
                           )}
                         </td>
                       )}
@@ -422,7 +553,10 @@ export default function AdminsPage() {
             </div>
 
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-              <p className="text-sm text-gray-600" data-testid="text-pagination-info">
+              <p
+                className="text-sm text-gray-600"
+                data-testid="text-pagination-info"
+              >
                 Showing {startItem}-{endItem} of {pagination.total} admins
               </p>
               <div className="flex items-center gap-2">
@@ -441,7 +575,9 @@ export default function AdminsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
+                  onClick={() =>
+                    setPage((p) => Math.min(pagination.pages, p + 1))
+                  }
                   disabled={page === pagination.pages}
                   data-testid="button-next-page"
                 >
@@ -453,138 +589,188 @@ export default function AdminsPage() {
         )}
       </Card>
 
-      <Dialog open={isAddDialogOpen || !!editingAdmin} onOpenChange={(open) => {
-        if (!open) {
-          setIsAddDialogOpen(false);
-          setEditingAdmin(null);
-          resetForm();
-        }
-      }}>
+      <Dialog
+        open={isAddDialogOpen || !!editingAdmin}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsAddDialogOpen(false);
+            setEditingAdmin(null);
+            resetForm();
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md" data-testid="dialog-admin-form">
-          <DialogHeader>
-            <DialogTitle>{editingAdmin ? "Edit Admin" : "Add New Admin"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          <FormProvider {...methods}>
+            <DialogHeader>
+              <DialogTitle>
+                {editingAdmin ? "Edit Admin" : "Add New Admin"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <FormInput
+                name="name"
+                label="Full Name"
+                required
                 placeholder="Enter full name"
                 data-testid="input-name"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
+              <FormInput
+                name="email"
+                label="Email"
                 type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
                 placeholder="Enter email address"
                 data-testid="input-email"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              <FormInput
+                name="phone"
+                label="Phone"
+                onInput={(e) => {
+                  e.currentTarget.value = e.currentTarget.value.replace(
+                    /[^0-9+]/g,
+                    ""
+                  );
+                }}
                 placeholder="Enter phone number"
                 data-testid="input-phone"
               />
-            </div>
-            {!editingAdmin && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
+
+              {!editingAdmin && (
+                <FormInput
+                  name="password"
+                  label="Password"
                   type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="Leave empty for default (Admin@123)"
                   data-testid="input-password"
                 />
+              )}
+
+              <div className="space-y-3">
+                <Label>
+                  Role <span className="text-red-600">*</span>
+                </Label>
+                <Controller
+                  name="role"
+                  control={control}
+                  render={({ field }) => (
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="flex flex-col gap-3"
+                    >
+                      <div
+                        onClick={() => field.onChange("SUPER_ADMIN")}
+                        className={cn(
+                          "flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors",
+                          field.value === "SUPER_ADMIN"
+                            ? "border-primary bg-primary/5"
+                            : "border-gray-200"
+                        )}
+                      >
+                        <RadioGroupItem
+                          value="SUPER_ADMIN"
+                          id="role-super-admin"
+                          data-testid="radio-super-admin"
+                        />
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-primary" />
+                          <Label
+                            htmlFor="role-super-admin"
+                            className="cursor-pointer font-medium"
+                          >
+                            Super Admin
+                          </Label>
+                        </div>
+                        <span className="text-xs text-gray-500 ml-auto font-normal">
+                          Full access to all features
+                        </span>
+                      </div>
+                      <div
+                        onClick={() => field.onChange("COACH")}
+                        className={cn(
+                          "flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors",
+                          field.value === "COACH"
+                            ? "border-primary bg-primary/5"
+                            : "border-gray-200"
+                        )}
+                      >
+                        <RadioGroupItem
+                          value="COACH"
+                          id="role-coach"
+                          data-testid="radio-coach"
+                        />
+                        <div className="flex items-center gap-2">
+                          <UserCog className="w-4 h-4 text-blue-600" />
+                          <Label
+                            htmlFor="role-coach"
+                            className="cursor-pointer font-medium"
+                          >
+                            Coach
+                          </Label>
+                        </div>
+                        <span className="text-xs text-gray-500 ml-auto font-normal">
+                          Limited admin access
+                        </span>
+                      </div>
+                    </RadioGroup>
+                  )}
+                />
               </div>
-            )}
-            <div className="space-y-3">
-              <Label>Role *</Label>
-              <RadioGroup 
-                value={formData.role} 
-                onValueChange={(value) => setFormData({ ...formData, role: value as "SUPER_ADMIN" | "COACH" })}
-                className="flex flex-col gap-3"
-              >
-                <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <RadioGroupItem value="SUPER_ADMIN" id="role-super-admin" data-testid="radio-super-admin" />
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-purple-600" />
-                    <Label htmlFor="role-super-admin" className="cursor-pointer font-medium">
-                      Super Admin
-                    </Label>
-                  </div>
-                  <span className="text-xs text-gray-500 ml-auto">Full access to all features</span>
-                </div>
-                <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <RadioGroupItem value="COACH" id="role-coach" data-testid="radio-coach" />
-                  <div className="flex items-center gap-2">
-                    <UserCog className="w-4 h-4 text-blue-600" />
-                    <Label htmlFor="role-coach" className="cursor-pointer font-medium">
-                      Coach
-                    </Label>
-                  </div>
-                  <span className="text-xs text-gray-500 ml-auto">Limited admin access</span>
-                </div>
-              </RadioGroup>
+
+              {editingAdmin && (
+                <FormSelect
+                  name="status"
+                  label="Status"
+                  required
+                  placeholder="Select status"
+                  options={[
+                    { label: "Active", value: "active" },
+                    { label: "Blocked", value: "blocked" },
+                  ]}
+                  data-testid="select-status"
+                />
+              )}
             </div>
-            {editingAdmin && (
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value) => setFormData({ ...formData, status: value })}
-                >
-                  <SelectTrigger data-testid="select-status">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="blocked">Blocked</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsAddDialogOpen(false);
-                setEditingAdmin(null);
-                resetForm();
-              }}
-              data-testid="button-cancel"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={!formData.name || !formData.email || createMutation.isPending || updateMutation.isPending}
-              className="bg-brand hover:bg-brand/90"
-              data-testid="button-submit"
-            >
-              {createMutation.isPending || updateMutation.isPending ? "Saving..." : editingAdmin ? "Update" : "Add Admin"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsAddDialogOpen(false);
+                  setEditingAdmin(null);
+                  resetForm();
+                  methods.clearErrors();
+                }}
+                data-testid="button-cancel"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmitRHF(onSubmit)}
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="bg-brand hover:bg-brand/90"
+                data-testid="button-submit"
+              >
+                {createMutation.isPending || updateMutation.isPending
+                  ? "Saving..."
+                  : editingAdmin
+                  ? "Update"
+                  : "Add Admin"}
+              </Button>
+            </DialogFooter>
+          </FormProvider>
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!statusAdmin} onOpenChange={(open) => !open && setStatusAdmin(null)}>
+      <AlertDialog
+        open={!!statusAdmin}
+        onOpenChange={(open) => !open && setStatusAdmin(null)}
+      >
         <AlertDialogContent data-testid="dialog-status-confirm">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {statusAdmin?.newStatus === "blocked" ? "Block Admin" : "Unblock Admin"}
+              {statusAdmin?.newStatus === "blocked"
+                ? "Block Admin"
+                : "Unblock Admin"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {statusAdmin?.newStatus === "blocked"
@@ -593,14 +779,23 @@ export default function AdminsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-status-cancel">Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-status-cancel">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (statusAdmin) {
-                  statusMutation.mutate({ id: statusAdmin.admin.id, status: statusAdmin.newStatus });
+                  statusMutation.mutate({
+                    id: statusAdmin.admin.id,
+                    status: statusAdmin.newStatus,
+                  });
                 }
               }}
-              className={statusAdmin?.newStatus === "blocked" ? "bg-orange-600 hover:bg-orange-700" : "bg-green-600 hover:bg-green-700"}
+              className={
+                statusAdmin?.newStatus === "blocked"
+                  ? "bg-orange-600 hover:bg-orange-700"
+                  : "bg-green-600 hover:bg-green-700"
+              }
               data-testid="button-status-confirm"
             >
               {statusAdmin?.newStatus === "blocked" ? "Block" : "Unblock"}
@@ -609,16 +804,22 @@ export default function AdminsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!deletingAdmin} onOpenChange={(open) => !open && setDeletingAdmin(null)}>
+      <AlertDialog
+        open={!!deletingAdmin}
+        onOpenChange={(open) => !open && setDeletingAdmin(null)}
+      >
         <AlertDialogContent data-testid="dialog-delete-confirm">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Admin</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {deletingAdmin?.name}? This action cannot be undone.
+              Are you sure you want to delete {deletingAdmin?.name}? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-delete-cancel">Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-delete-cancel">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (deletingAdmin) {

@@ -4,26 +4,93 @@ import { useLocation, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
   Upload,
   X,
   Loader2,
-  Calendar as CalendarIcon,
+  Calendar,
+  Sparkles,
+  AlertCircle,
 } from "lucide-react";
+import { useForm, FormProvider, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { FormInput } from "@/components/ui/form-input";
+import { FormSelect } from "@/components/ui/form-select";
 import { queryClient } from "@/lib/queryClient";
+import { cn } from "@/lib/utils";
 import type { SessionBanner } from "@shared/schema";
+
+const sessionBannerSchema = yup.object().shape({
+  type: yup
+    .string()
+    .oneOf(["session", "advertisement"])
+    .required("Banner type is required"),
+  thumbnailKey: yup.string().when("type", {
+    is: "session",
+    then: (schema) => schema.required("Session Banner image is required"),
+    otherwise: (schema) => schema.nullable().optional(),
+  }),
+  videoKey: yup.string().when("type", {
+    is: "advertisement",
+    then: (schema) =>
+      schema.required("Video is required for advertisement banners"),
+    otherwise: (schema) => schema.nullable().optional(),
+  }),
+  posterKey: yup.string().nullable().optional(),
+  ctaText: yup.string().nullable().optional(),
+  ctaLink: yup.string().nullable().url("Invalid URL").optional(),
+  startAt: yup.date().required("Banner start date is required"),
+  endAt: yup
+    .date()
+    .required("Banner end date is required")
+    .min(yup.ref("startAt"), "Banner end date must be after start date"),
+  liveEnabled: yup.boolean().default(false),
+  liveStartAt: yup
+    .date()
+    .when("liveEnabled", {
+      is: true,
+      then: (schema) => schema.required("Live start date is required"),
+      otherwise: (schema) => schema.nullable().optional(),
+    })
+    .test(
+      "within-window-start",
+      "Live dates must be within visibility window",
+      function (value) {
+        const { liveEnabled, startAt } = this.parent;
+        if (!liveEnabled || !value || !startAt) return true;
+        return new Date(value) >= new Date(startAt);
+      }
+    ),
+  liveEndAt: yup
+    .date()
+    .when("liveEnabled", {
+      is: true,
+      then: (schema) =>
+        schema
+          .required("Live end date is required")
+          .min(
+            yup.ref("liveStartAt"),
+            "Live end date must be after Live start date"
+          ),
+      otherwise: (schema) => schema.nullable().optional(),
+    })
+    .test(
+      "within-window-end",
+      "Live dates must be within visibility window",
+      function (value) {
+        const { liveEnabled, endAt } = this.parent;
+        if (!liveEnabled || !value || !endAt) return true;
+        return new Date(value) <= new Date(endAt);
+      }
+    ),
+});
+
+type SessionBannerFormValues = yup.InferType<typeof sessionBannerSchema>;
 
 export default function AdminSessionBannerFormPage() {
   const [, setLocation] = useLocation();
@@ -31,19 +98,36 @@ export default function AdminSessionBannerFormPage() {
   const { toast } = useToast();
   const isEdit = !!params.id;
 
-  const [formData, setFormData] = useState({
-    type: "session" as "session" | "advertisement",
-    thumbnailKey: "",
-    videoKey: "",
-    posterKey: "",
-    ctaText: "",
-    ctaLink: "",
-    startAt: "",
-    endAt: "",
-    liveEnabled: false,
-    liveStartAt: "",
-    liveEndAt: "",
+  const methods = useForm<SessionBannerFormValues>({
+    resolver: yupResolver(sessionBannerSchema) as any,
+    defaultValues: {
+      type: "session",
+      thumbnailKey: "",
+      videoKey: "",
+      posterKey: "",
+      ctaText: "",
+      ctaLink: "",
+      startAt: undefined,
+      endAt: undefined,
+      liveEnabled: false,
+      liveStartAt: undefined,
+      liveEndAt: undefined,
+    },
   });
+
+  const {
+    watch,
+    setValue,
+    reset,
+    handleSubmit: handleSubmitRHF,
+    control,
+    formState: { errors },
+  } = methods;
+  const formType = watch("type");
+  const liveEnabled = watch("liveEnabled");
+  const thumbnailKey = watch("thumbnailKey");
+  const videoKey = watch("videoKey");
+  const posterKey = watch("posterKey");
 
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
@@ -92,42 +176,39 @@ export default function AdminSessionBannerFormPage() {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  const formatDateForDisplay = (dateStr: string) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toLocaleString();
-  };
-
   useEffect(() => {
     if (existingBanner) {
-      setFormData({
+      reset({
         type: existingBanner.type as "session" | "advertisement",
         thumbnailKey: existingBanner.thumbnailKey || "",
         videoKey: existingBanner.videoKey || "",
         posterKey: existingBanner.posterKey || "",
         ctaText: existingBanner.ctaText || "",
         ctaLink: existingBanner.ctaLink || "",
-        startAt: formatDateForInput(existingBanner.startAt),
-        endAt: formatDateForInput(existingBanner.endAt),
+        startAt: existingBanner.startAt
+          ? new Date(existingBanner.startAt)
+          : undefined,
+        endAt: existingBanner.endAt
+          ? new Date(existingBanner.endAt)
+          : undefined,
         liveEnabled: existingBanner.liveEnabled,
-        liveStartAt: formatDateForInput(existingBanner.liveStartAt),
-        liveEndAt: formatDateForInput(existingBanner.liveEndAt),
+        liveStartAt: existingBanner.liveStartAt
+          ? new Date(existingBanner.liveStartAt)
+          : undefined,
+        liveEndAt: existingBanner.liveEndAt
+          ? new Date(existingBanner.liveEndAt)
+          : undefined,
       });
     }
-  }, [existingBanner]);
+  }, [existingBanner, reset]);
 
   const minDate = formatDateForInput(new Date());
 
   const handleLiveToggleChange = (checked: boolean) => {
+    setValue("liveEnabled", checked);
     if (!checked) {
-      setFormData((prev) => ({
-        ...prev,
-        liveEnabled: false,
-        liveStartAt: "",
-        liveEndAt: "",
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, liveEnabled: true }));
+      setValue("liveStartAt", undefined);
+      setValue("liveEndAt", undefined);
     }
   };
 
@@ -154,13 +235,13 @@ export default function AdminSessionBannerFormPage() {
       if (!uploadRes.ok) throw new Error("Upload failed");
 
       if (type === "thumbnail") {
-        setFormData((prev) => ({ ...prev, thumbnailKey: key }));
+        setValue("thumbnailKey", key, { shouldValidate: true });
         setThumbnailPreview(URL.createObjectURL(file));
       } else if (type === "video") {
-        setFormData((prev) => ({ ...prev, videoKey: key }));
+        setValue("videoKey", key, { shouldValidate: true });
         setVideoPreview(URL.createObjectURL(file));
       } else {
-        setFormData((prev) => ({ ...prev, posterKey: key }));
+        setValue("posterKey", key, { shouldValidate: true });
         setPosterPreview(URL.createObjectURL(file));
       }
 
@@ -187,54 +268,8 @@ export default function AdminSessionBannerFormPage() {
     }
   };
 
-  const validateForm = (): string | null => {
-    if (!formData.startAt || !formData.endAt) {
-      return "Banner start and end dates are required";
-    }
-
-    const startAt = new Date(formData.startAt);
-    const endAt = new Date(formData.endAt);
-
-    if (startAt >= endAt) {
-      return "Banner end date must be after start date";
-    }
-
-    if (formData.type === "session" && !formData.thumbnailKey) {
-      return "Session Banner image is required";
-    }
-
-    if (formData.type === "advertisement" && !formData.videoKey) {
-      return "Video is required for advertisement banners";
-    }
-
-    if (formData.liveEnabled) {
-      if (!formData.liveStartAt || !formData.liveEndAt) {
-        return "LIVE start and end dates are required when LIVE is enabled";
-      }
-
-      const liveStartAt = new Date(formData.liveStartAt);
-      const liveEndAt = new Date(formData.liveEndAt);
-
-      if (liveStartAt >= liveEndAt) {
-        return "LIVE end date must be after LIVE start date";
-      }
-
-      if (liveStartAt < startAt || liveEndAt > endAt) {
-        return "LIVE dates must be within the banner visibility window";
-      }
-    }
-
-    return null;
-  };
-
-  // Convert datetime-local string to ISO string (preserves local time as intended UTC)
-  const toISOString = (dateTimeLocal: string | null) => {
-    if (!dateTimeLocal) return null;
-    return new Date(dateTimeLocal).toISOString();
-  };
-
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: SessionBannerFormValues) => {
       const response = await fetch("/api/admin/v1/session-banners", {
         method: "POST",
         headers: {
@@ -248,10 +283,10 @@ export default function AdminSessionBannerFormPage() {
           posterKey: data.posterKey || null,
           ctaText: data.ctaText || null,
           ctaLink: data.ctaLink || null,
-          startAt: toISOString(data.startAt),
-          endAt: toISOString(data.endAt),
-          liveStartAt: toISOString(data.liveStartAt),
-          liveEndAt: toISOString(data.liveEndAt),
+          startAt: data.startAt.toISOString(),
+          endAt: data.endAt.toISOString(),
+          liveStartAt: data.liveStartAt ? data.liveStartAt.toISOString() : null,
+          liveEndAt: data.liveEndAt ? data.liveEndAt.toISOString() : null,
         }),
       });
       if (!response.ok) throw new Error("Failed to create banner");
@@ -270,7 +305,7 @@ export default function AdminSessionBannerFormPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: SessionBannerFormValues) => {
       const response = await fetch(
         `/api/admin/v1/session-banners/${params.id}`,
         {
@@ -286,10 +321,12 @@ export default function AdminSessionBannerFormPage() {
             posterKey: data.posterKey || null,
             ctaText: data.ctaText || null,
             ctaLink: data.ctaLink || null,
-            startAt: toISOString(data.startAt),
-            endAt: toISOString(data.endAt),
-            liveStartAt: toISOString(data.liveStartAt),
-            liveEndAt: toISOString(data.liveEndAt),
+            startAt: data.startAt.toISOString(),
+            endAt: data.endAt.toISOString(),
+            liveStartAt: data.liveStartAt
+              ? data.liveStartAt.toISOString()
+              : null,
+            liveEndAt: data.liveEndAt ? data.liveEndAt.toISOString() : null,
           }),
         }
       );
@@ -308,19 +345,11 @@ export default function AdminSessionBannerFormPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const validationError = validateForm();
-    if (validationError) {
-      toast({ title: validationError, variant: "destructive" });
-      return;
-    }
-
+  const onSubmit = (data: SessionBannerFormValues) => {
     if (isEdit) {
-      updateMutation.mutate(formData);
+      updateMutation.mutate(data);
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(data);
     }
   };
 
@@ -351,448 +380,560 @@ export default function AdminSessionBannerFormPage() {
       </div>
 
       <Card className="p-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 1. Banner Type */}
-          <div>
-            <Label htmlFor="type">Banner Type</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value: "session" | "advertisement") =>
-                setFormData((prev) => ({ ...prev, type: value }))
-              }
-            >
-              <SelectTrigger data-testid="select-type" className="mt-1.5">
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="session">Session Banner</SelectItem>
-                <SelectItem value="advertisement">
-                  Advertisement Video
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmitRHF(onSubmit)} className="space-y-6">
+            {/* 1. Banner Type */}
+            <FormSelect
+              name="type"
+              label="Banner Type"
+              required
+              options={[
+                { label: "Session Banner", value: "session" },
+                { label: "Advertisement Video", value: "advertisement" },
+              ]}
+              placeholder="Select type"
+              data-testid="select-type"
+            />
 
-          {formData.type === "session" && (
-            <>
-              {/* 2. Session Banner Upload */}
-              <div className="space-x-4">
-                <Label>Session Banner</Label>
-                <input
-                  ref={thumbnailInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "thumbnail")}
-                  className="hidden"
-                />
-                {formData.thumbnailKey || thumbnailPreview ? (
-                  <div className="mt-2 relative inline-block">
-                    <div className="w-64 h-40 bg-muted rounded-lg overflow-hidden">
-                      {thumbnailPreview ? (
-                        <img
-                          src={thumbnailPreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                          Uploaded
+            {formType === "session" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                {/* Media Upload */}
+                <div className="space-y-4">
+                  <div className="space-y-4">
+                    <Label className="text-base">
+                      Session Banner <span className="text-red-700">*</span>
+                    </Label>
+                    <input
+                      ref={thumbnailInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileChange(e, "thumbnail")}
+                      className="hidden"
+                    />
+
+                    {thumbnailKey || thumbnailPreview ? (
+                      <div className="relative group w-full max-w-64 aspect-video rounded-xl overflow-hidden border-2 border-primary/20 bg-muted shadow-lg">
+                        {thumbnailPreview ? (
+                          <img
+                            src={thumbnailPreview}
+                            alt="Preview"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground bg-primary/5">
+                            <Upload className="w-8 h-8 mb-2 opacity-50" />
+                            <span className="text-sm font-medium">
+                              Image Uploaded
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Overlay Actions */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="bg-white/90 hover:bg-white text-black"
+                            onClick={() => thumbnailInputRef.current?.click()}
+                          >
+                            Change Image
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="destructive"
+                            className="w-8 h-8 rounded-full shadow-lg hvr-pop"
+                            onClick={() => {
+                              setValue("thumbnailKey", "", {
+                                shouldValidate: true,
+                              });
+                              setThumbnailPreview(null);
+                              if (thumbnailInputRef.current) {
+                                thumbnailInputRef.current.value = "";
+                              }
+                            }}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
                         </div>
-                      )}
-                    </div>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="destructive"
-                      className="absolute -top-2 right-2 w-6 h-6"
-                      onClick={() => {
-                        setFormData((prev) => ({ ...prev, thumbnailKey: "" }));
-                        setThumbnailPreview(null);
-                      }}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="mt-2"
-                    onClick={() => thumbnailInputRef.current?.click()}
-                    disabled={isUploading}
-                    data-testid="button-upload-banner"
-                  >
-                    {isUploading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      </div>
                     ) : (
-                      <Upload className="w-4 h-4 mr-2" />
-                    )}
-                    Upload Banner
-                  </Button>
-                )}
-              </div>
-
-              {/* 3. Banner Start Date & End Date */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="startAt">Banner Start Date & Time</Label>
-                  <DateTimePicker
-                    className="mt-1.5"
-                    date={
-                      formData.startAt ? new Date(formData.startAt) : undefined
-                    }
-                    setDate={(date) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        startAt: formatDateForInput(date),
-                      }))
-                    }
-                    minDate={new Date()}
-                    placeholder="Select start date & time"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="endAt">Banner End Date & Time</Label>
-                  <DateTimePicker
-                    className="mt-1.5"
-                    date={formData.endAt ? new Date(formData.endAt) : undefined}
-                    setDate={(date) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        endAt: formatDateForInput(date),
-                      }))
-                    }
-                    minDate={
-                      formData.startAt ? new Date(formData.startAt) : new Date()
-                    }
-                    placeholder="Select end date & time"
-                  />
-                </div>
-              </div>
-
-              {/* 4. Enable LIVE Toggle */}
-              <div className="flex items-center gap-3 py-2">
-                <Switch
-                  id="liveEnabled"
-                  checked={formData.liveEnabled}
-                  onCheckedChange={handleLiveToggleChange}
-                  data-testid="switch-live-enabled"
-                />
-                <Label htmlFor="liveEnabled" className="cursor-pointer">
-                  Enable LIVE
-                </Label>
-              </div>
-
-              {/* 5. LIVE Date Fields (conditional) */}
-              {formData.liveEnabled && (
-                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg border border-muted">
-                  <div>
-                    <Label htmlFor="liveStartAt">Live Start Date & Time</Label>
-                    <DateTimePicker
-                      className="mt-1.5"
-                      date={
-                        formData.liveStartAt
-                          ? new Date(formData.liveStartAt)
-                          : undefined
-                      }
-                      setDate={(date) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          liveStartAt: formatDateForInput(date),
-                        }))
-                      }
-                      minDate={
-                        formData.startAt
-                          ? new Date(formData.startAt)
-                          : new Date()
-                      }
-                      maxDate={
-                        formData.endAt ? new Date(formData.endAt) : undefined
-                      }
-                      placeholder="Select live start date & time"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Must be within banner visibility window
-                    </p>
-                  </div>
-                  <div>
-                    <Label htmlFor="liveEndAt">Live End Date & Time</Label>
-                    <DateTimePicker
-                      className="mt-1.5"
-                      date={
-                        formData.liveEndAt
-                          ? new Date(formData.liveEndAt)
-                          : undefined
-                      }
-                      setDate={(date) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          liveEndAt: formatDateForInput(date),
-                        }))
-                      }
-                      minDate={
-                        formData.liveStartAt
-                          ? new Date(formData.liveStartAt)
-                          : formData.startAt
-                          ? new Date(formData.startAt)
-                          : new Date()
-                      }
-                      maxDate={
-                        formData.endAt ? new Date(formData.endAt) : undefined
-                      }
-                      placeholder="Select live end date & time"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* 6. CTA Text */}
-              <div>
-                <Label htmlFor="ctaText">CTA Text (optional)</Label>
-                <Input
-                  id="ctaText"
-                  value={formData.ctaText}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      ctaText: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g., Join Now"
-                  className="mt-1.5"
-                  data-testid="input-cta-text"
-                />
-              </div>
-
-              {/* 7. CTA Link */}
-              <div>
-                <Label htmlFor="ctaLink">CTA Link (optional)</Label>
-                <Input
-                  id="ctaLink"
-                  value={formData.ctaLink}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      ctaLink: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g., https://example.com/join"
-                  className="mt-1.5"
-                  data-testid="input-cta-link"
-                />
-              </div>
-            </>
-          )}
-
-          {formData.type === "advertisement" && (
-            <>
-              <div>
-                <Label>Video File</Label>
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => handleFileChange(e, "video")}
-                  className="hidden"
-                />
-                {formData.videoKey || videoPreview ? (
-                  <div className="mt-2 relative inline-block">
-                    <div className="w-64 h-40 bg-muted rounded-lg overflow-hidden flex items-center justify-center">
-                      {videoPreview ? (
-                        <video
-                          src={videoPreview}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-muted-foreground text-sm">
-                          Video uploaded
+                      <div
+                        onClick={() => thumbnailInputRef.current?.click()}
+                        className={cn(
+                          "w-full max-w-64 aspect-video rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary/50",
+                          errors.thumbnailKey
+                            ? "border-destructive bg-destructive/5"
+                            : "border-muted-foreground/20"
+                        )}
+                      >
+                        <div className="p-2 bg-primary/5 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                          {isUploading ? (
+                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                          ) : (
+                            <Upload className="w-5 h-5 text-primary" />
+                          )}
+                        </div>
+                        <span className="text-sm font-semibold text-foreground">
+                          Click to upload banner
                         </span>
+                        <span className="text-xs text-muted-foreground mt-1 text-center px-4">
+                          JPEG or PNG
+                        </span>
+                      </div>
+                    )}
+                    {errors.thumbnailKey && (
+                      <p className="text-xs font-medium text-destructive mt-1 flex items-center gap-1">
+                        {errors.thumbnailKey.message?.toString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Visibility Schedule */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/20 p-6 rounded-xl border border-muted">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        Start Date & Time{" "}
+                        <span className="text-red-700">*</span>
+                      </Label>
+                      <Controller
+                        name="startAt"
+                        control={control}
+                        render={({ field }) => (
+                          <DateTimePicker
+                            className="bg-white"
+                            date={field.value}
+                            setDate={field.onChange}
+                            minDate={new Date()}
+                            placeholder="Set visibility start"
+                            error={!!errors.startAt}
+                          />
+                        )}
+                      />
+                      {errors.startAt && (
+                        <p className="text-xs font-medium text-destructive mt-1">
+                          {errors.startAt.message?.toString()}
+                        </p>
                       )}
                     </div>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="destructive"
-                      className="absolute -top-2 -right-2 w-6 h-6"
-                      onClick={() => {
-                        setFormData((prev) => ({ ...prev, videoKey: "" }));
-                        setVideoPreview(null);
-                      }}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        End Date & Time <span className="text-red-700">*</span>
+                      </Label>
+                      <Controller
+                        name="endAt"
+                        control={control}
+                        render={({ field }) => (
+                          <DateTimePicker
+                            className="bg-white"
+                            date={field.value}
+                            setDate={field.onChange}
+                            minDate={watch("startAt") || new Date()}
+                            placeholder="Set visibility end"
+                            error={!!errors.endAt}
+                          />
+                        )}
+                      />
+                      {errors.endAt && (
+                        <p className="text-xs font-medium text-destructive mt-1">
+                          {errors.endAt.message?.toString()}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="mt-2"
-                    onClick={() => videoInputRef.current?.click()}
-                    disabled={isUploading}
-                    data-testid="button-upload-video"
-                  >
-                    {isUploading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4 mr-2" />
-                    )}
-                    Upload Video
-                  </Button>
-                )}
-              </div>
 
-              <div>
-                <Label>Poster Image (optional)</Label>
-                <input
-                  ref={posterInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "poster")}
-                  className="hidden"
-                />
-                {formData.posterKey || posterPreview ? (
-                  <div className="mt-2 relative inline-block">
-                    <div className="w-64 h-40 bg-muted rounded-lg overflow-hidden">
-                      {posterPreview ? (
-                        <img
-                          src={posterPreview}
-                          alt="Poster"
-                          className="w-full h-full object-cover"
-                        />
+                  {/* Live Section Integrated */}
+                  <div
+                    className={cn(
+                      "p-6 rounded-xl border transition-all duration-300",
+                      liveEnabled
+                        ? "bg-primary/5 border-primary/20 shadow-sm"
+                        : "bg-muted/10 border-muted"
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            "p-2 rounded-lg transition-colors",
+                            liveEnabled
+                              ? "bg-primary text-white"
+                              : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          <span className="font-bold tracking-tighter">
+                            Live
+                          </span>
+                        </div>
+                        <div>
+                          <Label
+                            htmlFor="liveEnabled"
+                            className="text-base font-semibold cursor-pointer block"
+                          >
+                            Enable live broadcast
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            Show live indicator during a specific window
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="liveEnabled"
+                        checked={liveEnabled}
+                        onCheckedChange={handleLiveToggleChange}
+                        data-testid="switch-live-enabled"
+                      />
+                    </div>
+
+                    {liveEnabled && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-primary/10 animate-in zoom-in-95 duration-200">
+                        <div className="space-y-2">
+                          <Label className="text-sm">
+                            Live Start Date & Time *
+                          </Label>
+                          <Controller
+                            name="liveStartAt"
+                            control={control}
+                            render={({ field }) => (
+                              <DateTimePicker
+                                className="bg-white"
+                                date={field.value || undefined}
+                                setDate={field.onChange}
+                                minDate={watch("startAt")}
+                                maxDate={watch("endAt")}
+                                placeholder="Start of stream"
+                                error={!!errors.liveStartAt}
+                              />
+                            )}
+                          />
+                          {errors.liveStartAt && (
+                            <p className="text-xs font-medium text-destructive mt-1">
+                              {errors.liveStartAt.message?.toString()}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm">
+                            Live End Date & Time *
+                          </Label>
+                          <Controller
+                            name="liveEndAt"
+                            control={control}
+                            render={({ field }) => (
+                              <DateTimePicker
+                                className="bg-white"
+                                date={field.value || undefined}
+                                setDate={field.onChange}
+                                minDate={
+                                  watch("liveStartAt") || watch("startAt")
+                                }
+                                maxDate={watch("endAt")}
+                                placeholder="End of stream"
+                                error={!!errors.liveEndAt}
+                              />
+                            )}
+                          />
+                          {errors.liveEndAt && (
+                            <p className="text-xs font-medium text-destructive mt-1">
+                              {errors.liveEndAt.message?.toString()}
+                            </p>
+                          )}
+                        </div>
+                        <p className="md:col-span-2 text-[11px] text-muted-foreground bg-primary/10 p-2 rounded flex items-center gap-2">
+                          <AlertCircle className="w-3 h-3 text-primary" />
+                          Live timings must fall within the banner's visibility
+                          window.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Interaction Details */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormInput
+                      name="ctaText"
+                      label="Button Text"
+                      placeholder="Example: Join now"
+                      data-testid="input-cta-text"
+                    />
+                    <FormInput
+                      name="ctaLink"
+                      label="Destination URL"
+                      placeholder="Example: https://zoom.us/j/..."
+                      data-testid="input-cta-link"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {formType === "advertisement" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                {/* Video & Media */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Video Upload */}
+                    <div className="space-y-3">
+                      <Label className="text-base">
+                        Video File <span className="text-red-700">*</span>
+                      </Label>
+                      <input
+                        ref={videoInputRef}
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => handleFileChange(e, "video")}
+                        className="hidden"
+                      />
+                      {videoKey || videoPreview ? (
+                        <div className="relative group w-full max-w-48 aspect-video rounded-xl overflow-hidden border-2 border-primary/20 bg-black shadow-lg">
+                          {videoPreview ? (
+                            <video
+                              src={videoPreview}
+                              className="w-full h-full object-cover"
+                              autoPlay
+                              muted
+                              loop
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-white/50">
+                              <Upload className="w-8 h-8 mb-2 opacity-50" />
+                              <span className="text-sm font-medium">
+                                Video Uploaded
+                              </span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="bg-white/90 hover:bg-white text-black"
+                              onClick={() => videoInputRef.current?.click()}
+                            >
+                              Change Video
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="destructive"
+                              className="w-8 h-8 rounded-full shadow-lg"
+                              onClick={() => {
+                                setValue("videoKey", "", {
+                                  shouldValidate: true,
+                                });
+                                setVideoPreview(null);
+                                if (videoInputRef.current) {
+                                  videoInputRef.current.value = "";
+                                }
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                          Uploaded
+                        <div
+                          onClick={() => videoInputRef.current?.click()}
+                          className={cn(
+                            "w-full max-w-xs aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary/50",
+                            errors.videoKey
+                              ? "border-destructive bg-destructive/5"
+                              : "border-muted-foreground/20"
+                          )}
+                        >
+                          <div className="p-4 bg-primary/5 rounded-full mb-3">
+                            {isUploading ? (
+                              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                            ) : (
+                              <Upload className="w-8 h-8 text-primary" />
+                            )}
+                          </div>
+                          <span className="text-sm font-semibold">
+                            Upload Video
+                          </span>
+                          <span className="text-[10px] text-muted-foreground mt-1 px-4 text-center">
+                            MP4, WebM recommended
+                          </span>
+                        </div>
+                      )}
+                      {errors.videoKey && (
+                        <p className="text-xs font-medium text-destructive flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {errors.videoKey.message?.toString()}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Poster Upload (Thumbnail for video) */}
+                    <div className="space-y-3">
+                      <Label className="text-base text-muted-foreground">
+                        Poster Image (Optional)
+                      </Label>
+                      <input
+                        ref={posterInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e, "poster")}
+                        className="hidden"
+                      />
+                      {posterKey || posterPreview ? (
+                        <div className="relative group w-full max-w-48 aspect-video rounded-xl overflow-hidden border-2 border-muted bg-muted shadow-sm">
+                          {posterPreview ? (
+                            <img
+                              src={posterPreview}
+                              alt="Poster"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
+                              <span className="text-sm font-medium">
+                                Poster Uploaded
+                              </span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="bg-white/90 hover:bg-white text-black"
+                              onClick={() => posterInputRef.current?.click()}
+                            >
+                              Change
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="destructive"
+                              className="w-8 h-8 rounded-full"
+                              onClick={() => {
+                                setValue("posterKey", "", {
+                                  shouldValidate: true,
+                                });
+                                setPosterPreview(null);
+                                if (posterInputRef.current) {
+                                  posterInputRef.current.value = "";
+                                }
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => posterInputRef.current?.click()}
+                          className="w-full max-w-48 aspect-video rounded-xl border-2 border-dashed border-muted flex flex-col items-center justify-center cursor-pointer hover:bg-muted/30 transition-all"
+                        >
+                          <Upload className="w-6 h-6 text-muted-foreground mb-2" />
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Upload Static Poster
+                          </span>
                         </div>
                       )}
                     </div>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="destructive"
-                      className="absolute -top-2 -right-2 w-6 h-6"
-                      onClick={() => {
-                        setFormData((prev) => ({ ...prev, posterKey: "" }));
-                        setPosterPreview(null);
-                      }}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
                   </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="mt-2"
-                    onClick={() => posterInputRef.current?.click()}
-                    disabled={isUploading}
-                    data-testid="button-upload-poster"
-                  >
-                    {isUploading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4 mr-2" />
-                    )}
-                    Upload Poster
-                  </Button>
+                </div>
+
+                {/* Visibility Schedule */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/20 p-6 rounded-xl border border-muted">
+                    <div className="space-y-2">
+                      <Label>Start Date & Time *</Label>
+                      <Controller
+                        name="startAt"
+                        control={control}
+                        render={({ field }) => (
+                          <DateTimePicker
+                            className="bg-white"
+                            date={field.value}
+                            setDate={field.onChange}
+                            minDate={new Date()}
+                            placeholder="Set start time"
+                            error={!!errors.startAt}
+                          />
+                        )}
+                      />
+                      {errors.startAt && (
+                        <p className="text-xs font-medium text-destructive mt-1">
+                          {errors.startAt.message?.toString()}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>End Date & Time *</Label>
+                      <Controller
+                        name="endAt"
+                        control={control}
+                        render={({ field }) => (
+                          <DateTimePicker
+                            className="bg-white"
+                            date={field.value}
+                            setDate={field.onChange}
+                            minDate={watch("startAt") || new Date()}
+                            placeholder="Set end time"
+                            error={!!errors.endAt}
+                          />
+                        )}
+                      />
+                      {errors.endAt && (
+                        <p className="text-xs font-medium text-destructive mt-1">
+                          {errors.endAt.message?.toString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Interactive Elements */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormInput
+                      name="ctaText"
+                      label="Button Label"
+                      placeholder="e.g., Learn More"
+                      data-testid="input-cta-text"
+                    />
+                    <FormInput
+                      name="ctaLink"
+                      label="Destination Link"
+                      placeholder="e.g., https://example.com"
+                      data-testid="input-cta-link"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 8. Action Buttons */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setLocation("/admin/session-banner/banners")}
+                data-testid="button-cancel"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || isUploading}
+                data-testid="button-submit"
+                className="bg-brand hover:bg-brand/90"
+              >
+                {isSubmitting && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="startAt">Start Date & Time</Label>
-                  <Input
-                    id="startAt"
-                    type="datetime-local"
-                    value={formData.startAt}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        startAt: e.target.value,
-                      }))
-                    }
-                    className="mt-1.5"
-                    data-testid="input-start-at"
-                    min={minDate}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="endAt">End Date & Time</Label>
-                  <Input
-                    id="endAt"
-                    type="datetime-local"
-                    value={formData.endAt}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        endAt: e.target.value,
-                      }))
-                    }
-                    className="mt-1.5"
-                    data-testid="input-end-at"
-                    min={formData.startAt || minDate}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="ctaText">CTA Text (optional)</Label>
-                <Input
-                  id="ctaText"
-                  value={formData.ctaText}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      ctaText: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g., Learn More"
-                  className="mt-1.5"
-                  data-testid="input-cta-text"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="ctaLink">CTA Link (optional)</Label>
-                <Input
-                  id="ctaLink"
-                  value={formData.ctaLink}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      ctaLink: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g., https://example.com"
-                  className="mt-1.5"
-                  data-testid="input-cta-link"
-                />
-              </div>
-            </>
-          )}
-
-          {/* 8. Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setLocation("/admin/session-banner/banners")}
-              data-testid="button-cancel"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || isUploading}
-              data-testid="button-submit"
-              className="bg-brand hover:bg-brand/90"
-            >
-              {isSubmitting && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              )}
-              {isEdit ? "Update Banner" : "Create Banner"}
-            </Button>
-          </div>
-        </form>
+                {isEdit ? "Update Banner" : "Create Banner"}
+              </Button>
+            </div>
+          </form>
+        </FormProvider>
       </Card>
     </div>
   );
