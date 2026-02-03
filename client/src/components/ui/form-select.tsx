@@ -58,7 +58,7 @@ export function FormSelect({
             <SelectTrigger
               className={cn(
                 error &&
-                  "border-destructive focus:border-destructive focus:ring-0"
+                  "!border-destructive focus:!border-destructive focus:ring-0"
               )}
             >
               <SelectValue placeholder={placeholder} />

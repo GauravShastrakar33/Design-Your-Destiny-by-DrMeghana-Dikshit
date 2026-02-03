@@ -20,6 +20,7 @@ interface DateTimePickerProps {
   maxDate?: Date;
   placeholder?: string;
   className?: string;
+  error?: boolean;
 }
 
 export function DateTimePicker({
@@ -29,6 +30,7 @@ export function DateTimePicker({
   maxDate,
   placeholder = "Pick a date",
   className,
+  error,
 }: DateTimePickerProps) {
   const [selectedDateTime, setSelectedDateTime] = React.useState<
     Date | undefined
@@ -140,6 +142,8 @@ export function DateTimePicker({
           variant={"outline"}
           className={cn(
             "w-full justify-start text-left font-normal border-input bg-background shadow-xs hover:bg-background hover:text-foreground",
+            error &&
+              "!border-destructive focus-visible:!border-destructive focus-visible:ring-destructive",
             !date && "text-muted-foreground",
             className
           )}

@@ -72,10 +72,14 @@ const adminSchema = yup.object().shape({
     .required("Email is required"),
   phone: yup
     .string()
-    .test("is-indian-phone", "Enter a valid 10-digit phone number", (value) => {
-      if (!value) return true;
-      return /^[6-9]\d{9}$/.test(value);
-    })
+    .test(
+      "is-phone",
+      "Enter a valid phone number (digits and '+' allowed, max 15)",
+      (value) => {
+        if (!value) return true;
+        return /^\+?\d{1,14}$/.test(value) && value.length <= 15;
+      }
+    )
     .nullable()
     .optional(),
   password: yup.string().optional(),
@@ -621,7 +625,12 @@ export default function AdminsPage() {
               <FormInput
                 name="phone"
                 label="Phone"
-                type="number"
+                onInput={(e) => {
+                  e.currentTarget.value = e.currentTarget.value.replace(
+                    /[^0-9+]/g,
+                    ""
+                  );
+                }}
                 placeholder="Enter phone number"
                 data-testid="input-phone"
               />

@@ -43,7 +43,7 @@ export function FormInput({
           {...props}
           className={cn(
             error &&
-              "border-destructive focus-visible:border-destructive focus-visible:ring-destructive",
+              "!border-destructive focus-visible:!border-destructive focus-visible:ring-destructive",
             isPassword && "pr-10"
           )}
         />
