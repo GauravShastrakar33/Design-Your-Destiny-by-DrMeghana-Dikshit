@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Users, 
-  Activity, 
-  Award, 
+import {
+  Users,
+  Activity,
+  Award,
   PlayCircle,
   Calendar,
   Bell,
@@ -13,7 +13,7 @@ import {
   UsersRound,
   BookOpen,
   FileCheck,
-  Clock
+  Clock,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -66,11 +66,19 @@ export default function AdminDashboardPage() {
     return (
       <div className="p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900" data-testid="text-dashboard-title">Dashboard</h1>
+          <h1
+            className="text-2xl font-bold text-gray-900"
+            data-testid="text-dashboard-title"
+          >
+            Dashboard
+          </h1>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
+            <Card
+              key={i}
+              className="animate-pulse bg-white rounded-lg shadow-sm border border-gray-100"
+            >
               <CardContent className="pt-6">
                 <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
                 <div className="h-8 bg-gray-200 rounded w-1/3"></div>
@@ -82,11 +90,23 @@ export default function AdminDashboardPage() {
     );
   }
 
-  const kpis = data?.kpis ?? { totalUsers: 0, activeToday: 0, practisedToday: 0, badgesEarnedToday: 0 };
+  const kpis = data?.kpis ?? {
+    totalUsers: 0,
+    activeToday: 0,
+    practisedToday: 0,
+    badgesEarnedToday: 0,
+  };
   const events = data?.events ?? { today: [], upcoming: [] };
-  const notifications = data?.notifications ?? { failedLast24h: 0, usersDisabled: 0 };
+  const notifications = data?.notifications ?? {
+    failedLast24h: 0,
+    usersDisabled: 0,
+  };
   const communityPractices = data?.communityPractices ?? { total: 0 };
-  const cmsHealth = data?.cmsHealth ?? { totalCourses: 0, publishedCourses: 0, lastUpdatedCourse: null };
+  const cmsHealth = data?.cmsHealth ?? {
+    totalCourses: 0,
+    publishedCourses: 0,
+    lastUpdatedCourse: null,
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -114,18 +134,28 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900" data-testid="text-dashboard-title">Dashboard</h1>
+        <h1
+          className="text-2xl font-bold text-gray-900"
+          data-testid="text-dashboard-title"
+        >
+          Dashboard
+        </h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card data-testid="card-kpi-users">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card
+          data-testid="card-kpi-users"
+          className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-450"
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Students</p>
-                <p className="text-2xl font-bold" data-testid="text-kpi-users">{kpis.totalUsers}</p>
+                <p className="text-2xl font-bold" data-testid="text-kpi-users">
+                  {kpis.totalUsers}
+                </p>
               </div>
               <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
                 <Users className="w-5 h-5 text-purple-600" />
@@ -134,12 +164,20 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card data-testid="card-kpi-active-today">
+        <Card
+          data-testid="card-kpi-active-today"
+          className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-450"
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Active Today</p>
-                <p className="text-2xl font-bold" data-testid="text-kpi-active-today">{kpis.activeToday}</p>
+                <p
+                  className="text-2xl font-bold"
+                  data-testid="text-kpi-active-today"
+                >
+                  {kpis.activeToday}
+                </p>
               </div>
               <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
                 <Activity className="w-5 h-5 text-blue-600" />
@@ -148,12 +186,20 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card data-testid="card-kpi-practised-today">
+        <Card
+          data-testid="card-kpi-practised-today"
+          className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-450"
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Practised Today</p>
-                <p className="text-2xl font-bold" data-testid="text-kpi-practised-today">{kpis.practisedToday}</p>
+                <p
+                  className="text-2xl font-bold"
+                  data-testid="text-kpi-practised-today"
+                >
+                  {kpis.practisedToday}
+                </p>
               </div>
               <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
                 <PlayCircle className="w-5 h-5 text-green-600" />
@@ -162,12 +208,22 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card data-testid="card-kpi-badges-earned">
+        <Card
+          data-testid="card-kpi-badges-earned"
+          className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-450"
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Badges Earned Today</p>
-                <p className="text-2xl font-bold" data-testid="text-kpi-badges-earned">{kpis.badgesEarnedToday}</p>
+                <p className="text-sm text-muted-foreground">
+                  Badges Earned Today
+                </p>
+                <p
+                  className="text-2xl font-bold"
+                  data-testid="text-kpi-badges-earned"
+                >
+                  {kpis.badgesEarnedToday}
+                </p>
               </div>
               <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
                 <Award className="w-5 h-5 text-amber-600" />
@@ -178,7 +234,10 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <Card data-testid="card-events">
+        <Card
+          data-testid="card-events"
+          className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-450"
+        >
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Calendar className="w-4 h-4" />
@@ -187,13 +246,24 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">Events Today</p>
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                Events Today
+              </p>
               {events.today.length === 0 ? (
-                <p className="text-sm text-gray-500" data-testid="text-no-events-today">No events scheduled for today</p>
+                <p
+                  className="text-sm text-gray-500"
+                  data-testid="text-no-events-today"
+                >
+                  No events scheduled for today
+                </p>
               ) : (
                 <div className="space-y-2">
                   {events.today.map((event) => (
-                    <div key={event.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0" data-testid={`event-today-${event.id}`}>
+                    <div
+                      key={event.id}
+                      className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                      data-testid={`event-today-${event.id}`}
+                    >
                       <div>
                         <p className="text-sm font-medium">{event.title}</p>
                         <p className="text-xs text-muted-foreground">
@@ -207,17 +277,31 @@ export default function AdminDashboardPage() {
               )}
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">Upcoming Events (Next 7 Days)</p>
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                Upcoming Events (Next 7 Days)
+              </p>
               {events.upcoming.length === 0 ? (
-                <p className="text-sm text-gray-500" data-testid="text-no-upcoming-events">No upcoming events</p>
+                <p
+                  className="text-sm text-gray-500"
+                  data-testid="text-no-upcoming-events"
+                >
+                  No upcoming events
+                </p>
               ) : (
                 <div className="space-y-2">
                   {events.upcoming.slice(0, 5).map((event) => (
-                    <div key={event.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0" data-testid={`event-upcoming-${event.id}`}>
+                    <div
+                      key={event.id}
+                      className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                      data-testid={`event-upcoming-${event.id}`}
+                    >
                       <div>
                         <p className="text-sm font-medium">{event.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(event.startDatetime), "EEE, MMM d 'at' h:mm a")}
+                          {format(
+                            new Date(event.startDatetime),
+                            "EEE, MMM d 'at' h:mm a"
+                          )}
                         </p>
                       </div>
                       {getStatusBadge(event.status)}
@@ -229,7 +313,10 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card data-testid="card-notifications">
+        <Card
+          data-testid="card-notifications"
+          className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-450"
+        >
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Bell className="w-4 h-4" />
@@ -241,20 +328,32 @@ export default function AdminDashboardPage() {
               {notifications.failedLast24h === 0 ? (
                 <>
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                  <p className="text-sm" data-testid="text-notification-health-ok">All notifications sent successfully (last 24h)</p>
+                  <p
+                    className="text-sm"
+                    data-testid="text-notification-health-ok"
+                  >
+                    All notifications sent successfully (last 24h)
+                  </p>
                 </>
               ) : (
                 <>
                   <AlertTriangle className="w-5 h-5 text-amber-500" />
-                  <p className="text-sm" data-testid="text-notification-health-failed">
-                    {notifications.failedLast24h} notification(s) failed (last 24h)
+                  <p
+                    className="text-sm"
+                    data-testid="text-notification-health-failed"
+                  >
+                    {notifications.failedLast24h} notification(s) failed (last
+                    24h)
                   </p>
                 </>
               )}
             </div>
             <div className="flex items-center gap-3 py-2">
               <BellOff className="w-5 h-5 text-gray-400" />
-              <p className="text-sm" data-testid="text-users-notifications-disabled">
+              <p
+                className="text-sm"
+                data-testid="text-users-notifications-disabled"
+              >
                 {notifications.usersDisabled} users have notifications disabled
               </p>
             </div>
@@ -263,7 +362,10 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card data-testid="card-community-practices">
+        <Card
+          data-testid="card-community-practices"
+          className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-450"
+        >
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <UsersRound className="w-4 h-4" />
@@ -272,13 +374,23 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Total Community Practices</p>
-              <p className="text-xl font-bold" data-testid="text-total-community-practices">{communityPractices.total}</p>
+              <p className="text-sm text-muted-foreground">
+                Total Community Practices
+              </p>
+              <p
+                className="text-xl font-bold"
+                data-testid="text-total-community-practices"
+              >
+                {communityPractices.total}
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card data-testid="card-cms-health">
+        <Card
+          data-testid="card-cms-health"
+          className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-450"
+        >
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
@@ -288,31 +400,54 @@ export default function AdminDashboardPage() {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">Courses</p>
-              <p className="font-semibold" data-testid="text-total-courses">{cmsHealth.totalCourses}</p>
+              <p className="font-semibold" data-testid="text-total-courses">
+                {cmsHealth.totalCourses}
+              </p>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileCheck className="w-4 h-4 text-green-500" />
-                <p className="text-sm text-muted-foreground">Published Courses</p>
+                <p className="text-sm text-muted-foreground">
+                  Published Courses
+                </p>
               </div>
-              <p className="font-semibold" data-testid="text-published-courses">{cmsHealth.publishedCourses}</p>
+              <p className="font-semibold" data-testid="text-published-courses">
+                {cmsHealth.publishedCourses}
+              </p>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-blue-500" />
-                <p className="text-sm text-muted-foreground">Last Updated Course</p>
+                <p className="text-sm text-muted-foreground">
+                  Last Updated Course
+                </p>
               </div>
               {cmsHealth.lastUpdatedCourse ? (
                 <div className="text-right">
-                  <p className="text-sm font-medium truncate max-w-[180px]" title={cmsHealth.lastUpdatedCourse.title} data-testid="text-last-updated-course-title">
+                  <p
+                    className="text-sm font-medium truncate max-w-[180px]"
+                    title={cmsHealth.lastUpdatedCourse.title}
+                    data-testid="text-last-updated-course-title"
+                  >
                     {cmsHealth.lastUpdatedCourse.title}
                   </p>
-                  <p className="text-xs text-muted-foreground" data-testid="text-last-updated-course-time">
-                    {formatDistanceToNow(new Date(cmsHealth.lastUpdatedCourse.updatedAt), { addSuffix: true })}
+                  <p
+                    className="text-xs text-muted-foreground"
+                    data-testid="text-last-updated-course-time"
+                  >
+                    {formatDistanceToNow(
+                      new Date(cmsHealth.lastUpdatedCourse.updatedAt),
+                      { addSuffix: true }
+                    )}
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500" data-testid="text-no-courses">No courses yet</p>
+                <p
+                  className="text-sm text-gray-500"
+                  data-testid="text-no-courses"
+                >
+                  No courses yet
+                </p>
               )}
             </div>
           </CardContent>

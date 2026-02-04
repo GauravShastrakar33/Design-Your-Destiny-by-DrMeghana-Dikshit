@@ -155,8 +155,15 @@ export default function AdminCoursesPage() {
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">Courses</h1>
-          <p className="text-gray-600 mt-1">Manage course content and curriculum</p>
+          <h1
+            className="text-2xl font-bold text-gray-900"
+            data-testid="text-page-title"
+          >
+            Courses
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage course content and curriculum
+          </p>
         </div>
         <Button
           onClick={() => setLocation("/admin/courses/create/step1")}
@@ -168,7 +175,7 @@ export default function AdminCoursesPage() {
         </Button>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-6 bg-white rounded-lg shadow-sm border border-gray-100">
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -181,7 +188,10 @@ export default function AdminCoursesPage() {
             />
           </div>
           <Select value={programFilter} onValueChange={setProgramFilter}>
-            <SelectTrigger className="w-[180px]" data-testid="select-program-filter">
+            <SelectTrigger
+              className="w-[180px]"
+              data-testid="select-program-filter"
+            >
               <SelectValue placeholder="Filter by Program" />
             </SelectTrigger>
             <SelectContent>
@@ -199,7 +209,11 @@ export default function AdminCoursesPage() {
             data-testid="button-sort-order"
           >
             {sortOrder === "asc" ? "ASC" : "DESC"}
-            {sortOrder === "asc" ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+            {sortOrder === "asc" ? (
+              <ChevronUp className="w-4 h-4 ml-1" />
+            ) : (
+              <ChevronDown className="w-4 h-4 ml-1" />
+            )}
           </Button>
         </div>
 
@@ -211,7 +225,9 @@ export default function AdminCoursesPage() {
         ) : filteredCourses.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">
-              {search || programFilter !== "all" ? "No courses match your filters." : "No courses yet. Create your first course!"}
+              {search || programFilter !== "all"
+                ? "No courses match your filters."
+                : "No courses yet. Create your first course!"}
             </p>
           </div>
         ) : (
@@ -220,17 +236,33 @@ export default function AdminCoursesPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 w-12"></th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Thumbnail</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Name</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Program Code</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Created</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    Thumbnail
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    Name
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    Program Code
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    Created
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    Status
+                  </th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredCourses.map((course, index) => (
-                  <tr key={course.id} className="border-b border-gray-100 hover:bg-gray-50" data-testid={`row-course-${course.id}`}>
+                  <tr
+                    key={course.id}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                    data-testid={`row-course-${course.id}`}
+                  >
                     <td className="py-3 px-4 w-12">
                       <div className="flex flex-col gap-1">
                         <button
@@ -265,18 +297,26 @@ export default function AdminCoursesPage() {
                       )}
                     </td>
                     <td className="py-3 px-4">
-                      <span className="font-medium text-gray-900">{course.title}</span>
+                      <span className="font-medium text-gray-900">
+                        {course.title}
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-gray-600">
                       {getProgramName(course.programId)}
                     </td>
                     <td className="py-3 px-4 text-gray-600">
-                      {course.createdAt ? format(new Date(course.createdAt), "dd MMM yy") : "-"}
+                      {course.createdAt
+                        ? format(new Date(course.createdAt), "dd MMM yy")
+                        : "-"}
                     </td>
                     <td className="py-3 px-4">
                       <Badge
                         variant={course.isPublished ? "default" : "secondary"}
-                        className={course.isPublished ? "bg-green-100 text-green-700 hover:bg-green-100" : ""}
+                        className={
+                          course.isPublished
+                            ? "bg-green-100 text-green-700 hover:bg-green-100"
+                            : ""
+                        }
                       >
                         {course.isPublished ? "Published" : "Unpublished"}
                       </Badge>
@@ -286,15 +326,26 @@ export default function AdminCoursesPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => togglePublishMutation.mutate({ id: course.id, isPublished: !course.isPublished })}
+                          onClick={() =>
+                            togglePublishMutation.mutate({
+                              id: course.id,
+                              isPublished: !course.isPublished,
+                            })
+                          }
                           data-testid={`button-toggle-publish-${course.id}`}
                         >
-                          {course.isPublished ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {course.isPublished ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setLocation(`/admin/courses/${course.id}`)}
+                          onClick={() =>
+                            setLocation(`/admin/courses/${course.id}`)
+                          }
                           data-testid={`button-edit-${course.id}`}
                         >
                           <Edit className="w-4 h-4" />
@@ -323,7 +374,9 @@ export default function AdminCoursesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Course</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{courseToDelete?.title}"? This will also delete all modules, folders, lessons, and files. This action cannot be undone.
+              Are you sure you want to delete "{courseToDelete?.title}"? This
+              will also delete all modules, folders, lessons, and files. This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

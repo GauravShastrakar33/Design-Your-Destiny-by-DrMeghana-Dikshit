@@ -357,14 +357,14 @@ export default function AdminSessionBannerFormPage() {
 
   if (isEdit && isLoadingBanner) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div className="p-6">
         <div className="text-center py-8">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="p-6">
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"
@@ -379,29 +379,32 @@ export default function AdminSessionBannerFormPage() {
         </h1>
       </div>
 
-      <Card className="p-8">
+      <Card className="p-8 bg-white rounded-lg shadow-sm border border-gray-100">
         <FormProvider {...methods}>
-          <form onSubmit={handleSubmitRHF(onSubmit)} className="space-y-6">
-            {/* 1. Banner Type */}
-            <FormSelect
-              name="type"
-              label="Banner Type"
-              required
-              options={[
-                { label: "Session Banner", value: "session" },
-                { label: "Advertisement Video", value: "advertisement" },
-              ]}
-              placeholder="Select type"
-              data-testid="select-type"
-            />
-
+          <form onSubmit={handleSubmitRHF(onSubmit)} className="space-y-5">
+            {/* 1. Header & Type (Full Width) */}
+            <div className="w-full">
+              <FormSelect
+                name="type"
+                label="Banner Type"
+                required
+                options={[
+                  { label: "Session Banner", value: "session" },
+                  { label: "Advertisement Video", value: "advertisement" },
+                ]}
+                placeholder="Select type"
+                data-testid="select-type"
+                className="w-full"
+              />
+            </div>
             {formType === "session" && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                {/* Media Upload */}
-                <div className="space-y-4">
-                  <div className="space-y-4">
-                    <Label className="text-base">
-                      Session Banner <span className="text-red-700">*</span>
+              <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                {/* 2. Media | Visibility Window Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+                  {/* Left: Media */}
+                  <div className="lg:col-span-4 space-y-4">
+                    <Label className="text-sm font-semibold text-gray-700">
+                      Banner Image <span className="text-red-700">*</span>
                     </Label>
                     <input
                       ref={thumbnailInputRef}
@@ -412,7 +415,7 @@ export default function AdminSessionBannerFormPage() {
                     />
 
                     {thumbnailKey || thumbnailPreview ? (
-                      <div className="relative group w-full max-w-64 aspect-video rounded-xl overflow-hidden border-2 border-primary/20 bg-muted shadow-lg">
+                      <div className="relative group w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm">
                         {thumbnailPreview ? (
                           <img
                             src={thumbnailPreview}
@@ -420,15 +423,13 @@ export default function AdminSessionBannerFormPage() {
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground bg-primary/5">
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                             <Upload className="w-8 h-8 mb-2 opacity-50" />
                             <span className="text-sm font-medium">
                               Image Uploaded
                             </span>
                           </div>
                         )}
-
-                        {/* Overlay Actions */}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
                           <Button
                             type="button"
@@ -437,21 +438,20 @@ export default function AdminSessionBannerFormPage() {
                             className="bg-white/90 hover:bg-white text-black"
                             onClick={() => thumbnailInputRef.current?.click()}
                           >
-                            Change Image
+                            Change
                           </Button>
                           <Button
                             type="button"
                             size="icon"
                             variant="destructive"
-                            className="w-8 h-8 rounded-full shadow-lg hvr-pop"
+                            className="w-8 h-8 rounded-full shadow-lg"
                             onClick={() => {
                               setValue("thumbnailKey", "", {
                                 shouldValidate: true,
                               });
                               setThumbnailPreview(null);
-                              if (thumbnailInputRef.current) {
+                              if (thumbnailInputRef.current)
                                 thumbnailInputRef.current.value = "";
-                              }
                             }}
                           >
                             <X className="w-4 h-4" />
@@ -462,24 +462,24 @@ export default function AdminSessionBannerFormPage() {
                       <div
                         onClick={() => thumbnailInputRef.current?.click()}
                         className={cn(
-                          "w-full max-w-64 aspect-video rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary/50",
+                          "w-full aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-gray-50 hover:border-brand/40",
                           errors.thumbnailKey
                             ? "border-destructive bg-destructive/5"
-                            : "border-muted-foreground/20"
+                            : "border-gray-200"
                         )}
                       >
-                        <div className="p-2 bg-primary/5 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                        <div className="p-3 bg-brand/5 rounded-full mb-3">
                           {isUploading ? (
-                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                            <Loader2 className="w-6 h-6 text-brand animate-spin" />
                           ) : (
-                            <Upload className="w-5 h-5 text-primary" />
+                            <Upload className="w-6 h-6 text-brand" />
                           )}
                         </div>
-                        <span className="text-sm font-semibold text-foreground">
-                          Click to upload banner
+                        <span className="text-sm font-semibold">
+                          Click to upload
                         </span>
-                        <span className="text-xs text-muted-foreground mt-1 text-center px-4">
-                          JPEG or PNG
+                        <span className="text-[10px] text-gray-400 mt-1">
+                          JPEG, PNG recommended
                         </span>
                       </div>
                     )}
@@ -489,182 +489,203 @@ export default function AdminSessionBannerFormPage() {
                       </p>
                     )}
                   </div>
-                </div>
 
-                {/* Visibility Schedule */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/20 p-6 rounded-xl border border-muted">
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        Start Date & Time{" "}
-                        <span className="text-red-700">*</span>
-                      </Label>
-                      <Controller
-                        name="startAt"
-                        control={control}
-                        render={({ field }) => (
-                          <DateTimePicker
-                            className="bg-white"
-                            date={field.value}
-                            setDate={field.onChange}
-                            minDate={new Date()}
-                            placeholder="Set visibility start"
-                            error={!!errors.startAt}
+                  {/* Right: Visibility & Live */}
+                  <div className="lg:col-span-8 space-y-4">
+                    {/* Schedule Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Calendar className="w-4 h-4 text-brand" />
+                        <span className="text-sm font-semibold text-gray-500">
+                          Visibility Window
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50/50 p-5 rounded-xl border border-gray-100">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-gray-500">
+                            Start Date & Time *
+                          </Label>
+                          <Controller
+                            name="startAt"
+                            control={control}
+                            render={({ field }) => (
+                              <div className="space-y-1">
+                                <DateTimePicker
+                                  className="bg-white border-gray-200"
+                                  date={field.value}
+                                  setDate={field.onChange}
+                                  minDate={new Date()}
+                                  placeholder="Start time"
+                                  error={!!errors.startAt}
+                                />
+                                {errors.startAt && (
+                                  <p className="text-xs font-medium text-destructive mt-1 flex items-center gap-1">
+                                    {errors.startAt.message?.toString()}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           />
-                        )}
-                      />
-                      {errors.startAt && (
-                        <p className="text-xs font-medium text-destructive mt-1">
-                          {errors.startAt.message?.toString()}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        End Date & Time <span className="text-red-700">*</span>
-                      </Label>
-                      <Controller
-                        name="endAt"
-                        control={control}
-                        render={({ field }) => (
-                          <DateTimePicker
-                            className="bg-white"
-                            date={field.value}
-                            setDate={field.onChange}
-                            minDate={watch("startAt") || new Date()}
-                            placeholder="Set visibility end"
-                            error={!!errors.endAt}
-                          />
-                        )}
-                      />
-                      {errors.endAt && (
-                        <p className="text-xs font-medium text-destructive mt-1">
-                          {errors.endAt.message?.toString()}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Live Section Integrated */}
-                  <div
-                    className={cn(
-                      "p-6 rounded-xl border transition-all duration-300",
-                      liveEnabled
-                        ? "bg-primary/5 border-primary/20 shadow-sm"
-                        : "bg-muted/10 border-muted"
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={cn(
-                            "p-2 rounded-lg transition-colors",
-                            liveEnabled
-                              ? "bg-primary text-white"
-                              : "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          <span className="font-bold tracking-tighter">
-                            Live
-                          </span>
                         </div>
-                        <div>
-                          <Label
-                            htmlFor="liveEnabled"
-                            className="text-base font-semibold cursor-pointer block"
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-gray-500">
+                            End Date & Time *
+                          </Label>
+                          <Controller
+                            name="endAt"
+                            control={control}
+                            render={({ field }) => (
+                              <div className="space-y-1">
+                                <DateTimePicker
+                                  className="bg-white border-gray-200"
+                                  date={field.value}
+                                  setDate={field.onChange}
+                                  minDate={watch("startAt") || new Date()}
+                                  placeholder="End time"
+                                  error={!!errors.endAt}
+                                />
+                                {errors.endAt && (
+                                  <p className="text-xs font-medium text-destructive mt-1 flex items-center gap-1">
+                                    {errors.endAt.message?.toString()}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Live Broadcast Section */}
+                    <div
+                      className={cn(
+                        "p-5 rounded-xl border transition-all duration-300",
+                        liveEnabled
+                          ? "bg-brand/[0.02] border-brand/20 shadow-sm"
+                          : "bg-white border-gray-100"
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn(
+                              "px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest transition-colors",
+                              liveEnabled
+                                ? "bg-red-500 text-white shadow-sm"
+                                : "bg-gray-100 text-gray-400"
+                            )}
                           >
-                            Enable live broadcast
-                          </Label>
-                          <p className="text-xs text-muted-foreground">
-                            Show live indicator during a specific window
-                          </p>
+                            Live
+                          </div>
+                          <div>
+                            <Label
+                              htmlFor="liveEnabled"
+                              className="text-sm font-semibold cursor-pointer"
+                            >
+                              Enable live broadcast
+                            </Label>
+                            <p className="text-[11px] text-gray-400">
+                              Show pulse indicator during a specific time
+                            </p>
+                          </div>
                         </div>
+                        <Switch
+                          id="liveEnabled"
+                          checked={liveEnabled}
+                          onCheckedChange={handleLiveToggleChange}
+                        />
                       </div>
-                      <Switch
-                        id="liveEnabled"
-                        checked={liveEnabled}
-                        onCheckedChange={handleLiveToggleChange}
-                        data-testid="switch-live-enabled"
-                      />
-                    </div>
 
-                    {liveEnabled && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-primary/10 animate-in zoom-in-95 duration-200">
-                        <div className="space-y-2">
-                          <Label className="text-sm">
-                            Live Start Date & Time *
-                          </Label>
-                          <Controller
-                            name="liveStartAt"
-                            control={control}
-                            render={({ field }) => (
-                              <DateTimePicker
-                                className="bg-white"
-                                date={field.value || undefined}
-                                setDate={field.onChange}
-                                minDate={watch("startAt")}
-                                maxDate={watch("endAt")}
-                                placeholder="Start of stream"
-                                error={!!errors.liveStartAt}
-                              />
-                            )}
-                          />
-                          {errors.liveStartAt && (
-                            <p className="text-xs font-medium text-destructive mt-1">
-                              {errors.liveStartAt.message?.toString()}
+                      {liveEnabled && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-5 border-t border-brand/10 animate-in fade-in duration-300">
+                          <div className="col-span-1 md:col-span-2 flex items-start gap-2 p-2 bg-brand/[0.03] rounded-lg border border-brand/10 mb-2">
+                            <AlertCircle className="w-3.5 h-3.5 text-brand mt-0.5" />
+                            <p className="text-[10px] text-gray-600 leading-relaxed font-medium">
+                              Note: Live Start and End times must fall within
+                              the "Visibility Window" defined above.
                             </p>
-                          )}
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium text-gray-500">
+                              Live Start *
+                            </Label>
+                            <Controller
+                              name="liveStartAt"
+                              control={control}
+                              render={({ field }) => (
+                                <div className="space-y-1">
+                                  <DateTimePicker
+                                    className="bg-white border-gray-200"
+                                    date={field.value || undefined}
+                                    setDate={field.onChange}
+                                    minDate={watch("startAt")}
+                                    maxDate={watch("endAt")}
+                                    placeholder="Stream start"
+                                    error={!!errors.liveStartAt}
+                                  />
+                                  {errors.liveStartAt && (
+                                    <p className="text-xs font-medium text-destructive mt-1 flex items-center gap-1">
+                                      {errors.liveStartAt.message?.toString()}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium text-gray-500">
+                              Live End *
+                            </Label>
+                            <Controller
+                              name="liveEndAt"
+                              control={control}
+                              render={({ field }) => (
+                                <div className="space-y-1">
+                                  <DateTimePicker
+                                    className="bg-white border-gray-200"
+                                    date={field.value || undefined}
+                                    setDate={field.onChange}
+                                    minDate={
+                                      watch("liveStartAt") || watch("startAt")
+                                    }
+                                    maxDate={watch("endAt")}
+                                    placeholder="Stream end"
+                                    error={!!errors.liveEndAt}
+                                  />
+                                  {errors.liveEndAt && (
+                                    <p className="text-xs font-medium text-destructive mt-1 flex items-center gap-1">
+                                      {errors.liveEndAt.message?.toString()}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-sm">
-                            Live End Date & Time *
-                          </Label>
-                          <Controller
-                            name="liveEndAt"
-                            control={control}
-                            render={({ field }) => (
-                              <DateTimePicker
-                                className="bg-white"
-                                date={field.value || undefined}
-                                setDate={field.onChange}
-                                minDate={
-                                  watch("liveStartAt") || watch("startAt")
-                                }
-                                maxDate={watch("endAt")}
-                                placeholder="End of stream"
-                                error={!!errors.liveEndAt}
-                              />
-                            )}
-                          />
-                          {errors.liveEndAt && (
-                            <p className="text-xs font-medium text-destructive mt-1">
-                              {errors.liveEndAt.message?.toString()}
-                            </p>
-                          )}
-                        </div>
-                        <p className="md:col-span-2 text-[11px] text-muted-foreground bg-primary/10 p-2 rounded flex items-center gap-2">
-                          <AlertCircle className="w-3 h-3 text-primary" />
-                          Live timings must fall within the banner's visibility
-                          window.
-                        </p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Interaction Details */}
+                {/* 3. Call to Action (Section below) */}
                 <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-brand" />
+                    <span className="text-sm font-semibold text-gray-500">
+                      Action
+                    </span>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormInput
                       name="ctaText"
-                      label="Button Text"
-                      placeholder="Example: Join now"
+                      label="Button text"
+                      placeholder="e.g. Join Now"
                       data-testid="input-cta-text"
                     />
                     <FormInput
                       name="ctaLink"
                       label="Destination URL"
-                      placeholder="Example: https://zoom.us/j/..."
+                      placeholder="e.g. https://..."
                       data-testid="input-cta-link"
                     />
                   </div>
@@ -673,13 +694,14 @@ export default function AdminSessionBannerFormPage() {
             )}
 
             {formType === "advertisement" && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                {/* Video & Media */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                {/* 2. Media | Timeline Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+                  {/* Left: Media */}
+                  <div className="lg:col-span-12 flex flex-wrap gap-4 items-start">
                     {/* Video Upload */}
-                    <div className="space-y-3">
-                      <Label className="text-base">
+                    <div className="space-y-1 w-full max-w-[380px]">
+                      <Label className="text-sm font-semibold text-gray-700">
                         Video File <span className="text-red-700">*</span>
                       </Label>
                       <input
@@ -690,7 +712,7 @@ export default function AdminSessionBannerFormPage() {
                         className="hidden"
                       />
                       {videoKey || videoPreview ? (
-                        <div className="relative group w-full max-w-48 aspect-video rounded-xl overflow-hidden border-2 border-primary/20 bg-black shadow-lg">
+                        <div className="relative group w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-black shadow-lg shadow-black/10">
                           {videoPreview ? (
                             <video
                               src={videoPreview}
@@ -701,7 +723,7 @@ export default function AdminSessionBannerFormPage() {
                             />
                           ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center text-white/50">
-                              <Upload className="w-8 h-8 mb-2 opacity-50" />
+                              <Upload className="w-8 h-8 mb-2 opacity-30" />
                               <span className="text-sm font-medium">
                                 Video Uploaded
                               </span>
@@ -715,7 +737,7 @@ export default function AdminSessionBannerFormPage() {
                               className="bg-white/90 hover:bg-white text-black"
                               onClick={() => videoInputRef.current?.click()}
                             >
-                              Change Video
+                              Change
                             </Button>
                             <Button
                               type="button"
@@ -727,9 +749,8 @@ export default function AdminSessionBannerFormPage() {
                                   shouldValidate: true,
                                 });
                                 setVideoPreview(null);
-                                if (videoInputRef.current) {
+                                if (videoInputRef.current)
                                   videoInputRef.current.value = "";
-                                }
                               }}
                             >
                               <X className="w-4 h-4" />
@@ -740,38 +761,37 @@ export default function AdminSessionBannerFormPage() {
                         <div
                           onClick={() => videoInputRef.current?.click()}
                           className={cn(
-                            "w-full max-w-xs aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary/50",
+                            "w-full aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-gray-50 hover:border-brand/40",
                             errors.videoKey
                               ? "border-destructive bg-destructive/5"
-                              : "border-muted-foreground/20"
+                              : "border-gray-200"
                           )}
                         >
-                          <div className="p-4 bg-primary/5 rounded-full mb-3">
+                          <div className="p-3 bg-brand/5 rounded-full mb-2">
                             {isUploading ? (
-                              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                              <Loader2 className="w-5 h-5 text-brand animate-spin" />
                             ) : (
-                              <Upload className="w-8 h-8 text-primary" />
+                              <Upload className="w-5 h-5 text-brand" />
                             )}
                           </div>
                           <span className="text-sm font-semibold">
                             Upload Video
                           </span>
-                          <span className="text-[10px] text-muted-foreground mt-1 px-4 text-center">
-                            MP4, WebM recommended
+                          <span className="text-[11px] text-gray-400 mt-1">
+                            MP4 recommended
                           </span>
                         </div>
                       )}
                       {errors.videoKey && (
                         <p className="text-xs font-medium text-destructive flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
                           {errors.videoKey.message?.toString()}
                         </p>
                       )}
                     </div>
 
-                    {/* Poster Upload (Thumbnail for video) */}
-                    <div className="space-y-3">
-                      <Label className="text-base text-muted-foreground">
+                    {/* Poster Upload */}
+                    <div className="space-y-1 w-full max-w-[380px]">
+                      <Label className="text-sm font-semibold text-gray-700">
                         Poster Image (Optional)
                       </Label>
                       <input
@@ -782,7 +802,7 @@ export default function AdminSessionBannerFormPage() {
                         className="hidden"
                       />
                       {posterKey || posterPreview ? (
-                        <div className="relative group w-full max-w-48 aspect-video rounded-xl overflow-hidden border-2 border-muted bg-muted shadow-sm">
+                        <div className="relative group w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm">
                           {posterPreview ? (
                             <img
                               src={posterPreview}
@@ -790,7 +810,7 @@ export default function AdminSessionBannerFormPage() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
+                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                               <span className="text-sm font-medium">
                                 Poster Uploaded
                               </span>
@@ -810,15 +830,14 @@ export default function AdminSessionBannerFormPage() {
                               type="button"
                               size="icon"
                               variant="destructive"
-                              className="w-8 h-8 rounded-full"
+                              className="w-8 h-8 rounded-full shadow-lg"
                               onClick={() => {
                                 setValue("posterKey", "", {
                                   shouldValidate: true,
                                 });
                                 setPosterPreview(null);
-                                if (posterInputRef.current) {
+                                if (posterInputRef.current)
                                   posterInputRef.current.value = "";
-                                }
                               }}
                             >
                               <X className="w-4 h-4" />
@@ -828,82 +847,102 @@ export default function AdminSessionBannerFormPage() {
                       ) : (
                         <div
                           onClick={() => posterInputRef.current?.click()}
-                          className="w-full max-w-48 aspect-video rounded-xl border-2 border-dashed border-muted flex flex-col items-center justify-center cursor-pointer hover:bg-muted/30 transition-all"
+                          className="w-full aspect-video rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-brand/40 transition-all"
                         >
-                          <Upload className="w-6 h-6 text-muted-foreground mb-2" />
-                          <span className="text-xs font-medium text-muted-foreground">
-                            Upload Static Poster
+                          <Upload className="w-5 h-5 text-gray-400 mb-2" />
+                          <span className="text-xs font-semibold text-gray-500">
+                            Static Poster
                           </span>
                         </div>
                       )}
                     </div>
                   </div>
-                </div>
 
-                {/* Visibility Schedule */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/20 p-6 rounded-xl border border-muted">
-                    <div className="space-y-2">
-                      <Label>Start Date & Time *</Label>
-                      <Controller
-                        name="startAt"
-                        control={control}
-                        render={({ field }) => (
-                          <DateTimePicker
-                            className="bg-white"
-                            date={field.value}
-                            setDate={field.onChange}
-                            minDate={new Date()}
-                            placeholder="Set start time"
-                            error={!!errors.startAt}
+                  {/* Secondary Details Row (Full Width Timeline) */}
+                  <div className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-1 gap-10">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-brand" />
+                        <span className="text-sm font-semibold text-gray-500">
+                          Timeline
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-gray-500">
+                            Start Date *
+                          </Label>
+                          <Controller
+                            name="startAt"
+                            control={control}
+                            render={({ field }) => (
+                              <div className="space-y-1">
+                                <DateTimePicker
+                                  className="bg-white border-gray-200"
+                                  date={field.value}
+                                  setDate={field.onChange}
+                                  minDate={new Date()}
+                                  placeholder="Start"
+                                  error={!!errors.startAt}
+                                />
+                                {errors.startAt && (
+                                  <p className="text-xs font-medium text-destructive mt-1 flex items-center gap-1">
+                                    {errors.startAt.message?.toString()}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           />
-                        )}
-                      />
-                      {errors.startAt && (
-                        <p className="text-xs font-medium text-destructive mt-1">
-                          {errors.startAt.message?.toString()}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label>End Date & Time *</Label>
-                      <Controller
-                        name="endAt"
-                        control={control}
-                        render={({ field }) => (
-                          <DateTimePicker
-                            className="bg-white"
-                            date={field.value}
-                            setDate={field.onChange}
-                            minDate={watch("startAt") || new Date()}
-                            placeholder="Set end time"
-                            error={!!errors.endAt}
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-gray-500">
+                            End Date *
+                          </Label>
+                          <Controller
+                            name="endAt"
+                            control={control}
+                            render={({ field }) => (
+                              <div className="space-y-1">
+                                <DateTimePicker
+                                  className="bg-white border-gray-200"
+                                  date={field.value}
+                                  setDate={field.onChange}
+                                  minDate={watch("startAt") || new Date()}
+                                  placeholder="End"
+                                  error={!!errors.endAt}
+                                />
+                                {errors.endAt && (
+                                  <p className="text-xs font-medium text-destructive mt-1 flex items-center gap-1">
+                                    {errors.endAt.message?.toString()}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           />
-                        )}
-                      />
-                      {errors.endAt && (
-                        <p className="text-xs font-medium text-destructive mt-1">
-                          {errors.endAt.message?.toString()}
-                        </p>
-                      )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Interactive Elements */}
-                <div className="space-y-4">
+                {/* 3. Call to Action (Section below) */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="w-4 h-4 text-brand" />
+                    <span className="text-sm font-semibold text-gray-500">
+                      Action
+                    </span>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormInput
                       name="ctaText"
-                      label="Button Label"
-                      placeholder="e.g., Learn More"
-                      data-testid="input-cta-text"
+                      label="Label"
+                      placeholder="Join Now"
                     />
                     <FormInput
                       name="ctaLink"
-                      label="Destination Link"
-                      placeholder="e.g., https://example.com"
-                      data-testid="input-cta-link"
+                      label="Link"
+                      placeholder="https://..."
                     />
                   </div>
                 </div>

@@ -382,7 +382,7 @@ export default function AdminsPage() {
         )}
       </div>
 
-      <Card className="p-6">
+      <Card className="p-6 bg-white rounded-lg shadow-sm border border-gray-100">
         <div className="flex gap-4 mb-6">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
