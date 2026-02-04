@@ -1,6 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, Quote, ToggleLeft, ToggleRight } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Quote,
+  ToggleLeft,
+  ToggleRight,
+  Loader2,
+  Sparkles,
+  Filter,
+  Settings2,
+  List,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +39,28 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { DailyQuote } from "@shared/schema";
+import { useForm, FormProvider } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { cn } from "@/lib/utils";
+import { FormInput } from "@/components/ui/form-input";
+import { FormTextarea } from "@/components/ui/form-textarea";
+
+// Form Schema
+const quoteSchema = yup.object().shape({
+  quoteText: yup
+    .string()
+    .required("Quote text is required")
+    .min(5, "Quote is too short"),
+  author: yup.string().nullable().optional(),
+  displayOrder: yup
+    .number()
+    .required("Display order is required")
+    .positive("Order must be positive")
+    .integer("Order must be an integer"),
+});
+
+type QuoteFormData = yup.InferType<typeof quoteSchema>;
 
 export default function AdminQuotesPage() {
   const { toast } = useToast();
@@ -34,7 +68,6 @@ export default function AdminQuotesPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<DailyQuote | null>(null);
-  const [formData, setFormData] = useState({ quoteText: "", author: "", displayOrder: 1 });
 
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
@@ -43,7 +76,7 @@ export default function AdminQuotesPage() {
     queryFn: async () => {
       const response = await fetch("/api/admin/quotes", {
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to fetch quotes");
@@ -51,36 +84,62 @@ export default function AdminQuotesPage() {
     },
   });
 
+  // react-hook-form for Create
+  const createForm = useForm<QuoteFormData>({
+    resolver: yupResolver(quoteSchema),
+    defaultValues: { quoteText: "", author: "", displayOrder: 1 },
+  });
+
+  // react-hook-form for Edit
+  const editForm = useForm<QuoteFormData>({
+    resolver: yupResolver(quoteSchema),
+  });
+
   const createMutation = useMutation({
-    mutationFn: async (data: { quoteText: string; author: string; displayOrder: number }) => {
+    mutationFn: async (data: QuoteFormData) => {
       await apiRequest("POST", "/api/admin/quotes", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/quotes"] });
-      toast({ title: "Quote created successfully" });
+      toast({ title: "Success", description: "Quote created successfully" });
       setCreateDialogOpen(false);
-      setFormData({ quoteText: "", author: "", displayOrder: 1 });
+      createForm.reset({
+        quoteText: "",
+        author: "",
+        displayOrder: quotes.length + 1,
+      });
     },
     onError: (error: any) => {
-      const message = error?.message || "Failed to create quote";
-      toast({ title: message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to create quote",
+        variant: "destructive",
+      });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<DailyQuote> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<DailyQuote>;
+    }) => {
       await apiRequest("PUT", `/api/admin/quotes/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/quotes"] });
-      toast({ title: "Quote updated successfully" });
+      toast({ title: "Success", description: "Quote updated successfully" });
       setEditDialogOpen(false);
       setSelectedQuote(null);
-      setFormData({ quoteText: "", author: "", displayOrder: 1 });
     },
     onError: (error: any) => {
-      const message = error?.message || "Failed to update quote";
-      toast({ title: message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to update quote",
+        variant: "destructive",
+      });
     },
   });
 
@@ -90,13 +149,19 @@ export default function AdminQuotesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/quotes"] });
-      toast({ title: "Quote deactivated successfully" });
+      toast({
+        title: "Success",
+        description: "Quote deactivated successfully",
+      });
       setDeleteDialogOpen(false);
       setSelectedQuote(null);
     },
     onError: (error: any) => {
-      const message = error?.message || "Failed to deactivate quote";
-      toast({ title: message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to deactivate quote",
+        variant: "destructive",
+      });
     },
   });
 
@@ -106,26 +171,32 @@ export default function AdminQuotesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/quotes"] });
-      toast({ title: "Quote status updated" });
+      toast({ title: "Success", description: "Quote status updated" });
     },
     onError: (error: any) => {
-      const message = error?.message || "Failed to update quote status";
-      toast({ title: message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to update status",
+        variant: "destructive",
+      });
     },
   });
 
   const handleCreate = () => {
-    const maxOrder = quotes.length > 0 ? Math.max(...quotes.map(q => q.displayOrder)) + 1 : 1;
-    setFormData({ quoteText: "", author: "", displayOrder: maxOrder });
+    const maxOrder =
+      quotes.length > 0
+        ? Math.max(...quotes.map((q) => q.displayOrder)) + 1
+        : 1;
+    createForm.reset({ quoteText: "", author: "", displayOrder: maxOrder });
     setCreateDialogOpen(true);
   };
 
   const handleEdit = (quote: DailyQuote) => {
     setSelectedQuote(quote);
-    setFormData({ 
-      quoteText: quote.quoteText, 
-      author: quote.author || "", 
-      displayOrder: quote.displayOrder 
+    editForm.reset({
+      quoteText: quote.quoteText,
+      author: quote.author || "",
+      displayOrder: quote.displayOrder,
     });
     setEditDialogOpen(true);
   };
@@ -139,30 +210,36 @@ export default function AdminQuotesPage() {
     toggleMutation.mutate({ id: quote.id, isActive: !quote.isActive });
   };
 
-  const submitCreate = () => {
-    if (!formData.quoteText.trim()) {
-      toast({ title: "Quote text is required", variant: "destructive" });
-      return;
+  const validateOrderUniqueness = (order: number, excludeId?: number) => {
+    const exists = quotes.find(
+      (q) => q.displayOrder === order && q.id !== excludeId
+    );
+    if (exists) {
+      toast({
+        title: "Validation Error",
+        description: `Display Order ${order} is already used by another quote.`,
+        variant: "destructive",
+      });
+      return false;
     }
-    createMutation.mutate({
-      quoteText: formData.quoteText.trim(),
-      author: formData.author.trim() || "",
-      displayOrder: formData.displayOrder,
-    });
+    return true;
   };
 
-  const submitUpdate = () => {
-    if (!selectedQuote || !formData.quoteText.trim()) {
-      toast({ title: "Quote text is required", variant: "destructive" });
-      return;
-    }
-    updateMutation.mutate({ 
-      id: selectedQuote.id, 
+  const onSubmitCreate = (data: QuoteFormData) => {
+    if (!validateOrderUniqueness(data.displayOrder)) return;
+    createMutation.mutate(data);
+  };
+
+  const onSubmitUpdate = (data: QuoteFormData) => {
+    if (!selectedQuote) return;
+    if (!validateOrderUniqueness(data.displayOrder, selectedQuote.id)) return;
+    updateMutation.mutate({
+      id: selectedQuote.id,
       data: {
-        quoteText: formData.quoteText.trim(),
-        author: formData.author.trim() || null,
-        displayOrder: formData.displayOrder,
-      }
+        quoteText: data.quoteText.trim(),
+        author: data.author?.trim() || null,
+        displayOrder: data.displayOrder,
+      },
     });
   };
 
@@ -174,237 +251,297 @@ export default function AdminQuotesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-[#f8f9fa]">
+        <Loader2 className="w-8 h-8 animate-spin text-brand" />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 p-6 bg-gray-50" data-testid="admin-quotes-page">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">Daily Quotes</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage inspirational quotes shown to users daily</p>
-        </div>
-        <Button
-          onClick={handleCreate}
-          className="bg-brand hover:bg-brand/90"
-          data-testid="button-create-quote"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Quote
-        </Button>
+    <div className="min-h-screen bg-[#f8f9fa] p-8">
+      <div>
+        <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h1
+                className="text-xl font-bold text-gray-900 leading-none"
+                data-testid="text-page-title"
+              >
+                Daily Quotes
+              </h1>
+            </div>
+            <p className="text-sm font-semibold text-gray-600">
+              Manage inspirational quotes displayed to users at the start of
+              their day.
+            </p>
+          </div>
+          <Button
+            onClick={handleCreate}
+            className="bg-brand hover:bg-brand/90 font-bold text-xs h-10 px-6 rounded-lg shadow-sm gap-2 w-fit"
+            data-testid="button-create-quote"
+          >
+            <Plus className="w-4 h-4" />
+            Add New Quote
+          </Button>
+        </header>
+
+        <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
+          <div className="p-0">
+            <div className="overflow-x-auto">
+              <table
+                className="w-full text-left border-collapse"
+                data-testid="table-quotes"
+              >
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <th className="py-4 px-6 text-sm font-bold tracking-wide text-gray-600 w-24">
+                      Order
+                    </th>
+                    <th className="py-4 px-6 text-sm font-bold tracking-wide text-gray-600">
+                      Quote
+                    </th>
+                    <th className="py-4 px-6 text-sm font-bold tracking-wide text-gray-600 w-48">
+                      Author
+                    </th>
+                    <th className="py-4 px-6 text-sm font-bold tracking-wide text-gray-600 w-32">
+                      Shown
+                    </th>
+                    <th className="py-4 px-6 text-sm font-bold tracking-wide text-gray-600 w-24 text-center">
+                      Status
+                    </th>
+                    <th className="py-4 px-6 text-sm font-bold tracking-wide text-gray-600 w-24 text-right">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {quotes.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-20 text-center">
+                        <div className="flex flex-col items-center justify-center opacity-40">
+                          <Quote className="w-10 h-10 mb-4 text-gray-600" />
+                          <p className="text-sm font-bold text-gray-600">
+                            No quotes available
+                          </p>
+                          <p className="text-xs text-gray-600 mt-1 italic">
+                            Click "Add New Quote" to create your first
+                            inspirational message.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    quotes.map((quote) => (
+                      <tr
+                        key={quote.id}
+                        className={cn(
+                          "group transition-colors hover:bg-gray-50/50",
+                          !quote.isActive && "opacity-60 grayscale-[0.5]"
+                        )}
+                        data-testid={`row-quote-${quote.id}`}
+                      >
+                        <td className="py-4 px-6">
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
+                            <span
+                              className="text-xs font-black text-gray-900"
+                              data-testid={`text-quote-order-${quote.id}`}
+                            >
+                              {quote.displayOrder.toString().padStart(2, "0")}
+                            </span>
+                          </div>
+                        </td>
+                        <td
+                          className="py-4 px-6 text-sm font-medium text-gray-700 leading-relaxed italic"
+                          data-testid={`text-quote-text-${quote.id}`}
+                        >
+                          <div className="max-w-2xl line-clamp-2">
+                            "{quote.quoteText}"
+                          </div>
+                        </td>
+                        <td
+                          className="py-4 px-6 text-xs font-semibold text-gray-600 tracking-wide"
+                          data-testid={`text-quote-author-${quote.id}`}
+                        >
+                          {quote.author || "-"}
+                        </td>
+                        <td
+                          className="py-4 px-6 text-xs font-semibold text-gray-600 tracking-wide"
+                          data-testid={`text-quote-lastshown-${quote.id}`}
+                        >
+                          {quote.lastShownDate || "-"}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <button
+                            onClick={() => handleToggle(quote)}
+                            className="bg-transparent border-none p-0 cursor-pointer outline-none transition-transform"
+                            data-testid={`button-toggle-quote-${quote.id}`}
+                          >
+                            {quote.isActive ? (
+                              <ToggleRight className="w-6 h-6 text-green-500 drop-shadow-sm" />
+                            ) : (
+                              <ToggleLeft className="w-6 h-6 text-gray-300" />
+                            )}
+                          </button>
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(quote)}
+                              className="w-8 h-8 text-brand hover:text-brand"
+                              data-testid={`button-edit-quote-${quote.id}`}
+                            >
+                              <Edit className="w-[18px] h-[18px]" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(quote)}
+                              className="w-8 h-8 text-red-500 hover:text-red-500 hover:bg-red-50"
+                              data-testid={`button-delete-quote-${quote.id}`}
+                            >
+                              <Trash2 className="w-[18px] h-[18px]" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </Card>
       </div>
 
-      <Card className="bg-white">
-        <div className="overflow-x-auto">
-          <table className="w-full" data-testid="table-quotes">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 w-12">Order</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Quote</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 w-40">Author</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 w-32">Last Shown</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-gray-600 w-20">Active</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-600 w-24">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quotes.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-gray-500">
-                    <Quote className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No quotes found</p>
-                    <p className="text-sm">Add your first quote to get started</p>
-                  </td>
-                </tr>
-              ) : (
-                quotes.map((quote) => (
-                  <tr 
-                    key={quote.id} 
-                    className={`border-b hover:bg-gray-50 ${!quote.isActive ? 'opacity-50' : ''}`} 
-                    data-testid={`row-quote-${quote.id}`}
-                  >
-                    <td className="py-3 px-4">
-                      <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded" data-testid={`text-quote-order-${quote.id}`}>
-                        {quote.displayOrder}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-gray-900" data-testid={`text-quote-text-${quote.id}`}>
-                      <p className="line-clamp-2 max-w-md">{quote.quoteText}</p>
-                    </td>
-                    <td className="py-3 px-4 text-gray-600" data-testid={`text-quote-author-${quote.id}`}>
-                      {quote.author || "-"}
-                    </td>
-                    <td className="py-3 px-4 text-gray-500 text-sm" data-testid={`text-quote-lastshown-${quote.id}`}>
-                      {quote.lastShownDate || "Never"}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => handleToggle(quote)}
-                        className="hover-elevate p-1 rounded"
-                        data-testid={`button-toggle-quote-${quote.id}`}
-                      >
-                        {quote.isActive ? (
-                          <ToggleRight className="w-6 h-6 text-green-600" />
-                        ) : (
-                          <ToggleLeft className="w-6 h-6 text-gray-400" />
-                        )}
-                      </button>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(quote)}
-                        data-testid={`button-edit-quote-${quote.id}`}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(quote)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        data-testid={`button-delete-quote-${quote.id}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
+      {/* Create Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Add New Quote</DialogTitle>
             <DialogDescription>
-              Add an inspirational quote to show users daily.
+              Create a new inspirational quote for users.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="quoteText">Quote Text *</Label>
-              <Textarea
-                id="quoteText"
-                placeholder="Enter the quote..."
-                value={formData.quoteText}
-                onChange={(e) => setFormData({ ...formData, quoteText: e.target.value })}
-                rows={4}
-                data-testid="input-quote-text"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="author">Author (Optional)</Label>
-              <Input
-                id="author"
-                placeholder="e.g., Tony Robbins"
-                value={formData.author}
-                onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                data-testid="input-quote-author"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="displayOrder">Display Order</Label>
-              <Input
-                id="displayOrder"
-                type="number"
-                min="1"
-                value={formData.displayOrder}
-                onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 1 })}
-                data-testid="input-quote-order"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={submitCreate} 
-              disabled={createMutation.isPending}
-              className="bg-brand hover:bg-brand/90"
-              data-testid="button-submit-create"
-            >
-              {createMutation.isPending ? "Creating..." : "Add Quote"}
-            </Button>
-          </DialogFooter>
+          <FormProvider {...createForm}>
+            <form onSubmit={createForm.handleSubmit(onSubmitCreate)}>
+              <div className="space-y-4 py-4">
+                <FormTextarea
+                  name="quoteText"
+                  label="Quote Text"
+                  placeholder="Enter the quote..."
+                  className="min-h-[100px]"
+                  data-testid="input-quote-text"
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormInput
+                    name="author"
+                    label="Author (Optional)"
+                    placeholder="e.g. Rumi"
+                    data-testid="input-quote-author"
+                  />
+                  <FormInput
+                    name="displayOrder"
+                    label="Display Order"
+                    type="number"
+                    data-testid="input-quote-order"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCreateDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="bg-brand hover:bg-brand/90"
+                  data-testid="button-submit-create"
+                >
+                  {createMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : null}
+                  Add Quote
+                </Button>
+              </DialogFooter>
+            </form>
+          </FormProvider>
         </DialogContent>
       </Dialog>
 
+      {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Quote</DialogTitle>
             <DialogDescription>
-              Update the quote details.
+              Update the details of this inspirational quote.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="editQuoteText">Quote Text *</Label>
-              <Textarea
-                id="editQuoteText"
-                placeholder="Enter the quote..."
-                value={formData.quoteText}
-                onChange={(e) => setFormData({ ...formData, quoteText: e.target.value })}
-                rows={4}
-                data-testid="input-edit-quote-text"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editAuthor">Author (Optional)</Label>
-              <Input
-                id="editAuthor"
-                placeholder="e.g., Tony Robbins"
-                value={formData.author}
-                onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                data-testid="input-edit-quote-author"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editDisplayOrder">Display Order</Label>
-              <Input
-                id="editDisplayOrder"
-                type="number"
-                min="1"
-                value={formData.displayOrder}
-                onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 1 })}
-                data-testid="input-edit-quote-order"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={submitUpdate} 
-              disabled={updateMutation.isPending}
-              className="bg-brand hover:bg-brand/90"
-              data-testid="button-submit-update"
-            >
-              {updateMutation.isPending ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
+          <FormProvider {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onSubmitUpdate)}>
+              <div className="space-y-4 py-4">
+                <FormTextarea
+                  name="quoteText"
+                  label="Quote Text"
+                  placeholder="Enter the quote..."
+                  className="min-h-[100px]"
+                  data-testid="input-edit-quote-text"
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormInput
+                    name="author"
+                    label="Author (Optional)"
+                    placeholder="e.g. Rumi"
+                    data-testid="input-edit-quote-author"
+                  />
+                  <FormInput
+                    name="displayOrder"
+                    label="Display Order"
+                    type="number"
+                    data-testid="input-edit-quote-order"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={updateMutation.isPending}
+                  className="bg-brand hover:bg-brand/90"
+                  data-testid="button-submit-update"
+                >
+                  {updateMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : null}
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </form>
+          </FormProvider>
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Deactivate Quote?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will deactivate the quote. It won't be shown to users anymore but can be reactivated later.
+              This inspiration will no longer be visible to users. You can
+              re-enable it anytime from the status toggle.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -414,7 +551,7 @@ export default function AdminQuotesPage() {
               className="bg-red-600 hover:bg-red-700"
               data-testid="button-confirm-delete"
             >
-              {deleteMutation.isPending ? "Deactivating..." : "Deactivate"}
+              {deleteMutation.isPending ? "Processing..." : "Deactivate"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
