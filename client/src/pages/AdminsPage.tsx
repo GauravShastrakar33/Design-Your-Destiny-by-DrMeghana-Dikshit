@@ -358,275 +358,280 @@ export default function AdminsPage() {
   const endItem = Math.min(pagination.page * limit, pagination.total);
 
   return (
-    <div className="p-8">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="min-h-screen bg-[#f8f9fa] p-8">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1
-            className="text-2xl font-bold text-gray-900"
+            className="text-xl font-bold text-gray-900 leading-none"
             data-testid="text-page-title"
           >
             Admins
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm font-semibold text-gray-600 mt-1">
             Manage administrator accounts and roles
           </p>
         </div>
         {isSuperAdmin && (
           <Button
             onClick={() => setIsAddDialogOpen(true)}
-            className="bg-brand hover:bg-brand/90"
+            className="bg-brand hover:bg-brand/90 font-bold text-xs h-10 px-6 rounded-lg shadow-sm gap-2"
             data-testid="button-add-admin"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4" />
             Add Admin
           </Button>
         )}
       </div>
 
-      <Card className="p-6 bg-white rounded-lg shadow-sm border border-gray-100">
-        <div className="flex gap-4 mb-6">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Search by name or email..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="pl-10"
-              data-testid="input-search"
-            />
+      <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-xl overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
+        <div className="p-6">
+          <div className="flex gap-4 mb-6">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Search by name or email..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-10"
+                data-testid="input-search"
+              />
+            </div>
           </div>
-        </div>
 
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full mx-auto" />
-            <p className="mt-4 text-gray-500">Loading admins...</p>
-          </div>
-        ) : admins.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No admins found</p>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table
-                className="w-full border-collapse"
-                style={{ tableLayout: "fixed" }}
-                data-testid="table-admins"
-              >
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "20%" }}
-                    >
-                      Name
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "25%" }}
-                    >
-                      Email
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "12%" }}
-                    >
-                      Role
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "10%" }}
-                    >
-                      Status
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "12%" }}
-                    >
-                      Last Login
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "12%" }}
-                    >
-                      Created
-                    </th>
-                    {isSuperAdmin && (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full mx-auto" />
+              <p className="mt-4 text-gray-500">Loading admins...</p>
+            </div>
+          ) : admins.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No admins found</p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table
+                  className="w-full border-collapse"
+                  style={{ tableLayout: "fixed" }}
+                  data-testid="table-admins"
+                >
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50/50">
                       <th
-                        className="text-right py-3 px-4 text-sm font-medium text-gray-600"
-                        style={{ width: "80px" }}
+                        className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "20%" }}
                       >
-                        Actions
+                        Name
                       </th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {admins.map((admin) => (
-                    <tr
-                      key={admin.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                      data-testid={`row-admin-${admin.id}`}
-                    >
-                      <td className="py-2 px-4 max-w-0">
-                        <div className="flex items-center gap-3 w-full text-left truncate">
-                          <Avatar className="h-8 w-8 text-[10px] font-bold shrink-0">
-                            <AvatarFallback className="bg-brand/5 text-brand/80 transition-colors">
-                              {admin.name
-                                ?.split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()
-                                .slice(0, 2) || "U"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-semibold text-gray-900 truncate text-sm">
-                            {admin.name}
-                          </span>
-                        </div>
-                      </td>
-                      <td
-                        className="py-3 px-4 text-gray-600 truncate"
-                        title={admin.email}
+                      <th
+                        className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "25%" }}
                       >
-                        {admin.email}
-                      </td>
-                      <td className="py-3 px-4">{getRoleBadge(admin.role)}</td>
-                      <td className="py-3 px-4">
-                        <Badge
-                          variant={
-                            admin.status === "active"
-                              ? "default"
-                              : "destructive"
-                          }
-                          className={
-                            admin.status === "active"
-                              ? "bg-green-100 text-green-700 hover:bg-green-100"
-                              : ""
-                          }
-                          data-testid={`badge-status-${admin.id}`}
-                        >
-                          {admin.status === "active" ? "Active" : "Blocked"}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">
-                        {formatDate(admin.lastLogin)}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">
-                        {formatDate(admin.createdAt)}
-                      </td>
+                        Email
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "12%" }}
+                      >
+                        Role
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "10%" }}
+                      >
+                        Status
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "12%" }}
+                      >
+                        Last Login
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "12%" }}
+                      >
+                        Created
+                      </th>
                       {isSuperAdmin && (
-                        <td className="py-3 px-4 text-right">
-                          {currentAdmin?.id !== admin.id ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  data-testid={`button-actions-${admin.id}`}
-                                >
-                                  <MoreVertical className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => handleEdit(admin)}
-                                  data-testid={`button-edit-${admin.id}`}
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                {admin.status === "active" ? (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setStatusAdmin({
-                                        admin,
-                                        newStatus: "blocked",
-                                      })
-                                    }
-                                    className="text-orange-600"
-                                    data-testid={`button-block-${admin.id}`}
-                                  >
-                                    <Ban className="w-4 h-4 mr-2" />
-                                    Block
-                                  </DropdownMenuItem>
-                                ) : (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setStatusAdmin({
-                                        admin,
-                                        newStatus: "active",
-                                      })
-                                    }
-                                    className="text-green-600"
-                                    data-testid={`button-unblock-${admin.id}`}
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                    Unblock
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem
-                                  onClick={() => setDeletingAdmin(admin)}
-                                  className="text-red-600"
-                                  data-testid={`button-delete-${admin.id}`}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : (
-                            <span className="text-xs text-gray-400 italic">
-                              You
-                            </span>
-                          )}
-                        </td>
+                        <th
+                          className="text-right py-3 px-4 text-sm font-medium text-gray-600"
+                          style={{ width: "80px" }}
+                        >
+                          Actions
+                        </th>
                       )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-              <p
-                className="text-sm text-gray-600"
-                data-testid="text-pagination-info"
-              >
-                Showing {startItem}-{endItem} of {pagination.total} admins
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  data-testid="button-prev-page"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-sm text-gray-600">
-                  Page {pagination.page} of {pagination.pages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setPage((p) => Math.min(pagination.pages, p + 1))
-                  }
-                  disabled={page === pagination.pages}
-                  data-testid="button-next-page"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                  </thead>
+                  <tbody>
+                    {admins.map((admin) => (
+                      <tr
+                        key={admin.id}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                        data-testid={`row-admin-${admin.id}`}
+                      >
+                        <td className="py-2 px-4 max-w-0">
+                          <div className="flex items-center gap-3 w-full text-left truncate">
+                            <Avatar className="h-8 w-8 text-[10px] font-bold shrink-0">
+                              <AvatarFallback className="bg-brand/5 text-brand/80 transition-colors">
+                                {admin.name
+                                  ?.split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()
+                                  .slice(0, 2) || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-semibold text-gray-900 truncate text-sm">
+                              {admin.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td
+                          className="py-3 px-4 text-gray-600 truncate"
+                          title={admin.email}
+                        >
+                          {admin.email}
+                        </td>
+                        <td className="py-3 px-4">
+                          {getRoleBadge(admin.role)}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge
+                            variant={
+                              admin.status === "active"
+                                ? "default"
+                                : "destructive"
+                            }
+                            className={
+                              admin.status === "active"
+                                ? "bg-green-100 text-green-700 hover:bg-green-100"
+                                : ""
+                            }
+                            data-testid={`badge-status-${admin.id}`}
+                          >
+                            {admin.status === "active" ? "Active" : "Blocked"}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">
+                          {formatDate(admin.lastLogin)}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">
+                          {formatDate(admin.createdAt)}
+                        </td>
+                        {isSuperAdmin && (
+                          <td className="py-3 px-4 text-right">
+                            {currentAdmin?.id !== admin.id ? (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    data-testid={`button-actions-${admin.id}`}
+                                  >
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => handleEdit(admin)}
+                                    data-testid={`button-edit-${admin.id}`}
+                                  >
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  {admin.status === "active" ? (
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        setStatusAdmin({
+                                          admin,
+                                          newStatus: "blocked",
+                                        })
+                                      }
+                                      className="text-orange-600"
+                                      data-testid={`button-block-${admin.id}`}
+                                    >
+                                      <Ban className="w-4 h-4 mr-2" />
+                                      Block
+                                    </DropdownMenuItem>
+                                  ) : (
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        setStatusAdmin({
+                                          admin,
+                                          newStatus: "active",
+                                        })
+                                      }
+                                      className="text-green-600"
+                                      data-testid={`button-unblock-${admin.id}`}
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2" />
+                                      Unblock
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem
+                                    onClick={() => setDeletingAdmin(admin)}
+                                    className="text-red-600"
+                                    data-testid={`button-delete-${admin.id}`}
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            ) : (
+                              <span className="text-xs text-gray-400 italic">
+                                You
+                              </span>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </>
-        )}
+
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                <p
+                  className="text-sm text-gray-600"
+                  data-testid="text-pagination-info"
+                >
+                  Showing {startItem}-{endItem} of {pagination.total} admins
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    data-testid="button-prev-page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {pagination.page} of {pagination.pages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setPage((p) => Math.min(pagination.pages, p + 1))
+                    }
+                    disabled={page === pagination.pages}
+                    data-testid="button-next-page"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </Card>
 
       <Dialog

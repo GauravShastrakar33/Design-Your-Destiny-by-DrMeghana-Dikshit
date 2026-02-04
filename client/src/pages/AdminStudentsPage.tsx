@@ -90,7 +90,22 @@ const studentSchema = yup.object().shape({
   status: yup.string().required(),
 });
 
+const bulkUploadSchema = yup.object().shape({
+  file: yup
+    .mixed<FileList>()
+    .test("required", "CSV File is required", (value) => {
+      return value && value.length > 0;
+    })
+    .test("fileType", "Only CSV files are allowed", (value) => {
+      if (!value || value.length === 0) return true;
+      const file = value[0];
+      return file.type === "text/csv" || file.name.endsWith(".csv");
+    }),
+  programId: yup.string().required("Program is required"),
+});
+
 type StudentFormValues = yup.InferType<typeof studentSchema>;
+type BulkUploadFormValues = yup.InferType<typeof bulkUploadSchema>;
 
 interface StudentsResponse {
   data: UserWithPrograms[];
@@ -126,8 +141,6 @@ export default function AdminStudentsPage() {
 
   // Bulk upload state
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null);
-  const [bulkUploadProgram, setBulkUploadProgram] = useState("");
   const [bulkUploadResult, setBulkUploadResult] = useState<{
     totalRows: number;
     created: number;
@@ -145,6 +158,13 @@ export default function AdminStudentsPage() {
       password: "",
       programCode: "",
       status: "active",
+    },
+  });
+
+  const bulkUploadForm = useForm<BulkUploadFormValues>({
+    resolver: yupResolver(bulkUploadSchema),
+    defaultValues: {
+      programId: "",
     },
   });
 
@@ -411,9 +431,8 @@ export default function AdminStudentsPage() {
   // Bulk upload handlers
   const handleBulkUploadClose = () => {
     setIsBulkUploadOpen(false);
-    setBulkUploadFile(null);
-    setBulkUploadProgram("");
     setBulkUploadResult(null);
+    bulkUploadForm.reset();
   };
 
   const handleDownloadSampleCSV = async () => {
@@ -442,16 +461,17 @@ export default function AdminStudentsPage() {
     }
   };
 
-  const handleBulkUpload = async () => {
-    if (!bulkUploadFile || !bulkUploadProgram) return;
+  const onSubmitBulkUpload = async (data: BulkUploadFormValues) => {
+    const file = data.file?.[0];
+    if (!file || !data.programId) return;
 
     setIsUploading(true);
     setBulkUploadResult(null);
 
     try {
       const formData = new FormData();
-      formData.append("file", bulkUploadFile);
-      formData.append("programId", bulkUploadProgram);
+      formData.append("file", file);
+      formData.append("programId", data.programId);
 
       const response = await fetch("/api/admin/students/bulk-upload", {
         method: "POST",
@@ -479,7 +499,7 @@ export default function AdminStudentsPage() {
     } catch (error: any) {
       toast({
         title: "Upload Failed",
-        description: error.message || "Failed to process bulk upload",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -488,16 +508,16 @@ export default function AdminStudentsPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="min-h-screen bg-[#f8f9fa] p-8">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1
-            className="text-2xl font-bold text-gray-900"
+            className="text-xl font-bold text-gray-900 leading-none"
             data-testid="text-page-title"
           >
             Students
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm font-semibold text-gray-600 mt-1">
             Manage student accounts and programs
           </p>
         </div>
@@ -505,6 +525,7 @@ export default function AdminStudentsPage() {
           <Button
             variant="outline"
             onClick={() => setIsBulkUploadOpen(true)}
+            className="font-bold text-xs h-10 px-6 rounded-lg"
             data-testid="button-bulk-upload"
           >
             <Upload className="w-4 h-4 mr-2" />
@@ -512,313 +533,316 @@ export default function AdminStudentsPage() {
           </Button>
           <Button
             onClick={() => setIsAddDialogOpen(true)}
-            className="bg-brand hover:bg-brand/90"
+            className="bg-brand hover:bg-brand/90 font-bold text-xs h-10 px-6 rounded-lg shadow-sm gap-2"
             data-testid="button-add-student"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4" />
             Add Student
           </Button>
         </div>
       </div>
 
-      <Card className="p-6 bg-white rounded-lg shadow-sm border border-gray-100">
-        <div className="flex gap-4 mb-6">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Search by name or email..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+      <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-xl overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
+        <div className="p-6">
+          <div className="flex gap-4 mb-6">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Search by name or email..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-10"
+                data-testid="input-search"
+              />
+            </div>
+            <Select
+              value={programFilter}
+              onValueChange={(value) => {
+                setProgramFilter(value);
                 setPage(1);
               }}
-              className="pl-10"
-              data-testid="input-search"
-            />
-          </div>
-          <Select
-            value={programFilter}
-            onValueChange={(value) => {
-              setProgramFilter(value);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger
-              className="w-[180px]"
-              data-testid="select-program-filter"
             >
-              <SelectValue placeholder="All Programs" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Programs</SelectItem>
-              {programsData.map((program) => (
-                <SelectItem key={program.id} value={program.code}>
-                  {program.code} - {program.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full mx-auto" />
-            <p className="mt-4 text-gray-500">Loading students...</p>
-          </div>
-        ) : students.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No students found</p>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table
-                className="w-full min-w-[1000px]"
-                style={{ tableLayout: "fixed" }}
-                data-testid="table-students"
+              <SelectTrigger
+                className="w-[180px]"
+                data-testid="select-program-filter"
               >
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "18%" }}
-                    >
-                      Name
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "28%" }}
-                    >
-                      Email
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "15%" }}
-                    >
-                      Phone
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "10%" }}
-                    >
-                      Program
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "10%" }}
-                    >
-                      Status
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "12%" }}
-                    >
-                      Last Login
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "12%" }}
-                    >
-                      Created
-                    </th>
-                    <th
-                      className="text-right py-3 px-4 text-sm font-medium text-gray-600"
-                      style={{ width: "80px" }}
-                    >
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map((student) => (
-                    <tr
-                      key={student.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                      data-testid={`row-student-${student.id}`}
-                    >
-                      <td className="py-2 px-4 max-w-0">
-                        <button
-                          onClick={() =>
-                            setLocation(`/admin/students/${student.id}`)
-                          }
-                          className="inline-flex items-center gap-2.5 max-w-full group text-left bg-white border border-gray-100 rounded-lg p-1 pr-3 hover:border-brand/30 hover:shadow-sm transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
-                          data-testid={`link-student-name-${student.id}`}
-                          title={student.name || ""}
-                        >
-                          <Avatar className="h-7 w-7 text-[9px] font-bold shrink-0">
-                            <AvatarFallback className="bg-brand/5 text-brand/70 group-hover:bg-brand group-hover:text-white transition-all">
-                              {student.name
-                                ?.split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()
-                                .slice(0, 2) || "U"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-semibold text-gray-800 group-hover:text-brand truncate text-xs transition-colors">
-                            {student.name}
-                          </span>
-                        </button>
-                      </td>
-                      <td
-                        className="py-3 px-4 text-gray-600 truncate max-w-0"
-                        title={student.email || ""}
+                <SelectValue placeholder="All Programs" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Programs</SelectItem>
+                {programsData.map((program) => (
+                  <SelectItem key={program.id} value={program.code}>
+                    {program.code} - {program.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full mx-auto" />
+              <p className="mt-4 text-gray-500">Loading students...</p>
+            </div>
+          ) : students.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No students found</p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table
+                  className="w-full min-w-[1000px]"
+                  style={{ tableLayout: "fixed" }}
+                  data-testid="table-students"
+                >
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50/50">
+                      <th
+                        className="py-4 px-6 text-sm font-bold tracking-wide text-gray-600"
+                        style={{ width: "18%" }}
                       >
-                        {student.email}
-                      </td>
-                      <td
-                        className="py-3 px-4 text-gray-600 truncate max-w-0"
-                        title={student.phone || "-"}
+                        Name
+                      </th>
+                      <th
+                        className="py-4 px-6 text-sm font-bold tracking-wide text-gray-600"
+                        style={{ width: "28%" }}
                       >
-                        {student.phone || "-"}
-                      </td>
-                      <td className="py-3 px-4">
-                        {student.programs.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {student.programs.map((prog) => (
-                              <Badge
-                                key={prog}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                {prog}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge
-                          variant={
-                            student.status === "active"
-                              ? "default"
-                              : "destructive"
-                          }
-                          className={
-                            student.status === "active"
-                              ? "bg-green-100 text-green-700 hover:bg-green-100"
-                              : ""
-                          }
-                          data-testid={`badge-status-${student.id}`}
-                        >
-                          {student.status === "active" ? "Active" : "Blocked"}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">
-                        {formatDate(student.lastLogin)}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">
-                        {formatDate(student.createdAt)}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              data-testid={`button-actions-${student.id}`}
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleEdit(student)}
-                              data-testid={`button-edit-${student.id}`}
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setResetPasswordStudent(student)}
-                              data-testid={`button-reset-password-${student.id}`}
-                            >
-                              <KeyRound className="w-4 h-4 mr-2" />
-                              Reset Password
-                            </DropdownMenuItem>
-                            {student.status === "active" ? (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  setStatusStudent({
-                                    student,
-                                    newStatus: "blocked",
-                                  })
-                                }
-                                className="text-orange-600"
-                                data-testid={`button-block-${student.id}`}
-                              >
-                                <Ban className="w-4 h-4 mr-2" />
-                                Block
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  setStatusStudent({
-                                    student,
-                                    newStatus: "active",
-                                  })
-                                }
-                                className="text-green-600"
-                                data-testid={`button-unblock-${student.id}`}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Unblock
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem
-                              onClick={() => setDeletingStudent(student)}
-                              className="text-red-600"
-                              data-testid={`button-delete-${student.id}`}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
+                        Email
+                      </th>
+                      <th
+                        className="py-4 px-6 text-sm font-bold tracking-wide text-gray-600"
+                        style={{ width: "15%" }}
+                      >
+                        Phone
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "10%" }}
+                      >
+                        Program
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "10%" }}
+                      >
+                        Status
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "12%" }}
+                      >
+                        Last Login
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "12%" }}
+                      >
+                        Created
+                      </th>
+                      <th
+                        className="text-right py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "80px" }}
+                      >
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-              <p
-                className="text-sm text-gray-600"
-                data-testid="text-pagination-info"
-              >
-                Showing {startItem}-{endItem} of {pagination.total} students
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  data-testid="button-prev-page"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-sm text-gray-600">
-                  Page {pagination.page} of {pagination.pages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setPage((p) => Math.min(pagination.pages, p + 1))
-                  }
-                  disabled={page === pagination.pages}
-                  data-testid="button-next-page"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                  </thead>
+                  <tbody>
+                    {students.map((student) => (
+                      <tr
+                        key={student.id}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                        data-testid={`row-student-${student.id}`}
+                      >
+                        <td className="py-2 px-4 max-w-0">
+                          <button
+                            onClick={() =>
+                              setLocation(`/admin/students/${student.id}`)
+                            }
+                            className="inline-flex items-center gap-2.5 max-w-full group text-left bg-white border border-gray-100 rounded-lg p-1 pr-3 hover:border-brand/30 hover:shadow-sm transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                            data-testid={`link-student-name-${student.id}`}
+                            title={student.name || ""}
+                          >
+                            <Avatar className="h-7 w-7 text-[9px] font-bold shrink-0">
+                              <AvatarFallback className="bg-brand/5 text-brand/70 group-hover:bg-brand group-hover:text-white transition-all">
+                                {student.name
+                                  ?.split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()
+                                  .slice(0, 2) || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-semibold text-gray-800 group-hover:text-brand truncate text-xs transition-colors">
+                              {student.name}
+                            </span>
+                          </button>
+                        </td>
+                        <td
+                          className="py-3 px-4 text-gray-600 truncate max-w-0"
+                          title={student.email || ""}
+                        >
+                          {student.email}
+                        </td>
+                        <td
+                          className="py-3 px-4 text-gray-600 truncate max-w-0"
+                          title={student.phone || "-"}
+                        >
+                          {student.phone || "-"}
+                        </td>
+                        <td className="py-3 px-4">
+                          {student.programs.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {student.programs.map((prog) => (
+                                <Badge
+                                  key={prog}
+                                  variant="outline"
+                                  className="text-xs"
+                                >
+                                  {prog}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge
+                            variant={
+                              student.status === "active"
+                                ? "default"
+                                : "destructive"
+                            }
+                            className={
+                              student.status === "active"
+                                ? "bg-green-100 text-green-700 hover:bg-green-100"
+                                : ""
+                            }
+                            data-testid={`badge-status-${student.id}`}
+                          >
+                            {student.status === "active" ? "Active" : "Blocked"}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">
+                          {formatDate(student.lastLogin)}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">
+                          {formatDate(student.createdAt)}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                data-testid={`button-actions-${student.id}`}
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleEdit(student)}
+                                data-testid={`button-edit-${student.id}`}
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => setResetPasswordStudent(student)}
+                                data-testid={`button-reset-password-${student.id}`}
+                              >
+                                <KeyRound className="w-4 h-4 mr-2" />
+                                Reset Password
+                              </DropdownMenuItem>
+                              {student.status === "active" ? (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setStatusStudent({
+                                      student,
+                                      newStatus: "blocked",
+                                    })
+                                  }
+                                  className="text-orange-600"
+                                  data-testid={`button-block-${student.id}`}
+                                >
+                                  <Ban className="w-4 h-4 mr-2" />
+                                  Block
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setStatusStudent({
+                                      student,
+                                      newStatus: "active",
+                                    })
+                                  }
+                                  className="text-green-600"
+                                  data-testid={`button-unblock-${student.id}`}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Unblock
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => setDeletingStudent(student)}
+                                className="text-red-600"
+                                data-testid={`button-delete-${student.id}`}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </>
-        )}
+
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                <p
+                  className="text-sm text-gray-600"
+                  data-testid="text-pagination-info"
+                >
+                  Showing {startItem}-{endItem} of {pagination.total} students
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    data-testid="button-prev-page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {pagination.page} of {pagination.pages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setPage((p) => Math.min(pagination.pages, p + 1))
+                    }
+                    disabled={page === pagination.pages}
+                    data-testid="button-next-page"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </Card>
 
       <Dialog
@@ -1097,143 +1121,144 @@ export default function AdminStudentsPage() {
           <DialogHeader>
             <DialogTitle>Bulk Upload Students</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            {/* Download sample link */}
-            <button
-              type="button"
-              onClick={handleDownloadSampleCSV}
-              className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
-              data-testid="link-download-sample"
-            >
-              <Download className="w-4 h-4 mr-1" />
-              Download Sample CSV
-            </button>
+          <FormProvider {...bulkUploadForm}>
+            <form onSubmit={bulkUploadForm.handleSubmit(onSubmitBulkUpload)}>
+              <div className="space-y-4 py-4">
+                {/* Download sample link */}
+                <button
+                  type="button"
+                  onClick={handleDownloadSampleCSV}
+                  className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                  data-testid="link-download-sample"
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  Download Sample CSV
+                </button>
 
-            {/* CSV File Input */}
-            <div className="space-y-2">
-              <Label htmlFor="csvFile">CSV File *</Label>
-              <Input
-                id="csvFile"
-                type="file"
-                accept=".csv"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  setBulkUploadFile(file);
-                  setBulkUploadResult(null);
-                }}
-                className="cursor-pointer"
-                data-testid="input-csv-file"
-              />
-              {bulkUploadFile && (
-                <p className="text-sm text-gray-500">
-                  Selected: {bulkUploadFile.name}
-                </p>
-              )}
-            </div>
-
-            {/* Program Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="bulkProgram">Program *</Label>
-              <Select
-                value={bulkUploadProgram}
-                onValueChange={setBulkUploadProgram}
-              >
-                <SelectTrigger data-testid="select-bulk-program">
-                  <SelectValue placeholder="Select program" />
-                </SelectTrigger>
-                <SelectContent>
-                  {programsData.map((program) => (
-                    <SelectItem key={program.id} value={program.id.toString()}>
-                      {program.code} - {program.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                All students will be assigned to this program
-              </p>
-            </div>
-
-            {/* Upload Results */}
-            {bulkUploadResult && (
-              <div
-                className="space-y-3 p-4 rounded-lg bg-gray-50 border"
-                data-testid="bulk-upload-result"
-              >
-                <h4 className="font-medium text-gray-900">Upload Results</h4>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {bulkUploadResult.totalRows}
+                {/* CSV File Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="file">CSV File *</Label>
+                  <Input
+                    id="file"
+                    type="file"
+                    accept=".csv"
+                    className="cursor-pointer"
+                    {...bulkUploadForm.register("file")}
+                    onChange={(e) => {
+                      bulkUploadForm.register("file").onChange(e);
+                      setBulkUploadResult(null);
+                    }}
+                    data-testid="input-csv-file"
+                  />
+                  {bulkUploadForm.formState.errors.file && (
+                    <p className="text-sm font-medium text-destructive">
+                      {bulkUploadForm.formState.errors.file.message}
                     </p>
-                    <p className="text-xs text-gray-500">Total Rows</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-green-600">
-                      {bulkUploadResult.created}
-                    </p>
-                    <p className="text-xs text-gray-500">Created</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-orange-600">
-                      {bulkUploadResult.skipped}
-                    </p>
-                    <p className="text-xs text-gray-500">Skipped</p>
-                  </div>
+                  )}
                 </div>
 
-                {bulkUploadResult.errors.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-sm font-medium text-gray-700 mb-2">
-                      Errors:
-                    </p>
-                    <div className="max-h-40 overflow-y-auto space-y-1">
-                      {bulkUploadResult.errors.map((error, index) => (
-                        <div
-                          key={index}
-                          className="flex items-start gap-2 text-sm text-red-600 bg-red-50 p-2 rounded"
-                        >
-                          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                          <span>
-                            Row {error.row}: {error.reason}
+                {/* Program Selection */}
+                <div className="space-y-2">
+                  <FormSelect
+                    name="programId"
+                    label="Program *"
+                    placeholder="Select program"
+                    options={programsData.map((p) => ({
+                      label: `${p.code} - ${p.name}`,
+                      value: p.id.toString(),
+                    }))}
+                    data-testid="select-bulk-program"
+                  />
+                  <p className="text-xs text-gray-500">
+                    All students will be assigned to this program
+                  </p>
+                </div>
+
+                {/* Upload Results */}
+                {bulkUploadResult && (
+                  <div
+                    className="space-y-3 p-4 rounded-lg bg-gray-50 border"
+                    data-testid="bulk-upload-result"
+                  >
+                    <h4 className="font-medium text-gray-900">
+                      Upload Results
+                    </h4>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {bulkUploadResult.totalRows}
+                        </p>
+                        <p className="text-xs text-gray-500">Total Rows</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-green-600">
+                          {bulkUploadResult.created}
+                        </p>
+                        <p className="text-xs text-gray-500">Created</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-orange-600">
+                          {bulkUploadResult.skipped}
+                        </p>
+                        <p className="text-xs text-gray-500">Skipped</p>
+                      </div>
+                    </div>
+
+                    {bulkUploadResult.errors.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          Errors:
+                        </p>
+                        <div className="max-h-40 overflow-y-auto space-y-1">
+                          {bulkUploadResult.errors.map((error, index) => (
+                            <div
+                              key={index}
+                              className="flex items-start gap-2 text-sm text-red-600 bg-red-50 p-2 rounded"
+                            >
+                              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                              <span>
+                                Row {error.row}: {error.reason}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {bulkUploadResult.created > 0 &&
+                      bulkUploadResult.skipped === 0 && (
+                        <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded">
+                          <CheckCircle2 className="w-5 h-5" />
+                          <span className="font-medium">
+                            All students uploaded successfully!
                           </span>
                         </div>
-                      ))}
-                    </div>
+                      )}
                   </div>
                 )}
-
-                {bulkUploadResult.created > 0 &&
-                  bulkUploadResult.skipped === 0 && (
-                    <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded">
-                      <CheckCircle2 className="w-5 h-5" />
-                      <span className="font-medium">
-                        All students uploaded successfully!
-                      </span>
-                    </div>
-                  )}
               </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleBulkUploadClose}
-              data-testid="button-bulk-cancel"
-            >
-              {bulkUploadResult ? "Close" : "Cancel"}
-            </Button>
-            {!bulkUploadResult && (
-              <Button
-                onClick={handleBulkUpload}
-                disabled={!bulkUploadFile || !bulkUploadProgram || isUploading}
-                className="bg-brand hover:bg-brand/90"
-                data-testid="button-bulk-submit"
-              >
-                {isUploading ? "Uploading..." : "Upload"}
-              </Button>
-            )}
-          </DialogFooter>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBulkUploadClose}
+                  data-testid="button-bulk-cancel"
+                >
+                  {bulkUploadResult ? "Close" : "Cancel"}
+                </Button>
+                {!bulkUploadResult && (
+                  <Button
+                    type="submit"
+                    disabled={isUploading}
+                    className="bg-brand hover:bg-brand/90"
+                    data-testid="button-bulk-submit"
+                  >
+                    {isUploading ? "Uploading..." : "Upload"}
+                  </Button>
+                )}
+              </DialogFooter>
+            </form>
+          </FormProvider>
         </DialogContent>
       </Dialog>
     </div>
