@@ -1,6 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, useParams, useSearch } from "wouter";
+import { useForm, FormProvider } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import {
   ArrowLeft,
   Upload,
@@ -10,6 +13,13 @@ import {
   FileType,
   Save,
   X,
+  Sparkles,
+  FileText,
+  Clock,
+  CheckCircle2,
+  PlayCircle,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +27,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { FormInput } from "@/components/ui/form-input";
+import { FormTextarea } from "@/components/ui/form-textarea";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CmsLesson, CmsLessonFile, CmsCourse } from "@shared/schema";
 
@@ -31,6 +45,13 @@ interface FileUploadState {
   status: "pending" | "uploading" | "done" | "error";
 }
 
+const lessonSchema = yup.object().shape({
+  title: yup.string().required("Lesson title is required").trim(),
+  description: yup.string().optional(),
+});
+
+type LessonFormData = yup.InferType<typeof lessonSchema>;
+
 export default function LessonDetailPage() {
   const params = useParams();
   const courseId = parseInt(params.courseId || "0");
@@ -39,24 +60,19 @@ export default function LessonDetailPage() {
   const searchString = useSearch();
   const { toast } = useToast();
 
-  // Parse the 'from' query parameter to determine back navigation
-  const fromCreate = useMemo(() => {
-    const searchParams = new URLSearchParams(searchString);
-    return searchParams.get("from") === "create";
-  }, [searchString]);
-
   const handleBack = () => {
-    if (fromCreate) {
-      setLocation(`/admin/courses/create/step3/${courseId}`);
-    } else {
-      setLocation(`/admin/courses/${courseId}`);
-    }
+    setLocation(`/admin/courses/${courseId}/edit?step=3`);
   };
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const form = useForm<LessonFormData>({
+    resolver: yupResolver(lessonSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+    },
+  });
+
   const [uploadQueue, setUploadQueue] = useState<FileUploadState[]>([]);
-  const [formInitialized, setFormInitialized] = useState(false);
 
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
@@ -108,18 +124,13 @@ export default function LessonDetailPage() {
   });
 
   useEffect(() => {
-    setFormInitialized(false);
-    setTitle("");
-    setDescription("");
-  }, [lessonId]);
-
-  useEffect(() => {
-    if (lesson && !formInitialized) {
-      setTitle(lesson.title);
-      setDescription(lesson.description || "");
-      setFormInitialized(true);
+    if (lesson) {
+      form.reset({
+        title: lesson.title,
+        description: lesson.description || "",
+      });
     }
-  }, [lesson, formInitialized]);
+  }, [lesson, form]);
 
   const updateLessonMutation = useMutation({
     mutationFn: async (data: { title: string; description?: string }) => {
@@ -321,19 +332,9 @@ export default function LessonDetailPage() {
     setUploadQueue((prev) => prev.filter((u) => u.file !== uploadState.file));
   };
 
-  const handleSave = () => {
-    const finalTitle = title.trim() || lesson?.title?.trim() || "";
-    const finalDescription = description || lesson?.description || "";
-
-    if (!finalTitle) {
-      toast({ title: "Title is required", variant: "destructive" });
-      return;
-    }
-    updateLessonMutation.mutate({
-      title: finalTitle,
-      description: finalDescription,
-    });
-  };
+  const handleSave = form.handleSubmit((data) => {
+    updateLessonMutation.mutate(data);
+  });
 
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
@@ -359,224 +360,307 @@ export default function LessonDetailPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Edit Lesson</h1>
-        <p className="text-gray-600 mt-1">{lesson?.title}</p>
+    <div className="min-h-screen bg-[#f8f9fa] p-8">
+      {/* Header */}
+      <div className="mb-10 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            className="text-gray-500 hover:text-brand transition-colors bg-white shadow-sm border border-gray-100 h-9 px-3 rounded-lg"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Curriculum
+          </Button>
+          <div className="w-px h-6 bg-gray-200" />
+          <div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
+              <h1 className="text-xl font-bold text-gray-900 leading-none">
+                Edit Lesson
+              </h1>
+            </div>
+            <p className="text-xs font-bold text-gray-400 tracking-widest flex items-center gap-2">
+              <FileText className="w-3 h-3" />
+              {lesson?.title || "Loading..."}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleSave}
+            disabled={updateLessonMutation.isPending}
+            className="bg-brand hover:bg-brand/90 shadow-lg shadow-brand/20 font-bold rounded-lg h-10 px-6 transition-all"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save Lesson
+          </Button>
+        </div>
       </div>
 
-      <div className="max-w-3xl">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          className="mb-6"
-          data-testid="button-back"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Course
-        </Button>
-
-        <Card className="p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">
-            Lesson Details
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <Label>Title</Label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter lesson title"
-                className="mt-2"
-                data-testid="input-title"
-              />
-            </div>
-            <div>
-              <Label>Description (Optional)</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter lesson description"
-                className="mt-2 min-h-[80px]"
-                data-testid="input-description"
-              />
-            </div>
-            <Button
-              onClick={handleSave}
-              disabled={updateLessonMutation.isPending}
-              className="bg-brand hover:bg-brand/90"
-              data-testid="button-save"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Changes
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            Lesson Files
-          </h2>
-          <p className="text-gray-600 text-sm mb-6">
-            Upload video, audio, or PDF script files for this lesson.
-          </p>
-
-          <div className="grid gap-4 md:grid-cols-3 mb-6">
-            <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
-              <Video className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-              <p className="text-sm text-gray-700 mb-3">Video</p>
-              <label>
-                <input
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => handleFileSelect(e, "video")}
-                  className="hidden"
-                  data-testid="input-video"
-                />
-                <Button variant="outline" size="sm" asChild>
-                  <span>
-                    <Upload className="w-3 h-3 mr-2" />
-                    Upload
-                  </span>
-                </Button>
-              </label>
-            </div>
-
-            <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-400 transition-colors">
-              <Music className="w-8 h-8 text-green-500 mx-auto mb-2" />
-              <p className="text-sm text-gray-700 mb-3">Audio</p>
-              <label>
-                <input
-                  type="file"
-                  accept="audio/*"
-                  onChange={(e) => handleFileSelect(e, "audio")}
-                  className="hidden"
-                  data-testid="input-audio"
-                />
-                <Button variant="outline" size="sm" asChild>
-                  <span>
-                    <Upload className="w-3 h-3 mr-2" />
-                    Upload
-                  </span>
-                </Button>
-              </label>
-            </div>
-
-            <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-orange-400 transition-colors">
-              <FileType className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-              <p className="text-sm text-gray-700 mb-3">Script (PDF)</p>
-              <label>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(e) => handleFileSelect(e, "script")}
-                  className="hidden"
-                  data-testid="input-script"
-                />
-                <Button variant="outline" size="sm" asChild>
-                  <span>
-                    <Upload className="w-3 h-3 mr-2" />
-                    Upload
-                  </span>
-                </Button>
-              </label>
-            </div>
-          </div>
-
-          {uploadQueue.length > 0 && (
-            <div className="space-y-3 mb-6">
-              <h4 className="text-sm font-medium text-gray-700">
-                Uploading...
-              </h4>
-              {uploadQueue.map((upload, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-                >
-                  {getFileIcon(upload.fileType)}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 truncate">
-                      {upload.file.name}
-                    </p>
-                    <Progress value={upload.progress} className="h-1 mt-1" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Side: Basic Info */}
+        <div className="lg:col-span-1 space-y-6">
+          <FormProvider {...form}>
+            <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
+              <div className="p-6">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-brand" />
                   </div>
-                  {upload.status === "error" && (
-                    <span className="text-xs text-red-500">Failed</span>
-                  )}
-                  {upload.status === "done" && (
-                    <span className="text-xs text-green-500">Done</span>
-                  )}
-                  {upload.status !== "done" && (
+                  <h2 className="text-md font-bold text-gray-900">
+                    Lesson Details
+                  </h2>
+                </div>
+
+                <div className="space-y-5">
+                  <FormInput
+                    name="title"
+                    label="Lesson Title"
+                    placeholder="Enter lesson title"
+                    required
+                  />
+                  <FormTextarea
+                    name="description"
+                    label="Description (Optional)"
+                    placeholder="Describe what this lesson covers..."
+                    className="min-h-[150px]"
+                  />
+                </div>
+              </div>
+            </Card>
+          </FormProvider>
+
+          <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-brand" />
+                </div>
+                <h3 className="text-sm font-bold text-gray-900">Quick Tip</h3>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed font-medium">
+                Keep your lessons focused and concise. Attach relevant handouts
+                or scripts help students follow along.
+              </p>
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Side: Media & Files */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="p-6 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Lesson Assets
+                </h2>
+                <Badge
+                  variant="secondary"
+                  className="bg-brand/10 text-brand border-none font-bold"
+                >
+                  {files.length} {files.length === 1 ? "File" : "Files"}{" "}
+                  Attached
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-400 font-medium">
+                Upload and manage files associated with this lesson.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+              {[
+                {
+                  type: "video" as const,
+                  label: "Video",
+                  icon: Video,
+                  color: "blue",
+                  accept: "video/*",
+                },
+                {
+                  type: "audio" as const,
+                  label: "Audio",
+                  icon: Music,
+                  color: "green",
+                  accept: "audio/*",
+                },
+                {
+                  type: "script" as const,
+                  label: "Script",
+                  icon: FileType,
+                  color: "orange",
+                  accept: "application/pdf",
+                },
+              ].map((item) => (
+                <div key={item.type} className="group relative">
+                  <input
+                    id={`file-${item.type}`}
+                    type="file"
+                    accept={item.accept}
+                    onChange={(e) => handleFileSelect(e, item.type)}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor={`file-${item.type}`}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all cursor-pointer",
+                      "bg-gray-50/30 border-gray-100 hover:border-brand/40 hover:bg-brand/[0.02]"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110",
+                        item.color === "blue"
+                          ? "bg-blue-50 text-blue-500"
+                          : item.color === "green"
+                          ? "bg-green-50 text-green-500"
+                          : "bg-orange-50 text-orange-500"
+                      )}
+                    >
+                      <item.icon className="w-6 h-6" />
+                    </div>
+                    <span className="text-xs font-bold text-gray-700">
+                      {item.label}
+                    </span>
+                    <span className="text-[10px] text-gray-400 mt-1 tracking-widest font-bold">
+                      Click to Upload
+                    </span>
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            {/* Upload Progress */}
+            {uploadQueue.length > 0 && (
+              <div className="space-y-3 mb-8">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-brand animate-spin" />
+                  <h4 className="text-sm font-bold text-gray-900">
+                    Uploading Files...
+                  </h4>
+                </div>
+                {uploadQueue.map((upload, index) => (
+                  <div
+                    key={index}
+                    className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-4"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
+                      {getFileIcon(upload.fileType)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-xs font-bold text-gray-700 truncate mr-4">
+                          {upload.file.name}
+                        </p>
+                        <span className="text-[10px] font-bold text-brand">
+                          {upload.progress}%
+                        </span>
+                      </div>
+                      <Progress
+                        value={upload.progress}
+                        className="h-1.5 bg-gray-200"
+                      />
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => cancelUpload(upload)}
-                      className="h-8 w-8 hover:text-red-500"
+                      className="h-8 w-8 text-gray-400 hover:text-red-500 shrink-0"
                     >
                       <X className="w-4 h-4" />
                     </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                  </div>
+                ))}
+              </div>
+            )}
 
-          {filesLoading ? (
-            <div className="text-center py-4 text-gray-500">
-              Loading files...
-            </div>
-          ) : files.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No files uploaded yet.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">
-                Uploaded Files
+            {/* Files List */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold text-gray-400 mb-4">
+                Attached Materials
               </h4>
-              {files.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    {getFileIcon(file.fileType)}
-                    <div>
-                      <p className="text-sm text-gray-900">
-                        {file.fileType.charAt(0).toUpperCase() +
-                          file.fileType.slice(1)}{" "}
-                        File
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {file.sizeMb ? `${file.sizeMb} MB` : "Size unknown"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {file.publicUrl && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(file.publicUrl!, "_blank")}
-                      >
-                        View
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteFileMutation.mutate(file.id)}
-                      className="hover:text-red-500"
-                      data-testid={`button-delete-file-${file.id}`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+              {filesLoading ? (
+                <div className="text-center py-10">
+                  <Loader2 className="w-8 h-8 text-brand animate-spin mx-auto mb-2" />
+                  <p className="text-xs font-medium text-gray-500">
+                    Retrieving files...
+                  </p>
                 </div>
-              ))}
+              ) : files.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-gray-500 italic">
+                    No files attached yet
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Upload media files to populate this list
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  {files.map((file) => (
+                    <div
+                      key={file.id}
+                      className="group p-4 bg-white hover:bg-gray-50 rounded-xl border border-gray-100 transition-all flex items-center justify-between shadow-sm"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gray-50 group-hover:bg-white flex items-center justify-center shrink-0 transition-colors">
+                          {getFileIcon(file.fileType)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">
+                            {file.fileType.charAt(0).toUpperCase() +
+                              file.fileType.slice(1)}{" "}
+                            File
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] font-bold text-gray-400 tracking-tighter">
+                              {file.sizeMb
+                                ? `${file.sizeMb} MB`
+                                : "Size unknown"}
+                            </span>
+                            <div className="w-1 h-1 rounded-full bg-gray-300" />
+                            <span className="text-[10px] font-bold text-green-600">
+                              Ready
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {file.publicUrl && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-8 rounded-lg text-xs font-bold bg-gray-100 hover:bg-brand hover:text-white transition-all shadow-none border-none"
+                            onClick={() =>
+                              window.open(file.publicUrl!, "_blank")
+                            }
+                          >
+                            <PlayCircle className="w-3.5 h-3.5 mr-1.5" />
+                            View
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteFileMutation.mutate(file.id)}
+                          className="h-8 w-8 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );

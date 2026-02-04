@@ -1,7 +1,16 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Plus, Search, ChevronUp, ChevronDown, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import {
+  Plus,
+  Search,
+  ChevronUp,
+  ChevronDown,
+  Edit,
+  Trash2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +46,8 @@ export default function AdminCoursesPage() {
   const [programFilter, setProgramFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [courseToDelete, setCourseToDelete] = useState<CourseWithSignedUrl | null>(null);
+  const [courseToDelete, setCourseToDelete] =
+    useState<CourseWithSignedUrl | null>(null);
 
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
@@ -45,14 +55,14 @@ export default function AdminCoursesPage() {
     queryKey: ["/api/admin/v1/programs"],
     queryFn: async () => {
       const response = await fetch("/api/admin/v1/programs", {
-        headers: { "Authorization": `Bearer ${adminToken}` },
+        headers: { Authorization: `Bearer ${adminToken}` },
       });
       if (!response.ok) throw new Error("Failed to fetch programs");
       return response.json();
     },
   });
 
-  const programMap = new Map(programs.map(p => [p.id, p]));
+  const programMap = new Map(programs.map((p) => [p.id, p]));
   const getProgramName = (programId: number | null) => {
     if (!programId) return "-";
     return programMap.get(programId)?.name || "-";
@@ -63,7 +73,7 @@ export default function AdminCoursesPage() {
     queryFn: async () => {
       const response = await fetch("/api/admin/v1/cms/courses", {
         headers: {
-          "Authorization": `Bearer ${adminToken}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
       if (!response.ok) throw new Error("Failed to fetch courses");
@@ -76,7 +86,9 @@ export default function AdminCoursesPage() {
       await apiRequest("DELETE", `/api/admin/v1/cms/courses/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/cms/courses"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/v1/cms/courses"],
+      });
       toast({ title: "Course deleted successfully" });
       setDeleteDialogOpen(false);
       setCourseToDelete(null);
@@ -87,11 +99,21 @@ export default function AdminCoursesPage() {
   });
 
   const togglePublishMutation = useMutation({
-    mutationFn: async ({ id, isPublished }: { id: number; isPublished: boolean }) => {
-      await apiRequest("PATCH", `/api/admin/v1/cms/courses/${id}/publish`, { isPublished });
+    mutationFn: async ({
+      id,
+      isPublished,
+    }: {
+      id: number;
+      isPublished: boolean;
+    }) => {
+      await apiRequest("PATCH", `/api/admin/v1/cms/courses/${id}/publish`, {
+        isPublished,
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/cms/courses"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/v1/cms/courses"],
+      });
       toast({ title: "Course updated successfully" });
     },
     onError: () => {
@@ -104,21 +126,29 @@ export default function AdminCoursesPage() {
       await apiRequest("PATCH", "/api/admin/v1/cms/courses/reorder", { items });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/cms/courses"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/v1/cms/courses"],
+      });
     },
   });
 
   const sortedCourses = [...courses].sort((a, b) => {
-    return sortOrder === "asc" ? a.position - b.position : b.position - a.position;
+    return sortOrder === "asc"
+      ? a.position - b.position
+      : b.position - a.position;
   });
 
   const filteredCourses = sortedCourses.filter((course) => {
-    const matchesSearch = !search || course.title.toLowerCase().includes(search.toLowerCase());
-    const matchesProgram = programFilter === "all" || course.programId === parseInt(programFilter);
+    const matchesSearch =
+      !search || course.title.toLowerCase().includes(search.toLowerCase());
+    const matchesProgram =
+      programFilter === "all" || course.programId === parseInt(programFilter);
     return matchesSearch && matchesProgram;
   });
 
-  const uniqueProgramIds = Array.from(new Set(courses.map((c) => c.programId).filter(Boolean))) as number[];
+  const uniqueProgramIds = Array.from(
+    new Set(courses.map((c) => c.programId).filter(Boolean))
+  ) as number[];
 
   const handleDelete = (course: CourseWithSignedUrl) => {
     setCourseToDelete(course);
@@ -166,7 +196,7 @@ export default function AdminCoursesPage() {
           </p>
         </div>
         <Button
-          onClick={() => setLocation("/admin/courses/create/step1")}
+          onClick={() => setLocation("/admin/courses/create")}
           data-testid="button-new-course"
           className="bg-brand hover:bg-brand/90"
         >
@@ -344,7 +374,7 @@ export default function AdminCoursesPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() =>
-                            setLocation(`/admin/courses/${course.id}`)
+                            setLocation(`/admin/courses/${course.id}/edit`)
                           }
                           data-testid={`button-edit-${course.id}`}
                         >
