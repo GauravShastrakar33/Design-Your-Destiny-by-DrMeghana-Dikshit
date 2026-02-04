@@ -460,8 +460,7 @@ export default function HomePage() {
           {isAuthenticated && (
             <button
               onClick={() => setLocation("/progress-insights")}
-              className="w-full text-left bg-white rounded-xl p-4 shadow-sm border border-gray-200
-/10 mt-4 hover:shadow-md active:scale-[0.98]"
+              className="w-full text-left bg-white rounded-xl p-4 shadow-sm border border-gray-200/10 mt-4 hover:shadow-md active:scale-[0.98]"
               data-testid="button-progress-insights"
             >
               <div className="flex items-center gap-3">

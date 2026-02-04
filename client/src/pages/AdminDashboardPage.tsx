@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Users, 
-  Activity, 
-  Award, 
+import {
+  Users,
+  Activity,
+  Award,
   PlayCircle,
   Calendar,
   Bell,
@@ -13,9 +13,124 @@ import {
   UsersRound,
   BookOpen,
   FileCheck,
-  Clock
+  Clock,
+  Loader2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  markerColor = "bg-brand",
+}: {
+  title: string;
+  value: number | string;
+  subtitle?: string;
+  icon?: any;
+  markerColor?: string;
+}) {
+  return (
+    <Card
+      className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative h-full flex flex-col"
+      data-testid={`card-stat-${title.toLowerCase().replace(/\s+/g, "-")}`}
+    >
+      <div className={cn("absolute top-0 left-0 w-1 h-full", markerColor)} />
+      <div className="p-5 flex-1 flex flex-col">
+        <div className="flex items-start justify-between mb-4">
+          <p className="text-sm font-semibold tracking-wide text-gray-500">
+            {title}
+          </p>
+          {Icon && (
+            <div
+              className={cn(
+                "w-7 h-7 rounded-lg flex items-center justify-center opacity-80",
+                markerColor
+                  .replace("bg-", "bg-")
+                  .replace("-500", "-100")
+                  .replace("bg-brand", "bg-brand/10")
+              )}
+            >
+              <Icon
+                className={cn(
+                  "w-4 h-4",
+                  markerColor
+                    .replace("bg-", "text-")
+                    .replace("bg-brand", "text-brand")
+                )}
+              />
+            </div>
+          )}
+        </div>
+        <div className="mt-auto flex justify-between items-center">
+          <p className="text-2xl font-bold text-gray-900 leading-none">
+            {value}
+          </p>
+          {subtitle && (
+            <p className="text-xs font-semibold text-gray-500 mt-2 italic">
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function SectionWrapper({
+  title,
+  description,
+  icon: Icon,
+  markerColor = "bg-brand",
+  children,
+}: {
+  title: string;
+  description?: string;
+  icon: any;
+  markerColor?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative h-full">
+      <div className={cn("absolute top-0 left-0 w-1 h-full", markerColor)} />
+      <div className="p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <div
+            className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center",
+              markerColor
+                .replace("bg-", "bg-")
+                .replace("-500", "-50")
+                .replace("bg-brand", "bg-brand/10")
+            )}
+          >
+            <Icon
+              className={cn(
+                "w-4 h-4",
+                markerColor
+                  .replace("bg-", "text-")
+                  .replace("bg-brand", "text-brand")
+              )}
+            />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 leading-tight">
+              {title}
+            </h3>
+            {description && (
+              <p className="text-xs font-medium text-gray-400 mt-0.5">
+                {description}
+              </p>
+            )}
+          </div>
+        </div>
+        {children}
+      </div>
+    </Card>
+  );
+}
 
 interface DashboardData {
   kpis: {
@@ -64,29 +179,29 @@ export default function AdminDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900" data-testid="text-dashboard-title">Dashboard</h1>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="pt-6">
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-[#f8f9fa]">
+        <Loader2 className="w-8 h-8 animate-spin text-brand" />
       </div>
     );
   }
 
-  const kpis = data?.kpis ?? { totalUsers: 0, activeToday: 0, practisedToday: 0, badgesEarnedToday: 0 };
+  const kpis = data?.kpis ?? {
+    totalUsers: 0,
+    activeToday: 0,
+    practisedToday: 0,
+    badgesEarnedToday: 0,
+  };
   const events = data?.events ?? { today: [], upcoming: [] };
-  const notifications = data?.notifications ?? { failedLast24h: 0, usersDisabled: 0 };
+  const notifications = data?.notifications ?? {
+    failedLast24h: 0,
+    usersDisabled: 0,
+  };
   const communityPractices = data?.communityPractices ?? { total: 0 };
-  const cmsHealth = data?.cmsHealth ?? { totalCourses: 0, publishedCourses: 0, lastUpdatedCourse: null };
+  const cmsHealth = data?.cmsHealth ?? {
+    totalCourses: 0,
+    publishedCourses: 0,
+    lastUpdatedCourse: null,
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -114,209 +229,277 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="p-8 max-w-6xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900" data-testid="text-dashboard-title">Dashboard</h1>
-      </div>
+    <div className="min-h-screen bg-[#f8f9fa] p-8">
+      <header className="mb-8">
+        <h1
+          className="text-xl font-bold text-gray-900 leading-none"
+          data-testid="text-dashboard-title"
+        >
+          Dashboard
+        </h1>
+        <p className="text-sm font-semibold text-gray-500 mt-1">
+          Overview of platform activity, events, and health metrics.
+        </p>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card data-testid="card-kpi-users">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+      <div className="space-y-8">
+        {/* KPI Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Total Users"
+            value={kpis.totalUsers}
+            icon={Users}
+            markerColor="bg-brand"
+          />
+          <StatCard
+            title="Active Today"
+            value={kpis.activeToday}
+            icon={Activity}
+            markerColor="bg-brand"
+          />
+          <StatCard
+            title="Practised Today"
+            value={kpis.practisedToday}
+            icon={PlayCircle}
+            markerColor="bg-brand"
+          />
+          <StatCard
+            title="Badges Earned"
+            value={kpis.badgesEarnedToday}
+            icon={Award}
+            markerColor="bg-brand"
+          />
+        </div>
+
+        {/* Content Section 1: Events & Notifications */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SectionWrapper
+            title="Events"
+            description="Scheduled community events and sessions"
+            icon={Calendar}
+            markerColor="bg-blue-500"
+          >
+            <div className="space-y-6">
               <div>
-                <p className="text-sm text-muted-foreground">Students</p>
-                <p className="text-2xl font-bold" data-testid="text-kpi-users">{kpis.totalUsers}</p>
-              </div>
-              <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                <Users className="w-5 h-5 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card data-testid="card-kpi-active-today">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Active Today</p>
-                <p className="text-2xl font-bold" data-testid="text-kpi-active-today">{kpis.activeToday}</p>
-              </div>
-              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                <Activity className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card data-testid="card-kpi-practised-today">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Practised Today</p>
-                <p className="text-2xl font-bold" data-testid="text-kpi-practised-today">{kpis.practisedToday}</p>
-              </div>
-              <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-                <PlayCircle className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card data-testid="card-kpi-badges-earned">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Badges Earned Today</p>
-                <p className="text-2xl font-bold" data-testid="text-kpi-badges-earned">{kpis.badgesEarnedToday}</p>
-              </div>
-              <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-                <Award className="w-5 h-5 text-amber-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <Card data-testid="card-events">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Events
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">Events Today</p>
-              {events.today.length === 0 ? (
-                <p className="text-sm text-gray-500" data-testid="text-no-events-today">No events scheduled for today</p>
-              ) : (
-                <div className="space-y-2">
-                  {events.today.map((event) => (
-                    <div key={event.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0" data-testid={`event-today-${event.id}`}>
-                      <div>
-                        <p className="text-sm font-medium">{event.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(event.startDatetime), "h:mm a")}
-                        </p>
-                      </div>
-                      {getStatusBadge(event.status)}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">Upcoming Events (Next 7 Days)</p>
-              {events.upcoming.length === 0 ? (
-                <p className="text-sm text-gray-500" data-testid="text-no-upcoming-events">No upcoming events</p>
-              ) : (
-                <div className="space-y-2">
-                  {events.upcoming.slice(0, 5).map((event) => (
-                    <div key={event.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0" data-testid={`event-upcoming-${event.id}`}>
-                      <div>
-                        <p className="text-sm font-medium">{event.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(event.startDatetime), "EEE, MMM d 'at' h:mm a")}
-                        </p>
-                      </div>
-                      {getStatusBadge(event.status)}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card data-testid="card-notifications">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Bell className="w-4 h-4" />
-              Notifications
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3 py-2">
-              {notifications.failedLast24h === 0 ? (
-                <>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <p className="text-sm" data-testid="text-notification-health-ok">All notifications sent successfully (last 24h)</p>
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="w-5 h-5 text-amber-500" />
-                  <p className="text-sm" data-testid="text-notification-health-failed">
-                    {notifications.failedLast24h} notification(s) failed (last 24h)
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                  Events Today
+                </p>
+                {events.today.length === 0 ? (
+                  <p
+                    className="text-sm text-gray-500 italic"
+                    data-testid="text-no-events-today"
+                  >
+                    No events scheduled for today
                   </p>
-                </>
-              )}
+                ) : (
+                  <div className="space-y-3">
+                    {events.today.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100"
+                        data-testid={`event-today-${event.id}`}
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {event.title}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {format(new Date(event.startDatetime), "h:mm a")}
+                          </p>
+                        </div>
+                        {getStatusBadge(event.status)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                  Upcoming (Next 7 Days)
+                </p>
+                {events.upcoming.length === 0 ? (
+                  <p
+                    className="text-sm text-gray-500 italic"
+                    data-testid="text-no-upcoming-events"
+                  >
+                    No upcoming events
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {events.upcoming.slice(0, 5).map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100"
+                        data-testid={`event-upcoming-${event.id}`}
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {event.title}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {format(
+                              new Date(event.startDatetime),
+                              "EEE, MMM d 'at' h:mm a"
+                            )}
+                          </p>
+                        </div>
+                        {getStatusBadge(event.status)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-3 py-2">
-              <BellOff className="w-5 h-5 text-gray-400" />
-              <p className="text-sm" data-testid="text-users-notifications-disabled">
-                {notifications.usersDisabled} users have notifications disabled
+          </SectionWrapper>
+
+          <SectionWrapper
+            title="Notifications"
+            description="System notification status and failures"
+            icon={Bell}
+            markerColor="bg-amber-500"
+          >
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                {notifications.failedLast24h === 0 ? (
+                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
+                )}
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Delivery Status (Last 24h)
+                  </p>
+                  {notifications.failedLast24h === 0 ? (
+                    <p
+                      className="text-xs text-gray-500 mt-1"
+                      data-testid="text-notification-health-ok"
+                    >
+                      All notifications sent successfully
+                    </p>
+                  ) : (
+                    <p
+                      className="text-xs text-amber-600 font-medium mt-1"
+                      data-testid="text-notification-health-failed"
+                    >
+                      {notifications.failedLast24h} notification(s) failed to
+                      send
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <BellOff className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Opt-out Status
+                  </p>
+                  <p
+                    className="text-xs text-gray-500 mt-1"
+                    data-testid="text-users-notifications-disabled"
+                  >
+                    {notifications.usersDisabled} users have disabled
+                    notifications
+                  </p>
+                </div>
+              </div>
+            </div>
+          </SectionWrapper>
+        </div>
+
+        {/* Content Section 2: Community & CMS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SectionWrapper
+            title="Community Practices"
+            description="Engagement metrics for community sessions"
+            icon={UsersRound}
+            markerColor="bg-pink-500"
+          >
+            <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-100">
+              <p className="text-sm font-medium text-gray-500">
+                Total Community Practices
+              </p>
+              <p
+                className="text-3xl font-bold text-gray-900"
+                data-testid="text-total-community-practices"
+              >
+                {communityPractices.total}
               </p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </SectionWrapper>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card data-testid="card-community-practices">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <UsersRound className="w-4 h-4" />
-              Community Practices
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Total Community Practices</p>
-              <p className="text-xl font-bold" data-testid="text-total-community-practices">{communityPractices.total}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card data-testid="card-cms-health">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              CMS Health
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Courses</p>
-              <p className="font-semibold" data-testid="text-total-courses">{cmsHealth.totalCourses}</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileCheck className="w-4 h-4 text-green-500" />
-                <p className="text-sm text-muted-foreground">Published Courses</p>
+          <SectionWrapper
+            title="CMS Health"
+            description="Content management system overview"
+            icon={BookOpen}
+            markerColor="bg-green-500"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                  Total Courses
+                </p>
+                <p
+                  className="text-2xl font-bold text-gray-900"
+                  data-testid="text-total-courses"
+                >
+                  {cmsHealth.totalCourses}
+                </p>
               </div>
-              <p className="font-semibold" data-testid="text-published-courses">{cmsHealth.publishedCourses}</p>
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    Published
+                  </p>
+                  <FileCheck className="w-3 h-3 text-green-500" />
+                </div>
+                <p
+                  className="text-2xl font-bold text-gray-900"
+                  data-testid="text-published-courses"
+                >
+                  {cmsHealth.publishedCourses}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
                 <Clock className="w-4 h-4 text-blue-500" />
-                <p className="text-sm text-muted-foreground">Last Updated Course</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  Last Updated Course
+                </p>
               </div>
               {cmsHealth.lastUpdatedCourse ? (
-                <div className="text-right">
-                  <p className="text-sm font-medium truncate max-w-[180px]" title={cmsHealth.lastUpdatedCourse.title} data-testid="text-last-updated-course-title">
+                <div>
+                  <p
+                    className="text-sm font-medium text-gray-900 truncate"
+                    title={cmsHealth.lastUpdatedCourse.title}
+                    data-testid="text-last-updated-course-title"
+                  >
                     {cmsHealth.lastUpdatedCourse.title}
                   </p>
-                  <p className="text-xs text-muted-foreground" data-testid="text-last-updated-course-time">
-                    {formatDistanceToNow(new Date(cmsHealth.lastUpdatedCourse.updatedAt), { addSuffix: true })}
+                  <p
+                    className="text-xs text-gray-500 mt-1"
+                    data-testid="text-last-updated-course-time"
+                  >
+                    Updated{" "}
+                    {formatDistanceToNow(
+                      new Date(cmsHealth.lastUpdatedCourse.updatedAt),
+                      { addSuffix: true }
+                    )}
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500" data-testid="text-no-courses">No courses yet</p>
+                <p
+                  className="text-sm text-gray-500 italic"
+                  data-testid="text-no-courses"
+                >
+                  No courses found
+                </p>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </SectionWrapper>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,13 @@
-import { useEffect, useLayoutEffect, useState, useRef, useCallback } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
 import { X, Trophy } from "lucide-react";
 import { BadgeIcon } from "./BadgeIcon";
-import { getBadgeByKey } from "@/lib/badgeRegistry";
+import { getBadgeByKey, getBadgeSvgPath } from "@/lib/badgeRegistry";
 import { useLocation } from "wouter";
 
 const confettiStylesInjected = { current: false };
@@ -9,26 +15,30 @@ const confettiStylesInjected = { current: false };
 function injectConfettiStyles() {
   if (confettiStylesInjected.current) return;
   confettiStylesInjected.current = true;
-  
+
   const style = document.createElement("style");
   style.textContent = `
-    @keyframes confetti-fall {
+    @keyframes confetti-burst {
       0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
         opacity: 1;
-        transform: translateY(0) rotate(0deg);
       }
       100% {
+        transform: translate(var(--x), var(--y)) scale(0) rotate(var(--r));
         opacity: 0;
-        transform: translateY(300px) rotate(720deg);
       }
     }
-    @keyframes badge-pulse {
-      0%, 100% {
-        transform: scale(1);
-      }
-      50% {
-        transform: scale(1.05);
-      }
+    @keyframes badge-gentle-rotate {
+      0%, 100% { transform: perspective(1000px) rotateY(-15deg); }
+      50% { transform: perspective(1000px) rotateY(15deg); }
+    }
+    @keyframes toast-shimmer {
+      0% { transform: translateX(-150%) skewX(-20deg); }
+      100% { transform: translateX(150%) skewX(-20deg); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
   `;
   document.head.appendChild(style);
@@ -39,78 +49,102 @@ interface BadgeEarnedToastProps {
   onDismiss: () => void;
 }
 
-function ConfettiParticle({ delay, left }: { delay: number; left: number }) {
-  const colors = ["#703DFA", "#5FB77D", "#E5AC19", "#FF6B6B", "#4ECDC4"];
-  const color = colors[Math.floor(Math.random() * colors.length)];
-  const size = 6 + Math.random() * 6;
-  const rotation = Math.random() * 360;
-  
+function ConfettiParticle({ delay, index }: { delay: number; index: number }) {
+  const side = index % 2 === 0 ? "left" : "right";
+  const colors = [
+    "#FFD700",
+    "#703DFA",
+    "#5FB77D",
+    "#FF6B6B",
+    "#4ECDC4",
+    "#FF1493",
+    "#00BFFF",
+  ];
+  const color = colors[index % colors.length];
+  const size = 10 + Math.random() * 12;
+
+  // Burst from bottom corners towards the center
+  const baseAngle = side === "left" ? -Math.PI / 3 : (-2 * Math.PI) / 3;
+  const angle = baseAngle + (Math.random() - 0.5) * 0.4;
+  const velocity = 250 + Math.random() * 300;
+  const x = Math.cos(angle) * velocity;
+  const y = Math.sin(angle) * velocity;
+  const rotation = 360 + Math.random() * 720;
+
+  const duration = 4 + Math.random() * 2;
+
   return (
     <div
-      className="absolute pointer-events-none"
-      style={{
-        left: `${left}%`,
-        top: "-10px",
-        width: size,
-        height: size,
-        backgroundColor: color,
-        borderRadius: Math.random() > 0.5 ? "50%" : "2px",
-        transform: `rotate(${rotation}deg)`,
-        animation: `confetti-fall 2s ease-out ${delay}s forwards`,
-        opacity: 0,
-      }}
+      className={`absolute pointer-events-none z-50 bottom-0 ${
+        side === "left" ? "left-0" : "right-0"
+      }`}
+      style={
+        {
+          width: size,
+          height: size,
+          backgroundColor: color,
+          borderRadius: index % 3 === 0 ? "50%" : "2px",
+          "--x": `${x}px`,
+          "--y": `${y}px`,
+          "--r": `${rotation}deg`,
+          animation: `confetti-burst ${duration}s cubic-bezier(0.1, 0.8, 0.3, 1) ${delay}s infinite`,
+          boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+        } as any
+      }
     />
   );
 }
 
 function Confetti() {
-  const particles = Array.from({ length: 30 }, (_, i) => ({
+  const particles = Array.from({ length: 60 }, (_, i) => ({
     id: i,
-    delay: Math.random() * 0.3,
-    left: 10 + Math.random() * 80,
+    delay: Math.random() * 0.4,
   }));
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="absolute inset-0 overflow-visible pointer-events-none">
       {particles.map((p) => (
-        <ConfettiParticle key={p.id} delay={p.delay} left={p.left} />
+        <ConfettiParticle key={p.id} delay={p.delay} index={p.id} />
       ))}
     </div>
   );
 }
 
-export function BadgeEarnedToast({ badgeKey, onDismiss }: BadgeEarnedToastProps) {
+export function BadgeEarnedToast({
+  badgeKey,
+  onDismiss,
+}: BadgeEarnedToastProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const badge = getBadgeByKey(badgeKey);
   const [, setLocation] = useLocation();
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     injectConfettiStyles();
-    
-    setTimeout(() => {
-      setIsVisible(true);
-      setShowConfetti(true);
-    }, 50);
-    
-    timerRef.current = setTimeout(() => {
-      handleClose();
-    }, 4000);
+
+    // Preload image
+    const img = new Image();
+    img.src = getBadgeSvgPath(badgeKey);
+
+    let entryTimeout: ReturnType<typeof setTimeout>;
+
+    img.onload = () => {
+      setIsLoaded(true);
+      entryTimeout = setTimeout(() => {
+        setIsVisible(true);
+        setShowConfetti(true);
+      }, 100);
+    };
 
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      if (entryTimeout) clearTimeout(entryTimeout);
     };
-  }, []);
+  }, [badgeKey]);
 
   const handleClose = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
     setIsVisible(false);
-    setTimeout(onDismiss, 300);
+    setTimeout(onDismiss, 400);
   }, [onDismiss]);
 
   const handleToastClick = () => {
@@ -118,70 +152,99 @@ export function BadgeEarnedToast({ badgeKey, onDismiss }: BadgeEarnedToastProps)
     setLocation("/badges");
   };
 
-  if (!badge) return null;
+  if (!badge || !isLoaded) return null;
 
   return (
-    <div 
-      className={`fixed z-50 left-1/2 transition-all duration-300 ease-out ${
-        isVisible 
-          ? "opacity-100 translate-y-0" 
-          : "opacity-0 -translate-y-4"
-      }`}
-      style={{ 
-        width: 340,
-        top: "15%",
-        transform: "translateX(-50%)",
-      }}
-      data-testid="badge-celebration-overlay"
-    >
-      {showConfetti && <Confetti />}
-      
-      <div 
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 cursor-pointer relative overflow-hidden"
-        onClick={handleToastClick}
-        data-testid="badge-earned-toast"
+    <>
+      {/* Backdrop Backdrop Overlay */}
+      <div
+        className={`fixed inset-0 z-[60] bg-black/40 backdrop-blur-[2px] transition-opacity duration-500 ${
+          isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={handleClose}
+      />
+
+      <div
+        className={`fixed z-[70] left-1/2 transition-all duration-500 ease-out ${
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
+        }`}
+        style={{
+          width: 340,
+          top: "15%",
+          transform: "translateX(-50%)",
+        }}
+        data-testid="badge-celebration-overlay"
       >
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClose();
+        {showConfetti && <Confetti />}
+
+        <div
+          className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] border border-white/20 p-8 cursor-pointer relative overflow-hidden group"
+          onClick={handleToastClick}
+          style={{
+            animation: isVisible ? "float 5s ease-in-out infinite" : "none",
           }}
-          className="absolute top-3 right-3 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors z-10"
-          data-testid="button-dismiss-badge-toast"
+          data-testid="badge-earned-toast"
         >
-          <X className="w-4 h-4 text-muted-foreground" />
-        </button>
-
-        <div className="flex flex-col items-center text-center">
-          <div className="mb-4 flex items-center gap-2 text-amber-500">
-            <Trophy className="w-5 h-5" />
-            <span className="text-sm font-semibold uppercase tracking-wide">
-              Badge Unlocked
-            </span>
-            <Trophy className="w-5 h-5" />
+          {/* Shimmer Effect */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+            <div
+              className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white to-transparent"
+              style={{ animation: "toast-shimmer 4s infinite linear" }}
+            />
           </div>
 
-          <div 
-            className="mb-4"
-            style={{ animation: "badge-pulse 2s ease-in-out infinite" }}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClose();
+            }}
+            className="absolute top-5 right-5 p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors z-10"
+            data-testid="button-dismiss-badge-toast"
           >
-            <BadgeIcon badgeKey={badgeKey} size="lg" earned className="w-24 h-24" />
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-6 flex items-center gap-2 text-amber-500">
+              <Trophy className="w-5 h-5 fill-amber-500/20" />
+              <span className="text-[11px] font-black uppercase tracking-[0.2em]">
+                Badge Unlocked
+              </span>
+              <Trophy className="w-5 h-5 fill-amber-500/20" />
+            </div>
+
+            <div
+              className="mb-8 relative flex justify-center items-center"
+              style={{
+                animation: "badge-gentle-rotate 4s ease-in-out infinite",
+              }}
+            >
+              <div className="absolute inset-0 bg-brand/15 blur-3xl rounded-full scale-125 animate-pulse" />
+              <BadgeIcon
+                badgeKey={badgeKey}
+                size="xl"
+                earned
+                className="w-32 h-32 relative z-10 filter drop-shadow-[0_12px_20px_rgba(0,0,0,0.15)]"
+              />
+            </div>
+
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">
+              {badge.displayName}
+            </h3>
+
+            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-[280px] font-medium">
+              {badge.meaning}
+            </p>
+
+            <div className="mt-8 flex flex-col items-center gap-3">
+              <p className="text-[10px] font-bold text-brand uppercase tracking-wide opacity-80 group-hover:opacity-100 transition-opacity">
+                Tap to keep exploring
+              </p>
+            </div>
           </div>
-
-          <h3 className="text-xl font-bold text-foreground mb-2">
-            {badge.displayName}
-          </h3>
-
-          <p className="text-sm text-muted-foreground max-w-[280px]">
-            {badge.meaning}
-          </p>
-
-          <p className="mt-3 text-xs text-muted-foreground/70">
-            Tap to view all badges
-          </p>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -190,7 +253,10 @@ interface BadgeToastManagerProps {
   onAllDismissed?: () => void;
 }
 
-export function BadgeToastManager({ newBadges, onAllDismissed }: BadgeToastManagerProps) {
+export function BadgeToastManager({
+  newBadges,
+  onAllDismissed,
+}: BadgeToastManagerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [batchVersion, setBatchVersion] = useState(0);
   const prevBadgesRef = useRef<string[]>([]);
@@ -200,7 +266,7 @@ export function BadgeToastManager({ newBadges, onAllDismissed }: BadgeToastManag
       prevBadgesRef.current = newBadges;
       if (newBadges.length > 0) {
         setCurrentIndex(0);
-        setBatchVersion(v => v + 1);
+        setBatchVersion((v) => v + 1);
       }
     }
   }, [newBadges]);
@@ -221,10 +287,10 @@ export function BadgeToastManager({ newBadges, onAllDismissed }: BadgeToastManag
   const currentBadge = newBadges[safeIndex];
 
   return (
-    <BadgeEarnedToast 
+    <BadgeEarnedToast
       key={`${batchVersion}-${currentBadge}-${safeIndex}`}
-      badgeKey={currentBadge} 
-      onDismiss={handleDismiss} 
+      badgeKey={currentBadge}
+      onDismiss={handleDismiss}
     />
   );
 }
