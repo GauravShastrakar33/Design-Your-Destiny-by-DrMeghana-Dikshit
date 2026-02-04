@@ -39,9 +39,9 @@ export default function AdminProgramsPage() {
         <p className="text-gray-500 text-sm mt-1">System-defined program hierarchy</p>
       </div>
 
-      <div className="flex items-start gap-2 p-3 mb-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-        <p className="text-sm text-blue-700">
+      <div className="flex items-start gap-2 p-3 mb-4 bg-brand/10 border border-brand/20 rounded-lg">
+        <Info className="w-4 h-4 text-brand mt-0.5 flex-shrink-0" />
+        <p className="text-sm text-brand">
           Higher-level programs automatically include access to all lower-level programs.
         </p>
       </div>
@@ -68,7 +68,7 @@ export default function AdminProgramsPage() {
                 sortedPrograms.map((program) => (
                   <tr key={program.id} className="border-b" data-testid={`row-program-${program.id}`}>
                     <td className="py-3 px-4">
-                      <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded" data-testid={`text-program-code-${program.id}`}>
+                      <span className="text-sm bg-gray-100 px-2 py-1 rounded" data-testid={`text-program-code-${program.id}`}>
                         {program.code}
                       </span>
                     </td>
@@ -76,7 +76,7 @@ export default function AdminProgramsPage() {
                       {program.name}
                     </td>
                     <td className="py-3 px-4 text-center" data-testid={`text-program-level-${program.id}`}>
-                      <span className="inline-flex items-center justify-center w-8 h-8 bg-brand/10 text-brand font-semibold rounded-full">
+                      <span className="inline-flex items-center justify-center w-6 h-6 bg-brand/10 text-brand text-sm font-semibold rounded-full">
                         {program.level}
                       </span>
                     </td>

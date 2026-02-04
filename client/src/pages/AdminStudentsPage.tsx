@@ -41,6 +41,7 @@ import { Badge } from "@/components/ui/badge";
 import { useForm, FormProvider } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FormInput } from "@/components/ui/form-input";
 import { FormSelect } from "@/components/ui/form-select";
 import {
@@ -571,31 +572,59 @@ export default function AdminStudentsPage() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full" data-testid="table-students">
+              <table
+                className="w-full min-w-[1000px]"
+                style={{ tableLayout: "fixed" }}
+                data-testid="table-students"
+              >
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "18%" }}
+                    >
                       Name
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "28%" }}
+                    >
                       Email
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "15%" }}
+                    >
                       Phone
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "10%" }}
+                    >
                       Program
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "10%" }}
+                    >
                       Status
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "12%" }}
+                    >
                       Last Login
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "12%" }}
+                    >
                       Created
                     </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-right py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "80px" }}
+                    >
                       Actions
                     </th>
                   </tr>
@@ -607,21 +636,40 @@ export default function AdminStudentsPage() {
                       className="border-b border-gray-100 hover:bg-gray-50"
                       data-testid={`row-student-${student.id}`}
                     >
-                      <td className="py-3 px-4">
+                      <td className="py-2 px-4 max-w-0">
                         <button
                           onClick={() =>
                             setLocation(`/admin/students/${student.id}`)
                           }
-                          className="font-medium text-primary hover:underline text-left"
+                          className="inline-flex items-center gap-2.5 max-w-full group text-left bg-white border border-gray-100 rounded-lg p-1 pr-3 hover:border-brand/30 hover:shadow-sm transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
                           data-testid={`link-student-name-${student.id}`}
+                          title={student.name || ""}
                         >
-                          {student.name}
+                          <Avatar className="h-7 w-7 text-[9px] font-bold shrink-0">
+                            <AvatarFallback className="bg-brand/5 text-brand/70 group-hover:bg-brand group-hover:text-white transition-all">
+                              {student.name
+                                ?.split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()
+                                .slice(0, 2) || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-semibold text-gray-800 group-hover:text-brand truncate text-xs transition-colors">
+                            {student.name}
+                          </span>
                         </button>
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td
+                        className="py-3 px-4 text-gray-600 truncate max-w-0"
+                        title={student.email || ""}
+                      >
                         {student.email}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td
+                        className="py-3 px-4 text-gray-600 truncate max-w-0"
+                        title={student.phone || "-"}
+                      >
                         {student.phone || "-"}
                       </td>
                       <td className="py-3 px-4">

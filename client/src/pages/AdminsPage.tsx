@@ -41,6 +41,7 @@ import { Badge } from "@/components/ui/badge";
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FormInput } from "@/components/ui/form-input";
 import { FormSelect } from "@/components/ui/form-select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -411,29 +412,54 @@ export default function AdminsPage() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full" data-testid="table-admins">
+              <table
+                className="w-full border-collapse"
+                style={{ tableLayout: "fixed" }}
+                data-testid="table-admins"
+              >
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "20%" }}
+                    >
                       Name
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "25%" }}
+                    >
                       Email
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "12%" }}
+                    >
                       Role
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "10%" }}
+                    >
                       Status
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "12%" }}
+                    >
                       Last Login
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                    <th
+                      className="text-left py-3 px-4 text-sm font-medium text-gray-600"
+                      style={{ width: "12%" }}
+                    >
                       Created
                     </th>
                     {isSuperAdmin && (
-                      <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">
+                      <th
+                        className="text-right py-3 px-4 text-sm font-medium text-gray-600"
+                        style={{ width: "80px" }}
+                      >
                         Actions
                       </th>
                     )}
@@ -446,15 +472,29 @@ export default function AdminsPage() {
                       className="border-b border-gray-100 hover:bg-gray-50"
                       data-testid={`row-admin-${admin.id}`}
                     >
-                      <td className="py-3 px-4">
-                        <span
-                          className="font-medium text-gray-900"
-                          data-testid={`text-admin-name-${admin.id}`}
-                        >
-                          {admin.name}
-                        </span>
+                      <td className="py-2 px-4 max-w-0">
+                        <div className="flex items-center gap-3 w-full text-left truncate">
+                          <Avatar className="h-8 w-8 text-[10px] font-bold shrink-0">
+                            <AvatarFallback className="bg-brand/5 text-brand/80 transition-colors">
+                              {admin.name
+                                ?.split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()
+                                .slice(0, 2) || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-semibold text-gray-900 truncate text-sm">
+                            {admin.name}
+                          </span>
+                        </div>
                       </td>
-                      <td className="py-3 px-4 text-gray-600">{admin.email}</td>
+                      <td
+                        className="py-3 px-4 text-gray-600 truncate"
+                        title={admin.email}
+                      >
+                        {admin.email}
+                      </td>
                       <td className="py-3 px-4">{getRoleBadge(admin.role)}</td>
                       <td className="py-3 px-4">
                         <Badge
