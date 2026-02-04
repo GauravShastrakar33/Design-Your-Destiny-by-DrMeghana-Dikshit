@@ -247,12 +247,6 @@ export default function AdminProgramsPage() {
                     <th className="py-4 px-6 text-xs font-bold uppercase tracking-widest text-gray-600">
                       Program Name
                     </th>
-                    <th className="py-4 px-6 text-xs font-bold uppercase tracking-widest text-gray-600 text-center">
-                      Status
-                    </th>
-                    <th className="py-4 px-6 text-xs font-bold uppercase tracking-widest text-gray-600 text-right">
-                      Actions
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -301,7 +295,7 @@ export default function AdminProgramsPage() {
                             {program.name}
                           </span>
                         </td>
-                        <td className="py-4 px-6 text-center">
+                        <td className="py-4 px-6 text-center hidden">
                           <Badge
                             variant="outline"
                             className="bg-green-50 text-green-700 border-green-200 font-bold uppercase text-[10px] tracking-widest px-2 py-0.5"
@@ -309,7 +303,7 @@ export default function AdminProgramsPage() {
                             Active
                           </Badge>
                         </td>
-                        <td className="py-4 px-6 text-right">
+                        <td className="py-4 px-6 text-right hidden">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" className="h-8 w-8 p-0">

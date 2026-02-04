@@ -469,7 +469,7 @@ export default function AdminProjectHeartPage() {
 
             <section data-testid="section-drop-offs">
               <SectionWrapper
-                title="Attrition Analysis"
+                title="Drop-offs"
                 description="Identifying where users disengage or pause their project journey."
                 icon={AlertTriangle}
                 markerColor="bg-amber-500"
