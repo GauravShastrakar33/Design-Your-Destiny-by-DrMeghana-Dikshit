@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
+import { FirebaseMessaging } from "@capacitor-firebase/messaging";
 import { apiRequest } from "@/lib/queryClient";
 import { setUnread } from "./notificationState";
 
@@ -12,6 +13,16 @@ function navigate(to: string) {
 // Check if we're running in a native Capacitor environment
 export function isNativePlatform(): boolean {
   return Capacitor.isNativePlatform();
+}
+
+async function getNativeFcmToken(): Promise<string | null> {
+  try {
+    const result = await FirebaseMessaging.getToken();
+    return result?.token ?? null;
+  } catch (error) {
+    console.error("❌ Failed to get FCM token:", error);
+    return null;
+  }
 }
 
 // Check current permission status without requesting
@@ -44,15 +55,35 @@ export function setupNativePushListeners() {
 
   // Handle successful registration - this is called after PushNotifications.register()
   PushNotifications.addListener("registration", async (token) => {
+    const rawPlatform = Capacitor.getPlatform();
+    const platform = rawPlatform === "ios" || rawPlatform === "android"
+      ? rawPlatform
+      : "native";
+    let tokenValue = token.value;
+
+    // iOS registration returns APNs token; fetch FCM token instead
+    if (platform === "ios") {
+      const fcmToken = await getNativeFcmToken();
+      if (fcmToken) {
+        tokenValue = fcmToken;
+      } else {
+        console.error("❌ iOS FCM token unavailable; skipping registration");
+        window.dispatchEvent(
+          new CustomEvent("nativePushRegistered", { detail: { success: false } }),
+        );
+        return;
+      }
+    }
+
     console.log(
-      "🔥 Native FCM token received:",
-      token.value.substring(0, 20) + "...",
+      "🔥 Native push token received:",
+      tokenValue.substring(0, 20) + "...",
     );
 
     try {
       await apiRequest("POST", "/api/v1/notifications/register-device", {
-        token: token.value,
-        platform: "native",
+        token: tokenValue,
+        platform,
       });
       console.log("✅ Native FCM token registered with backend");
 
@@ -121,44 +152,21 @@ export async function initPushNotifications() {
   if (!isNativePlatform()) return;
 
   setupNativePushListeners();
-
-  const isInitialized = localStorage.getItem("push_initialized") === "true";
-  const isEnabled = localStorage.getItem("push_enabled") === "true";
-
-  if (!isInitialized) {
-    // First launch logic
-    console.log("📱 First launch: Requesting push permissions...");
-    try {
-      const permStatus = await PushNotifications.requestPermissions();
-
-      if (permStatus.receive === "granted") {
-        console.log("✅ Permission granted on first launch");
-        localStorage.setItem("push_enabled", "true");
-        await PushNotifications.register();
-      } else {
-        console.log("❌ Permission denied on first launch");
-        localStorage.setItem("push_enabled", "false");
-      }
-    } catch (error) {
-      console.error("❌ Error during first launch push init:", error);
-      localStorage.setItem("push_enabled", "false");
+  console.log("📱 Native push init: checking permissions...");
+  try {
+    let permStatus = await PushNotifications.checkPermissions();
+    if (permStatus.receive === "prompt") {
+      permStatus = await PushNotifications.requestPermissions();
     }
 
-    localStorage.setItem("push_initialized", "true");
-  } else {
-    // Subsequent launch logic
-    console.log("📱 Subsequent launch: push_enabled =", isEnabled);
-    if (isEnabled) {
-      // Just register to ensure we have a fresh token. 
-      // OS shouldn't prompt again if already granted.
+    if (permStatus.receive === "granted") {
       await PushNotifications.register();
+      console.log("✅ Native push registered");
     } else {
-      try {
-        await PushNotifications.unregister();
-      } catch (e) {
-        // Unregister might fail if not currently registered, which is fine
-      }
+      console.log("❌ Native push permission not granted");
     }
+  } catch (error) {
+    console.error("❌ Error during native push init:", error);
   }
 }
 
@@ -168,35 +176,28 @@ export async function initPushNotifications() {
 export async function setPushEnabled(enabled: boolean) {
   if (!isNativePlatform()) return false;
 
-  localStorage.setItem("push_enabled", enabled ? "true" : "false");
-
   if (enabled) {
     // If enabling, we might need to request permissions again if they haven't been granted
     const status = await checkNativePermissionStatus();
     if (status !== "granted") {
       const permStatus = await PushNotifications.requestPermissions();
       if (permStatus.receive !== "granted") {
-        localStorage.setItem("push_enabled", "false");
         return false;
       }
     }
     await PushNotifications.register();
+    await apiRequest("POST", "/api/v1/notifications/push-enabled", {
+      enabled: true,
+    });
     console.log("📱 Push notifications enabled and registered");
   } else {
-    // 1. Unregister from backend
     try {
-      await apiRequest("DELETE", "/api/v1/notifications/unregister-device", undefined);
-      console.log("✅ Device token unregistered from backend");
+      await apiRequest("POST", "/api/v1/notifications/push-enabled", {
+        enabled: false,
+      });
+      console.log("✅ Push preference disabled");
     } catch (error) {
-      console.error("❌ Failed to unregister device from backend:", error);
-    }
-
-    // 2. Unregister from platform
-    try {
-      await PushNotifications.unregister();
-      console.log("📱 Push notifications disabled and unregistered locally");
-    } catch (error) {
-      console.error("❌ Error unregistering push locally:", error);
+      console.error("❌ Failed to update push preference:", error);
     }
   }
   return true;

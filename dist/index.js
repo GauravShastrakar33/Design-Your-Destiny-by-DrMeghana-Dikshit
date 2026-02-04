@@ -580,6 +580,7 @@ var init_schema = __esm({
       userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
       token: text("token").notNull().unique(),
       platform: varchar("platform", { length: 10 }).notNull().default("web"),
+      pushEnabled: boolean("push_enabled").notNull().default(true),
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
     });
     insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
@@ -1608,6 +1609,27 @@ var init_storage = __esm({
         const result = await db.insert(notificationLogs).values(logs).returning();
         return result;
       }
+      async updateNotificationLogStatus(notificationId, deviceToken, status, error = null) {
+        await db.update(notificationLogs).set({ status, error }).where(
+          and(
+            eq(notificationLogs.notificationId, notificationId),
+            eq(notificationLogs.deviceToken, deviceToken)
+          )
+        );
+      }
+      async updateNotificationLogsStatus(updates) {
+        if (updates.length === 0) return;
+        await Promise.all(
+          updates.map(
+            (u) => this.updateNotificationLogStatus(
+              u.notificationId,
+              u.deviceToken,
+              u.status,
+              u.error ?? null
+            )
+          )
+        );
+      }
       async getNotificationLogsByNotificationId(notificationId) {
         return db.select().from(notificationLogs).where(eq(notificationLogs.notificationId, notificationId));
       }
@@ -1618,7 +1640,10 @@ var init_storage = __esm({
       // ===== DEVICE TOKENS (for notifications) =====
       async getDeviceTokensByUserIds(userIds) {
         if (userIds.length === 0) return [];
-        return db.select({ userId: deviceTokens.userId, token: deviceTokens.token }).from(deviceTokens).where(inArray(deviceTokens.userId, userIds));
+        return db.select({ userId: deviceTokens.userId, token: deviceTokens.token }).from(deviceTokens).where(and(
+          inArray(deviceTokens.userId, userIds),
+          eq(deviceTokens.pushEnabled, true)
+        ));
       }
       async deleteDeviceToken(token) {
         await db.delete(deviceTokens).where(eq(deviceTokens.token, token));
@@ -2918,8 +2943,8 @@ async function registerRoutes(app2) {
           eq2(notificationLogs.status, "failed"),
           gte(notificationLogs.createdAt, twentyFourHoursAgo)
         )),
-        // Count of unique users with device tokens
-        db.select({ count: countDistinct(deviceTokens.userId) }).from(deviceTokens),
+        // Count of unique users with push enabled
+        db.select({ count: countDistinct(deviceTokens.userId) }).from(deviceTokens).where(eq2(deviceTokens.pushEnabled, true)),
         // Total users
         db.select({ count: count2() }).from(users).where(eq2(users.role, "USER"))
       ]);
@@ -6125,22 +6150,24 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const { token } = req.body;
+      const { token, platform } = req.body;
       if (!token || typeof token !== "string") {
         return res.status(400).json({ error: "Token is required" });
       }
+      const normalizedPlatform = typeof platform === "string" && platform.trim().length > 0 ? platform.trim().slice(0, 10) : "native";
       const existingToken = await db.select().from(deviceTokens).where(eq2(deviceTokens.token, token)).limit(1);
       if (existingToken.length > 0) {
-        if (existingToken[0].userId !== userId) {
-          await db.update(deviceTokens).set({ userId }).where(eq2(deviceTokens.token, token));
+        const needsUpdate = existingToken[0].userId !== userId || existingToken[0].platform !== normalizedPlatform;
+        if (needsUpdate) {
+          await db.update(deviceTokens).set({ userId, platform: normalizedPlatform }).where(eq2(deviceTokens.token, token));
         }
         return res.json({ success: true, message: "Token already registered" });
       }
-      await db.delete(deviceTokens).where(eq2(deviceTokens.userId, userId));
       await db.insert(deviceTokens).values({
         userId,
         token,
-        platform: "web"
+        platform: normalizedPlatform,
+        pushEnabled: true
       });
       res.json({ success: true, message: "Device registered successfully" });
     } catch (error) {
@@ -6172,11 +6199,31 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const tokens = await db.select().from(deviceTokens).where(eq2(deviceTokens.userId, userId)).limit(1);
+      const tokens = await db.select().from(deviceTokens).where(and2(
+        eq2(deviceTokens.userId, userId),
+        eq2(deviceTokens.pushEnabled, true)
+      )).limit(1);
       res.json({ enabled: tokens.length > 0 });
     } catch (error) {
       console.error("Error getting notification status:", error);
       res.status(500).json({ error: "Failed to get notification status" });
+    }
+  });
+  app2.post("/api/v1/notifications/push-enabled", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const { enabled } = req.body;
+      if (typeof enabled !== "boolean") {
+        return res.status(400).json({ error: "enabled must be boolean" });
+      }
+      await db.update(deviceTokens).set({ pushEnabled: enabled }).where(eq2(deviceTokens.userId, userId));
+      res.json({ success: true, enabled });
+    } catch (error) {
+      console.error("Error updating push preference:", error);
+      res.status(500).json({ error: "Failed to update push preference" });
     }
   });
   app2.get("/admin/api/notifications/stats", requireAdmin, async (req, res) => {
@@ -6198,7 +6245,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!title || !body) {
         return res.status(400).json({ error: "Title and body are required" });
       }
-      const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId }).from(deviceTokens);
+      const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId }).from(deviceTokens).where(eq2(deviceTokens.pushEnabled, true));
       if (allTokens.length === 0) {
         return res.json({
           success: true,
@@ -6750,6 +6797,22 @@ async function processNotifications() {
           continue;
         }
         const deviceTokens2 = await storage.getDeviceTokensByUserIds(eligibleUserIds);
+        const userIdsWithTokens = new Set(deviceTokens2.map((dt) => dt.userId));
+        const inAppOnlyLogs = eligibleUserIds.filter((userId) => !userIdsWithTokens.has(userId)).map((userId) => ({
+          notificationId: notification.id,
+          userId,
+          deviceToken: "in-app-only",
+          status: "sent",
+          error: null
+        }));
+        const pushLogs = deviceTokens2.map((dt) => ({
+          notificationId: notification.id,
+          userId: dt.userId,
+          deviceToken: dt.token,
+          status: "pending",
+          error: null
+        }));
+        await storage.createNotificationLogs([...inAppOnlyLogs, ...pushLogs]);
         if (deviceTokens2.length === 0) {
           console.log(`No device tokens found for notification ${notification.id}, marking as sent`);
           await storage.markNotificationSent(notification.id);
@@ -6771,19 +6834,16 @@ async function processNotifications() {
           notification.body,
           dataPayload
         );
-        const logs = [];
-        for (const token of tokens) {
-          const userId = userIdByToken.get(token) || 0;
+        const logUpdates = tokens.map((token) => {
           const failed = result.failedTokens.includes(token);
-          logs.push({
+          return {
             notificationId: notification.id,
-            userId,
             deviceToken: token,
             status: failed ? "failed" : "sent",
             error: failed ? "FCM delivery failed" : null
-          });
-        }
-        await storage.createNotificationLogs(logs);
+          };
+        });
+        await storage.updateNotificationLogsStatus(logUpdates);
         for (const failedToken of result.failedTokens) {
           try {
             await storage.deleteDeviceToken(failedToken);
