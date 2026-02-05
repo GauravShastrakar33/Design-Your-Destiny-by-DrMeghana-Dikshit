@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/Header";
 import { useQuery } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -27,6 +28,10 @@ import {
   Loader2,
   Phone,
   User,
+  Quote,
+  Award,
+  Zap,
+  Info,
 } from "lucide-react";
 import {
   requestNotificationPermission,
@@ -36,7 +41,6 @@ import {
 import {
   isNativePlatform,
   checkNativePermissionStatus,
-  initPushNotifications,
   setPushEnabled,
   setupNativePushListeners,
 } from "@/lib/nativePush";
@@ -46,7 +50,6 @@ import ConsistencyCalendar from "@/components/ConsistencyCalendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges } from "@/hooks/useBadges";
 import { BadgeIcon } from "@/components/BadgeIcon";
-import { Award } from "lucide-react";
 import { App } from "@capacitor/app";
 
 interface PrescriptionData {
@@ -59,10 +62,9 @@ export default function ProfilePage() {
   const [, setLocation] = useLocation();
   const { logout } = useAuth();
   const [prescriptionExpanded, setPrescriptionExpanded] = useState(false);
-  const [userName, setUserName] = useState("UserName");
+  const [userName, setUserName] = useState("User");
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
-
   const [appVersion, setAppVersion] = useState<string>("");
 
   useEffect(() => {
@@ -71,11 +73,9 @@ export default function ProfilePage() {
         const info = await App.getInfo();
         setAppVersion(`Version ${info.version} (Build ${info.build})`);
       } catch {
-        // Web fallback
-        setAppVersion("Web Version");
+        setAppVersion("Web v1.0.0");
       }
     };
-
     loadVersion();
   }, []);
 
@@ -86,512 +86,388 @@ export default function ProfilePage() {
     queryKey: ["/api/v1/me/wellness-profile"],
     queryFn: async () => {
       const response = await fetch("/api/v1/me/wellness-profile", {
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
+        headers: { Authorization: `Bearer ${userToken}` },
       });
-      if (!response.ok) {
-        return { karmicAffirmation: null, prescription: null };
-      }
+      if (!response.ok) return { karmicAffirmation: null, prescription: null };
       return response.json();
     },
     enabled: !!userToken,
-    refetchInterval: 10000,
-    refetchOnWindowFocus: true,
   });
 
   const prescriptionFromApi =
     (wellnessProfile?.prescription as PrescriptionData) || {};
   const hasPrescription =
-    prescriptionFromApi.morning?.length ||
-    prescriptionFromApi.afternoon?.length ||
-    prescriptionFromApi.evening?.length;
+    (prescriptionFromApi?.morning?.length ?? 0) > 0 ||
+    (prescriptionFromApi?.afternoon?.length ?? 0) > 0 ||
+    (prescriptionFromApi?.evening?.length ?? 0) > 0;
 
   const { badges, isLoading: isLoadingBadges } = useBadges();
   const earnedBadges = badges.slice(0, 5);
 
-  // Load from localStorage on mount
   useEffect(() => {
     const savedUserName = localStorage.getItem("@app:userName");
-    setUserName(savedUserName || "UserName");
-
-    // Set up native push listeners on mount (no-op on web)
+    setUserName(savedUserName || "User");
     setupNativePushListeners();
 
-    // Check notification status - combines OS permission + backend status
-    const checkNotificationStatus = async () => {
+    const checkStatus = async () => {
+      const backendEnabled = await getNotificationStatus();
       if (isNativePlatform()) {
-        const backendEnabled = await getNotificationStatus();
         const osPermission = await checkNativePermissionStatus();
-        // Only show as enabled if BOTH backend has token AND OS permission is granted
         setNotificationsEnabled(backendEnabled && osPermission === "granted");
       } else {
-        // First check backend status (DB source of truth for enabled state)
-        const backendEnabled = await getNotificationStatus();
-        // On web, check browser permission too
         const browserGranted =
           "Notification" in window && Notification.permission === "granted";
         setNotificationsEnabled(backendEnabled && browserGranted);
       }
     };
-    checkNotificationStatus();
-
-    // Listen for native push registration events to update UI
-    const handleNativePushRegistered = async (event: Event) => {
-      const customEvent = event as CustomEvent;
-      console.log("📱 Native push registered event:", customEvent.detail);
-      if (customEvent.detail?.success) {
-        // Re-check status from backend after successful registration
-        const enabled = await getNotificationStatus();
-        setNotificationsEnabled(enabled);
-        setNotificationsLoading(false);
-      }
-    };
-
-    window.addEventListener("nativePushRegistered", handleNativePushRegistered);
-
-    return () => {
-      window.removeEventListener(
-        "nativePushRegistered",
-        handleNativePushRegistered
-      );
-    };
+    checkStatus();
   }, []);
 
-  // Carousel Logic
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
-    }
-  };
-
-  useEffect(() => {
-    checkScroll();
-    window.addEventListener("resize", checkScroll);
-    return () => window.removeEventListener("resize", checkScroll);
-  }, [earnedBadges]);
-
-  const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      const scrollAmount = scrollRef.current.clientWidth;
-      scrollRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      });
-      setTimeout(checkScroll, 300);
-    }
-  };
-
-  const handleToggleNotifications = async () => {
-    setNotificationsLoading(true);
-    try {
-      if (isNativePlatform()) {
-        const targetState = !notificationsEnabled;
-        const success = await setPushEnabled(targetState);
-
-        if (success) {
-          setNotificationsEnabled(targetState);
-        } else if (targetState) {
-          alert("Unable to enable notifications. Please check your device settings.");
-        }
-        setNotificationsLoading(false);
-      } else {
-        if (notificationsEnabled) {
-          // Disable: unregister device tokens from backend
-          const success = await unregisterDeviceTokens();
-          if (!success) {
-            console.error("Failed to unregister device tokens");
-          }
-          // Re-fetch status from DB to update toggle
-          const enabled = await getNotificationStatus();
-          setNotificationsEnabled(enabled);
-          setNotificationsLoading(false);
-        } else {
-          // Web: use Firebase web SDK
-          const success = await requestNotificationPermission();
-          // Re-fetch status from DB regardless to ensure UI matches DB state
-          const enabled = await getNotificationStatus();
-          const browserGranted =
-            "Notification" in window && Notification.permission === "granted";
-          setNotificationsEnabled(enabled && browserGranted);
-          setNotificationsLoading(false);
-
-          if (!success && !enabled) {
-            alert(
-              "Unable to enable notifications. Please check your browser settings."
-            );
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error toggling notifications:", error);
-      // Re-fetch to ensure UI matches DB state even on error
-      const enabled = await getNotificationStatus();
-      setNotificationsEnabled(enabled);
-      setNotificationsLoading(false);
-    }
-  };
-
   const getInitials = (name: string) => {
-    const words = name
+    return name
       .trim()
       .split(/\s+/)
-      .filter((w) => w.length > 0);
-    if (words.length === 0) return "";
-    if (words.length === 1) {
-      return words[0][0].toUpperCase();
-    }
-    return words.map((w) => w[0].toUpperCase()).join("");
+      .map((w) => w[0]?.toUpperCase())
+      .join("")
+      .slice(0, 2);
   };
 
   return (
-    <div className="min-h-screen pb-24" style={{ backgroundColor: "#F3F3F3" }}>
-      {/* White Header Section */}
+    <div className="min-h-screen pb-24 bg-[#F9FAFB]">
       <Header title="Profile" />
 
-      {/* Profile Card */}
-      <div className="max-w-md mx-auto px-4 mt-2">
-        <div className="bg-white rounded-xl shadow-md p-4 pb-1">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-white flex items-center justify-center text-white text-sm font-bold border border-white/30 shadow-sm flex-shrink-0">
-              {getInitials(userName)}
-            </div>
-            <h2
-              className="text-lg font-['Poppins'] font-semibold text-gray-600 dark:text-gray-200 tracking-tight"
-              data-testid="text-username"
-            >
-              {userName}
-            </h2>
-          </div>
-
-          {/* Karmic Affirmation Section */}
-          {!isLoadingProfile && wellnessProfile?.karmicAffirmation && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <div className="flex flex-col items-start gap-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles
-                    className="w-4 h-4 text-primary flex-shrink-0 mt-0.5"
-                    strokeWidth={2}
-                  />
-                  <p className="text-md text-primary font-semibold">
-                    Karmic Affirmation
-                  </p>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Profile Identity Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="border-0 shadow-md rounded-3xl overflow-hidden bg-white">
+            <div className="p-4">
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-brand/20 blur-md rounded-full" />
+                  <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-50 to-white shadow-inner flex items-center justify-center border border-indigo-50">
+                    <span className="text-3xl font-black text-brand tracking-tighter">
+                      {getInitials(userName)}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center border border-brand/10">
+                    <Zap className="w-5 h-5 text-brand fill-brand" />
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-700 italic">
-                    "{wellnessProfile.karmicAffirmation}"
-                  </p>
+                <div className="min-w-0">
+                  <h2 className="text-2xl font-bold text-gray-900 truncate">
+                    {userName}
+                  </h2>
                 </div>
               </div>
+
+              {/* Karmic Affirmation */}
+              <AnimatePresence>
+                {!isLoadingProfile && wellnessProfile?.karmicAffirmation && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="mt-5 border-gray-50"
+                  >
+                    <div className="relative pt-6 p-3 rounded-xl bg-indigo-50/50 border border-indigo-100 italic group">
+                      <Quote className="absolute -top-3 left-4 w-7 h-7 text-brand/30 rotate-180" />
+                      <div className="pl-4">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                          Karmic Affirmation
+                        </p>
+                        <p className="text-gray-700 leading-relaxed text-xs">
+                          "{wellnessProfile.karmicAffirmation}"
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          )}
 
-          {/* Earned Badges Section */}
-          {!isLoadingBadges && earnedBadges.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <p className="text-sm text-muted-foreground">Earned Badges</p>
-              <div className="relative group -mx-4">
-                <button
-                  onClick={() => scroll("left")}
-                  className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-white shadow-md border hover:bg-gray-50 transition-all duration-200 ${
-                    canScrollLeft
-                      ? "opacity-100 translate-x-0"
-                      : "opacity-0 -translate-x-2 pointer-events-none"
-                  }`}
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeft className="w-4 h-4 text-gray-600" />
-                </button>
-
-                <div
-                  ref={scrollRef}
-                  onScroll={checkScroll}
-                  className="flex items-center justify-start gap-2 overflow-x-auto scroll-smooth py-2 px-10 [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
-                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                >
+            {/* Earned Badges Carousel */}
+            {!isLoadingBadges && earnedBadges.length > 0 && (
+              <div className="px-8 pb-4 pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                    Milestone Badges ({badges.length})
+                  </p>
+                  <button
+                    onClick={() => setLocation("/badges")}
+                    className="text-xs font-bold text-brand hover:underline"
+                  >
+                    View All
+                  </button>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
                   {earnedBadges.map((badge) => (
                     <div
                       key={badge.badgeKey}
-                      className="flex-shrink-0 w-[calc((100%-16px)/3)] flex justify-center snap-center"
+                      className="flex-shrink-0 w-20 flex flex-col items-center gap-2"
                     >
                       <BadgeIcon
                         badgeKey={badge.badgeKey}
-                        size="2xl"
+                        size="xl"
                         earned
-                        showTooltip
-                        className="!w-full !h-auto aspect-square"
+                        className="p-2 rounded-full shadow-md hover:scale-105 transition-transform"
                       />
                     </div>
                   ))}
-                  <div className="w-1 flex-shrink-0" />
-                </div>
-
-                <button
-                  onClick={() => scroll("right")}
-                  className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-white shadow-md border hover:bg-gray-50 transition-all duration-200 ${
-                    canScrollRight
-                      ? "opacity-100 translate-x-0"
-                      : "opacity-0 translate-x-2 pointer-events-none"
-                  }`}
-                  aria-label="Scroll right"
-                >
-                  <ChevronRight className="w-4 h-4 text-gray-600" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Other Cards Container */}
-      <div className="max-w-md mx-auto px-4 py-3 space-y-3">
-        {/* Consistency Calendar */}
-        <div className="relative">
-          <ConsistencyCalendar />
-        </div>
-
-        {/* My Prescription Card */}
-        <div
-          className="bg-white rounded-xl shadow-md overflow-hidden"
-          data-testid="card-prescription"
-        >
-          <button
-            onClick={() => setPrescriptionExpanded(!prescriptionExpanded)}
-            className="w-full text-left p-5 hover-elevate active-elevate-2"
-            data-testid="button-prescription"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h3 className="text-md font-semibold text-primary-text mb-2">
-                  My Prescription
-                </h3>
-                <p className="text-gray-700 text-sm">
-                  View your personalized daily practices
-                </p>
-              </div>
-              <div className="flex-shrink-0 ml-3">
-                <Heart className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-            <div className="flex items-center justify-end mt-3">
-              <ChevronDown
-                className={`w-5 h-5 text-[#703DFA] transition-transform ${prescriptionExpanded ? "rotate-180" : ""
-                  }`}
-              />
-            </div>
-          </button>
-
-          {prescriptionExpanded && (
-            <div className="px-5 pb-5 space-y-3">
-              {isLoadingProfile ? (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : !hasPrescription ? (
-                <p
-                  className="text-muted-foreground italic text-sm text-center py-2"
-                  data-testid="text-prescription-empty"
-                >
-                  Your personalized practices will appear here.
-                </p>
-              ) : (
-                <>
-                  {prescriptionFromApi.morning &&
-                    prescriptionFromApi.morning.length > 0 && (
-                      <div
-                        className="flex items-start gap-3"
-                        data-testid="prescription-morning"
-                      >
-                        <Sunrise className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-foreground">
-                          <span className="font-semibold">Morning: </span>
-                          {prescriptionFromApi.morning.join(" • ")}
-                        </p>
-                      </div>
-                    )}
-                  {prescriptionFromApi.afternoon &&
-                    prescriptionFromApi.afternoon.length > 0 && (
-                      <div
-                        className="flex items-start gap-3"
-                        data-testid="prescription-afternoon"
-                      >
-                        <Sun className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-foreground">
-                          <span className="font-semibold">Afternoon: </span>
-                          {prescriptionFromApi.afternoon.join(" • ")}
-                        </p>
-                      </div>
-                    )}
-                  {prescriptionFromApi.evening &&
-                    prescriptionFromApi.evening.length > 0 && (
-                      <div
-                        className="flex items-start gap-3"
-                        data-testid="prescription-evening"
-                      >
-                        <Moon className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-foreground">
-                          <span className="font-semibold">Evening: </span>
-                          {prescriptionFromApi.evening.join(" • ")}
-                        </p>
-                      </div>
-                    )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Settings Card */}
-        <div
-          className="bg-white rounded-xl shadow-md overflow-hidden"
-          data-testid="card-settings"
-        >
-          <div className="p-5">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h3 className="text-md font-semibold text-primary-text mb-2">
-                  Settings
-                </h3>
-                <p className="text-gray-700 text-sm">
-                  Manage your account and preferences
-                </p>
-              </div>
-              <div className="flex-shrink-0 ml-3">
-                <SettingsIcon className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <button
-                onClick={() => setLocation("/account-settings")}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
-                data-testid="button-account"
-              >
-                <div className="flex items-center gap-3">
-                  <User className="w-5 h-5 text-primary" />
-                  <div className="text-left">
-                    <p className="font-medium text-foreground">Account</p>
-                    <p className="text-xs text-muted-foreground">
-                      Manage your account settings
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-
-              <button
-                onClick={() => setLocation("/badges")}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
-                data-testid="button-badges-settings"
-              >
-                <div className="flex items-center gap-3">
-                  <Award className="w-5 h-5 text-primary" />
-                  <div className="text-left">
-                    <p className="font-medium text-foreground">Badges</p>
-                    <p className="text-xs text-muted-foreground">
-                      View your journey and achievements
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-
-              <button
-                onClick={handleToggleNotifications}
-                disabled={notificationsLoading}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
-                data-testid="button-notifications-settings"
-              >
-                <div className="flex items-center gap-3">
-                  {notificationsEnabled ? (
-                    <Bell className="w-5 h-5 text-primary" />
-                  ) : (
-                    <BellOff className="w-5 h-5 text-primary" />
+                  {badges.length > 5 && (
+                    <div
+                      onClick={() => setLocation("/badges")}
+                      className="flex-shrink-0 w-20 h-20 rounded-full border-2 border-dashed border-gray-100 flex items-center justify-center text-gray-300 font-bold cursor-pointer hover:border-brand/30 hover:text-brand/30 transition-all"
+                    >
+                      +{badges.length - 5}
+                    </div>
                   )}
-                  <div className="text-left">
-                    <p className="font-medium text-foreground">
-                      Enable Notifications
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {notificationsLoading
-                        ? "Enabling..."
-                        : notificationsEnabled
-                          ? "Push notifications enabled"
-                          : "Tap to enable push notifications"}
-                    </p>
-                  </div>
-                </div>
-                {notificationsLoading ? (
-                  <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
-                ) : notificationsEnabled ? (
-                  <Check className="w-5 h-5 text-green-500" />
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                )}
-              </button>
-
-              <a
-                href="tel:+919920115400"
-                className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
-                data-testid="button-support"
-              >
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-primary" />
-                  <div className="text-left">
-                    <p className="font-medium text-foreground">Get Support</p>
-                    <p className="text-xs text-muted-foreground">
-                      +91 99201 15400
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </a>
-
-              <button
-                className="w-full flex items-center justify-between p-3 rounded-lg hover-elevate active-elevate-2"
-                data-testid="button-logout"
-                onClick={async () => {
-                  try {
-                    await unregisterDeviceTokens();
-                  } catch (e) {
-                    // Continue with logout even if token unregister fails
-                  }
-                  logout();
-                  setLocation("/login");
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <LogOut className="w-5 h-5 text-red-500" />
-                  <div className="text-left">
-                    <p className="font-medium text-red-500">Logout</p>
-                    <p className="text-xs text-muted-foreground">
-                      Log out of your account
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-
-              <div className="w-full flex items-center justify-between p-3 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Circle className="w-5 h-5 text-primary" />
-                  <div className="text-left">
-                    <p className="font-medium text-foreground">App Version</p>
-                    <p className="text-xs text-muted-foreground">
-                      {appVersion || "Loading..."}
-                    </p>
-                  </div>
                 </div>
               </div>
+            )}
+          </Card>
+        </motion.div>
+
+        {/* Consistency Calendar - Integrated into main flow */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="relative"
+        >
+          <ConsistencyCalendar />
+        </motion.div>
+
+        {/* My Prescription Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="border-0 shadow-md rounded-3xl overflow-hidden bg-white">
+            <button
+              onClick={() => setPrescriptionExpanded(!prescriptionExpanded)}
+              className="w-full text-left p-6 flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center border border-rose-100 text-rose-500 shadow-sm group-hover:shadow-md transition-all">
+                  <Heart className="w-6 h-6 fill-current" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 leading-none">
+                    Daily Prescription
+                  </h3>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Your personalized practices
+                  </p>
+                </div>
+              </div>
+              <ChevronDown
+                className={`w-6 h-6 text-gray-400 transition-transform duration-300 ${
+                  prescriptionExpanded ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            <AnimatePresence>
+              {prescriptionExpanded && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="px-6 pb-8 space-y-4"
+                >
+                  {isLoadingProfile ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="w-6 h-6 animate-spin text-brand" />
+                    </div>
+                  ) : !hasPrescription ? (
+                    <div className="text-center py-6 border-2 border-dashed border-gray-50 rounded-xl">
+                      <p className="text-gray-400 italic text-sm">
+                        Your personalized practices will appear here soon.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(prescriptionFromApi?.morning?.length ?? 0) > 0 && (
+                        <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-100/50 flex items-start gap-4">
+                          <Sunrise className="w-6 h-6 text-amber-500 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-1">
+                              Morning
+                            </p>
+                            <p className="text-gray-700 text-sm font-medium">
+                              {prescriptionFromApi?.morning?.join(" • ")}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {(prescriptionFromApi?.afternoon?.length ?? 0) > 0 && (
+                        <div className="p-4 rounded-xl bg-orange-50/50 border border-orange-100/50 flex items-start gap-4">
+                          <Sun className="w-6 h-6 text-orange-500 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-orange-600 uppercase tracking-widest mb-1">
+                              Afternoon
+                            </p>
+                            <p className="text-gray-700 text-sm font-medium">
+                              {prescriptionFromApi?.afternoon?.join(" • ")}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {(prescriptionFromApi?.evening?.length ?? 0) > 0 && (
+                        <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100/50 flex items-start gap-4">
+                          <Moon className="w-6 h-6 text-indigo-600 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">
+                              Evening
+                            </p>
+                            <p className="text-gray-700 text-sm font-medium">
+                              {prescriptionFromApi?.evening?.join(" • ")}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Card>
+        </motion.div>
+
+        {/* Global Settings Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-3 px-2">
+            <SettingsIcon className="w-5 h-5 text-gray-400" />
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">
+              Settings & Preferences
+            </h3>
+          </div>
+
+          <Card className="border-0 shadow-md rounded-3xl bg-white overflow-hidden divide-y divide-gray-50">
+            {/* Account */}
+            <button
+              onClick={() => setLocation("/account-settings")}
+              className="w-full flex items-center justify-between p-6 hover:bg-gray-50 active:scale-[0.99] transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center border border-blue-100 shadow-sm">
+                  <User className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-gray-900 leading-none">
+                    Account Detail
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Personal information & identity
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-brand transition-colors" />
+            </button>
+
+            {/* Badges */}
+            <button
+              onClick={() => setLocation("/badges")}
+              className="w-full flex items-center justify-between p-6 hover:bg-gray-50 active:scale-[0.99] transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center border border-purple-100 shadow-sm">
+                  <Award className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-gray-900 leading-none">
+                    Milestone Badges
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Your journey & achievements
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-brand transition-colors" />
+            </button>
+
+            {/* Support */}
+            <a
+              href="tel:+919920115400"
+              className="w-full flex items-center justify-between p-6 hover:bg-gray-50 active:scale-[0.99] transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100 shadow-sm">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-gray-900 leading-none">
+                    Get Support
+                  </p>
+                  <p className="text-xs text-brand font-bold mt-1 tracking-tight">
+                    +91 99201 15400
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-brand transition-colors" />
+            </a>
+
+            {/* Logout */}
+            <button
+              onClick={async () => {
+                try {
+                  await unregisterDeviceTokens();
+                } catch (e) {}
+                logout();
+                setLocation("/login");
+              }}
+              className="w-full flex items-center justify-between p-6 hover:bg-red-50/30 active:scale-[0.99] transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm">
+                  <LogOut className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-red-600 leading-none">Logout</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Sign out of your account
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-200 group-hover:text-red-300 transition-colors" />
+            </button>
+
+            {/* App Version */}
+            <div className="w-full flex items-center justify-between p-6 group">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 flex items-center justify-center border border-gray-100 shadow-sm">
+                  <Info className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-gray-900 leading-none">
+                    App Version
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1 font-medium">
+                    {appVersion || "Production Build v1.0.0"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Slogan Footer */}
+          <div className="flex flex-col items-center gap-2 opacity-40 grayscale group hover:opacity-100 hover:grayscale-0 transition-all duration-700">
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+                Design Your Destiny
+              </p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

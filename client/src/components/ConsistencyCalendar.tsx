@@ -7,6 +7,7 @@ import {
   Loader2,
   CalendarDays,
 } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface ConsistencyDay {
   date: string;
@@ -161,149 +162,169 @@ export default function ConsistencyCalendar({
   const isLoading = isRangeLoading || isMonthLoading;
 
   return (
-    <div
-      className="bg-white rounded-xl p-4 shadow-sm"
+    <Card
+      className="border-0 shadow-md rounded-3xl sm:rounded-[2.5rem] overflow-hidden bg-white"
       data-testid="consistency-calendar"
     >
-      <div className="flex items-center justify-between gap-2 mb-4">
-        <div className="flex items-center gap-2">
-          <h3 className="text-md font-semibold text-primary-text">
-            Your Consistency Calendar
-          </h3>
-        </div>
-          <CalendarDays className="w-5 h-5 text-primary" />
-      </div>
-
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={handlePrevMonth}
-          disabled={!canGoBack}
-          className={`p-2 rounded-lg transition ${
-            canGoBack
-              ? "hover:bg-gray-100 text-gray-700"
-              : "text-gray-300 cursor-not-allowed"
-          }`}
-          data-testid="button-prev-month"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <span
-          className="text-sm font-medium text-gray-800"
-          data-testid="text-current-month"
-        >
-          {monthNames[viewMonth - 1]} {viewYear}
-        </span>
-        <button
-          onClick={handleNextMonth}
-          disabled={!canGoForward}
-          className={`p-2 rounded-lg transition ${
-            canGoForward
-              ? "hover:bg-gray-100 text-gray-700"
-              : "text-gray-300 cursor-not-allowed"
-          }`}
-          data-testid="button-next-month"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="flex justify-end gap-4 text-xs mb-3">
-        <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-amber-400"></span>
-          <span className="text-gray-600">Active</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-gray-200"></span>
-          <span className="text-gray-600">Inactive</span>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {dayNames.map((day) => (
-              <div
-                key={day}
-                className="text-center text-xs text-gray-500 font-medium py-1"
-              >
-                {day}
-              </div>
-            ))}
+      <div className="p-5 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 flex items-center justify-center border border-indigo-100 text-brand shadow-sm flex-shrink-0">
+              <CalendarDays className="w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-none">
+                Consistency Calendar
+              </h3>
+              <p className="text-gray-500 text-xs sm:text-sm mt-1">
+                Track your growth
+              </p>
+            </div>
           </div>
+          <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-xs font-bold text-gray-400">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-400 shadow-sm"></span>
+              <span className="tracking-widest">Active</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-gray-100 border border-gray-200 shadow-sm"></span>
+              <span className="tracking-widest">Inactive</span>
+            </div>
+          </div>
+        </div>
 
-          <div className="grid grid-cols-7 gap-x-8 gap-y-2 place-items-center">
-            {calendarDays.map((day, index) => {
-              if (!day) {
-                return <div key={`empty-${index}`} className="w-12 h-12" />;
-              }
+        {/* Month Navigation */}
+        <div className="flex items-center justify-between bg-gray-50/50 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 mb-6 sm:mb-8">
+          <button
+            onClick={handlePrevMonth}
+            disabled={!canGoBack}
+            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${
+              canGoBack
+                ? "hover:bg-white hover:shadow-sm text-gray-700 active:scale-95"
+                : "text-gray-300 cursor-not-allowed"
+            }`}
+            data-testid="button-prev-month"
+          >
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+          <span
+            className="text-sm sm:text-base font-bold text-gray-800 tracking-tight"
+            data-testid="text-current-month"
+          >
+            {monthNames[viewMonth - 1]} {viewYear}
+          </span>
+          <button
+            onClick={handleNextMonth}
+            disabled={!canGoForward}
+            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${
+              canGoForward
+                ? "hover:bg-white hover:shadow-sm text-gray-700 active:scale-95"
+                : "text-gray-300 cursor-not-allowed"
+            }`}
+            data-testid="button-next-month"
+          >
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+        </div>
 
-              const isFuture = day.date > todayDate;
-              const isToday = day.date === todayDate;
-              const isActive = day.active;
-
-              let bgColor = "bg-gray-200";
-              let textColor = "text-gray-600";
-
-              if (isFuture) {
-                bgColor = "bg-gray-100";
-                textColor = "text-gray-300";
-              } else if (isActive) {
-                bgColor = "bg-amber-400";
-                textColor = "text-amber-900";
-              }
-
-              const dayDate = new Date(day.date);
-              const today = new Date(todayDate);
-              const diffTime = today.getTime() - dayDate.getTime();
-              const daysFromToday = Math.round(diffTime / (1000 * 3600 * 24));
-
-              // Show flame if:
-              // 1. Streak is at least 7 days (showFlame)
-              // 2. This day is active
-              // 3. This day is within the current streak window (relative to today)
-              const isPartOfStreak =
-                showFlame &&
-                isActive &&
-                daysFromToday >= 0 &&
-                daysFromToday < currentStreak;
-
-              const dayNum = parseInt(day.date.split("-")[2], 10);
-
-              return (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-10 sm:py-12">
+            <Loader2 className="w-8 h-8 text-brand/40 animate-spin" />
+          </div>
+        ) : (
+          <div className="max-w-md mx-auto">
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
+              {dayNames.map((day) => (
                 <div
-                  key={day.date}
-                  className={`aspect-square w-10 h-10 flex items-center justify-center rounded-full relative ${bgColor} ${
-                    isToday ? "ring-2 ring-primary ring-offset-1" : ""
-                  }`}
-                  data-testid={`day-${day.date}`}
+                  key={day}
+                  className="text-center text-[8px] sm:text-xs text-gray-400 font-black uppercase tracking-widest"
                 >
-                  <span className={`text-sm font-medium ${textColor}`}>
-                    {dayNum}
-                  </span>
-                  {isPartOfStreak && (
-                    <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-[1px] ring-2 ring-white z-10 shadow-sm">
-                      <Flame
-                        className="w-4 h-4 text-orange-500"
-                        strokeWidth={3}
-                      />
-                    </div>
-                  )}
+                  {day}
                 </div>
-              );
-            })}
-          </div>
-        </>
-      )}
+              ))}
+            </div>
 
-      {!startMonth && !isLoading && (
-        <p className="text-center text-xs text-gray-400 mt-4">
-          Start using the app daily to build your consistency!
-        </p>
-      )}
-    </div>
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-3 place-items-center">
+              {calendarDays.map((day, index) => {
+                if (!day) {
+                  return (
+                    <div
+                      key={`empty-${index}`}
+                      className="w-8 h-8 sm:w-10 sm:h-10"
+                    />
+                  );
+                }
+
+                const isFuture = day.date > todayDate;
+                const isToday = day.date === todayDate;
+                const isActive = day.active;
+
+                let bgColor = "bg-gray-100";
+                let textColor = "text-gray-500";
+                let borderColor = "border-transparent";
+
+                if (isFuture) {
+                  bgColor = "bg-gray-50/50";
+                  textColor = "text-gray-300";
+                } else if (isActive) {
+                  bgColor =
+                    "bg-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.3)]";
+                  textColor = "text-amber-900";
+                }
+
+                const dayNum = parseInt(day.date.split("-")[2], 10);
+
+                const dayDate = new Date(day.date);
+                const today = new Date(todayDate);
+                const diffTime = today.getTime() - dayDate.getTime();
+                const daysFromToday = Math.round(diffTime / (1000 * 3600 * 24));
+
+                const isPartOfStreak =
+                  showFlame &&
+                  isActive &&
+                  daysFromToday >= 0 &&
+                  daysFromToday < currentStreak;
+
+                return (
+                  <div
+                    key={day.date}
+                    className={`group relative aspect-square w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl sm:rounded-2xl border border-transparent transition-all duration-300 ${bgColor} ${
+                      isToday
+                        ? "ring-2 ring-brand ring-offset-2 scale-110 z-10"
+                        : ""
+                    } hover:scale-110`}
+                    data-testid={`day-${day.date}`}
+                  >
+                    <span
+                      className={`text-xs sm:text-sm font-black ${textColor}`}
+                    >
+                      {dayNum}
+                    </span>
+                    {isPartOfStreak && (
+                      <div className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 bg-white rounded-full p-[1.5px] sm:p-[2px] shadow-sm z-20">
+                        <Flame
+                          className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-orange-500 fill-orange-500"
+                          strokeWidth={2}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {!startMonth && !isLoading && (
+              <div className="mt-8 sm:mt-10 p-4 rounded-2xl bg-indigo-50/30 border border-indigo-50 text-center">
+                <p className="text-xs sm:text-xs font-medium text-indigo-400">
+                  Begin your wellness journey today.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
