@@ -32,6 +32,7 @@ import {
   Briefcase,
   Users,
   Banknote,
+  Quote,
 } from "lucide-react";
 import {
   Dialog,
@@ -802,93 +803,125 @@ export default function ProjectOfHeartPage() {
   // Completion animation overlay
   if (showCompletionAnimation) {
     return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center px-8"
-        style={{ backgroundColor: "#fff" }}
-      >
-        {/* Background glow */}
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-[#F9FAFB]">
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1.5, opacity: 0.3 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          className="absolute w-64 h-64 rounded-full"
-        />
-
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, type: "spring", bounce: 0.4 }}
-          className="text-center relative z-10"
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.6, type: "spring", bounce: 0.3 }}
+          className="w-full max-w-sm"
         >
-          {/* Heart Chakra Icon with pulse */}
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: [0.8, 1.1, 1] }}
-            transition={{ duration: 0.8, times: [0, 0.5, 1] }}
-          >
-            <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto">
+          <div className="bg-white rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(112,61,250,0.12)] border border-indigo-50 text-center relative overflow-hidden">
+            {/* Aesthetic Background Element */}
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-brand/5 rounded-full blur-3xl" />
+            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-brand/5 rounded-full blur-3xl" />
+
+            <div className="relative z-10 space-y-8">
+              {/* Icon Section */}
+              <div className="flex justify-center">
+                <div className="relative">
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.15, 1],
+                      opacity: [0.3, 0.6, 0.3],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="absolute inset-0 bg-brand/20 blur-xl rounded-full"
+                  />
+                  <div className="relative w-24 h-24 rounded-3xl bg-white shadow-lg border border-indigo-50 flex items-center justify-center">
+                    <motion.div
+                      animate={{
+                        rotate: [0, 5, -5, 0],
+                        scale: [1, 1.05, 1],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      {renderHeartChakra("w-20 h-20")}
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Text Section */}
+              <div className="space-y-3">
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-2xl font-bold tracking-tight"
+                  style={{
+                    color: completeMode === "complete" ? "#5FB77D" : "#E5AC19",
+                  }}
+                >
+                  {completeMode === "complete"
+                    ? "Phase Completed!"
+                    : "Phase Closed"}
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-gray-500 font-medium leading-relaxed"
+                >
+                  A chapter closes.
+                  <br />
+                  Your journey continues.
+                </motion.p>
+              </div>
+
+              {/* Reflection Card */}
               <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 0.5, delay: 0.3 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 }}
+                className="p-5 bg-gray-50/50 rounded-2xl border border-gray-100 italic"
               >
-                {renderHeartChakra("w-20 h-20")}
+                <Quote className="w-5 h-5 text-brand/20 mb-2 mx-auto rotate-180" />
+                <p className="text-sm text-gray-600 leading-relaxed px-2">
+                  "Every ending is a beginning in disguise. What you've learned
+                  lives on within you."
+                </p>
+              </motion.div>
+
+              {/* Progress Indicator */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+                className="pt-4"
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex gap-1.5">
+                    {[0, 1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        animate={{
+                          scale: [1, 1.3, 1],
+                          opacity: [0.4, 1, 0.4],
+                        }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          delay: i * 0.2,
+                        }}
+                        className="w-1.5 h-1.5 rounded-full bg-brand"
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs font-bold text-gray-400 tracking-widest uppercase">
+                    Advancing your path
+                  </p>
+                </div>
               </motion.div>
             </div>
-          </motion.div>
-
-          {/* Title */}
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            className="text-2xl font-bold mb-2"
-            style={{
-              color: completeMode === "complete" ? "#5FB77D" : "#E5AC19",
-            }}
-          >
-            {completeMode === "complete"
-              ? "Project Completed!"
-              : "Project Closed"}
-          </motion.h2>
-
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-            className="text-gray-500 mb-6"
-          >
-            A chapter closes. Your journey continues.
-          </motion.p>
-
-          {/* Encouraging message */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.7, duration: 0.5 }}
-            className="p-4 rounded-2xl mx-auto max-w-xs"
-            style={{
-              backgroundColor: "white",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-            }}
-          >
-            <p className="text-sm text-gray-600 italic leading-relaxed">
-              "Every ending is a beginning in disguise. What you've learned
-              lives on within you."
-            </p>
-          </motion.div>
-
-          {/* Loading indicator for transition */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.5 }}
-            className="mt-8"
-          >
-            <p className="text-xs text-gray-400">
-              Preparing your next chapter...
-            </p>
-          </motion.div>
+          </div>
         </motion.div>
       </div>
     );
