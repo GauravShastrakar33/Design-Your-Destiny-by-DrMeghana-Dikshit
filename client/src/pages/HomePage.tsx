@@ -19,6 +19,8 @@ import {
   ChevronRight,
   GraduationCap,
   TrendingUp,
+  Quote,
+  Feather,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import ActionCard from "@/components/ActionCard";
@@ -198,311 +200,329 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F3F3F3" }}>
+    <div className="min-h-screen bg-gray-50/50 pb-24 font-sans text-slate-800">
       {/* Badge Earned Toast */}
       <BadgeToastManager
         newBadges={newBadges}
         onAllDismissed={() => setNewBadges([])}
       />
 
-      <div className="max-w-md mx-auto">
-        {/* Header with Search and Notification */}
-        <div
-          className={`bg-white px-4 py-3 shadow-sm border-b border-primary-text/10 flex items-center justify-between gap-3 ${
-            isNative ? "pt-[env(safe-area-inset-top)]" : ""
+      <div className="w-full mx-auto min-h-screen flex flex-col max-w-5xl transition-all duration-300">
+        {/* Header Section */}
+        <header
+          className={`sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-4 flex items-center justify-between gap-4 transition-all ${
+            isNative ? "pt-[calc(env(safe-area-inset-top)+1rem)]" : ""
           }`}
         >
           <div className="flex-1">
-            <h1 className="text-lg font-semibold text-primary-text">
-              Welcome Designer 💫
+            <h1 className="text-xl sm:text-xl font-bold text-slate-900 tracking-tight">
+              Hello, Designer <span className="animate-pulse">✨</span>
             </h1>
-            <p className="text-sm text-gray-600 mt-0.5">
-              How's your energy today?
+            <p className="text-sm sm:text-base font-medium text-slate-500 mt-0.5">
+              Ready to design your destiny?
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
+              className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 hover:bg-white hover:shadow-md hover:text-brand transition-all active:scale-95"
               data-testid="button-search"
             >
-              <Search className="w-5 h-5 text-primary" strokeWidth={2} />
+              <Search className="w-5 h-5" strokeWidth={2} />
             </button>
             <div className="relative">
               <button
                 onClick={() => setLocation("/notifications")}
-                className="w-10 h-10 rounded-full bg-[#F3F0FF] flex items-center justify-center hover-elevate active-elevate-2"
+                className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 hover:bg-white hover:shadow-md hover:text-brand transition-all active:scale-95"
                 data-testid="button-notifications"
               >
-                <Bell className="w-5 h-5 text-primary" strokeWidth={2} />
+                <Bell className="w-5 h-5" strokeWidth={2} />
               </button>
-
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold border-2 border-white">
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold border-2 border-white shadow-sm animate-in zoom-in">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Dynamic Banner Section */}
-        {banner && (
-          <div className="w-full mt-3 mb-4">
-            {banner.type === "advertisement" && banner.videoUrl ? (
-              <div className="relative w-full h-56 overflow-hidden shadow-md bg-black">
-                <video
-                  ref={videoRef}
-                  src={banner.videoUrl}
-                  poster={banner.posterUrl || undefined}
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  data-testid="video-banner"
-                />
-                <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
-                  <button
-                    onClick={toggleMute}
-                    className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition"
-                    data-testid="button-video-mute"
-                  >
-                    {isMuted ? (
-                      <VolumeX className="w-4 h-4 text-white" />
-                    ) : (
-                      <Volume2 className="w-4 h-4 text-white" />
-                    )}
-                  </button>
-                  <button
-                    onClick={toggleVideoPlayback}
-                    className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition"
-                    data-testid="button-video-toggle"
-                  >
-                    {isVideoPlaying ? (
-                      <Pause className="w-4 h-4 text-white" />
-                    ) : (
-                      <Play className="w-4 h-4 text-white ml-0.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            ) : banner.thumbnailUrl ? (
-              <div className="relative w-full h-56 overflow-hidden shadow-md">
-                <img
-                  src={banner.thumbnailUrl}
-                  alt="Session Banner"
-                  className="w-full h-full object-cover"
-                  data-testid="img-banner"
-                />
-                {banner.type === "session" &&
-                  banner.liveEnabled &&
-                  bannerStatus === "active" && (
-                    <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-white/20 backdrop-blur-lg px-3 py-1 rounded-md">
-                      <span className="h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse"></span>
-                      <span className="text-xs font-medium text-white">
-                        LIVE
-                      </span>
-                    </div>
-                  )}
-              </div>
-            ) : null}
-
-            {banner.ctaText &&
-              banner.ctaLink &&
-              banner.ctaLink.trim() !== "" && (
-                <div className="w-full flex justify-center">
-                  <button
-                    onClick={() => {
-                      if (banner.ctaLink) {
-                        window.open(banner.ctaLink, "_blank");
-                      }
-                    }}
-                    className="mt-3 w-[85%] px-4 py-3 rounded-full font-semibold shadow-sm hover:opacity-90 transition text-md bg-secondary text-primary-text hover:shadow-md active:scale-[0.98]"
-                    data-testid="button-banner-cta"
-                  >
-                    {banner.ctaText}
-                  </button>
-                </div>
-              )}
-          </div>
-        )}
-
-        {/* Content Container */}
-        <div className="px-4 pb-4 space-y-4">
-          {/* Quick Actions + Masterclasses */}
-          <div className="-mx-2 px-2 space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              {actionCards
-                .filter((c) => !c.fullWidth)
-                .map((card) => (
-                  <button
-                    key={card.path}
-                    onClick={() => setLocation(card.path)}
-                    className="bg-white shadow-sm border border-gray-200 rounded-xl p-3 flex items-center gap-3 hover:shadow-md active:scale-[0.98] transition h-[60px]"
-                    data-testid={card.testId}
-                  >
-                    <card.icon
-                      className="w-[20px] h-[20px] text-primary flex-shrink-0"
-                      strokeWidth={1.75}
+        {/* Main Scrollable Content */}
+        <main className="flex-1 w-full px-4 sm:px-6 py-6 space-y-8">
+          {/* Dynamic Banner Section */}
+          {banner && (
+            <section className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-black group ring-1 ring-black/5">
+                {banner.type === "advertisement" && banner.videoUrl ? (
+                  <>
+                    <video
+                      ref={videoRef}
+                      src={banner.videoUrl}
+                      poster={banner.posterUrl || undefined}
+                      className="w-full h-full object-cover opacity-95 group-hover:opacity-100 transition-opacity"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      data-testid="video-banner"
                     />
-                    <span className="text-sm font-semibold text-primary-text flex-1 text-left line-clamp-2">
-                      {card.title}
-                    </span>
-                  </button>
-                ))}
-            </div>
+                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+                    <div className="absolute bottom-4 right-4 flex items-center gap-2 z-10">
+                      <button
+                        onClick={toggleMute}
+                        className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-black/50 text-white transition-all active:scale-95"
+                        data-testid="button-video-mute"
+                      >
+                        {isMuted ? (
+                          <VolumeX className="w-4 h-4" />
+                        ) : (
+                          <Volume2 className="w-4 h-4" />
+                        )}
+                      </button>
+                      <button
+                        onClick={toggleVideoPlayback}
+                        className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-black/50 text-white transition-all active:scale-95"
+                        data-testid="button-video-toggle"
+                      >
+                        {isVideoPlaying ? (
+                          <Pause className="w-4 h-4" />
+                        ) : (
+                          <Play className="w-4 h-4 ml-0.5" />
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : banner.thumbnailUrl ? (
+                  <>
+                    <img
+                      src={banner.thumbnailUrl}
+                      alt="Session Banner"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      data-testid="img-banner"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
+                    {banner.type === "session" &&
+                      banner.liveEnabled &&
+                      bannerStatus === "active" && (
+                        <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-red-500/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-lg z-10">
+                          <span className="h-2 w-2 bg-white rounded-full animate-pulse"></span>
+                          <span className="text-[10px] font-bold text-white tracking-wider uppercase">
+                            Live Now
+                          </span>
+                        </div>
+                      )}
+                  </>
+                ) : null}
+              </div>
 
-            {actionCards
-              .filter((c) => c.fullWidth)
-              .map((card) => (
+              {banner.ctaText &&
+                banner.ctaLink &&
+                banner.ctaLink.trim() !== "" && (
+                  <div className="w-full flex justify-center -mt-6 relative z-10">
+                    <button
+                      onClick={() => {
+                        if (banner.ctaLink) {
+                          window.open(banner.ctaLink, "_blank");
+                        }
+                      }}
+                      className="px-8 py-3 rounded-full font-bold text-sm shadow-xl shadow-brand/20 bg-brand text-white hover:bg-brand/90 hover:scale-105 active:scale-95 transition-all duration-300 ring-4 ring-white"
+                      data-testid="button-banner-cta"
+                    >
+                      {banner.ctaText}
+                    </button>
+                  </div>
+                )}
+            </section>
+          )}
+
+          {/* Quick Actions Grid */}
+          <section className="space-y-4">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-brand" />
+              Quick Actions
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              {actionCards.map((card) => (
                 <button
                   key={card.path}
                   onClick={() => setLocation(card.path)}
-                  className="w-full bg-white shadow-sm border border-gray-200
-/10 rounded-xl p-3 flex items-center gap-3 hover:shadow-md active:scale-[0.98] transition h-[60px]"
+                  className={`group relative overflow-hidden bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand/20 transition-all duration-300 active:scale-[0.98] flex items-center gap-2 sm:gap-3 ${
+                    card.fullWidth ? "col-span-2 lg:col-span-4" : ""
+                  }`}
                   data-testid={card.testId}
                 >
-                  <card.icon
-                    className="w-[20px] h-[20px] text-primary flex-shrink-0"
-                    strokeWidth={1.6}
-                  />
-                  <span className="text-sm font-semibold text-primary-text flex-1 text-left">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-brand/5 flex items-center justify-center group-hover:bg-brand/10 group-hover:scale-110 transition-all duration-300 shrink-0">
+                    <card.icon
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-brand"
+                      strokeWidth={2}
+                    />
+                  </div>
+                  <span className="text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-brand transition-colors text-left flex-1 line-clamp-2 leading-tight">
                     {card.title}
                   </span>
+                  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300 group-hover:text-brand/50 group-hover:translate-x-0.5 transition-all shrink-0" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-brand/[0.03] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               ))}
-          </div>
+            </div>
+          </section>
 
-          <p className="px-1 text-sm font-semibold text-gray-600 tracking-wide my-4">
-            My Progress
-          </p>
+          {/* Journey & progress */}
+          <section className="space-y-6">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-brand" />
+              Your Journey
+            </h2>
 
-          {/* 7-Day Streak Tracker - Only show when authenticated */}
-          {isAuthenticated && (
-            <div
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-200
-/10 hover:shadow-md active:scale-[0.98]"
-              data-testid="card-streak"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-6 h-6 text-orange-500" />
-                  <span className="text-md font-semibold text-primary-text">
-                    7 Day Streak
-                  </span>
-                </div>
-                <span className="text-xs font-semibold text-gray-600">
-                  {streakData
-                    ? `${streakData.filter((d) => d.active).length} day${
-                        streakData.filter((d) => d.active).length !== 1
-                          ? "s"
-                          : ""
-                      } this week`
-                    : ""}
-                </span>
-              </div>
-              <div className="flex justify-between gap-1">
-                {(streakData || Array(7).fill({ date: "", active: false })).map(
-                  (day, index) => {
-                    const dayDate = day.date
-                      ? new Date(day.date + "T12:00:00")
-                      : new Date();
-                    const dayName = day.date
-                      ? dayDate
-                          .toLocaleDateString("en-US", { weekday: "short" })
-                          .charAt(0)
-                      : ["M", "T", "W", "T", "F", "S", "S"][index];
-                    const isToday =
-                      day.date === new Date().toISOString().split("T")[0];
+            <div className="flex flex-col gap-6">
+              {/* Streak Card */}
+              {isAuthenticated && (
+                <div
+                  className="bg-gradient-to-br from-orange-50 to-white rounded-xl p-6 shadow-sm border border-slate-200 relative overflow-hidden"
+                  data-testid="card-streak"
+                >
+                  <div className="absolute top-0 right-0 p-8 -mr-4 -mt-4 bg-orange-500/5 rounded-full blur-3xl w-32 h-32 pointer-events-none" />
 
-                    return (
-                      <div
-                        key={day.date || index}
-                        className="flex flex-col items-center gap-1"
-                        data-testid={`streak-day-${index}`}
-                      >
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                            day.active
-                              ? "bg-gradient-to-br from-orange-400 to-orange-600 shadow-sm"
-                              : "bg-gray-100"
-                          } ${
-                            isToday
-                              ? "ring-2 ring-orange-300 ring-offset-1"
-                              : ""
-                          }`}
-                        >
-                          {day.active ? (
-                            <Flame className="w-4 h-4 text-white" />
-                          ) : (
-                            <div className="w-2 h-2 rounded-full bg-gray-300" />
-                          )}
-                        </div>
-                        <span
-                          className={`text-xs ${
-                            day.active
-                              ? "text-primary-text font-medium"
-                              : "text-gray-400"
-                          }`}
-                        >
-                          {dayName}
+                  <div className="flex items-center justify-between mb-6 relative">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-orange-50 rounded-xl">
+                        <Flame className="w-6 h-6 text-orange-500 fill-orange-500/20" />
+                      </div>
+                      <div>
+                        <span className="block text-sm font-bold text-slate-900">
+                          7 Day Streak
+                        </span>
+                        <span className="text-xs font-medium text-slate-500">
+                          Keep the momentum going!
                         </span>
                       </div>
-                    );
-                  }
-                )}
-              </div>
+                    </div>
+                    <div className="px-3 py-1.5 bg-white rounded-lg border border-slate-100">
+                      <span className="text-xs font-bold text-slate-700">
+                        {streakData
+                          ? `${streakData.filter((d) => d.active).length}/7`
+                          : "0/7"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-end gap-2 relative">
+                    {(
+                      streakData || Array(7).fill({ date: "", active: false })
+                    ).map((day, index) => {
+                      const dayDate = day.date
+                        ? new Date(day.date + "T12:00:00")
+                        : new Date();
+                      const dayName = day.date
+                        ? dayDate
+                            .toLocaleDateString("en-US", { weekday: "short" })
+                            .charAt(0)
+                        : ["M", "T", "W", "T", "F", "S", "S"][index];
+                      const isToday =
+                        day.date === new Date().toISOString().split("T")[0];
+
+                      return (
+                        <div
+                          key={day.date || index}
+                          className="flex flex-col items-center gap-2 flex-1"
+                          data-testid={`streak-day-${index}`}
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${
+                              day.active
+                                ? "bg-gradient-to-b from-orange-400 to-orange-500 shadow-lg shadow-orange-500/30 scale-100"
+                                : "bg-slate-50 border border-slate-100 scale-90"
+                            } ${
+                              isToday
+                                ? "ring-2 ring-orange-400 ring-offset-2"
+                                : ""
+                            }`}
+                          >
+                            {day.active ? (
+                              <Flame
+                                className="w-4 h-4 text-white"
+                                strokeWidth={2.5}
+                              />
+                            ) : (
+                              <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                            )}
+                          </div>
+                          <span
+                            className={`text-xs font-bold tracking-wide ${
+                              day.active ? "text-orange-600" : "text-slate-500"
+                            }`}
+                          >
+                            {dayName}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Progress Insights Button - Theme Color Style */}
+              {isAuthenticated && (
+                <button
+                  onClick={() => setLocation("/progress-insights")}
+                  className="w-full group relative overflow-hidden bg-brand rounded-xl p-6 shadow-lg shadow-brand/20 hover:shadow-xl hover:shadow-brand/30 transition-all duration-300 active:scale-[0.99] border border-white/10"
+                  data-testid="button-progress-insights"
+                >
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/20 rounded-full blur-xl -ml-10 -mb-10 pointer-events-none" />
+
+                  <div className="relative flex flex-col justify-between items-start h-full z-10">
+                    <div className="flex justify-between items-center gap-3 mb-2 w-full">
+                      <TrendingUp className="w-8 h-8 text-white" />
+                      <div className="text-left w-full">
+                        <h3 className="text-lg font-bold text-white mb-1">
+                          Progress Insights
+                        </h3>
+                      </div>
+                      <ChevronRight className="w-7 h-7 text-white" />
+                    </div>
+                    <p className="text-white/80 text-sm font-medium italic leading-relaxed">
+                      Track your daily growth and milestones
+                    </p>
+                  </div>
+                </button>
+              )}
             </div>
-          )}
+          </section>
 
-          {/* Progress Insights Card - Only show when authenticated */}
-          {isAuthenticated && (
-            <button
-              onClick={() => setLocation("/progress-insights")}
-              className="w-full text-left bg-white rounded-xl p-4 shadow-sm border border-gray-200/10 mt-4 hover:shadow-md active:scale-[0.98]"
-              data-testid="button-progress-insights"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-md font-semibold text-primary-text mb-1">
-                    Progress Insights
-                  </h3>
-                  <p
-                    className="text-gray-600 text-xs truncate"
-                    title="Receive personalised insights for your streak"
-                  >
-                    Receive personalised insights for your streak
-                  </p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              </div>
-            </button>
-          )}
-
-          {/* Daily Quote Card */}
+          {/* Daily Quote Card - Redesigned to Light Premium Theme */}
           {quoteData?.quote && (
             <div
-              className="rounded-xl p-4 relative mt-4 bg-primary shadow-sm border border-gray-200
-/10"
+              className="group relative bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-slate-200 overflow-hidden text-center"
               data-testid="card-quote"
             >
-              <div className="text-center px-2">
-                <p className="text-white text-md font-medium mb-2.5 leading-relaxed italic">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#fafafa] via-[#fafafa] to-brand/[0.2]" />
+              <div className="absolute -top-6 -right-6 opacity-[0.04] transform rotate-12 group-hover:rotate-6 transition-transform duration-1000">
+                <Feather className="w-48 h-48 text-slate-900" />
+              </div>
+
+              <div className="relative z-10">
+                <div className="inline-flex mb-6">
+                  <div className="w-12 h-12 rounded-full bg-brand/5 flex items-center justify-center ring-4 ring-white shadow-sm">
+                    <Quote className="w-5 h-5 text-brand fill-brand/20" />
+                  </div>
+                </div>
+                <p className="text-slate-700 text-lg sm:text-xl leading-relaxed font-normal mb-5 px-3">
                   "{quoteData.quote}"
                 </p>
                 {quoteData.author && (
-                  <p className="text-white/90 text-sm font-light">
-                    — {quoteData.author}
-                  </p>
+                  <div className="flex items-center justify-center gap-4">
+                    <span className="h-px w-12 bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
+                    <p className="text-slate-500 text-xs font-bold tracking-[0.2em]">
+                      {quoteData.author}
+                    </p>
+                    <span className="h-px w-12 bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
+                  </div>
                 )}
               </div>
             </div>
           )}
-        </div>
+        </main>
       </div>
 
       <SearchOverlay

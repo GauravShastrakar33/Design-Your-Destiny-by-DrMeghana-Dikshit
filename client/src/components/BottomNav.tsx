@@ -20,43 +20,61 @@ export default function BottomNav() {
   const [location] = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-white border-t border-gray-200 dark:border-gray-200 z-50 pb-safe">
-      <div className="w-full">
-        <div className="flex items-center justify-around min-h-[64px] px-2">
+    <nav className="fixed bottom-2 left-0 right-0 z-50 pointer-events-none flex justify-center pb-safe">
+      <div className="mx-4 w-full max-w-lg pointer-events-auto">
+        <div className="bg-[#F8F7FF]/95 backdrop-blur-2xl border border-brand/10 shadow-[0_4px_20px_-4px_rgba(112,61,250,0.15)] rounded-2xl px-1 py-1.5 flex items-center justify-between">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location === item.path;
+            const isDrM = item.label === "Dr.M";
 
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
+                className="relative group flex-1"
+                data-testid={`nav-${item.label
+                  .toLowerCase()
+                  .replace(/\s+/g, "-")}`}
               >
-                <button className="flex flex-col items-center justify-center min-h-[48px] min-w-[60px] py-2 hover-elevate active-elevate-2 rounded-lg px-2">
-                  {item.label === "Dr.M" ? (
-                    <img
-                      src={chatIcon}
-                      alt="Dr.M"
-                      className={`w-6 h-6 ${
-                        isActive ? "opacity-100" : "opacity-50"
-                      }`}
-                    />
-                  ) : (
-                    <Icon
-                      className={`w-6 h-6 ${
-                        isActive
-                          ? "text-[#703DFA]"
-                          : "text-[#703DFA] opacity-50"
-                      }`}
-                      fill={isActive ? "currentColor" : "none"}
-                    />
+                <button className="relative flex flex-col items-center justify-center w-full rounded-xl py-1.5 transition-all duration-300 active:scale-95">
+                  {/* Active Background Pill */}
+                  {isActive && (
+                    <div className="absolute inset-x-2 inset-y-0.5 bg-brand/10 rounded-xl -z-10 animate-in zoom-in-50 duration-300" />
                   )}
+
+                  <div
+                    className={`h-7 flex items-center justify-center transition-all duration-300 ${
+                      isActive ? "-translate-y-0.5" : ""
+                    }`}
+                  >
+                    {isDrM ? (
+                      <img
+                        src={chatIcon}
+                        alt="Dr.M"
+                        className={`w-6 h-6 object-contain transition-all duration-300 ${
+                          isActive
+                            ? "drop-shadow-sm scale-110"
+                            : "opacity-70 group-hover:opacity-100 grayscale-[0.5] group-hover:grayscale-0"
+                        }`}
+                      />
+                    ) : (
+                      <Icon
+                        className={`w-5 h-5 transition-all duration-300 ${
+                          isActive
+                            ? "text-brand fill-brand/20 scale-110"
+                            : "text-slate-400 group-hover:text-slate-600"
+                        }`}
+                        strokeWidth={isActive ? 2.5 : 2}
+                      />
+                    )}
+                  </div>
+
                   <span
-                    className={`text-xs mt-1 ${
+                    className={`text-[9px] font-medium tracking-wide transition-all duration-300 ${
                       isActive
-                        ? "font-semibold text-gray-900"
-                        : "font-medium text-gray-600"
+                        ? "text-brand font-bold"
+                        : "text-slate-400 group-hover:text-slate-600"
                     }`}
                   >
                     {item.label}
