@@ -23,6 +23,7 @@ import {
   Feather,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import ActionCard from "@/components/ActionCard";
 import { useToast } from "@/hooks/use-toast";
 import SearchOverlay from "@/components/SearchOverlay";
@@ -88,9 +89,11 @@ export default function HomePage() {
     },
   });
 
-  const { data: bannerData } = useQuery<BannerData>({
-    queryKey: ["/api/public/v1/session-banner"],
-  });
+  const { data: bannerData, isLoading: isBannerLoading } = useQuery<BannerData>(
+    {
+      queryKey: ["/api/public/v1/session-banner"],
+    }
+  );
 
   // Fetch today's daily quote
   const { data: quoteData } = useQuery<{
@@ -250,89 +253,95 @@ export default function HomePage() {
         {/* Main Scrollable Content */}
         <main className="flex-1 w-full px-4 sm:px-6 py-6 space-y-8">
           {/* Dynamic Banner Section */}
-          {banner && (
+          {isBannerLoading ? (
             <section className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-black group ring-1 ring-black/5">
-                {banner.type === "advertisement" && banner.videoUrl ? (
-                  <>
-                    <video
-                      ref={videoRef}
-                      src={banner.videoUrl}
-                      poster={banner.posterUrl || undefined}
-                      className="w-full h-full object-cover opacity-95 group-hover:opacity-100 transition-opacity"
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      data-testid="video-banner"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-                    <div className="absolute bottom-4 right-4 flex items-center gap-2 z-10">
-                      <button
-                        onClick={toggleMute}
-                        className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-black/50 text-white transition-all active:scale-95"
-                        data-testid="button-video-mute"
-                      >
-                        {isMuted ? (
-                          <VolumeX className="w-4 h-4" />
-                        ) : (
-                          <Volume2 className="w-4 h-4" />
+              <Skeleton className="w-full aspect-[16/9] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)]" />
+            </section>
+          ) : (
+            banner && (
+              <section className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-black group ring-1 ring-black/5">
+                  {banner.type === "advertisement" && banner.videoUrl ? (
+                    <>
+                      <video
+                        ref={videoRef}
+                        src={banner.videoUrl}
+                        poster={banner.posterUrl || undefined}
+                        className="w-full h-full object-cover opacity-95 group-hover:opacity-100 transition-opacity"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        data-testid="video-banner"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+                      <div className="absolute bottom-4 right-4 flex items-center gap-2 z-10">
+                        <button
+                          onClick={toggleMute}
+                          className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-black/50 text-white transition-all active:scale-95"
+                          data-testid="button-video-mute"
+                        >
+                          {isMuted ? (
+                            <VolumeX className="w-4 h-4" />
+                          ) : (
+                            <Volume2 className="w-4 h-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={toggleVideoPlayback}
+                          className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-black/50 text-white transition-all active:scale-95"
+                          data-testid="button-video-toggle"
+                        >
+                          {isVideoPlaying ? (
+                            <Pause className="w-4 h-4" />
+                          ) : (
+                            <Play className="w-4 h-4 ml-0.5" />
+                          )}
+                        </button>
+                      </div>
+                    </>
+                  ) : banner.thumbnailUrl ? (
+                    <>
+                      <img
+                        src={banner.thumbnailUrl}
+                        alt="Session Banner"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        data-testid="img-banner"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
+                      {banner.type === "session" &&
+                        banner.liveEnabled &&
+                        bannerStatus === "active" && (
+                          <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-red-500/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-lg z-10">
+                            <span className="h-2 w-2 bg-white rounded-full animate-pulse"></span>
+                            <span className="text-[10px] font-bold text-white tracking-wider uppercase">
+                              Live Now
+                            </span>
+                          </div>
                         )}
-                      </button>
+                    </>
+                  ) : null}
+                </div>
+
+                {banner.ctaText &&
+                  banner.ctaLink &&
+                  banner.ctaLink.trim() !== "" && (
+                    <div className="w-full flex justify-center -mt-6 relative z-10">
                       <button
-                        onClick={toggleVideoPlayback}
-                        className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-black/50 text-white transition-all active:scale-95"
-                        data-testid="button-video-toggle"
+                        onClick={() => {
+                          if (banner.ctaLink) {
+                            window.open(banner.ctaLink, "_blank");
+                          }
+                        }}
+                        className="px-8 py-3 rounded-full font-bold text-sm shadow-xl shadow-brand/20 bg-brand text-white hover:bg-brand/90 hover:scale-105 active:scale-95 transition-all duration-300 ring-4 ring-white"
+                        data-testid="button-banner-cta"
                       >
-                        {isVideoPlaying ? (
-                          <Pause className="w-4 h-4" />
-                        ) : (
-                          <Play className="w-4 h-4 ml-0.5" />
-                        )}
+                        {banner.ctaText}
                       </button>
                     </div>
-                  </>
-                ) : banner.thumbnailUrl ? (
-                  <>
-                    <img
-                      src={banner.thumbnailUrl}
-                      alt="Session Banner"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      data-testid="img-banner"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
-                    {banner.type === "session" &&
-                      banner.liveEnabled &&
-                      bannerStatus === "active" && (
-                        <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-red-500/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-lg z-10">
-                          <span className="h-2 w-2 bg-white rounded-full animate-pulse"></span>
-                          <span className="text-[10px] font-bold text-white tracking-wider uppercase">
-                            Live Now
-                          </span>
-                        </div>
-                      )}
-                  </>
-                ) : null}
-              </div>
-
-              {banner.ctaText &&
-                banner.ctaLink &&
-                banner.ctaLink.trim() !== "" && (
-                  <div className="w-full flex justify-center -mt-6 relative z-10">
-                    <button
-                      onClick={() => {
-                        if (banner.ctaLink) {
-                          window.open(banner.ctaLink, "_blank");
-                        }
-                      }}
-                      className="px-8 py-3 rounded-full font-bold text-sm shadow-xl shadow-brand/20 bg-brand text-white hover:bg-brand/90 hover:scale-105 active:scale-95 transition-all duration-300 ring-4 ring-white"
-                      data-testid="button-banner-cta"
-                    >
-                      {banner.ctaText}
-                    </button>
-                  </div>
-                )}
-            </section>
+                  )}
+              </section>
+            )
           )}
 
           {/* Quick Actions Grid */}
