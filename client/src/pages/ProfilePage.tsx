@@ -121,10 +121,10 @@ export default function ProfilePage() {
     // Check notification status - combines OS permission + backend status
     const checkNotificationStatus = async () => {
       if (isNativePlatform()) {
-        const isEnabled = localStorage.getItem("push_enabled") === "true";
+        const backendEnabled = await getNotificationStatus();
         const osPermission = await checkNativePermissionStatus();
-        // Only show as enabled if BOTH preference is true AND OS permission is granted
-        setNotificationsEnabled(isEnabled && osPermission === "granted");
+        // Only show as enabled if BOTH backend has token AND OS permission is granted
+        setNotificationsEnabled(backendEnabled && osPermission === "granted");
       } else {
         // First check backend status (DB source of truth for enabled state)
         const backendEnabled = await getNotificationStatus();

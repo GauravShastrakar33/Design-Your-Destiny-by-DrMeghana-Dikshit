@@ -1029,13 +1029,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eq(notificationLogs.status, "failed"),
             gte(notificationLogs.createdAt, twentyFourHoursAgo)
           )),
-        // Count of unique users with device tokens
-        db.select({ count: countDistinct(deviceTokens.userId) }).from(deviceTokens),
+        // Count of unique users with push enabled
+        db.select({ count: countDistinct(deviceTokens.userId) })
+          .from(deviceTokens)
+          .where(eq(deviceTokens.pushEnabled, true)),
         // Total users
         db.select({ count: count() }).from(users).where(eq(users.role, "USER")),
       ]);
       
-      // Users without device tokens = total users - users with tokens
+      // Users without push enabled = total users - users with push enabled
       const usersWithNotificationsDisabled = 
         (totalUserCount[0]?.count ?? 0) - (usersWithDeviceTokens[0]?.count ?? 0);
 
@@ -5520,11 +5522,16 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      const { token } = req.body;
+      const { token, platform } = req.body;
       
       if (!token || typeof token !== "string") {
         return res.status(400).json({ error: "Token is required" });
       }
+
+      const normalizedPlatform =
+        typeof platform === "string" && platform.trim().length > 0
+          ? platform.trim().slice(0, 10)
+          : "native";
 
       // Check if this exact token already exists
       const existingToken = await db.select()
@@ -5533,24 +5540,25 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .limit(1);
 
       if (existingToken.length > 0) {
-        // Token already exists - update user_id if different
-        if (existingToken[0].userId !== userId) {
+        // Token already exists - update user/platform if different
+        const needsUpdate =
+          existingToken[0].userId !== userId ||
+          existingToken[0].platform !== normalizedPlatform;
+
+        if (needsUpdate) {
           await db.update(deviceTokens)
-            .set({ userId })
+            .set({ userId, platform: normalizedPlatform })
             .where(eq(deviceTokens.token, token));
         }
         return res.json({ success: true, message: "Token already registered" });
       }
 
-      // UPSERT: Delete any old tokens for this user first, then insert new one
-      // This ensures only the latest token is stored per user (tokens change on browser refresh)
-      await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
-
-      // Insert new token
+      // Insert new token (default pushEnabled=true)
       await db.insert(deviceTokens).values({
         userId,
         token,
-        platform: "web",
+        platform: normalizedPlatform,
+        pushEnabled: true,
       });
 
       res.json({ success: true, message: "Device registered successfully" });
@@ -5598,13 +5606,41 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       const tokens = await db.select()
         .from(deviceTokens)
-        .where(eq(deviceTokens.userId, userId))
+        .where(and(
+          eq(deviceTokens.userId, userId),
+          eq(deviceTokens.pushEnabled, true),
+        ))
         .limit(1);
 
       res.json({ enabled: tokens.length > 0 });
     } catch (error: any) {
       console.error("Error getting notification status:", error);
       res.status(500).json({ error: "Failed to get notification status" });
+    }
+  });
+
+  // Update push preference without deleting tokens
+  app.post("/api/v1/notifications/push-enabled", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.sub;
+
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { enabled } = req.body;
+      if (typeof enabled !== "boolean") {
+        return res.status(400).json({ error: "enabled must be boolean" });
+      }
+
+      await db.update(deviceTokens)
+        .set({ pushEnabled: enabled })
+        .where(eq(deviceTokens.userId, userId));
+
+      res.json({ success: true, enabled });
+    } catch (error: any) {
+      console.error("Error updating push preference:", error);
+      res.status(500).json({ error: "Failed to update push preference" });
     }
   });
 
@@ -5635,7 +5671,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Fetch all device tokens with userId
       const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId })
-        .from(deviceTokens);
+        .from(deviceTokens)
+        .where(eq(deviceTokens.pushEnabled, true));
 
       if (allTokens.length === 0) {
         return res.json({ 

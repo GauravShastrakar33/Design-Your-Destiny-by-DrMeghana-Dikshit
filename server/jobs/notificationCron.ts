@@ -28,7 +28,30 @@ async function processNotifications(): Promise<void> {
         }
 
         const deviceTokens = await storage.getDeviceTokensByUserIds(eligibleUserIds);
-        
+
+        // ALWAYS create logs first (in-app reliability), then attempt push
+        const userIdsWithTokens = new Set(deviceTokens.map(dt => dt.userId));
+
+        const inAppOnlyLogs = eligibleUserIds
+          .filter(userId => !userIdsWithTokens.has(userId))
+          .map(userId => ({
+            notificationId: notification.id,
+            userId,
+            deviceToken: "in-app-only",
+            status: "sent",
+            error: null,
+          }));
+
+        const pushLogs = deviceTokens.map(dt => ({
+          notificationId: notification.id,
+          userId: dt.userId,
+          deviceToken: dt.token,
+          status: "pending",
+          error: null,
+        }));
+
+        await storage.createNotificationLogs([...inAppOnlyLogs, ...pushLogs]);
+
         if (deviceTokens.length === 0) {
           console.log(`No device tokens found for notification ${notification.id}, marking as sent`);
           await storage.markNotificationSent(notification.id);
@@ -58,28 +81,17 @@ async function processNotifications(): Promise<void> {
           dataPayload
         );
 
-        const logs: Array<{
-          notificationId: number;
-          userId: number;
-          deviceToken: string;
-          status: string;
-          error: string | null;
-        }> = [];
-
-        for (const token of tokens) {
-          const userId = userIdByToken.get(token) || 0;
+        const logUpdates = tokens.map(token => {
           const failed = result.failedTokens.includes(token);
-          
-          logs.push({
+          return {
             notificationId: notification.id,
-            userId,
             deviceToken: token,
             status: failed ? "failed" : "sent",
             error: failed ? "FCM delivery failed" : null,
-          });
-        }
+          };
+        });
 
-        await storage.createNotificationLogs(logs);
+        await storage.updateNotificationLogsStatus(logUpdates);
 
         for (const failedToken of result.failedTokens) {
           try {

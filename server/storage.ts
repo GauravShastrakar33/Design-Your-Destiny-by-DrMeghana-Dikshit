@@ -1941,6 +1941,39 @@ export class DbStorage implements IStorage {
     return result;
   }
 
+  async updateNotificationLogStatus(
+    notificationId: number,
+    deviceToken: string,
+    status: string,
+    error: string | null = null,
+  ): Promise<void> {
+    await db
+      .update(notificationLogsTable)
+      .set({ status, error })
+      .where(
+        and(
+          eq(notificationLogsTable.notificationId, notificationId),
+          eq(notificationLogsTable.deviceToken, deviceToken),
+        ),
+      );
+  }
+
+  async updateNotificationLogsStatus(
+    updates: Array<{ notificationId: number; deviceToken: string; status: string; error?: string | null }>,
+  ): Promise<void> {
+    if (updates.length === 0) return;
+    await Promise.all(
+      updates.map((u) =>
+        this.updateNotificationLogStatus(
+          u.notificationId,
+          u.deviceToken,
+          u.status,
+          u.error ?? null,
+        ),
+      ),
+    );
+  }
+
   async getNotificationLogsByNotificationId(notificationId: number): Promise<NotificationLog[]> {
     return db
       .select()
@@ -1963,7 +1996,10 @@ export class DbStorage implements IStorage {
     return db
       .select({ userId: deviceTokensTable.userId, token: deviceTokensTable.token })
       .from(deviceTokensTable)
-      .where(inArray(deviceTokensTable.userId, userIds));
+      .where(and(
+        inArray(deviceTokensTable.userId, userIds),
+        eq(deviceTokensTable.pushEnabled, true),
+      ));
   }
 
   async deleteDeviceToken(token: string): Promise<void> {
