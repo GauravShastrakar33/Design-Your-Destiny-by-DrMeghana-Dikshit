@@ -379,7 +379,8 @@ export default function AdminSessionBannerFormPage() {
         </h1>
       </div>
 
-      <Card className="p-8 bg-white rounded-lg shadow-sm border border-gray-100">
+      <Card className="relative overflow-hidden p-8 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
         <FormProvider {...methods}>
           <form onSubmit={handleSubmitRHF(onSubmit)} className="space-y-5">
             {/* 1. Header & Type (Full Width) */}
