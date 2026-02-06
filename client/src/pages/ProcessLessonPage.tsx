@@ -3,6 +3,8 @@ import { Header } from "@/components/Header";
 import { useParams, useLocation, useSearch } from "wouter";
 import { ArrowLeft, Loader2, Video, Music, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useRef } from "react";
 import type { CmsLesson, CmsLessonFile } from "@shared/schema";
@@ -97,30 +99,39 @@ export default function ProcessLessonPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-brand" />
+      <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center p-6">
+        <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
+        <p className="text-gray-400 font-bold text-sm tracking-wide">
+          Loading Lesson...
+        </p>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-md mx-auto p-4">
-          <button
-            onClick={() => setLocation("/")}
-            className="hover-elevate active-elevate-2 rounded-lg p-2 mb-4"
-            data-testid="button-back"
+      <div className="min-h-screen bg-[#F9FAFB]">
+        <Header
+          title="Lesson Not Found"
+          hasBackButton={true}
+          onBack={handleBack}
+        />
+        <main className="max-w-3xl mx-auto px-4 py-20 text-center">
+          <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            Oops! Lesson not found
+          </h3>
+          <p className="text-gray-500 text-sm max-w-xs mx-auto mb-8">
+            The lesson you're looking for might have been moved or doesn't
+            exist.
+          </p>
+          <Button
+            onClick={handleBack}
+            className="rounded-xl font-bold px-8 bg-brand hover:bg-brand/90"
           >
-            <ArrowLeft className="w-6 h-6 text-foreground" />
-          </button>
-          <div
-            className="text-center py-12 text-muted-foreground"
-            data-testid="text-error"
-          >
-            Lesson not found
-          </div>
-        </div>
+            Back to Processes
+          </Button>
+        </main>
       </div>
     );
   }
@@ -129,19 +140,6 @@ export default function ProcessLessonPage() {
   const videoFile = files.find((f) => f.fileType === "video");
   const audioFile = files.find((f) => f.fileType === "audio");
   const scriptFile = files.find((f) => f.fileType === "script");
-
-  const getFileIcon = (type: string) => {
-    switch (type) {
-      case "video":
-        return <Video className="w-5 h-5" />;
-      case "audio":
-        return <Music className="w-5 h-5" />;
-      case "script":
-        return <FileText className="w-5 h-5" />;
-      default:
-        return <FileText className="w-5 h-5" />;
-    }
-  };
 
   const pauseAudioIfPlaying = () => {
     if (audioRef.current && !audioRef.current.paused) {
@@ -156,13 +154,16 @@ export default function ProcessLessonPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-md mx-auto">
-        <Header title={lesson.title} hasBackButton={true} onBack={handleBack} />
+    <div className="min-h-screen bg-[#F9FAFB] pb-24">
+      <Header title={lesson.title} hasBackButton={true} onBack={handleBack} />
 
-        <div className="p-4 space-y-6">
-          {videoFile && videoFile.signedUrl && (
-            <Card className="overflow-hidden">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+        {videoFile && videoFile.signedUrl && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card className="overflow-hidden border-0 shadow-2xl shadow-black/[0.05] rounded-2xl bg-black">
               <video
                 ref={videoRef}
                 src={videoFile.signedUrl}
@@ -170,7 +171,7 @@ export default function ProcessLessonPage() {
                 controlsList="nodownload noremoteplayback"
                 disablePictureInPicture
                 playsInline
-                className="w-full aspect-video bg-black"
+                className="w-full aspect-video"
                 data-testid="video-player"
                 onPlay={() => {
                   pauseAudioIfPlaying();
@@ -181,35 +182,60 @@ export default function ProcessLessonPage() {
                 }
               />
             </Card>
-          )}
+          </motion.div>
+        )}
 
-          <p>
-            <strong>Title: </strong>
-            {lesson.title}
-          </p>
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm shadow-black/[0.02] overflow-hidden"
+        >
+          <div className="p-4 pb-0">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+              Lesson Title
+            </h3>
+            <h1 className="text-lg font-bold text-gray-900 leading-tight pb-2">
+              {lesson.title}
+            </h1>
+          </div>
 
           {lesson.description && (
-            <p
-              className="text-muted-foreground whitespace-pre-line"
-              data-testid="text-lesson-description"
-            >
-              <strong className="text-foreground">Description: </strong>
-              {lesson.description}
-            </p>
+            <div className="p-4 pt-0">
+              <div className="pt-2 border-t border-primary-light">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+                  Description
+                </h3>
+                <p
+                  className="text-gray-600 whitespace-pre-line text-sm leading-relaxed"
+                  data-testid="text-lesson-description"
+                >
+                  {lesson.description}
+                </p>
+              </div>
+            </div>
           )}
+        </motion.div>
 
-          {audioFile && audioFile.signedUrl && (
-            <Card className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <Music className="w-5 h-5 text-brand" />
-                <span className="font-medium text-foreground">Audio</span>
+        {audioFile && audioFile.signedUrl && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="p-6 border-0 shadow-lg shadow-black/[0.03] rounded-2xl bg-white group">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center group-hover:bg-brand group-hover:text-white transition-colors">
+                  <Music className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-gray-900">Experience Audio</h3>
               </div>
               <audio
                 ref={audioRef}
                 src={audioFile.signedUrl}
                 controls
-                controlsList="nodownload"
-                className="w-full"
+                controlsList="nodownload noplaybackrate"
+                className="w-full custom-audio"
                 data-testid="audio-player"
                 onPlay={() => {
                   pauseVideoIfPlaying();
@@ -220,39 +246,53 @@ export default function ProcessLessonPage() {
                 }
               />
             </Card>
-          )}
+          </motion.div>
+        )}
 
-          {scriptFile &&
-            (scriptFile.scriptHtml || scriptFile.extractedText) && (
-              <Card className="p-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <FileText className="w-5 h-5 text-amber-600" />
-                  <span className="font-medium text-foreground">Script</span>
+        {scriptFile && (scriptFile.scriptHtml || scriptFile.extractedText) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="p-6 sm:p-8 border-0 shadow-lg shadow-black/[0.03] rounded-2xl bg-white">
+              <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <FileText className="w-5 h-5" />
                 </div>
+                <h3 className="font-bold text-gray-900">
+                  Transcription & Notes
+                </h3>
+              </div>
+
+              <div className="prose prose-slate max-w-none prose-p:text-gray-600 prose-headings:text-gray-900 prose-p:leading-relaxed prose-sm">
                 {scriptFile.scriptHtml ? (
                   <div
-                    className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground"
                     data-testid="text-script-content"
                     dangerouslySetInnerHTML={{ __html: scriptFile.scriptHtml }}
                   />
                 ) : (
                   <div
-                    className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap"
+                    className="whitespace-pre-wrap"
                     data-testid="text-script-content"
                   >
                     {scriptFile.extractedText}
                   </div>
                 )}
-              </Card>
-            )}
+              </div>
+            </Card>
+          </motion.div>
+        )}
 
-          {files.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+        {files.length === 0 && (
+          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+            <Loader2 className="w-10 h-10 mx-auto mb-4 text-gray-100" />
+            <p className="text-gray-400 font-medium">
               No content available for this lesson yet
-            </div>
-          )}
-        </div>
-      </div>
+            </p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
