@@ -45,6 +45,17 @@ import {
   setupNativePushListeners,
 } from "@/lib/nativePush";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { UserWellnessProfile } from "@shared/schema";
 import ConsistencyCalendar from "@/components/ConsistencyCalendar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,6 +77,7 @@ export default function ProfilePage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [appVersion, setAppVersion] = useState<string>("");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const loadVersion = async () => {
@@ -417,29 +429,66 @@ export default function ProfilePage() {
             </a>
 
             {/* Logout */}
-            <button
-              onClick={async () => {
-                try {
-                  await unregisterDeviceTokens();
-                } catch (e) {}
-                logout();
-                setLocation("/login");
-              }}
-              className="w-full flex items-center justify-between p-6 hover:bg-red-50/30 active:scale-[0.99] transition-all group"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm">
-                  <LogOut className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold text-red-600 leading-none">Logout</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Sign out of your account
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-200 group-hover:text-red-300 transition-colors" />
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="w-full flex items-center justify-between p-6 hover:bg-red-50/30 active:scale-[0.99] transition-all group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm">
+                      <LogOut className="w-5 h-5" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-red-600 leading-none">
+                        Logout
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Sign out of your account
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-200 group-hover:text-red-300 transition-colors" />
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-3xl border-0 shadow-2xl">
+                <AlertDialogHeader className="space-y-3">
+                  <div className="mx-auto w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 mb-2">
+                    <LogOut className="w-6 h-6" />
+                  </div>
+                  <AlertDialogDescription className="text-md text-center text-gray-500 font-medium leading-relaxed">
+                    Are you sure you want to logout?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-col sm:flex-col gap-2 mt-4">
+                  <AlertDialogAction
+                    disabled={isLoggingOut}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      setIsLoggingOut(true);
+                      try {
+                        await unregisterDeviceTokens();
+                      } catch (e) {
+                        console.error("Failed to unregister tokens:", e);
+                      }
+                      logout();
+                      setLocation("/login");
+                      setIsLoggingOut(false);
+                    }}
+                    className="w-full h-12 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold shadow-lg shadow-red-200 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+                  >
+                    {isLoggingOut ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      "Logout Now"
+                    )}
+                  </AlertDialogAction>
+                  <AlertDialogCancel
+                    disabled={isLoggingOut}
+                    className="w-full h-12 rounded-lg bg-gray-50 text-gray-500 font-bold border border-gray-100 hover:bg-gray-100 transition-all disabled:opacity-50"
+                  >
+                    Stay Signed In
+                  </AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {/* App Version */}
             <div className="w-full flex items-center justify-between p-6 group">
