@@ -102,13 +102,13 @@ export default function BadgesPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-6">
             {/* Header Description */}
             <div className="text-center max-w-lg mx-auto mb-4">
-              <div className="inline-flex p-3 rounded-2xl bg-indigo-50 text-brand mb-4 border border-indigo-100 shadow-sm">
+              <div className="inline-flex p-3 rounded-2xl bg-indigo-50 text-brand mb-2 border border-indigo-100 shadow-sm">
                 <Award className="w-6 h-6" />
               </div>
-              <h1 className="text-2xl font-black text-gray-900 tracking-tight mb-2">
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight mb-2">
                 Your Milestone Journey
               </h1>
               <p className="text-gray-500 font-medium text-sm leading-relaxed px-4">

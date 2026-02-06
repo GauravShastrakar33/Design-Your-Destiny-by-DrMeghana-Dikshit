@@ -148,19 +148,19 @@ export default function ProfilePage() {
     <div className="min-h-screen pb-24 bg-[#F9FAFB]">
       <Header title="Profile" />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
         {/* Profile Identity Card */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card className="border-0 shadow-md rounded-3xl overflow-hidden bg-white">
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
             <div className="p-4">
               <div className="flex items-center gap-6">
                 <div className="relative">
                   <div className="absolute inset-0 bg-brand/20 blur-md rounded-full" />
-                  <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-50 to-white shadow-inner flex items-center justify-center border border-indigo-50">
+                  <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-50 to-white shadow-inner flex items-center justify-center border border-indigo-50">
                     <span className="text-3xl font-black text-brand tracking-tighter">
                       {getInitials(userName)}
                     </span>
@@ -258,7 +258,7 @@ export default function ProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="border-0 shadow-md rounded-3xl overflow-hidden bg-white">
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
             <button
               onClick={() => setPrescriptionExpanded(!prescriptionExpanded)}
               className="w-full text-left p-6 flex items-center justify-between group"
@@ -364,7 +364,7 @@ export default function ProfilePage() {
             </h3>
           </div>
 
-          <Card className="border-0 shadow-md rounded-3xl bg-white overflow-hidden divide-y divide-gray-50">
+          <Card className="border-0 shadow-md rounded-2xl bg-white overflow-hidden divide-y divide-gray-50">
             {/* Account */}
             <button
               onClick={() => setLocation("/account-settings")}
@@ -448,7 +448,7 @@ export default function ProfilePage() {
                   <ChevronRight className="w-5 h-5 text-gray-200 group-hover:text-red-300 transition-colors" />
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-3xl border-0 shadow-2xl">
+              <AlertDialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-2xl border-0 shadow-2xl">
                 <AlertDialogHeader className="space-y-3">
                   <div className="mx-auto w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 mb-2">
                     <LogOut className="w-6 h-6" />

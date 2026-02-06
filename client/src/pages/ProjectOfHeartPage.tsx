@@ -831,7 +831,7 @@ export default function ProjectOfHeartPage() {
                     }}
                     className="absolute inset-0 bg-brand/20 blur-xl rounded-full"
                   />
-                  <div className="relative w-24 h-24 rounded-3xl bg-white shadow-lg border border-indigo-50 flex items-center justify-center">
+                  <div className="relative w-24 h-24 rounded-2xl bg-white shadow-lg border border-indigo-50 flex items-center justify-center">
                     <motion.div
                       animate={{
                         rotate: [0, 5, -5, 0],
@@ -1182,20 +1182,11 @@ export default function ProjectOfHeartPage() {
             transition={{ duration: 0.4, delay: 0.1 }}
           >
             <div
-              className={`relative overflow-hidden group transition-all duration-500 ${
+              className={`relative overflow-hidden group transition-all duration-500 rounded-2xl bg-white p-6 shadow-sm ${
                 pohState.active.category === "wealth"
                   ? "ring-1 ring-amber-100 shadow-amber-50/50 shadow-lg"
                   : ""
               }`}
-              style={{
-                backgroundColor: "white",
-                borderRadius: "20px",
-                padding: "24px",
-                boxShadow:
-                  pohState.active.category === "wealth"
-                    ? "0 10px 40px rgba(180, 83, 9, 0.08), 0 0 0 1px rgba(180, 83, 9, 0.05)"
-                    : "0 4px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)",
-              }}
             >
               {/* Header Row - Category Left, Status Right */}
               <div className="flex items-center justify-between mb-5">
@@ -1235,7 +1226,7 @@ export default function ProjectOfHeartPage() {
 
               {/* Title */}
               <h2
-                className="text-xl font-bold leading-relaxed mb-4"
+                className="text-lg font-semibold leading-relaxed mb-4"
                 data-testid="text-active-poh-title"
               >
                 {pohState.active.title}
@@ -1257,7 +1248,7 @@ export default function ProjectOfHeartPage() {
                   }`}
                 >
                   <p
-                    className={`text-xs font-semibold mb-2 uppercase tracking-wide flex items-center gap-1.5 ${
+                    className={`text-xs font-semibold mb-2 uppercase tracking-wide flex items-start gap-1.5 ${
                       (
                         CATEGORY_CONFIG[pohState.active.category as Category] ||
                         CATEGORY_CONFIG.other
@@ -2001,7 +1992,7 @@ export default function ProjectOfHeartPage() {
                 </span>
               </div>
               <p
-                className="text-base sm:text-lg font-semibold text-gray-700 leading-relaxed mb-2"
+                className="text-lg font-semibold leading-relaxed mb-2"
                 data-testid="text-next-poh"
               >
                 {pohState.next.title}
@@ -2114,7 +2105,7 @@ export default function ProjectOfHeartPage() {
 
       {/* Milestone Creation Modal */}
       <Dialog open={showMilestoneModal} onOpenChange={setShowMilestoneModal}>
-        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle>Create Milestones</DialogTitle>
             <DialogDescription>
@@ -2194,7 +2185,7 @@ export default function ProjectOfHeartPage() {
 
       {/* Milestone Achievement Confirmation Modal */}
       <Dialog open={showAchieveConfirm} onOpenChange={setShowAchieveConfirm}>
-        <DialogContent className="w-[92vw] sm:max-w-sm p-6 rounded-3xl text-center">
+        <DialogContent className="w-[92vw] sm:max-w-sm p-6 rounded-2xl text-center">
           <DialogHeader>
             <DialogTitle className="text-center">Mark Milestone</DialogTitle>
           </DialogHeader>
@@ -2222,7 +2213,7 @@ export default function ProjectOfHeartPage() {
 
       {/* Complete/Close Modal */}
       <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
-        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle>
               {completeMode === "complete"
@@ -2312,7 +2303,7 @@ export default function ProjectOfHeartPage() {
 
       {/* Create Next POH Modal */}
       <Dialog open={showCreateNextModal} onOpenChange={setShowCreateNextModal}>
-        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle>Create Next POH</DialogTitle>
             <DialogDescription>
@@ -2388,7 +2379,7 @@ export default function ProjectOfHeartPage() {
         open={showCreateHorizonModal}
         onOpenChange={setShowCreateHorizonModal}
       >
-        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle>Create North Star</DialogTitle>
             <DialogDescription>

@@ -163,7 +163,7 @@ export default function ConsistencyCalendar({
 
   return (
     <Card
-      className="border-0 shadow-md rounded-3xl sm:rounded-[2.5rem] overflow-hidden bg-white"
+      className="border-0 shadow-md rounded-2xl overflow-hidden bg-white"
       data-testid="consistency-calendar"
     >
       <div className="p-5 sm:p-8">
