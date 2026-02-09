@@ -234,7 +234,7 @@ export default function DrMPage() {
                       <div className="space-y-4">
                         <div className="flex items-center gap-2 px-1">
                           <Sparkles className="w-4 h-4 text-brand fill-brand/20" />
-                          <p className="text-xs font-bold text-gray-900 tracking-widest">
+                          <p className="text-xs font-bold text-gray-900 tracking-wide">
                             Personal Response
                           </p>
                         </div>
@@ -255,14 +255,14 @@ export default function DrMPage() {
                               setSelectedQuestionId(currentMonthQuestion.id)
                             }
                             disabled={isLoadingDetails}
-                            className="w-full h-16 rounded-2xl bg-white border-2 border-dashed border-indigo-200 text-brand font-bold hover:bg-indigo-50 hover:border-brand/30 transition-all flex items-center justify-center gap-3 group"
+                            className="w-full h-10 rounded-lg bg-primary text-white text-xs font-bold hover:bg-brand hover:text-white transition-all gap-2"
                           >
                             {isLoadingDetails ? (
                               <Loader2 className="w-6 h-6 animate-spin" />
                             ) : (
                               <>
                                 <Volume2 className="w-6 h-6 transition-transform group-hover:scale-110" />
-                                <span>Reveal Audio Guidance</span>
+                                <span>Load Response</span>
                               </>
                             )}
                           </Button>
