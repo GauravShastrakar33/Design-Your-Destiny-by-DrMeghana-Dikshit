@@ -189,14 +189,8 @@ export default function MoneyMasteryPage() {
   };
 
   const getEarningColor = (amount: number): string => {
-    const maxEarning = Math.max(...Object.values(earnings), 1);
-    const ratio = amount / maxEarning;
-
-    if (ratio > 0.75) {
-      return "bg-emerald-500 text-white border-transparent";
-    }
-
-    return "bg-white border-emerald-300 text-emerald-600 shadow-sm";
+    // All earning days get the same style
+    return "bg-white border-emerald-600 text-emerald-600 shadow-sm";
   };
 
   const summary = calendarData?.summary || { total: 0, highest: 0, average: 0 };
@@ -293,9 +287,6 @@ export default function MoneyMasteryPage() {
                     const dateKey = formatDate(day);
                     const earning = earnings[dateKey];
                     const hasEarning = earning !== undefined && earning > 0;
-                    const maxEarning = Math.max(...Object.values(earnings), 1);
-                    const ratio = hasEarning ? earning / maxEarning : 0;
-                    const isHighEarning = ratio > 0.75;
                     const isHighestDay =
                       hasEarning &&
                       earning === summary.highest &&
@@ -313,7 +304,7 @@ export default function MoneyMasteryPage() {
                             hasEarning
                               ? `${getEarningColor(earning)} border ${
                                   isHighestDay
-                                    ? "ring-2 ring-amber-400 ring-offset-1 shadow-[0_0_15px_rgba(251,191,36,0.2)]"
+                                    ? "ring-2 text-white bg-emerald-600 ring-amber-400 ring-offset-1 shadow-[0_0_15px_rgba(251,191,36,0.2)]"
                                     : ""
                                 }`
                               : isToday(day)
@@ -324,9 +315,9 @@ export default function MoneyMasteryPage() {
                         data-testid={`day-${day}`}
                       >
                         <span
-                          className={`text-xs opacity font-medium ${
-                            hasEarning ? "mb-0.5" : ""
-                          }`}
+                          className={`text-xs font-medium ${
+                            isHighestDay ? "text-white" : "text-gray-800"
+                          } ${hasEarning ? "mb-0.5" : ""}`}
                         >
                           {day}
                         </span>
@@ -335,7 +326,7 @@ export default function MoneyMasteryPage() {
                           <div className="h-2 flex items-center justify-center">
                             <span
                               className={`text-[10px] font-semibold tracking-tight leading-none ${
-                                isHighEarning ? "text-yellow-300" : ""
+                                isHighestDay ? "text-yellow-300" : ""
                               }`}
                             >
                               {formatAmountCompact(earning)}
@@ -369,23 +360,15 @@ export default function MoneyMasteryPage() {
                         <div className="space-y-2.5">
                           {/* Highest Day */}
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-emerald-500 text-white border-transparent ring-2 ring-amber-400 ring-offset-1 shadow-sm flex-shrink-0" />
+                            <div className="w-3 h-3 rounded-full bg-emerald-600 text-white border-transparent ring-2 ring-amber-400 ring-offset-1 shadow-sm flex-shrink-0" />
                             <p className="text-xs text-gray-700">
                               Your best earning day
                             </p>
                           </div>
 
-                          {/* High Earning Day */}
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-emerald-500 text-white border-transparent flex-shrink-0" />
-                            <p className="text-xs text-gray-700">
-                              Days above 75% of your highest earning day
-                            </p>
-                          </div>
-
                           {/* Regular Earning */}
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-white border border-emerald-300 text-emerald-600 shadow-sm flex-shrink-0" />
+                            <div className="w-3 h-3 rounded-full bg-white border border-emerald-600 text-emerald-600 shadow-sm flex-shrink-0" />
                             <p className="text-xs text-gray-700">
                               Day with earnings
                             </p>
@@ -687,7 +670,7 @@ export default function MoneyMasteryPage() {
                         </div>
 
                         <div className="flex-1 p-5 flex flex-col justify-center">
-                          <div className="flex items-center gap-2 mb-2">
+                          <div className="flex items-center gap-2 mb-2 hidden">
                             <BookOpen className="w-3.5 h-3.5 text-brand" />
                             <span className="text-xs font-black tracking-wide text-brand">
                               Challenge Journey
