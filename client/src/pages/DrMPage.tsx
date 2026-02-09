@@ -397,8 +397,8 @@ export default function DrMPage() {
                               isLoadingDetails &&
                               selectedQuestionId === question.id
                             }
-                            variant="ghost"
-                            className="w-full h-10 rounded-lg bg-gray-50 text-brand text-xs font-bold hover:bg-brand hover:text-white transition-all gap-2"
+                            variant="default"
+                            className="w-full h-10 rounded-lg bg-primary text-white text-xs font-bold hover:bg-brand hover:text-white transition-all gap-2"
                           >
                             {isLoadingDetails &&
                             selectedQuestionId === question.id ? (

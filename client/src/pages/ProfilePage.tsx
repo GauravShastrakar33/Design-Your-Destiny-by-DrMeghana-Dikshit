@@ -85,7 +85,7 @@ export default function ProfilePage() {
         const info = await App.getInfo();
         setAppVersion(`Version ${info.version} (Build ${info.build})`);
       } catch {
-        setAppVersion("Web v1.0.0");
+        setAppVersion("Web Version");
       }
     };
     loadVersion();
@@ -501,7 +501,7 @@ export default function ProfilePage() {
                     App Version
                   </p>
                   <p className="text-xs text-gray-500 mt-1 font-medium">
-                    {appVersion || "Production Build v1.0.0"}
+                    {appVersion || "Loading..."}
                   </p>
                 </div>
               </div>

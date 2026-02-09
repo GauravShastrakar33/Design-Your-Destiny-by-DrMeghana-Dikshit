@@ -285,8 +285,7 @@ export default function ProcessLessonPage() {
         )}
 
         {files.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-            <Loader2 className="w-10 h-10 mx-auto mb-4 text-gray-100" />
+          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
             <p className="text-gray-400 font-medium">
               No content available for this lesson yet
             </p>
