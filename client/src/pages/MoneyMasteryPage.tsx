@@ -302,11 +302,9 @@ export default function MoneyMasteryPage() {
                           active:scale-[0.98]
                           ${
                             hasEarning
-                              ? `${getEarningColor(earning)} border ${
-                                  isHighestDay
-                                    ? "ring-2 text-white bg-emerald-600 ring-amber-400 ring-offset-1 shadow-[0_0_15px_rgba(251,191,36,0.2)]"
-                                    : ""
-                                }`
+                              ? isHighestDay
+                                ? "ring-2 text-white bg-emerald-600 ring-amber-400 ring-offset-1 shadow-[0_0_15px_rgba(251,191,36,0.2)]"
+                                : "bg-white border border-emerald-600 text-emerald-600 shadow-sm"
                               : isToday(day)
                               ? "bg-brand/5 border border-brand text-brand shadow-sm font-bold"
                               : "bg-gray-300/70 border border-gray-300/70 text-gray-800"

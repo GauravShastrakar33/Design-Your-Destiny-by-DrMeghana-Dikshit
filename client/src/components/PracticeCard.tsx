@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { ChevronDown, ChevronUp, LucideIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SegmentedControl from "./SegmentedControl";
-import { AudioPlayer } from "./AudioPlayer";
+import { VideoPlayer, AudioPlayer } from "./MediaPlayers";
 import { audioLibrary } from "@/lib/audioLibrary";
 
 interface PracticeCardProps {
@@ -17,14 +17,25 @@ interface PracticeCardProps {
   hideIcon?: boolean;
 }
 
-export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, audioUrl, script, testId, hideIcon = false }: PracticeCardProps) {
+export default function PracticeCard({
+  title,
+  icon: Icon,
+  practiceId,
+  videoUrl,
+  audioUrl,
+  script,
+  testId,
+  hideIcon = false,
+}: PracticeCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [activeFormat, setActiveFormat] = useState<"Video" | "Audio" | "Script">("Video");
+  const [activeFormat, setActiveFormat] = useState<
+    "Video" | "Audio" | "Script"
+  >("Video");
 
-  const legacyAudioFile = practiceId 
-    ? audioLibrary.practices.find(p => p.id === practiceId)
+  const legacyAudioFile = practiceId
+    ? audioLibrary.practices.find((p) => p.id === practiceId)
     : null;
-  
+
   const finalAudioUrl = audioUrl || legacyAudioFile?.file;
 
   return (
@@ -32,10 +43,14 @@ export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, 
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full p-4 flex items-center gap-3 hover-elevate active-elevate-2"
-        data-testid={`button-expand-${title.toLowerCase().replace(/\s+/g, '-')}`}
+        data-testid={`button-expand-${title
+          .toLowerCase()
+          .replace(/\s+/g, "-")}`}
       >
         {!hideIcon && <Icon className="w-6 h-6 flex-shrink-0 text-brand" />}
-        <span className="flex-1 text-left font-medium text-gray-900">{title}</span>
+        <span className="flex-1 text-left font-medium text-gray-900">
+          {title}
+        </span>
         {isExpanded ? (
           <ChevronUp className="w-5 h-5 text-brand" />
         ) : (
@@ -57,25 +72,21 @@ export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, 
                 options={["Video", "Audio", "Script"]}
                 selected={activeFormat}
                 onChange={(val) => setActiveFormat(val as typeof activeFormat)}
-                testId={`format-selector-${title.toLowerCase().replace(/\s+/g, '-')}`}
+                testId={`format-selector-${title
+                  .toLowerCase()
+                  .replace(/\s+/g, "-")}`}
               />
 
               <div className="pt-2">
                 {activeFormat === "Video" && (
                   <>
                     {videoUrl ? (
-                      <div className="aspect-video bg-black rounded-lg overflow-hidden" data-testid="video-player">
-                        <video
-                          className="w-full h-full"
-                          controls
-                          controlsList="nodownload"
-                          src={videoUrl}
-                        >
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
+                      <VideoPlayer src={videoUrl} title={title} />
                     ) : (
-                      <div className="aspect-video bg-muted rounded-lg flex items-center justify-center" data-testid="video-placeholder">
+                      <div
+                        className="aspect-video bg-muted rounded-lg flex items-center justify-center"
+                        data-testid="video-placeholder"
+                      >
                         <div className="text-center text-muted-foreground">
                           <p className="text-sm">Video coming soon</p>
                           <p className="text-xs mt-1">{title}</p>
@@ -88,15 +99,18 @@ export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, 
                 {activeFormat === "Audio" && (
                   <>
                     {finalAudioUrl ? (
-                      <AudioPlayer
-                        src={finalAudioUrl}
-                        title={title}
-                        mode="basic"
-                      />
+                      <AudioPlayer src={finalAudioUrl} title={title} />
                     ) : (
-                      <div className="bg-muted rounded-lg p-4 flex items-center gap-3" data-testid="audio-placeholder">
+                      <div
+                        className="bg-muted rounded-lg p-4 flex items-center gap-3"
+                        data-testid="audio-placeholder"
+                      >
                         <button className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                          <svg className="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
+                          <svg
+                            className="w-5 h-5 text-primary-foreground"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
                             <path d="M8 5v14l11-7z" />
                           </svg>
                         </button>
@@ -104,7 +118,9 @@ export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, 
                           <div className="h-1.5 bg-background rounded-full overflow-hidden">
                             <div className="h-full bg-primary w-1/3 rounded-full" />
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">Audio coming soon</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Audio coming soon
+                          </p>
                         </div>
                       </div>
                     )}
@@ -112,9 +128,13 @@ export default function PracticeCard({ title, icon: Icon, practiceId, videoUrl, 
                 )}
 
                 {activeFormat === "Script" && (
-                  <div className="bg-muted rounded-lg p-4 max-h-64 overflow-y-auto" data-testid="script-text">
+                  <div
+                    className="bg-muted rounded-lg p-4 max-h-64 overflow-y-auto"
+                    data-testid="script-text"
+                  >
                     <p className="text-sm leading-relaxed text-foreground">
-                      {script || `Begin by finding a comfortable seated position. Close your eyes gently and take a deep breath in through your nose, filling your lungs completely. Hold for a moment at the top, then slowly exhale through your mouth. 
+                      {script ||
+                        `Begin by finding a comfortable seated position. Close your eyes gently and take a deep breath in through your nose, filling your lungs completely. Hold for a moment at the top, then slowly exhale through your mouth. 
 
 As you continue to breathe naturally, bring your awareness to the present moment. Notice any sensations in your body, any thoughts passing through your mind, without judgment or attachment.
 

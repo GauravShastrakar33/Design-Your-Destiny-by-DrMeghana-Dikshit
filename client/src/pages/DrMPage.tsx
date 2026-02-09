@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { AudioPlayer } from "@/components/MediaPlayers";
 import {
   Loader2,
   MessageCircle,
@@ -45,6 +46,7 @@ export default function DrMPage() {
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
     urlQuestionId
   );
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Auto-select question from URL param
   useEffect(() => {
@@ -163,12 +165,10 @@ export default function DrMPage() {
           <div className="inline-flex p-3 rounded-2xl bg-indigo-50 text-brand border border-indigo-100 shadow-sm">
             <Mic className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900">
-            Personal Guidance
-          </h1>
+          <h1 className="text-xl font-bold text-gray-900">Personal Guidance</h1>
           <p className="text-gray-500 text-sm leading-relaxed max-w-sm mx-auto">
-            Dr. M personally answers one core question every month to help
-            guide your transformation.
+            Dr. M personally answers one core question every month to help guide
+            your transformation.
           </p>
         </motion.div>
 
@@ -241,18 +241,13 @@ export default function DrMPage() {
 
                         {selectedQuestionId === currentMonthQuestion.id &&
                         questionDetails?.audioUrl ? (
-                          <div className="p-4 rounded-2xl bg-brand/5 border border-brand/20 shadow-sm">
-                            <audio
-                              controls
-                              controlsList="nodownload noplaybackrate"
-                              className="w-full h-10 accent-brand"
+                          <div className="p-0 border-0 bg-transparent">
+                            <AudioPlayer
+                              ref={audioRef}
                               src={questionDetails.audioUrl}
-                            >
-                              Your browser does not support the audio element.
-                            </audio>
-                            <p className="text-xs text-brand/60 mt-2 font-bold tracking-widest text-center">
-                              Dr. Meghana is speaking
-                            </p>
+                              title="Voice Guidance"
+                              onPlay={() => {}}
+                            />
                           </div>
                         ) : (
                           <Button
@@ -382,12 +377,13 @@ export default function DrMPage() {
                       <div className="pt-2">
                         {selectedQuestionId === question.id &&
                         questionDetails?.audioUrl ? (
-                          <div className="p-2 rounded-2xl bg-brand/5 border border-brand/10 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <audio
-                              controls
-                              controlsList="nodownload noplaybackrate"
-                              className="w-full h-8 accent-brand"
+                          <div className="p-0 border-0 bg-transparent animate-in fade-in slide-in-from-top-2 duration-300">
+                            <AudioPlayer
+                              ref={audioRef}
                               src={questionDetails.audioUrl}
+                              title={`Response for ${formatMonthYear(
+                                question.monthYear
+                              )}`}
                             />
                           </div>
                         ) : (

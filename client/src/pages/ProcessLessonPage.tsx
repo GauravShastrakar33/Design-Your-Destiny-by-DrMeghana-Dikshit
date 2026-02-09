@@ -1,9 +1,10 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { useParams, useLocation, useSearch } from "wouter";
-import { ArrowLeft, Loader2, Video, Music, FileText } from "lucide-react";
+import { Loader2, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { VideoPlayer, AudioPlayer } from "@/components/MediaPlayers";
 import { motion } from "framer-motion";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useRef } from "react";
@@ -160,28 +161,21 @@ export default function ProcessLessonPage() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
         {videoFile && videoFile.signedUrl && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <Card className="overflow-hidden border-0 shadow-2xl shadow-black/[0.05] rounded-2xl bg-black">
-              <video
-                ref={videoRef}
-                src={videoFile.signedUrl}
-                controls
-                controlsList="nodownload noremoteplayback"
-                disablePictureInPicture
-                playsInline
-                className="w-full aspect-video"
-                data-testid="video-player"
-                onPlay={() => {
-                  pauseAudioIfPlaying();
-                  handlePlay(lesson.id, lesson.title);
-                }}
-                onTimeUpdate={(e) =>
-                  handleTimeUpdate(e.currentTarget, lesson.id, lesson.title)
-                }
-              />
-            </Card>
+            <VideoPlayer
+              ref={videoRef}
+              src={videoFile.signedUrl}
+              onPlay={() => {
+                pauseAudioIfPlaying();
+                handlePlay(lesson.id, lesson.title);
+              }}
+              onTimeUpdate={(element) =>
+                handleTimeUpdate(element, lesson.id, lesson.title)
+              }
+            />
           </motion.div>
         )}
 
@@ -219,33 +213,22 @@ export default function ProcessLessonPage() {
 
         {audioFile && audioFile.signedUrl && (
           <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <Card className="p-6 border-0 shadow-lg shadow-black/[0.03] rounded-2xl bg-white group">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center group-hover:bg-brand group-hover:text-white transition-colors">
-                  <Music className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-gray-900">Experience Audio</h3>
-              </div>
-              <audio
-                ref={audioRef}
-                src={audioFile.signedUrl}
-                controls
-                controlsList="nodownload noplaybackrate"
-                className="w-full custom-audio"
-                data-testid="audio-player"
-                onPlay={() => {
-                  pauseVideoIfPlaying();
-                  handlePlay(lesson.id, lesson.title);
-                }}
-                onTimeUpdate={(e) =>
-                  handleTimeUpdate(e.currentTarget, lesson.id, lesson.title)
-                }
-              />
-            </Card>
+            <AudioPlayer
+              ref={audioRef}
+              src={audioFile.signedUrl}
+              title={lesson.title}
+              onPlay={() => {
+                pauseVideoIfPlaying();
+                handlePlay(lesson.id, lesson.title);
+              }}
+              onTimeUpdate={(element) =>
+                handleTimeUpdate(element, lesson.id, lesson.title)
+              }
+            />
           </motion.div>
         )}
 

@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import { AudioPlayer } from "@/components/AudioPlayer";
+import { AudioPlayer } from "@/components/MediaPlayers";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Playlist, PlaylistItem } from "@shared/schema";
@@ -668,9 +668,7 @@ export default function MyPracticePlaylistPage() {
                                 <AudioPlayer
                                   src={currentAudio.url || ""}
                                   title={currentAudio.title}
-                                  mode="playlist"
                                   autoPlay={true}
-                                  initialTime={initialTime}
                                   onEnded={handleTrackEnded}
                                 />
                               </div>
