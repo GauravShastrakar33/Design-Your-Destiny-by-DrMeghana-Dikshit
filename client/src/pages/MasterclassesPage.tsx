@@ -23,6 +23,9 @@ interface MasterclassResponse {
   courses: MasterclassCourse[];
 }
 
+import { useAuth } from "@/contexts/AuthContext";
+import { apiRequest } from "@/lib/queryClient";
+
 // Skeleton component for loading state
 const CourseCardSkeleton = () => (
   <Card className="overflow-hidden border border-gray-100 shadow-sm rounded-2xl bg-white">
@@ -36,9 +39,18 @@ const CourseCardSkeleton = () => (
 
 export default function MasterclassesPage() {
   const [, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth();
 
   const { data, isLoading } = useQuery<MasterclassResponse>({
     queryKey: ["/api/public/v1/features/MASTERCLASS"],
+    queryFn: async () => {
+      const response = await apiRequest(
+        "GET",
+        "/api/public/v1/features/MASTERCLASS"
+      );
+      return response.json();
+    },
+    enabled: isAuthenticated,
   });
 
   const courses = data?.courses || [];

@@ -37,19 +37,9 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // 1. Split path and query params
-  const [path, query] = url.split('?');
-
-  // 2. Clean the path (remove leading slashes)
-  let cleanPath = path.replace(/^\/+/, "");
-
-  // 3. Ensure trailing slash only on the path portion if it's not a file
-  if (cleanPath && !cleanPath.endsWith('/') && !cleanPath.includes('.')) {
-    cleanPath += '/';
-  }
-
-  // 4. Reconstruct the URL
-  const cleanUrl = query ? `${cleanPath}?${query}` : cleanPath;
+  // 1. Clean the URL by removing leading slashes only
+  // We NO LONGER append a trailing slash automatically because it breaks parameters
+  const cleanUrl = url.replace(/^\/+/, "");
 
   const fullUrl = Capacitor.isNativePlatform()
     ? `https://app.drmeghana.com/${cleanUrl}`
