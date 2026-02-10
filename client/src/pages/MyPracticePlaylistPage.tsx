@@ -368,7 +368,7 @@ export default function MyPracticePlaylistPage() {
   const getCurrentAudio = () => {
     if (!currentPlaylistId || playingItems.length === 0) return null;
     const item = playingItems[currentTrackIndex];
-    if (!item || !item.audioFiles.length) return null;
+    if (!item || !item.audioFiles || !item.audioFiles.length) return null;
     const audioFile = item.audioFiles[0];
     return {
       url: audioFile.signedUrl,
@@ -640,12 +640,11 @@ export default function MyPracticePlaylistPage() {
                               {expandedPlaylistData.items.map((item, index) => (
                                 <div
                                   key={item.id}
-                                  className={`flex items-center gap-2 text-sm ${
-                                    currentPlaylistId === playlist.id &&
+                                  className={`flex items-center gap-2 text-sm ${currentPlaylistId === playlist.id &&
                                     currentTrackIndex === index
-                                      ? "text-brand font-semibold"
-                                      : "text-foreground"
-                                  }`}
+                                    ? "text-brand font-semibold"
+                                    : "text-foreground"
+                                    }`}
                                   data-testid={`practice-item-${index}`}
                                 >
                                   <div
@@ -882,6 +881,12 @@ export default function MyPracticePlaylistPage() {
                   No content available yet. Please check back later.
                 </p>
               </div>
+            ) : !playlistSource?.modules || playlistSource.modules.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  No modules available yet. Please check back later.
+                </p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {playlistSource.modules.map((module) => (
@@ -890,22 +895,21 @@ export default function MyPracticePlaylistPage() {
                       {module.title}
                     </h4>
                     <div className="space-y-1">
-                      {module.lessons.map((lesson) => {
+                      {module.lessons?.map((lesson) => {
                         const selectionIndex = selectedLessonIds.indexOf(
                           lesson.id
                         );
                         const isSelected = selectionIndex !== -1;
-                        const hasAudio = lesson.audioFiles.length > 0;
+                        const hasAudio = lesson.audioFiles?.length > 0;
                         if (!hasAudio) return null;
                         return (
                           <button
                             key={lesson.id}
                             onClick={() => handleToggleLesson(lesson.id)}
-                            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                              isSelected
-                                ? "bg-brand/10 border border-brand"
-                                : "bg-gray-50 hover:bg-gray-100"
-                            }`}
+                            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${isSelected
+                              ? "bg-brand/10 border border-brand"
+                              : "bg-gray-50 hover:bg-gray-100"
+                              }`}
                             data-testid={`lesson-option-${lesson.id}`}
                           >
                             <Music className="w-4 h-4 text-brand flex-shrink-0" />

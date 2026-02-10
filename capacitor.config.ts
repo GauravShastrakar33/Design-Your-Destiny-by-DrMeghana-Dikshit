@@ -5,13 +5,15 @@ const config: CapacitorConfig = {
   appName: "Design Your Destiny by Dr. Meghana Dikshit",
   webDir: "dist/public",
 
+  server: {
+    // url: "https://app.drmeghana.com",
+    androidScheme: "https",  // fix
+    hostname: "localhost", // fix
+  },
+
   plugins: {
-    SplashScreen: {
-      launchShowDuration: 3000,
-      launchAutoHide: true,
-      backgroundColor: "#FFFFFF",
-      showSpinner: false,
-      androidScaleType: "CENTER_CROP",
+    CapacitorHttp: {
+      enabled: true, // This patches 'fetch' to use native layer automatically
     },
     StatusBar: {
       overlaysWebView: false,
@@ -23,10 +25,7 @@ const config: CapacitorConfig = {
     },
   },
 
-  server: {
-    url: "https://app.drmeghana.com",
-    androidScheme: "https",
-  },
+
 };
 
 export default config;

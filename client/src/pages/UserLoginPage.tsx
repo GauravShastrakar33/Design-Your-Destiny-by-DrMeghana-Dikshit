@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function UserLoginPage() {
   const [email, setEmail] = useState("");
@@ -18,7 +19,7 @@ export default function UserLoginPage() {
   const { login, isAuthenticated } = useAuth();
 
   if (isAuthenticated) {
-    return <Redirect to="/" />;
+    return <Redirect to="/home" />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,16 +37,15 @@ export default function UserLoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const response = await apiRequest("POST", "/api/v1/auth/login", {
+        email,
+        password,
       });
 
       const data = await response.json();
 
       if (response.ok && data.token) {
-        login(data.token, data.user);
+        await login(data.token, data.user);
         toast({
           title: "Welcome back!",
           description: `Hello, ${data.user.name}!`,
@@ -54,7 +54,7 @@ export default function UserLoginPage() {
         if (data.user.forcePasswordChange) {
           setLocation("/account-settings");
         } else {
-          setLocation("/");
+          setLocation("/home");
         }
       } else {
         toast({
@@ -64,9 +64,10 @@ export default function UserLoginPage() {
         });
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Error",
-        description: "Failed to connect to server",
+        description: error instanceof Error ? error.message : "Failed to connect to server",
         variant: "destructive",
       });
     } finally {

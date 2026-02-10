@@ -1,24 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
   plugins: [
     react(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
   ],
+
+  base: "./", // standard relative paths for capacitor
 
   resolve: {
     alias: {
@@ -33,16 +22,18 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    target: "es2020", // 📱 Better compatibility for older Android WebViews
+    modulePreload: {
+      polyfill: true // 🔧 Ensure ESM polyfills are included
+    },
   },
 
+  publicDir: path.resolve(import.meta.dirname, "client/public"),
+
   server: {
-    hmr: {
-      overlay: false, // ✅ disable red overlay error modal during dev reloads
-    },
     fs: {
       strict: false, // ✅ allow serving files outside root (important for Replit public)
     },
-    publicDir: path.resolve(import.meta.dirname, "client/public"), // ✅ ensure /RightDecisions.mp4 is served
     port: 5173, // optional: helps when debugging locally
   },
 });

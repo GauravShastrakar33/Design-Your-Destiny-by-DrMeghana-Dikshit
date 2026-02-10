@@ -31,6 +31,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useEvaluateBadgesOnMount } from "@/hooks/useBadges";
 import { BadgeToastManager } from "@/components/BadgeEarnedToast";
 import { getUnreadCount } from "@/lib/notificationState";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface BannerData {
   banner: {
@@ -104,7 +105,7 @@ export default function HomePage() {
   });
 
   // Check if user is authenticated
-  const isAuthenticated = !!localStorage.getItem("@app:user_token");
+  const { isAuthenticated } = useAuth();
 
   // Fetch streak data - only when authenticated
   const { data: streakData } = useQuery<StreakDay[]>({
@@ -213,9 +214,8 @@ export default function HomePage() {
       <div className="w-full mx-auto min-h-screen flex flex-col max-w-5xl transition-all duration-300">
         {/* Header Section */}
         <header
-          className={`sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-4 flex items-center justify-between gap-4 transition-all ${
-            isNative ? "pt-[calc(env(safe-area-inset-top)+1rem)]" : ""
-          }`}
+          className={`sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-4 flex items-center justify-between gap-4 transition-all ${isNative ? "pt-[calc(env(safe-area-inset-top)+1rem)]" : ""
+            }`}
         >
           <div className="flex-1">
             <h1 className="text-xl sm:text-xl font-bold text-slate-900 tracking-tight">
@@ -355,9 +355,8 @@ export default function HomePage() {
                 <button
                   key={card.path}
                   onClick={() => setLocation(card.path)}
-                  className={`group relative overflow-hidden bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand/20 transition-all duration-300 active:scale-[0.98] flex items-center gap-2 sm:gap-3 ${
-                    card.fullWidth ? "col-span-2 lg:col-span-4" : ""
-                  }`}
+                  className={`group relative overflow-hidden bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand/20 transition-all duration-300 active:scale-[0.98] flex items-center gap-2 sm:gap-3 ${card.fullWidth ? "col-span-2 lg:col-span-4" : ""
+                    }`}
                   data-testid={card.testId}
                 >
                   <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-brand/5 flex items-center justify-center group-hover:bg-brand/10 group-hover:scale-110 transition-all duration-300 shrink-0">
@@ -424,8 +423,8 @@ export default function HomePage() {
                         : new Date();
                       const dayName = day.date
                         ? dayDate
-                            .toLocaleDateString("en-US", { weekday: "short" })
-                            .charAt(0)
+                          .toLocaleDateString("en-US", { weekday: "short" })
+                          .charAt(0)
                         : ["M", "T", "W", "T", "F", "S", "S"][index];
                       const isToday =
                         day.date === new Date().toISOString().split("T")[0];
@@ -437,15 +436,13 @@ export default function HomePage() {
                           data-testid={`streak-day-${index}`}
                         >
                           <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${
-                              day.active
-                                ? "bg-gradient-to-b from-orange-400 to-orange-500 shadow-lg shadow-orange-500/30 scale-100"
-                                : "bg-slate-50 border border-slate-100 scale-90"
-                            } ${
-                              isToday
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${day.active
+                              ? "bg-gradient-to-b from-orange-400 to-orange-500 shadow-lg shadow-orange-500/30 scale-100"
+                              : "bg-slate-50 border border-slate-100 scale-90"
+                              } ${isToday
                                 ? "ring-2 ring-orange-400 ring-offset-2"
                                 : ""
-                            }`}
+                              }`}
                           >
                             {day.active ? (
                               <Flame
@@ -457,9 +454,8 @@ export default function HomePage() {
                             )}
                           </div>
                           <span
-                            className={`text-xs font-bold tracking-wide ${
-                              day.active ? "text-orange-600" : "text-slate-500"
-                            }`}
+                            className={`text-xs font-bold tracking-wide ${day.active ? "text-orange-600" : "text-slate-500"
+                              }`}
                           >
                             {dayName}
                           </span>

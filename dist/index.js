@@ -6664,20 +6664,12 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path2 from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 var vite_config_default = defineConfig({
   plugins: [
-    react(),
-    runtimeErrorOverlay(),
-    ...process.env.NODE_ENV !== "production" && process.env.REPL_ID !== void 0 ? [
-      await import("@replit/vite-plugin-cartographer").then(
-        (m) => m.cartographer()
-      ),
-      await import("@replit/vite-plugin-dev-banner").then(
-        (m) => m.devBanner()
-      )
-    ] : []
+    react()
   ],
+  base: "./",
+  // standard relative paths for capacitor
   resolve: {
     alias: {
       "@": path2.resolve(import.meta.dirname, "client", "src"),
@@ -6688,19 +6680,20 @@ var vite_config_default = defineConfig({
   root: path2.resolve(import.meta.dirname, "client"),
   build: {
     outDir: path2.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true
+    emptyOutDir: true,
+    target: "es2020",
+    // 📱 Better compatibility for older Android WebViews
+    modulePreload: {
+      polyfill: true
+      // 🔧 Ensure ESM polyfills are included
+    }
   },
+  publicDir: path2.resolve(import.meta.dirname, "client/public"),
   server: {
-    hmr: {
-      overlay: false
-      // ✅ disable red overlay error modal during dev reloads
-    },
     fs: {
       strict: false
       // ✅ allow serving files outside root (important for Replit public)
     },
-    publicDir: path2.resolve(import.meta.dirname, "client/public"),
-    // ✅ ensure /RightDecisions.mp4 is served
     port: 5173
     // optional: helps when debugging locally
   }
@@ -6877,7 +6870,32 @@ function startNotificationCron() {
 }
 
 // server/index.ts
+import cors from "cors";
 var app = express2();
+var allowedOrigins = [
+  "https://app.drmeghana.com",
+  "http://localhost",
+  // Android default
+  "https://localhost",
+  // Android/iOS modern
+  "capacitor://localhost"
+  // iOS default
+];
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+  })
+);
+app.options("*", cors());
 app.get("/firebase-messaging-sw.js", (req, res) => {
   const swPath = path4.join(
     process.cwd(),

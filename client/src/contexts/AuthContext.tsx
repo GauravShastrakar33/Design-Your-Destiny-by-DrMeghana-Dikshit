@@ -1,8 +1,9 @@
 import { Capacitor } from "@capacitor/core";
-import { initPushNotifications } from "@/lib/nativePush";
+import { initPushNotifications, syncTokenWithBackend } from "@/lib/nativePush";
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { refreshPushToken, setupForegroundNotifications } from "@/lib/notifications";
+import { Preferences } from "@capacitor/preferences";
 
 interface User {
   id: number;
@@ -17,8 +18,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   requiresPasswordChange: boolean;
-  login: (token: string, user: User) => void;
-  logout: () => void;
+  login: (token: string, user: User) => Promise<void>;
+  logout: () => Promise<void>;
   clearPasswordChangeRequirement: () => void;
 }
 
@@ -30,47 +31,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("@app:user_token");
-    const storedUser = localStorage.getItem("@app:user");
-
-    if (token && storedUser) {
+    const initAuth = async () => {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+        const { value: token } = await Preferences.get({ key: "@app:user_token" });
+        const { value: storedUser } = await Preferences.get({ key: "@app:user" });
 
-        // Check if user needs to change password
-        if (parsedUser.forcePasswordChange) {
-          setRequiresPasswordChange(true);
-        }
+        if (token && storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
 
-        if (Capacitor.isNativePlatform()) {
-          // 📱 Android / iOS
-          initPushNotifications().then(() => {
-            console.log("📱 Native push initialized");
-          });
-        } else {
-          // 🌐 Web / PWA
-          refreshPushToken().then((refreshed) => {
-            if (refreshed) {
-              console.log("🌐 Web push token refreshed");
+            // Check if user needs to change password
+            if (parsedUser.forcePasswordChange) {
+              setRequiresPasswordChange(true);
             }
-          });
 
-          setupForegroundNotifications();
+            if (Capacitor.isNativePlatform()) {
+              // 📱 Android / iOS - Fire and forget, don't block rendering
+              initPushNotifications().then(() => {
+                console.log("📱 Native push initialized");
+                // 🔄 Sync token if it was already cached
+                syncTokenWithBackend();
+              }).catch((error) => {
+                // Already logged in initPushNotifications, just prevent unhandled rejection
+                console.error("⚠️ Push init failed in AuthContext (non-blocking):", error);
+              });
+            } else {
+              // 🌐 Web / PWA
+              refreshPushToken().then((refreshed) => {
+                if (refreshed) {
+                  console.log("🌐 Web push token refreshed");
+                }
+              });
+
+              setupForegroundNotifications();
+            }
+          } catch (error) {
+            console.error("Failed to parse user data", error);
+            await Preferences.remove({ key: "@app:user_token" });
+            await Preferences.remove({ key: "@app:user" });
+          }
         }
       } catch (error) {
-        localStorage.removeItem("@app:user_token");
-        localStorage.removeItem("@app:user");
+        console.error("Auth initialization failed", error);
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
 
-    setIsLoading(false);
+    initAuth();
   }, []);
 
 
-  const login = (token: string, userData: User) => {
-    localStorage.setItem("@app:user_token", token);
-    localStorage.setItem("@app:user", JSON.stringify(userData));
+  const login = async (token: string, userData: User) => {
+    await Preferences.set({ key: "@app:user_token", value: token });
+    await Preferences.set({ key: "@app:user", value: JSON.stringify(userData) });
     setUser(userData);
 
     // Check if user needs to change password
@@ -78,28 +93,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRequiresPasswordChange(true);
     }
 
-    // 🔔 Register push AFTER login
+    // 🔔 Register push AFTER login - Fire and forget, don't block UI
     if (Capacitor.isNativePlatform()) {
       initPushNotifications().then(() => {
         console.log("📱 Native push initialized after login");
+        // 🚀 CRITICAL: Sync the token now that we have the Auth token!
+        syncTokenWithBackend();
+      }).catch((error) => {
+        // Already logged in initPushNotifications, just prevent unhandled rejection
+        console.error("⚠️ Push init after login failed (non-blocking):", error);
       });
     }
   };
 
-  const clearPasswordChangeRequirement = () => {
+  const clearPasswordChangeRequirement = async () => {
     setRequiresPasswordChange(false);
     // Update stored user to remove the flag
     if (user) {
       const updatedUser = { ...user, forcePasswordChange: false };
-      localStorage.setItem("@app:user", JSON.stringify(updatedUser));
+      await Preferences.set({ key: "@app:user", value: JSON.stringify(updatedUser) });
       setUser(updatedUser);
     }
   };
 
 
-  const logout = () => {
-    localStorage.removeItem("@app:user_token");
-    localStorage.removeItem("@app:user");
+  const logout = async () => {
+    await Preferences.remove({ key: "@app:user_token" });
+    await Preferences.remove({ key: "@app:user" });
     setUser(null);
     queryClient.clear();
   };

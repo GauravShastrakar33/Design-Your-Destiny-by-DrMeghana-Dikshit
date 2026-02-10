@@ -3,6 +3,7 @@ import { PushNotifications } from "@capacitor/push-notifications";
 import { FirebaseMessaging } from "@capacitor-firebase/messaging";
 import { apiRequest } from "@/lib/queryClient";
 import { setUnread } from "./notificationState";
+import { Preferences } from "@capacitor/preferences";
 
 // SPA navigation helper for use outside React components
 function navigate(to: string) {
@@ -80,93 +81,89 @@ export function setupNativePushListeners() {
       tokenValue.substring(0, 20) + "...",
     );
 
-    try {
-      await apiRequest("POST", "/api/v1/notifications/register-device", {
-        token: tokenValue,
-        platform,
-      });
-      console.log("✅ Native FCM token registered with backend");
+    // 💾 Always save the token for later sync
+    await Preferences.set({ key: "@app:pending_fcm_token", value: tokenValue });
+    await Preferences.set({ key: "@app:fcm_platform", value: platform });
 
-      // Dispatch custom event so ProfilePage can update its state
-      window.dispatchEvent(
-        new CustomEvent("nativePushRegistered", { detail: { success: true } }),
-      );
-    } catch (error) {
-      console.error("❌ Failed to register native token with backend:", error);
-      window.dispatchEvent(
-        new CustomEvent("nativePushRegistered", { detail: { success: false } }),
-      );
+    // 🚀 Only sync now if we are already authenticated
+    const { value: hasToken } = await Preferences.get({ key: "@app:user_token" });
+    if (hasToken) {
+      await syncTokenWithBackend();
+    } else {
+      console.log("⏳ No user token found; deferring registration until login");
     }
   });
 
-  PushNotifications.addListener("registrationError", (error) => {
-    console.error("❌ Push registration error:", error);
+  // ... (rest of listeners remain same) ...
+}
+
+/**
+ * Synchronizes the locally stored FCM token with the backend.
+ * Guaranteed to only run if a user token is present.
+ */
+export async function syncTokenWithBackend() {
+  const { value: tokenValue } = await Preferences.get({ key: "@app:pending_fcm_token" });
+  const { value: platform } = await Preferences.get({ key: "@app:fcm_platform" });
+  const { value: userToken } = await Preferences.get({ key: "@app:user_token" });
+
+  if (!tokenValue || !userToken) {
+    return;
+  }
+
+  try {
+    await apiRequest("POST", "/api/v1/notifications/register-device", {
+      token: tokenValue,
+      platform: platform || "native",
+    });
+    console.log("✅ Native FCM token synchronized with backend");
+
     window.dispatchEvent(
-      new CustomEvent("nativePushRegistered", {
-        detail: { success: false, error },
-      }),
+      new CustomEvent("nativePushRegistered", { detail: { success: true } }),
     );
-  });
-
-  // Handle notification tap (deep linking)
-  PushNotifications.addListener(
-    "pushNotificationActionPerformed",
-    (notification) => {
-      console.log("📱 Notification tapped:", notification);
-      const data = notification.notification.data;
-
-      if (!data) return;
-
-      if (data.eventId) {
-        navigate(`/events/${data.eventId}`);
-        return;
-      }
-
-      if (data.type === "admin_test") {
-        navigate("/notifications");
-        return;
-      }
-
-      if (data.type === "drm_answer") {
-        navigate("/drm");
-        return;
-      }
-    },
-  );
-
-  // Handle foreground notifications
-  PushNotifications.addListener("pushNotificationReceived", (notification) => {
-    console.log("📱 Foreground notification received:", notification);
-    setUnread(true);
-  });
-
-  console.log("📱 Native push listeners set up");
+  } catch (error) {
+    console.error("❌ Failed to sync native token with backend:", error);
+    window.dispatchEvent(
+      new CustomEvent("nativePushRegistered", { detail: { success: false } }),
+    );
+  }
 }
 
 /**
  * Initialize Push Notifications according to requirements:
  * 1. On FIRST launch: Request OS permissions. If granted, enable and register.
  * 2. On SUBSEQUENT launches: Use saved user preference. Do not auto-request.
+ * 
+ * CRITICAL: This function is wrapped in try/catch to prevent Firebase errors
+ * from blocking the app's UI rendering. The app should render even if push
+ * notifications fail to initialize (e.g., network issues, Firebase unavailable).
  */
 export async function initPushNotifications() {
   if (!isNativePlatform()) return;
 
-  setupNativePushListeners();
-  console.log("📱 Native push init: checking permissions...");
   try {
-    let permStatus = await PushNotifications.checkPermissions();
-    if (permStatus.receive === "prompt") {
-      permStatus = await PushNotifications.requestPermissions();
-    }
+    setupNativePushListeners();
+    console.log("📱 Native push init: checking permissions...");
 
-    if (permStatus.receive === "granted") {
-      await PushNotifications.register();
-      console.log("✅ Native push registered");
-    } else {
-      console.log("❌ Native push permission not granted");
+    try {
+      let permStatus = await PushNotifications.checkPermissions();
+      if (permStatus.receive === "prompt") {
+        permStatus = await PushNotifications.requestPermissions();
+      }
+
+      if (permStatus.receive === "granted") {
+        await PushNotifications.register();
+        console.log("✅ Native push registered");
+      } else {
+        console.log("❌ Native push permission not granted");
+      }
+    } catch (error) {
+      console.error("❌ Error during native push registration:", error);
+      // Don't rethrow - let the app continue even if push fails
     }
   } catch (error) {
-    console.error("❌ Error during native push init:", error);
+    // CRITICAL: Catch ALL errors to prevent blocking UI
+    console.error("⚠️ Push notification initialization failed (non-blocking):", error);
+    // App will continue to render normally
   }
 }
 

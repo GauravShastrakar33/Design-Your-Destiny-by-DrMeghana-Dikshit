@@ -1,4 +1,6 @@
+import { Capacitor } from "@capacitor/core";
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { Preferences } from "@capacitor/preferences";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -7,25 +9,26 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-function getAuthHeaders(url: string): Record<string, string> {
+async function getAuthHeaders(url: string): Promise<Record<string, string>> {
   const headers: Record<string, string> = {};
-  
+
   const normalizedUrl = url.replace(/^\/+/, "/");
-  
+
   const isAdminRoute = normalizedUrl.startsWith("/admin") || normalizedUrl.startsWith("/api/admin");
-  
+
   if (isAdminRoute) {
-    const adminToken = localStorage.getItem("@app:admin_token");
+    const { value: adminToken } = await Preferences.get({ key: "@app:admin_token" });
     if (adminToken) {
       headers["Authorization"] = `Bearer ${adminToken}`;
     }
-  } else if (normalizedUrl.startsWith("/api/v1") || normalizedUrl.startsWith("/api/public/v1")) {
-    const userToken = localStorage.getItem("@app:user_token");
+  } else {
+    // Check for user token for all other routes, especially API routes
+    const { value: userToken } = await Preferences.get({ key: "@app:user_token" });
     if (userToken) {
       headers["Authorization"] = `Bearer ${userToken}`;
     }
   }
-  
+
   return headers;
 }
 
@@ -34,17 +37,29 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const authHeaders = getAuthHeaders(url);
+  // 1. Remove leading slashes and ensure a trailing slash
+  let cleanUrl = url.replace(/^\/+/, "");
+  if (!cleanUrl.endsWith('/')) {
+    cleanUrl += '/';
+  }
+
+  const fullUrl = Capacitor.isNativePlatform()
+    ? `https://app.drmeghana.com/${cleanUrl}`
+    : `/${cleanUrl}`;
+
+  // Use 'cleanUrl' for headers to stay consistent
+  const authHeaders = await getAuthHeaders(cleanUrl);
+
   const headers: Record<string, string> = {
     ...authHeaders,
     ...(data ? { "Content-Type": "application/json" } : {}),
   };
 
-  const res = await fetch(url, {
+  const res = await fetch(fullUrl, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+    credentials: "include", // This handles cookies for web
   });
 
   await throwIfResNotOk(res);
@@ -56,22 +71,27 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const url = queryKey.join("/") as string;
-    const authHeaders = getAuthHeaders(url);
-    
-    const res = await fetch(url, {
-      credentials: "include",
-      headers: authHeaders,
-    });
+    async ({ queryKey }) => {
+      const url = queryKey.join("/") as string;
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
+      // Use apiRequest for proper native platform routing
+      try {
+        const res = await apiRequest("GET", url);
 
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
+        if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+          return null;
+        }
+
+        await throwIfResNotOk(res);
+        return await res.json();
+      } catch (error) {
+        // If it's a 401 and we should return null, do so
+        if (unauthorizedBehavior === "returnNull" && error instanceof Error && error.message.includes("401")) {
+          return null;
+        }
+        throw error;
+      }
+    };
 
 export const queryClient = new QueryClient({
   defaultOptions: {

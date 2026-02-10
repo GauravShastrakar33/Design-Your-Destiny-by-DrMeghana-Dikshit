@@ -1,4 +1,5 @@
-import { useLocation } from "wouter";
+import { Router, useLocation } from "wouter";
+import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -13,16 +14,27 @@ import AppRoutes from "@/routes/AppRoutes";
 import AdminRoutes from "@/routes/AdminRoutes";
 import NetworkStatus from "@/components/NetworkStatus";
 import { useEffect } from "react";
-import { setUnread } from "@/lib/notificationState";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Toast } from "@capacitor/toast";
 import { Capacitor } from "@capacitor/core";
 
 function App() {
-  const [location] = useLocation();
+  console.log("🎯 App component rendering...");
+  const [location, setLocation] = useLocation();
   const isAdminRoute = location.startsWith("/admin");
   const isAdminLoginPage = location === "/admin/login";
   const isLoginPage = location === "/login";
+  console.log("📍 Current location:", location);
+  console.log("🔍 isLoginPage:", isLoginPage, "| isAdminRoute:", isAdminRoute);
+
+  // CRITICAL: Force redirect if on root path
+  useEffect(() => {
+    console.log("🔄 Location effect triggered, location:", location);
+    if (location === "/" || location === "") {
+      console.log("⚠️ On root path! Forcing redirect to /login...");
+      setLocation("/login");
+    }
+  }, [location, setLocation]);
 
   // 🔴 FIX 3: Handle notifications received while app was closed/backgrounded
   useEffect(() => {
@@ -94,40 +106,42 @@ function App() {
   }, []);
 
   return (
-    <NetworkStatus>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <AuthProvider>
-            <AdminAuthProvider>
-              {isAdminRoute ? (
-                isAdminLoginPage ? (
-                  <AdminLayout>
-                    <AdminRoutes />
-                  </AdminLayout>
-                ) : (
-                  <AdminRoute>
+    <Router hook={useHashLocation}>
+      <NetworkStatus>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <AuthProvider>
+              <AdminAuthProvider>
+                {isAdminRoute ? (
+                  isAdminLoginPage ? (
                     <AdminLayout>
                       <AdminRoutes />
                     </AdminLayout>
-                  </AdminRoute>
-                )
-              ) : isLoginPage ? (
-                <AppLayout>
-                  <AppRoutes />
-                </AppLayout>
-              ) : (
-                <ProtectedRoute>
+                  ) : (
+                    <AdminRoute>
+                      <AdminLayout>
+                        <AdminRoutes />
+                      </AdminLayout>
+                    </AdminRoute>
+                  )
+                ) : isLoginPage ? (
                   <AppLayout>
                     <AppRoutes />
                   </AppLayout>
-                </ProtectedRoute>
-              )}
-            </AdminAuthProvider>
-          </AuthProvider>
-          <Toaster />
-        </TooltipProvider>
-      </QueryClientProvider>
-    </NetworkStatus>
+                ) : (
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <AppRoutes />
+                    </AppLayout>
+                  </ProtectedRoute>
+                )}
+              </AdminAuthProvider>
+            </AuthProvider>
+            <Toaster />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </NetworkStatus>
+    </Router>
   );
 }
 

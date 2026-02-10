@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import HomePage from "@/pages/HomePage";
 import ProcessesPage from "@/pages/ProcessesPage";
 import DesignYourPracticePage from "@/pages/DesignYourPracticePage";
@@ -34,7 +34,14 @@ import NotFound from "@/pages/not-found";
 export default function AppRoutes() {
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
+      {/* Handle empty hash - redirect to login */}
+      <Route path="/">
+        <Redirect to="/login" />
+      </Route>
+      <Route path="/index.html">
+        <Redirect to="/login" />
+      </Route>
+      <Route path="/home" component={HomePage} />
       <Route path="/processes" component={ProcessesPage} />
       <Route path="/design-practice" component={DesignYourPracticePage} />
       <Route path="/community-practices" component={CommunityPracticesPage} />
