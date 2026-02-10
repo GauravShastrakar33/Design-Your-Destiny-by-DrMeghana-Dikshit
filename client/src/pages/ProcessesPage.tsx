@@ -28,6 +28,8 @@ import type {
   CmsLesson,
   CmsModuleFolder,
 } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FeatureResponse {
   feature: FrontendFeature;
@@ -59,9 +61,8 @@ function LessonItem({
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className={`px-5 py-3.5 flex items-center gap-4 cursor-pointer transition-all hover:bg-brand/5 group/lesson border-b border-gray-100 ${
-        isLast ? "border-b-0" : ""
-      } last:border-b-0`}
+      className={`px-5 py-3.5 flex items-center gap-4 cursor-pointer transition-all hover:bg-brand/5 group/lesson border-b border-gray-100 ${isLast ? "border-b-0" : ""
+        } last:border-b-0`}
       onClick={() => onClick(lesson.id, moduleId)}
       data-testid={`lesson-item-${lesson.id}`}
     >
@@ -112,9 +113,8 @@ function FolderAccordion({
             </div>
 
             <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                isOpen ? "bg-amber-500 text-white" : "text-gray-300"
-              }`}
+              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isOpen ? "bg-amber-500 text-white" : "text-gray-300"
+                }`}
             >
               {isOpen ? (
                 <ChevronDown className="w-4 h-4" />
@@ -164,15 +164,15 @@ function ModuleAccordion({
   onToggle: () => void;
 }) {
   const [, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth(); // Imported from AuthContext
 
   const { data, isLoading } = useQuery<ModuleLessonsResponse>({
     queryKey: ["/api/public/v1/modules", module.id],
     queryFn: async () => {
-      const response = await fetch(`/api/public/v1/modules/${module.id}`);
-      if (!response.ok) throw new Error("Failed to fetch module");
+      const response = await apiRequest("GET", `/api/public/v1/modules/${module.id}`);
       return response.json();
     },
-    enabled: isOpen,
+    enabled: isOpen && isAuthenticated,
   });
 
   const folders = data?.folders || [];
@@ -196,11 +196,10 @@ function ModuleAccordion({
     >
       <Collapsible open={isOpen} onOpenChange={onToggle}>
         <Card
-          className={`overflow-hidden transition-all duration-300 border-0 shadow-lg shadow-black/[0.03] rounded-2xl group/module mb-3 ${
-            isOpen
-              ? "ring-2 ring-brand/10 bg-white"
-              : "hover:shadow-xl hover:shadow-black/[0.04] bg-white"
-          }`}
+          className={`overflow-hidden transition-all duration-300 border-0 shadow-lg shadow-black/[0.03] rounded-2xl group/module mb-3 ${isOpen
+            ? "ring-2 ring-brand/10 bg-white"
+            : "hover:shadow-xl hover:shadow-black/[0.04] bg-white"
+            }`}
           data-testid={`card-module-${module.id}`}
         >
           <CollapsibleTrigger asChild>
@@ -211,11 +210,10 @@ function ModuleAccordion({
 
               <div className="flex-1 min-w-0">
                 <h3
-                  className={`text-base font-bold transition-colors truncate ${
-                    isOpen
-                      ? "text-brand"
-                      : "text-gray-900 group-hover/module:text-brand"
-                  }`}
+                  className={`text-base font-bold transition-colors truncate ${isOpen
+                    ? "text-brand"
+                    : "text-gray-900 group-hover/module:text-brand"
+                    }`}
                   title={module.title}
                 >
                   {module.title}
@@ -223,11 +221,10 @@ function ModuleAccordion({
               </div>
 
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                  isOpen
-                    ? "bg-brand text-white"
-                    : "bg-gray-50 text-muted-foreground group-hover/module:bg-brand/5 group-hover/module:text-brand"
-                }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isOpen
+                  ? "bg-brand text-white"
+                  : "bg-gray-50 text-muted-foreground group-hover/module:bg-brand/5 group-hover/module:text-brand"
+                  }`}
               >
                 {isOpen ? (
                   <ChevronDown className="w-4 h-4" />
@@ -373,6 +370,7 @@ function ModulesList({
 export default function ProcessesPage() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("DYD");
+  const { isAuthenticated } = useAuth();
 
   const {
     data: dydData,
@@ -381,10 +379,10 @@ export default function ProcessesPage() {
   } = useQuery<FeatureResponse>({
     queryKey: ["/api/public/v1/features", "DYD"],
     queryFn: async () => {
-      const response = await fetch("/api/public/v1/features/DYD");
-      if (!response.ok) throw new Error("Failed to fetch DYD content");
+      const response = await apiRequest("GET", "/api/public/v1/features/DYD");
       return response.json();
     },
+    enabled: isAuthenticated,
   });
 
   const {
@@ -394,10 +392,10 @@ export default function ProcessesPage() {
   } = useQuery<FeatureResponse>({
     queryKey: ["/api/public/v1/features", "USM"],
     queryFn: async () => {
-      const response = await fetch("/api/public/v1/features/USM");
-      if (!response.ok) throw new Error("Failed to fetch USM content");
+      const response = await apiRequest("GET", "/api/public/v1/features/USM");
       return response.json();
     },
+    enabled: isAuthenticated,
   });
 
   return (

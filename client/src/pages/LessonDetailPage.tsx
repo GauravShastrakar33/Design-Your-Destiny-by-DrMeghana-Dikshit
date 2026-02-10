@@ -518,8 +518,8 @@ export default function LessonDetailPage() {
                         item.color === "blue"
                           ? "bg-blue-50 text-blue-500"
                           : item.color === "green"
-                          ? "bg-green-50 text-green-500"
-                          : "bg-orange-50 text-orange-500"
+                            ? "bg-green-50 text-green-500"
+                            : "bg-orange-50 text-orange-500"
                       )}
                     >
                       <item.icon className="w-6 h-6" />

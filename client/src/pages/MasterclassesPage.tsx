@@ -24,7 +24,7 @@ interface MasterclassResponse {
 }
 
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getMediaUrl } from "@/lib/queryClient";
 
 // Skeleton component for loading state
 const CourseCardSkeleton = () => (
@@ -104,7 +104,7 @@ export default function MasterclassesPage() {
                   <div className="aspect-[16/9] w-full bg-gray-50 relative overflow-hidden">
                     {course.thumbnailUrl ? (
                       <img
-                        src={course.thumbnailUrl}
+                        src={getMediaUrl(course.thumbnailUrl)}
                         alt={course.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />

@@ -24,7 +24,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem("@app:admin_token");
     const storedAdmin = localStorage.getItem("@app:admin_user");
-    
+
     if (token && storedAdmin) {
       try {
         const parsedAdmin = JSON.parse(storedAdmin);

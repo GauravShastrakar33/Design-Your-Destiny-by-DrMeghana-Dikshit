@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import type { CmsCourse, CmsModule, CmsLesson } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ModuleWithLessons extends CmsModule {
   lessons: CmsLesson[];
@@ -36,8 +37,7 @@ export default function MasterclassCourseOverviewPage() {
   const { data, isLoading, error } = useQuery<CourseResponse>({
     queryKey: ["/api/public/v1/courses", courseId, "full"],
     queryFn: async () => {
-      const response = await fetch(`/api/public/v1/courses/${courseId}/full`);
-      if (!response.ok) throw new Error("Failed to fetch course");
+      const response = await apiRequest("GET", `/api/public/v1/courses/${courseId}/full`);
       return response.json();
     },
     enabled: !!courseId,
@@ -171,11 +171,10 @@ export default function MasterclassCourseOverviewPage() {
                   <div key={module.id} className="space-y-2">
                     <button
                       onClick={() => toggleModule(module.id)}
-                      className={`w-full flex items-center justify-between p-4 rounded-xl transition-all border ${
-                        isExpanded
+                      className={`w-full flex items-center justify-between p-4 rounded-xl transition-all border ${isExpanded
                           ? "bg-brand/10 text-brand border-brand/10 shadow-sm"
                           : "bg-white text-gray-900 border-gray-100 shadow-sm hover:border-brand/30"
-                      }`}
+                        }`}
                       data-testid={`section-toggle-${module.id}`}
                     >
                       <span className="font-bold text-base">

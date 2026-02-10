@@ -32,13 +32,24 @@ async function getAuthHeaders(url: string): Promise<Record<string, string>> {
   return headers;
 }
 
+export const API_BASE_URL = Capacitor.isNativePlatform()
+  ? "https://app.drmeghana.com"
+  : "";
+
+export function getMediaUrl(path: string | null | undefined) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // 1. Clean the URL by removing leading slashes only
-  // We NO LONGER append a trailing slash automatically because it breaks parameters
+  // 1. Clean the URL by removing leading slashes only.
+  // We NO LONGER append a trailing slash automatically because backend routes
+  // in server/routes.ts are defined without them (e.g., /api/v1/money-calendar).
   const cleanUrl = url.replace(/^\/+/, "");
 
   const fullUrl = Capacitor.isNativePlatform()
