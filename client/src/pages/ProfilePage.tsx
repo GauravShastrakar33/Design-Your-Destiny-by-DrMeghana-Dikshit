@@ -45,12 +45,25 @@ import {
   setupNativePushListeners,
 } from "@/lib/nativePush";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { UserWellnessProfile } from "@shared/schema";
 import ConsistencyCalendar from "@/components/ConsistencyCalendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges } from "@/hooks/useBadges";
 import { BadgeIcon } from "@/components/BadgeIcon";
 import { App } from "@capacitor/app";
+import { Preferences } from "@capacitor/preferences";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PrescriptionData {
   morning?: string[];
@@ -60,12 +73,13 @@ interface PrescriptionData {
 
 export default function ProfilePage() {
   const [, setLocation] = useLocation();
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const [prescriptionExpanded, setPrescriptionExpanded] = useState(false);
   const [userName, setUserName] = useState("User");
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [appVersion, setAppVersion] = useState<string>("");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const loadVersion = async () => {
@@ -73,25 +87,21 @@ export default function ProfilePage() {
         const info = await App.getInfo();
         setAppVersion(`Version ${info.version} (Build ${info.build})`);
       } catch {
-        setAppVersion("Web v1.0.0");
+        setAppVersion("Web Version");
       }
     };
     loadVersion();
   }, []);
 
-  const userToken = localStorage.getItem("@app:user_token");
   const { data: wellnessProfile, isLoading: isLoadingProfile } = useQuery<
     UserWellnessProfile | { karmicAffirmation: null; prescription: null }
   >({
     queryKey: ["/api/v1/me/wellness-profile"],
     queryFn: async () => {
-      const response = await fetch("/api/v1/me/wellness-profile", {
-        headers: { Authorization: `Bearer ${userToken}` },
-      });
-      if (!response.ok) return { karmicAffirmation: null, prescription: null };
+      const response = await apiRequest("GET", "/api/v1/me/wellness-profile");
       return response.json();
     },
-    enabled: !!userToken,
+    enabled: isAuthenticated,
   });
 
   const prescriptionFromApi =
@@ -105,8 +115,12 @@ export default function ProfilePage() {
   const earnedBadges = badges.slice(0, 5);
 
   useEffect(() => {
-    const savedUserName = localStorage.getItem("@app:userName");
-    setUserName(savedUserName || "User");
+    const loadUserName = async () => {
+      const { value } = await Preferences.get({ key: "@app:userName" });
+      setUserName(value || "User");
+    };
+    loadUserName();
+
     setupNativePushListeners();
 
     const checkStatus = async () => {
@@ -136,19 +150,19 @@ export default function ProfilePage() {
     <div className="min-h-screen pb-24 bg-[#F9FAFB]">
       <Header title="Profile" />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
         {/* Profile Identity Card */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card className="border-0 shadow-md rounded-3xl overflow-hidden bg-white">
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
             <div className="p-4">
               <div className="flex items-center gap-6">
                 <div className="relative">
                   <div className="absolute inset-0 bg-brand/20 blur-md rounded-full" />
-                  <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-50 to-white shadow-inner flex items-center justify-center border border-indigo-50">
+                  <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-50 to-white shadow-inner flex items-center justify-center border border-indigo-50">
                     <span className="text-3xl font-black text-brand tracking-tighter">
                       {getInitials(userName)}
                     </span>
@@ -246,7 +260,7 @@ export default function ProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="border-0 shadow-md rounded-3xl overflow-hidden bg-white">
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
             <button
               onClick={() => setPrescriptionExpanded(!prescriptionExpanded)}
               className="w-full text-left p-6 flex items-center justify-between group"
@@ -265,9 +279,8 @@ export default function ProfilePage() {
                 </div>
               </div>
               <ChevronDown
-                className={`w-6 h-6 text-gray-400 transition-transform duration-300 ${
-                  prescriptionExpanded ? "rotate-180" : ""
-                }`}
+                className={`w-6 h-6 text-gray-400 transition-transform duration-300 ${prescriptionExpanded ? "rotate-180" : ""
+                  }`}
               />
             </button>
 
@@ -352,7 +365,7 @@ export default function ProfilePage() {
             </h3>
           </div>
 
-          <Card className="border-0 shadow-md rounded-3xl bg-white overflow-hidden divide-y divide-gray-50">
+          <Card className="border-0 shadow-md rounded-2xl bg-white overflow-hidden divide-y divide-gray-50">
             {/* Account */}
             <button
               onClick={() => setLocation("/account-settings")}
@@ -417,29 +430,66 @@ export default function ProfilePage() {
             </a>
 
             {/* Logout */}
-            <button
-              onClick={async () => {
-                try {
-                  await unregisterDeviceTokens();
-                } catch (e) {}
-                logout();
-                setLocation("/login");
-              }}
-              className="w-full flex items-center justify-between p-6 hover:bg-red-50/30 active:scale-[0.99] transition-all group"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm">
-                  <LogOut className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold text-red-600 leading-none">Logout</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Sign out of your account
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-200 group-hover:text-red-300 transition-colors" />
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="w-full flex items-center justify-between p-6 hover:bg-red-50/30 active:scale-[0.99] transition-all group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm">
+                      <LogOut className="w-5 h-5" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-red-600 leading-none">
+                        Logout
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Sign out of your account
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-200 group-hover:text-red-300 transition-colors" />
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-2xl border-0 shadow-2xl">
+                <AlertDialogHeader className="space-y-3">
+                  <div className="mx-auto w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 mb-2">
+                    <LogOut className="w-6 h-6" />
+                  </div>
+                  <AlertDialogDescription className="text-md text-center text-gray-500 font-medium leading-relaxed">
+                    Are you sure you want to logout?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-col sm:flex-col gap-2 mt-4">
+                  <AlertDialogAction
+                    disabled={isLoggingOut}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      setIsLoggingOut(true);
+                      try {
+                        await unregisterDeviceTokens();
+                      } catch (e) {
+                        console.error("Failed to unregister tokens:", e);
+                      }
+                      logout();
+                      setLocation("/login");
+                      setIsLoggingOut(false);
+                    }}
+                    className="w-full h-12 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold shadow-lg shadow-red-200 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+                  >
+                    {isLoggingOut ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      "Logout Now"
+                    )}
+                  </AlertDialogAction>
+                  <AlertDialogCancel
+                    disabled={isLoggingOut}
+                    className="w-full h-12 rounded-lg bg-gray-50 text-gray-500 font-bold border border-gray-100 hover:bg-gray-100 transition-all disabled:opacity-50"
+                  >
+                    Stay Signed In
+                  </AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {/* App Version */}
             <div className="w-full flex items-center justify-between p-6 group">
@@ -452,7 +502,7 @@ export default function ProfilePage() {
                     App Version
                   </p>
                   <p className="text-xs text-gray-500 mt-1 font-medium">
-                    {appVersion || "Production Build v1.0.0"}
+                    {appVersion || "Loading..."}
                   </p>
                 </div>
               </div>

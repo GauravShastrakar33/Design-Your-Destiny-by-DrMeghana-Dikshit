@@ -11,6 +11,9 @@ const app = express();
 
 // 2. Define allowed mobile and web origins
 const allowedOrigins = [
+  "http://localhost:5001", // Your current Mac browser port
+  "http://localhost:5173",
+  "http://localhost:5000",
   "https://app.drmeghana.com",
   "http://localhost", // Android default
   "https://localhost", // Android/iOS modern

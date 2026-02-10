@@ -6873,6 +6873,10 @@ function startNotificationCron() {
 import cors from "cors";
 var app = express2();
 var allowedOrigins = [
+  "http://localhost:5001",
+  // Your current Mac browser port
+  "http://localhost:5173",
+  "http://localhost:5000",
   "https://app.drmeghana.com",
   "http://localhost",
   // Android default

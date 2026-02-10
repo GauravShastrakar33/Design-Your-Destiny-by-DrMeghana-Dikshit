@@ -37,11 +37,19 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // 1. Remove leading slashes and ensure a trailing slash
-  let cleanUrl = url.replace(/^\/+/, "");
-  if (!cleanUrl.endsWith('/')) {
-    cleanUrl += '/';
+  // 1. Split path and query params
+  const [path, query] = url.split('?');
+
+  // 2. Clean the path (remove leading slashes)
+  let cleanPath = path.replace(/^\/+/, "");
+
+  // 3. Ensure trailing slash only on the path portion if it's not a file
+  if (cleanPath && !cleanPath.endsWith('/') && !cleanPath.includes('.')) {
+    cleanPath += '/';
   }
+
+  // 4. Reconstruct the URL
+  const cleanUrl = query ? `${cleanPath}?${query}` : cleanPath;
 
   const fullUrl = Capacitor.isNativePlatform()
     ? `https://app.drmeghana.com/${cleanUrl}`
@@ -52,13 +60,22 @@ export async function apiRequest(
 
   const headers: Record<string, string> = {
     ...authHeaders,
-    ...(data ? { "Content-Type": "application/json" } : {}),
   };
+
+  let body: BodyInit | null | undefined;
+
+  if (data instanceof FormData) {
+    // Content-Type is set automatically by fetch when body is FormData
+    body = data;
+  } else if (data) {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify(data);
+  }
 
   const res = await fetch(fullUrl, {
     method,
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body,
     credentials: "include", // This handles cookies for web
   });
 

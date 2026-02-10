@@ -1,10 +1,21 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Loader2, Play, Check, Video, Music, FileText, DollarSign, CheckCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Play,
+  Check,
+  Video,
+  Music,
+  FileText,
+  DollarSign,
+  CheckCircle,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useRef, useEffect } from "react";
+import { VideoPlayer, AudioPlayer } from "@/components/MediaPlayers";
 import type { CmsModule, CmsLesson, CmsLessonFile } from "@shared/schema";
 
 interface LessonFileWithUrl extends CmsLessonFile {
@@ -26,30 +37,40 @@ interface LessonResponse {
   files: LessonFileWithUrl[];
 }
 
+import { useAuth } from "@/contexts/AuthContext";
+
+// ... existing imports ...
+
 export default function ModuleLessonsPage() {
   const params = useParams();
   const moduleId = params.moduleId;
   const courseId = params.courseId;
   const [, setLocation] = useLocation();
-  
+
   const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
   const [loadingLessonId, setLoadingLessonId] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const isAuthenticated = !!localStorage.getItem("@app:user_token");
+  const { isAuthenticated } = useAuth();
 
-  const { data: moduleData, isLoading: moduleLoading, error: moduleError } = useQuery<ModuleResponse>({
+  const {
+    data: moduleData,
+    isLoading: moduleLoading,
+    error: moduleError,
+  } = useQuery<ModuleResponse>({
     queryKey: ["/api/public/v1/modules", moduleId],
     queryFn: async () => {
-      const response = await fetch(`/api/public/v1/modules/${moduleId}`);
-      if (!response.ok) throw new Error("Failed to fetch module");
+      // Use apiRequest even for public endpoints to ensure consistency with base URL handling
+      const response = await apiRequest("GET", `/api/public/v1/modules/${moduleId}`);
       return response.json();
     },
     enabled: !!moduleId,
   });
 
-  const { data: progressData, isLoading: progressLoading } = useQuery<{ completedLessonIds: number[] }>({
+  const { data: progressData, isLoading: progressLoading } = useQuery<{
+    completedLessonIds: number[];
+  }>({
     queryKey: ["/api/v1/lesson-progress"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/v1/lesson-progress");
@@ -58,19 +79,24 @@ export default function ModuleLessonsPage() {
     enabled: isAuthenticated,
   });
 
-  const { data: lessonData, isLoading: lessonLoading } = useQuery<LessonResponse>({
-    queryKey: ["/api/public/v1/lessons", selectedLessonId],
-    queryFn: async () => {
-      const response = await fetch(`/api/public/v1/lessons/${selectedLessonId}`);
-      if (!response.ok) throw new Error("Failed to fetch lesson");
-      return response.json();
-    },
-    enabled: !!selectedLessonId,
-  });
+  const { data: lessonData, isLoading: lessonLoading } =
+    useQuery<LessonResponse>({
+      queryKey: ["/api/public/v1/lessons", selectedLessonId],
+      queryFn: async () => {
+        const response = await apiRequest("GET",
+          `/api/public/v1/lessons/${selectedLessonId}`
+        );
+        return response.json();
+      },
+      enabled: !!selectedLessonId,
+    });
 
   const markCompleteMutation = useMutation({
     mutationFn: async (lessonId: number) => {
-      const res = await apiRequest("POST", `/api/v1/lesson-progress/${lessonId}/complete`);
+      const res = await apiRequest(
+        "POST",
+        `/api/v1/lesson-progress/${lessonId}/complete`
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -124,7 +150,10 @@ export default function ModuleLessonsPage() {
   if (moduleLoading || progressLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-brand" data-testid="loader-module" />
+        <Loader2
+          className="w-8 h-8 animate-spin text-brand"
+          data-testid="loader-module"
+        />
       </div>
     );
   }
@@ -140,7 +169,10 @@ export default function ModuleLessonsPage() {
           >
             <ArrowLeft className="w-6 h-6 text-foreground" />
           </button>
-          <div className="text-center py-12 text-muted-foreground" data-testid="text-error">
+          <div
+            className="text-center py-12 text-muted-foreground"
+            data-testid="text-error"
+          >
             Module not found
           </div>
         </div>
@@ -163,16 +195,21 @@ export default function ModuleLessonsPage() {
               <ArrowLeft className="w-6 h-6 text-foreground" />
             </button>
             <DollarSign className="w-5 h-5 text-amber-500" />
-            <h1 className="text-lg font-semibold text-foreground truncate" data-testid="text-module-title">
+            <h1
+              className="text-lg font-semibold text-foreground truncate"
+              data-testid="text-module-title"
+            >
               {module.title}
             </h1>
           </div>
         </div>
 
         <div className="p-4 space-y-4">
-
           {lessons.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground" data-testid="text-no-lessons">
+            <div
+              className="text-center py-8 text-muted-foreground"
+              data-testid="text-no-lessons"
+            >
               No lessons in this module yet
             </div>
           ) : (
@@ -185,26 +222,31 @@ export default function ModuleLessonsPage() {
                 return (
                   <div key={lesson.id}>
                     <Card
-                      className={`p-4 hover-elevate active-elevate-2 cursor-pointer transition-colors ${
-                        isSelected ? "ring-2 ring-amber-500" : ""
-                      }`}
+                      className={`p-4 hover-elevate active-elevate-2 cursor-pointer transition-colors ${isSelected ? "ring-2 ring-amber-500" : ""
+                        }`}
                       onClick={() => handleLessonClick(lesson.id)}
                       data-testid={`lesson-card-${lesson.id}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm ${
-                          isCompleted 
-                            ? "bg-green-500/10 text-green-600" 
-                            : "bg-amber-500/10 text-amber-600"
-                        }`}>
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm ${isCompleted
+                              ? "bg-green-500/10 text-green-600"
+                              : "bg-amber-500/10 text-amber-600"
+                            }`}
+                        >
                           {isCompleted ? (
-                            <Check className="w-4 h-4" data-testid={`icon-completed-${lesson.id}`} />
+                            <Check
+                              className="w-4 h-4"
+                              data-testid={`icon-completed-${lesson.id}`}
+                            />
                           ) : (
                             index + 1
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-foreground font-medium truncate">{lesson.title}</p>
+                          <p className="text-foreground font-medium truncate">
+                            {lesson.title}
+                          </p>
                         </div>
                         {isLoadingLesson ? (
                           <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -213,43 +255,53 @@ export default function ModuleLessonsPage() {
                             Completed
                           </span>
                         ) : (
-                          <Play className="w-5 h-5 text-amber-500" data-testid={`icon-play-${lesson.id}`} />
+                          <Play
+                            className="w-5 h-5 text-amber-500"
+                            data-testid={`icon-play-${lesson.id}`}
+                          />
                         )}
                       </div>
                     </Card>
 
                     {isSelected && lessonData && !lessonLoading && (
-                      <div className="mt-2 p-4 bg-muted/50 rounded-lg space-y-4" data-testid={`lesson-content-${lesson.id}`}>
+                      <div
+                        className="mt-2 p-4 bg-muted/50 rounded-lg space-y-4"
+                        data-testid={`lesson-content-${lesson.id}`}
+                      >
                         {lessonData.files && lessonData.files.length > 0 ? (
                           <>
                             {lessonData.files.map((file) => (
                               <div key={file.id} className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                   {getFileIcon(file.fileType)}
-                                  <span className="truncate capitalize">{file.fileType}</span>
+                                  <span className="truncate capitalize">
+                                    {file.fileType}
+                                  </span>
                                 </div>
 
-                                {file.fileType === "video" && file.signedUrl && (
-                                  <video
-                                    ref={videoRef}
-                                    src={file.signedUrl}
-                                    controls
-                                    className="w-full rounded-lg"
-                                    onEnded={() => handleVideoEnded(lesson.id)}
-                                    data-testid={`video-player-${file.id}`}
-                                  />
-                                )}
+                                {file.fileType === "video" &&
+                                  file.signedUrl && (
+                                    <VideoPlayer
+                                      ref={videoRef}
+                                      src={file.signedUrl}
+                                      onEnded={() =>
+                                        handleVideoEnded(lesson.id)
+                                      }
+                                      title={lesson.title}
+                                    />
+                                  )}
 
-                                {file.fileType === "audio" && file.signedUrl && (
-                                  <audio
-                                    ref={audioRef}
-                                    src={file.signedUrl}
-                                    controls
-                                    className="w-full"
-                                    onEnded={() => handleAudioEnded(lesson.id)}
-                                    data-testid={`audio-player-${file.id}`}
-                                  />
-                                )}
+                                {file.fileType === "audio" &&
+                                  file.signedUrl && (
+                                    <AudioPlayer
+                                      ref={audioRef}
+                                      src={file.signedUrl}
+                                      onEnded={() =>
+                                        handleAudioEnded(lesson.id)
+                                      }
+                                      title={lesson.title}
+                                    />
+                                  )}
 
                                 {file.fileType === "script" && (
                                   <div className="text-sm text-muted-foreground bg-background p-3 rounded border">
@@ -258,13 +310,15 @@ export default function ModuleLessonsPage() {
                                 )}
                               </div>
                             ))}
-                            
+
                             {isAuthenticated && !isCompleted && (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 className="w-full mt-2"
-                                onClick={() => markCompleteMutation.mutate(lesson.id)}
+                                onClick={() =>
+                                  markCompleteMutation.mutate(lesson.id)
+                                }
                                 disabled={markCompleteMutation.isPending}
                                 data-testid={`button-mark-complete-${lesson.id}`}
                               >

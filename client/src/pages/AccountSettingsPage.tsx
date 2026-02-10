@@ -22,11 +22,14 @@ import type { UserWellnessProfile } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
 
+import { Preferences } from "@capacitor/preferences";
+
+// ... existing imports ...
+
 export default function AccountSettingsPage() {
   const [, setLocation] = useLocation();
-  const { user, clearPasswordChangeRequirement, requiresPasswordChange } =
+  const { user, clearPasswordChangeRequirement, requiresPasswordChange, isAuthenticated } =
     useAuth();
-  const userToken = localStorage.getItem("@app:user_token");
   const [userName, setUserName] = useState("");
 
   // Password Form States
@@ -46,22 +49,18 @@ export default function AccountSettingsPage() {
   >({
     queryKey: ["/api/v1/me/wellness-profile"],
     queryFn: async () => {
-      const response = await fetch("/api/v1/me/wellness-profile", {
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
-      });
-      if (!response.ok) {
-        return { karmicAffirmation: null, prescription: null };
-      }
+      const response = await apiRequest("GET", "/api/v1/me/wellness-profile");
       return response.json();
     },
-    enabled: !!userToken,
+    enabled: isAuthenticated,
   });
 
   useEffect(() => {
-    const savedUserName = localStorage.getItem("@app:userName");
-    setUserName(savedUserName || "User");
+    const loadUserName = async () => {
+      const { value } = await Preferences.get({ key: "@app:userName" });
+      setUserName(value || "User");
+    };
+    loadUserName();
   }, []);
 
   // Auto-open password form if user needs to change password

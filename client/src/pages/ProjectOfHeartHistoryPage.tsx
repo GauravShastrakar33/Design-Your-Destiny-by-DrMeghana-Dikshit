@@ -88,29 +88,21 @@ interface HistoryPOH {
   milestones: string[];
 }
 
+import { apiRequest } from "@/lib/queryClient";
+
+// ... existing imports ...
+
 export default function ProjectOfHeartHistoryPage() {
   const [, setLocation] = useLocation();
   const [loading, setLoading] = useState(true);
   const [historyProjects, setHistoryProjects] = useState<HistoryPOH[]>([]);
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("@app:user_token");
-    return {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-  };
-
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await fetch("/api/poh/history", {
-          headers: getAuthHeaders(),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setHistoryProjects(data);
-        }
+        const response = await apiRequest("GET", "/api/poh/history");
+        const data = await response.json();
+        setHistoryProjects(data);
       } catch (err) {
         console.error("Failed to fetch POH history:", err);
       } finally {
@@ -265,11 +257,10 @@ export default function ProjectOfHeartHistoryPage() {
                       </div>
 
                       <span
-                        className={`text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 border ${
-                          project.status === "completed"
+                        className={`text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 border ${project.status === "completed"
                             ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                             : "bg-amber-50 text-amber-600 border-amber-100"
-                        }`}
+                          }`}
                       >
                         {project.status === "completed" ? (
                           <Trophy className="w-3.5 h-3.5 fill-current" />

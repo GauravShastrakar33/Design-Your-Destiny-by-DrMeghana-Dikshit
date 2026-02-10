@@ -30,13 +30,18 @@ interface ConsistencyCalendarProps {
   visible?: boolean;
 }
 
+import { useAuth } from "@/contexts/AuthContext";
+import { apiRequest } from "@/lib/queryClient";
+
+// ... existing imports ...
+
 export default function ConsistencyCalendar({
   visible = true,
 }: ConsistencyCalendarProps) {
   // 🔥 DEV ONLY — remove after UI check
   // const FORCE_TEST_FLAME = true;
 
-  const userToken = localStorage.getItem("@app:user_token");
+  const { isAuthenticated } = useAuth();
 
   const getTodayDate = () => {
     const now = new Date();
@@ -55,31 +60,25 @@ export default function ConsistencyCalendar({
   const { data: rangeData, isLoading: isRangeLoading } = useQuery<RangeData>({
     queryKey: ["/api/v1/consistency/range", todayDate],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/v1/consistency/range?today=${todayDate}`,
-        {
-          headers: { Authorization: `Bearer ${userToken}` },
-        }
+      const response = await apiRequest(
+        "GET",
+        `/api/v1/consistency/range?today=${todayDate}`
       );
-      if (!response.ok) throw new Error("Failed to fetch range");
       return response.json();
     },
-    enabled: !!userToken && visible,
+    enabled: isAuthenticated && visible,
   });
 
   const { data: monthData, isLoading: isMonthLoading } = useQuery<MonthData>({
     queryKey: ["/api/v1/consistency/month", viewYear, viewMonth],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/v1/consistency/month?year=${viewYear}&month=${viewMonth}`,
-        {
-          headers: { Authorization: `Bearer ${userToken}` },
-        }
+      const response = await apiRequest(
+        "GET",
+        `/api/v1/consistency/month?year=${viewYear}&month=${viewMonth}`
       );
-      if (!response.ok) throw new Error("Failed to fetch month data");
       return response.json();
     },
-    enabled: !!userToken && visible,
+    enabled: isAuthenticated && visible,
   });
 
   const currentStreak = rangeData?.currentStreak || 0;
@@ -163,7 +162,7 @@ export default function ConsistencyCalendar({
 
   return (
     <Card
-      className="border-0 shadow-md rounded-3xl sm:rounded-[2.5rem] overflow-hidden bg-white"
+      className="border-0 shadow-md rounded-2xl overflow-hidden bg-white"
       data-testid="consistency-calendar"
     >
       <div className="p-5 sm:p-8">
@@ -198,11 +197,10 @@ export default function ConsistencyCalendar({
           <button
             onClick={handlePrevMonth}
             disabled={!canGoBack}
-            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${
-              canGoBack
+            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${canGoBack
                 ? "hover:bg-white hover:shadow-sm text-gray-700 active:scale-95"
                 : "text-gray-300 cursor-not-allowed"
-            }`}
+              }`}
             data-testid="button-prev-month"
           >
             <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -216,11 +214,10 @@ export default function ConsistencyCalendar({
           <button
             onClick={handleNextMonth}
             disabled={!canGoForward}
-            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${
-              canGoForward
+            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${canGoForward
                 ? "hover:bg-white hover:shadow-sm text-gray-700 active:scale-95"
                 : "text-gray-300 cursor-not-allowed"
-            }`}
+              }`}
             data-testid="button-next-month"
           >
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -290,11 +287,10 @@ export default function ConsistencyCalendar({
                 return (
                   <div
                     key={day.date}
-                    className={`group relative aspect-square w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl sm:rounded-2xl border border-transparent transition-all duration-300 ${bgColor} ${
-                      isToday
+                    className={`group relative aspect-square w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl sm:rounded-2xl border border-transparent transition-all duration-300 ${bgColor} ${isToday
                         ? "ring-2 ring-brand ring-offset-2 scale-110 z-10"
                         : ""
-                    } hover:scale-110`}
+                      } hover:scale-110`}
                     data-testid={`day-${day.date}`}
                   >
                     <span

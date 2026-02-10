@@ -53,6 +53,7 @@ import { Input } from "@/components/ui/input";
 import { Capacitor } from "@capacitor/core";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 type POHStatus = "active" | "next" | "horizon";
 type Category = "career" | "health" | "relationships" | "wealth" | "other";
@@ -326,22 +327,11 @@ export default function ProjectOfHeartPage() {
   const [editMilestoneText, setEditMilestoneText] = useState("");
   const [savingMilestone, setSavingMilestone] = useState(false);
 
-  const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("@app:user_token");
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-    return headers;
-  };
+
 
   const fetchPOHData = async () => {
     try {
-      const response = await fetch("/api/poh/current", {
-        headers: getAuthHeaders(),
-      });
+      const response = await apiRequest("GET", "/api/poh/current");
 
       if (response.ok) {
         const data = await response.json();
@@ -378,14 +368,10 @@ export default function ProjectOfHeartPage() {
         newPOH.category === "other"
           ? newPOH.customCategory.toLowerCase()
           : newPOH.category;
-      const response = await fetch("/api/poh", {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          title: newPOH.title.trim(),
-          why: newPOH.why.trim(),
-          category,
-        }),
+      const response = await apiRequest("POST", "/api/poh", {
+        title: newPOH.title.trim(),
+        why: newPOH.why.trim(),
+        category,
       });
 
       if (response.ok) {
@@ -413,11 +399,11 @@ export default function ProjectOfHeartPage() {
     setCreatingMilestones(true);
     try {
       for (const text of validMilestones) {
-        await fetch(`/api/poh/${pohState.active.id}/milestones`, {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ text: text.trim() }),
-        });
+        await apiRequest(
+          "POST",
+          `/api/poh/${pohState.active.id}/milestones`,
+          { text: text.trim() }
+        );
       }
       setShowMilestoneModal(false);
       setNewMilestones([""]);
@@ -442,12 +428,9 @@ export default function ProjectOfHeartPage() {
     setShowAchieveConfirm(false);
 
     try {
-      const response = await fetch(
-        `/api/poh/milestone/${milestoneToAchieve.id}/achieve`,
-        {
-          method: "POST",
-          headers: getAuthHeaders(),
-        }
+      const response = await apiRequest(
+        "POST",
+        `/api/poh/milestone/${milestoneToAchieve.id}/achieve`
       );
 
       if (response.ok) {
@@ -474,10 +457,8 @@ export default function ProjectOfHeartPage() {
           ? `/api/poh/${pohState.active.id}/complete`
           : `/api/poh/${pohState.active.id}/close`;
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ closing_reflection: reflection.trim() }),
+      const response = await apiRequest("POST", endpoint, {
+        closing_reflection: reflection.trim(),
       });
 
       if (response.ok) {
@@ -522,11 +503,11 @@ export default function ProjectOfHeartPage() {
 
     setSavingActions(true);
     try {
-      const response = await fetch(`/api/poh/${pohState.active.id}/actions`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ actions: newActions }),
-      });
+      const response = await apiRequest(
+        "PUT",
+        `/api/poh/${pohState.active.id}/actions`,
+        { actions: newActions }
+      );
 
       if (response.ok) {
         await fetchPOHData();
@@ -549,14 +530,10 @@ export default function ProjectOfHeartPage() {
 
     try {
       const today = new Date().toISOString().split("T")[0];
-      const response = await fetch("/api/poh/rate", {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          poh_id: pohState.active.id,
-          local_date: today,
-          rating: value,
-        }),
+      const response = await apiRequest("POST", "/api/poh/rate", {
+        poh_id: pohState.active.id,
+        local_date: today,
+        rating: value,
       });
 
       if (!response.ok) {
@@ -595,15 +572,10 @@ export default function ProjectOfHeartPage() {
       formData.append("image", blob, "vision.jpg");
       formData.append("index", String(index));
 
-      const token = localStorage.getItem("@app:user_token");
-
-      const uploadResponse = await fetch(
+      const uploadResponse = await apiRequest(
+        "POST",
         `/api/poh/${pohState.active.id}/vision`,
-        {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: formData,
-        }
+        formData
       );
 
       if (uploadResponse.ok) {
@@ -652,12 +624,11 @@ export default function ProjectOfHeartPage() {
       formData.append("image", file);
       formData.append("index", String(index));
 
-      const token = localStorage.getItem("@app:user_token");
-      const response = await fetch(`/api/poh/${pohState.active.id}/vision`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
+      const response = await apiRequest(
+        "POST",
+        `/api/poh/${pohState.active.id}/vision`,
+        formData
+      );
 
       if (response.ok) {
         await fetchPOHData();
@@ -686,10 +657,10 @@ export default function ProjectOfHeartPage() {
           ? "Direction after current project"
           : "Long-term guiding star";
 
-      const response = await fetch("/api/poh", {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ title, why: defaultWhy, category }),
+      const response = await apiRequest("POST", "/api/poh", {
+        title,
+        why: defaultWhy,
+        category,
       });
 
       if (response.ok) {
@@ -713,8 +684,8 @@ export default function ProjectOfHeartPage() {
       target === "active"
         ? pohState.active
         : target === "next"
-        ? pohState.next
-        : pohState.horizon;
+          ? pohState.next
+          : pohState.horizon;
     if (!poh) return;
 
     setRealignTarget(target);
@@ -731,8 +702,8 @@ export default function ProjectOfHeartPage() {
       realignTarget === "active"
         ? pohState.active
         : realignTarget === "next"
-        ? pohState.next
-        : pohState.horizon;
+          ? pohState.next
+          : pohState.horizon;
     if (!poh) return;
 
     setSavingRealign(true);
@@ -749,11 +720,7 @@ export default function ProjectOfHeartPage() {
         body.why = realignWhy.trim();
       }
 
-      const response = await fetch(`/api/poh/${poh.id}`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(body),
-      });
+      const response = await apiRequest("PUT", `/api/poh/${poh.id}`, body);
 
       if (response.ok) {
         setShowRealignModal(false);
@@ -771,11 +738,11 @@ export default function ProjectOfHeartPage() {
 
     setSavingMilestone(true);
     try {
-      const response = await fetch(`/api/poh/milestone/${editingMilestoneId}`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ text: editMilestoneText.trim() }),
-      });
+      const response = await apiRequest(
+        "PUT",
+        `/api/poh/milestone/${editingMilestoneId}`,
+        { text: editMilestoneText.trim() }
+      );
 
       if (response.ok) {
         setEditingMilestoneId(null);
@@ -831,7 +798,7 @@ export default function ProjectOfHeartPage() {
                     }}
                     className="absolute inset-0 bg-brand/20 blur-xl rounded-full"
                   />
-                  <div className="relative w-24 h-24 rounded-3xl bg-white shadow-lg border border-indigo-50 flex items-center justify-center">
+                  <div className="relative w-24 h-24 rounded-2xl bg-white shadow-lg border border-indigo-50 flex items-center justify-center">
                     <motion.div
                       animate={{
                         rotate: [0, 5, -5, 0],
@@ -1025,11 +992,10 @@ export default function ProjectOfHeartPage() {
                       onClick={() =>
                         setNewPOH((p) => ({ ...p, category: cat }))
                       }
-                      className={`w-full p-4 rounded-lg text-left border transition-all ${
-                        newPOH.category === cat
-                          ? "border-purple-500 bg-purple-50"
-                          : "border-gray-200 bg-white hover:border-gray-300"
-                      }`}
+                      className={`w-full p-4 rounded-lg text-left border transition-all ${newPOH.category === cat
+                        ? "border-purple-500 bg-purple-50"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
                       data-testid={`button-category-${cat}`}
                     >
                       <span className="font-medium capitalize">{cat}</span>
@@ -1182,20 +1148,10 @@ export default function ProjectOfHeartPage() {
             transition={{ duration: 0.4, delay: 0.1 }}
           >
             <div
-              className={`relative overflow-hidden group transition-all duration-500 ${
-                pohState.active.category === "wealth"
-                  ? "ring-1 ring-amber-100 shadow-amber-50/50 shadow-lg"
-                  : ""
-              }`}
-              style={{
-                backgroundColor: "white",
-                borderRadius: "20px",
-                padding: "24px",
-                boxShadow:
-                  pohState.active.category === "wealth"
-                    ? "0 10px 40px rgba(180, 83, 9, 0.08), 0 0 0 1px rgba(180, 83, 9, 0.05)"
-                    : "0 4px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)",
-              }}
+              className={`relative overflow-hidden group transition-all duration-500 rounded-2xl bg-white p-6 shadow-sm ${pohState.active.category === "wealth"
+                ? "ring-1 ring-amber-100 shadow-amber-50/50 shadow-lg"
+                : ""
+                }`}
             >
               {/* Header Row - Category Left, Status Right */}
               <div className="flex items-center justify-between mb-5">
@@ -1235,7 +1191,7 @@ export default function ProjectOfHeartPage() {
 
               {/* Title */}
               <h2
-                className="text-xl font-bold leading-relaxed mb-4"
+                className="text-lg font-semibold leading-relaxed mb-4"
                 data-testid="text-active-poh-title"
               >
                 {pohState.active.title}
@@ -1244,31 +1200,28 @@ export default function ProjectOfHeartPage() {
               {/* Why */}
               {pohState.active.why && (
                 <div
-                  className={`mb-6 p-4 rounded-xl border transition-all duration-300 ${
-                    (
-                      CATEGORY_CONFIG[pohState.active.category as Category] ||
-                      CATEGORY_CONFIG.other
-                    ).theme.whyBg
-                  } ${
-                    (
+                  className={`mb-6 p-4 rounded-xl border transition-all duration-300 ${(
+                    CATEGORY_CONFIG[pohState.active.category as Category] ||
+                    CATEGORY_CONFIG.other
+                  ).theme.whyBg
+                    } ${(
                       CATEGORY_CONFIG[pohState.active.category as Category] ||
                       CATEGORY_CONFIG.other
                     ).theme.whyBorder
-                  }`}
+                    }`}
                 >
                   <p
-                    className={`text-xs font-semibold mb-2 uppercase tracking-wide flex items-center gap-1.5 ${
-                      (
-                        CATEGORY_CONFIG[pohState.active.category as Category] ||
-                        CATEGORY_CONFIG.other
-                      ).theme.whyText
-                    }`}
+                    className={`text-xs font-semibold mb-2 uppercase tracking-wide flex items-start gap-1.5 ${(
+                      CATEGORY_CONFIG[pohState.active.category as Category] ||
+                      CATEGORY_CONFIG.other
+                    ).theme.whyText
+                      }`}
                   >
                     <span>
                       {
                         (
                           CATEGORY_CONFIG[
-                            pohState.active.category as Category
+                          pohState.active.category as Category
                           ] || CATEGORY_CONFIG.other
                         ).theme.whyIcon
                       }
@@ -1327,11 +1280,10 @@ export default function ProjectOfHeartPage() {
                           whileTap={{ scale: 0.98 }}
                         >
                           <div
-                            className={`w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
-                              hasImage
-                                ? "shadow-md hover:shadow-lg border border-black/5"
-                                : "border-2 border-dashed hover:border-brand hover:bg-brand/5"
-                            }`}
+                            className={`w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${hasImage
+                              ? "shadow-md hover:shadow-lg border border-black/5"
+                              : "border-2 border-dashed hover:border-brand hover:bg-brand/5"
+                              }`}
                             onClick={() => handleVisionSlotClick(index)}
                             data-testid={`button-vision-image-${index}`}
                             style={{
@@ -1429,7 +1381,7 @@ export default function ProjectOfHeartPage() {
                 </div>
 
                 {!pohState.active.milestones ||
-                pohState.active.milestones.length === 0 ? (
+                  pohState.active.milestones.length === 0 ? (
                   <Button
                     variant="outline"
                     onClick={() => setShowMilestoneModal(true)}
@@ -1444,35 +1396,32 @@ export default function ProjectOfHeartPage() {
                     {pohState?.active?.milestones?.map((milestone) => (
                       <motion.div
                         key={milestone.id}
-                        className={`group relative flex items-start gap-3 p-2 rounded-xl transition-all duration-300 ${
-                          milestone.achieved
-                            ? `${
-                                (
-                                  CATEGORY_CONFIG[
-                                    pohState?.active?.category as Category
-                                  ] || CATEGORY_CONFIG.other
-                                ).theme.milestoneBg
-                              } border ${
-                                (
-                                  CATEGORY_CONFIG[
-                                    pohState?.active?.category as Category
-                                  ] || CATEGORY_CONFIG.other
-                                ).theme.milestoneBorder
-                              }`
-                            : "bg-gray-50/50 hover:bg-gray-100/80 cursor-pointer border border-transparent"
-                        }`}
+                        className={`group relative flex items-start gap-3 p-2 rounded-xl transition-all duration-300 ${milestone.achieved
+                          ? `${(
+                            CATEGORY_CONFIG[
+                            pohState?.active?.category as Category
+                            ] || CATEGORY_CONFIG.other
+                          ).theme.milestoneBg
+                          } border ${(
+                            CATEGORY_CONFIG[
+                            pohState?.active?.category as Category
+                            ] || CATEGORY_CONFIG.other
+                          ).theme.milestoneBorder
+                          }`
+                          : "bg-gray-50/50 hover:bg-gray-100/80 cursor-pointer border border-transparent"
+                          }`}
                         onClick={() => handleMilestoneClick(milestone)}
                         data-testid={`milestone-${milestone.id}`}
                         animate={
                           justAchievedId === milestone.id
                             ? {
-                                scale: [1, 1.03, 1],
-                                boxShadow: [
-                                  "0 0 0 0 rgba(34, 197, 94, 0)",
-                                  "0 0 0 8px rgba(34, 197, 94, 0.2)",
-                                  "0 0 0 0 rgba(34, 197, 94, 0)",
-                                ],
-                              }
+                              scale: [1, 1.03, 1],
+                              boxShadow: [
+                                "0 0 0 0 rgba(34, 197, 94, 0)",
+                                "0 0 0 8px rgba(34, 197, 94, 0.2)",
+                                "0 0 0 0 rgba(34, 197, 94, 0)",
+                              ],
+                            }
                             : {}
                         }
                         transition={{ duration: 0.8 }}
@@ -1525,11 +1474,10 @@ export default function ProjectOfHeartPage() {
 
                         {/* Milestone Text */}
                         <span
-                          className={`text-sm sm:text-base leading-relaxed flex-1 min-w-0 break-words transition-colors duration-300 ${
-                            milestone.achieved
-                              ? "text-gray-600 font-medium"
-                              : "text-gray-700 group-hover:text-gray-900"
-                          }`}
+                          className={`text-sm sm:text-base leading-relaxed flex-1 min-w-0 break-words transition-colors duration-300 ${milestone.achieved
+                            ? "text-gray-600 font-medium"
+                            : "text-gray-700 group-hover:text-gray-900"
+                            }`}
                         >
                           {milestone.text}
                         </span>
@@ -1587,13 +1535,12 @@ export default function ProjectOfHeartPage() {
                         className="absolute top-0 left-0 h-full bg-gradient-to-r from-brand via-purple-500 to-brand rounded-full"
                         initial={{ width: 0 }}
                         animate={{
-                          width: `${
-                            (pohState.active.milestones.filter(
-                              (m) => m.achieved
-                            ).length /
-                              pohState.active.milestones.length) *
+                          width: `${(pohState.active.milestones.filter(
+                            (m) => m.achieved
+                          ).length /
+                            pohState.active.milestones.length) *
                             100
-                          }%`,
+                            }%`,
                         }}
                         transition={{ duration: 1, ease: "easeOut" }}
                       >
@@ -1606,12 +1553,11 @@ export default function ProjectOfHeartPage() {
                         .length === 0
                         ? "Start achieving your milestones!"
                         : pohState.active.milestones.filter((m) => m.achieved)
-                            .length === pohState.active.milestones.length
-                        ? "🎉 All milestones completed! Ready to close?"
-                        : `Keep going! ${
-                            pohState.active.milestones.length -
-                            pohState.active.milestones.filter((m) => m.achieved)
-                              .length
+                          .length === pohState.active.milestones.length
+                          ? "🎉 All milestones completed! Ready to close?"
+                          : `Keep going! ${pohState.active.milestones.length -
+                          pohState.active.milestones.filter((m) => m.achieved)
+                            .length
                           } more to go!`}
                     </p>
                   </div>
@@ -1816,12 +1762,12 @@ export default function ProjectOfHeartPage() {
                       animate={{
                         scale:
                           sliderValue >= item.range[0] &&
-                          sliderValue <= item.range[1]
+                            sliderValue <= item.range[1]
                             ? 1.15
                             : 1,
                         opacity:
                           sliderValue >= item.range[0] &&
-                          sliderValue <= item.range[1]
+                            sliderValue <= item.range[1]
                             ? 1
                             : 0.4,
                       }}
@@ -1856,14 +1802,14 @@ export default function ProjectOfHeartPage() {
                         sliderValue === 0
                           ? "#6B7280"
                           : sliderValue <= 3
-                          ? "#DC2626"
-                          : sliderValue <= 5
-                          ? "#D97706"
-                          : sliderValue <= 7
-                          ? "#16A34A"
-                          : sliderValue <= 9
-                          ? "#7C3AED"
-                          : "#5B21B6",
+                            ? "#DC2626"
+                            : sliderValue <= 5
+                              ? "#D97706"
+                              : sliderValue <= 7
+                                ? "#16A34A"
+                                : sliderValue <= 9
+                                  ? "#7C3AED"
+                                  : "#5B21B6",
                     }}
                   >
                     {sliderValue}
@@ -1879,29 +1825,29 @@ export default function ProjectOfHeartPage() {
                         sliderValue === 0
                           ? "#9CA3AF"
                           : sliderValue <= 3
-                          ? "#EF4444"
-                          : sliderValue <= 5
-                          ? "#F59E0B"
-                          : sliderValue <= 7
-                          ? "#22C55E"
-                          : sliderValue <= 9
-                          ? "#8B5CF6"
-                          : "#703DFA",
+                            ? "#EF4444"
+                            : sliderValue <= 5
+                              ? "#F59E0B"
+                              : sliderValue <= 7
+                                ? "#22C55E"
+                                : sliderValue <= 9
+                                  ? "#8B5CF6"
+                                  : "#703DFA",
                     }}
                   >
                     {sliderValue === 0
                       ? "Rate your alignment"
                       : sliderValue <= 2
-                      ? "Room for improvement"
-                      : sliderValue <= 4
-                      ? "Making progress"
-                      : sliderValue <= 6
-                      ? "Good alignment today!"
-                      : sliderValue <= 8
-                      ? "Great work staying aligned!"
-                      : sliderValue === 9
-                      ? "Excellent alignment!"
-                      : "Excellent alignment achieved! 🎉"}
+                        ? "Room for improvement"
+                        : sliderValue <= 4
+                          ? "Making progress"
+                          : sliderValue <= 6
+                            ? "Good alignment today!"
+                            : sliderValue <= 8
+                              ? "Great work staying aligned!"
+                              : sliderValue === 9
+                                ? "Excellent alignment!"
+                                : "Excellent alignment achieved! 🎉"}
                   </motion.p>
                 </div>
               </div>
@@ -2001,7 +1947,7 @@ export default function ProjectOfHeartPage() {
                 </span>
               </div>
               <p
-                className="text-base sm:text-lg font-semibold text-gray-700 leading-relaxed mb-2"
+                className="text-lg font-semibold leading-relaxed mb-2"
                 data-testid="text-next-poh"
               >
                 {pohState.next.title}
@@ -2114,17 +2060,15 @@ export default function ProjectOfHeartPage() {
 
       {/* Milestone Creation Modal */}
       <Dialog open={showMilestoneModal} onOpenChange={setShowMilestoneModal}>
-        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle>Create Milestones</DialogTitle>
             <DialogDescription>
               {pohState.active?.milestones &&
-              pohState.active.milestones.length > 0
-                ? `You have ${
-                    pohState.active.milestones.length
-                  } milestones. You can add up to ${
-                    5 - pohState.active.milestones.length
-                  } more.`
+                pohState.active.milestones.length > 0
+                ? `You have ${pohState.active.milestones.length
+                } milestones. You can add up to ${5 - pohState.active.milestones.length
+                } more.`
                 : "Add up to 5 milestones that reflect shifts in you."}
             </DialogDescription>
           </DialogHeader>
@@ -2157,14 +2101,14 @@ export default function ProjectOfHeartPage() {
             ))}
             {newMilestones.length <
               5 - (pohState.active?.milestones?.length || 0) && (
-              <button
-                onClick={() => setNewMilestones([...newMilestones, ""])}
-                className="text-sm font-semibold text-brand hover:text-brand/80 transition-colors py-1 flex items-center gap-1.5"
-              >
-                <Plus className="w-4 h-4" />
-                Add another milestone
-              </button>
-            )}
+                <button
+                  onClick={() => setNewMilestones([...newMilestones, ""])}
+                  className="text-sm font-semibold text-brand hover:text-brand/80 transition-colors py-1 flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add another milestone
+                </button>
+              )}
           </div>
           <div className="flex gap-3 pt-2">
             <Button
@@ -2194,7 +2138,7 @@ export default function ProjectOfHeartPage() {
 
       {/* Milestone Achievement Confirmation Modal */}
       <Dialog open={showAchieveConfirm} onOpenChange={setShowAchieveConfirm}>
-        <DialogContent className="w-[92vw] sm:max-w-sm p-6 rounded-3xl text-center">
+        <DialogContent className="w-[92vw] sm:max-w-sm p-6 rounded-2xl text-center">
           <DialogHeader>
             <DialogTitle className="text-center">Mark Milestone</DialogTitle>
           </DialogHeader>
@@ -2222,7 +2166,7 @@ export default function ProjectOfHeartPage() {
 
       {/* Complete/Close Modal */}
       <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
-        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle>
               {completeMode === "complete"
@@ -2232,20 +2176,17 @@ export default function ProjectOfHeartPage() {
           </DialogHeader>
           <div className="py-4">
             <div
-              className={`flex gap-3 mb-6 transition-all duration-300 ${
-                allMilestonesCompleted ? "justify-center" : ""
-              }`}
+              className={`flex gap-3 mb-6 transition-all duration-300 ${allMilestonesCompleted ? "justify-center" : ""
+                }`}
             >
               <Button
                 variant={completeMode === "complete" ? "default" : "outline"}
                 onClick={() => setCompleteMode("complete")}
-                className={`h-11 text-sm sm:text-sm font-semibold rounded-xl shadow-md transition-all duration-300 ${
-                  allMilestonesCompleted ? "w-full" : "flex-1"
-                } ${
-                  completeMode === "complete"
+                className={`h-11 text-sm sm:text-sm font-semibold rounded-xl shadow-md transition-all duration-300 ${allMilestonesCompleted ? "w-full" : "flex-1"
+                  } ${completeMode === "complete"
                     ? "bg-green-500 hover:bg-green-600 text-white shadow-green-500/20"
                     : "border-indigo-100 bg-white hover:bg-brand/5 text-indigo-600"
-                }`}
+                  }`}
               >
                 {allMilestonesCompleted ? "🎉 Complete" : "Complete"}
               </Button>
@@ -2253,11 +2194,10 @@ export default function ProjectOfHeartPage() {
                 <Button
                   variant={completeMode === "close" ? "default" : "outline"}
                   onClick={() => setCompleteMode("close")}
-                  className={`flex-1 h-11 text-xs sm:text-sm font-semibold rounded-xl shadow-md transition-all duration-300 ${
-                    completeMode === "close"
-                      ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
-                      : "border-indigo-100 bg-white hover:bg-brand/5 text-indigo-600"
-                  }`}
+                  className={`flex-1 h-11 text-xs sm:text-sm font-semibold rounded-xl shadow-md transition-all duration-300 ${completeMode === "close"
+                    ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
+                    : "border-indigo-100 bg-white hover:bg-brand/5 text-indigo-600"
+                    }`}
                 >
                   Close Early
                 </Button>
@@ -2312,7 +2252,7 @@ export default function ProjectOfHeartPage() {
 
       {/* Create Next POH Modal */}
       <Dialog open={showCreateNextModal} onOpenChange={setShowCreateNextModal}>
-        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle>Create Next POH</DialogTitle>
             <DialogDescription>
@@ -2388,7 +2328,7 @@ export default function ProjectOfHeartPage() {
         open={showCreateHorizonModal}
         onOpenChange={setShowCreateHorizonModal}
       >
-        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle>Create North Star</DialogTitle>
             <DialogDescription>
@@ -2481,11 +2421,10 @@ export default function ProjectOfHeartPage() {
             <div className="flex p-1 bg-gray-100 rounded-lg">
               {pohState.active && (
                 <button
-                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                    realignTarget === "active"
-                      ? "bg-white text-brand shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${realignTarget === "active"
+                    ? "bg-white text-brand shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                   onClick={() => openRealignFor("active")}
                 >
                   Active Project
@@ -2493,11 +2432,10 @@ export default function ProjectOfHeartPage() {
               )}
               {pohState.next && (
                 <button
-                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                    realignTarget === "next"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${realignTarget === "next"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                   onClick={() => openRealignFor("next")}
                 >
                   Next Project
@@ -2505,11 +2443,10 @@ export default function ProjectOfHeartPage() {
               )}
               {pohState.horizon && (
                 <button
-                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                    realignTarget === "horizon"
-                      ? "bg-white text-yellow-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${realignTarget === "horizon"
+                    ? "bg-white text-yellow-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                   onClick={() => openRealignFor("horizon")}
                 >
                   North Star
@@ -2604,9 +2541,8 @@ export default function ProjectOfHeartPage() {
                           className="flex items-start gap-3 group"
                         >
                           <div
-                            className={`mt-2.5 w-2 h-2 rounded-full ${
-                              m.achieved ? "bg-green-500" : "bg-gray-300"
-                            }`}
+                            className={`mt-2.5 w-2 h-2 rounded-full ${m.achieved ? "bg-green-500" : "bg-gray-300"
+                              }`}
                           />
 
                           {editingMilestoneId === m.id ? (
@@ -2642,11 +2578,10 @@ export default function ProjectOfHeartPage() {
                           ) : (
                             <div className="flex-1 flex justify-between gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
                               <span
-                                className={`text-sm leading-relaxed ${
-                                  m.achieved
-                                    ? "text-gray-400 line-through"
-                                    : "text-gray-700"
-                                }`}
+                                className={`text-sm leading-relaxed ${m.achieved
+                                  ? "text-gray-400 line-through"
+                                  : "text-gray-700"
+                                  }`}
                               >
                                 {m.text}
                               </span>
