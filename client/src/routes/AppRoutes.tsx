@@ -34,12 +34,12 @@ import NotFound from "@/pages/not-found";
 export default function AppRoutes() {
   return (
     <Switch>
-      {/* Handle empty hash - redirect to login */}
+      {/* Handle empty hash - let ProtectedRoute handle auth check */}
       <Route path="/">
-        <Redirect to="/login" />
+        <Redirect to="/home" />
       </Route>
       <Route path="/index.html">
-        <Redirect to="/login" />
+        <Redirect to="/home" />
       </Route>
       <Route path="/home" component={HomePage} />
       <Route path="/processes" component={ProcessesPage} />

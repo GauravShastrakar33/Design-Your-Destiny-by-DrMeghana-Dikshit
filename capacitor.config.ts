@@ -1,5 +1,6 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
+
 const config: CapacitorConfig = {
   appId: "com.dyd.drmeghana",
   appName: "Design Your Destiny by Dr. Meghana Dikshit",
@@ -22,6 +23,16 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],
+    },
+    SplashScreen: {
+      launchShowDuration: 3000,
+      launchAutoHide: true,
+      launchFadeOutDuration: 300,
+      backgroundColor: "#703DFA",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: true,
+      androidSpinnerStyle: "large",
+      spinnerColor: "#999999",
     },
   },
 

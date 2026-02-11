@@ -12,17 +12,30 @@ async function throwIfResNotOk(res: Response) {
 async function getAuthHeaders(url: string): Promise<Record<string, string>> {
   const headers: Record<string, string> = {};
 
-  const normalizedUrl = url.replace(/^\/+/, "/");
+  const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
 
   const isAdminRoute = normalizedUrl.startsWith("/admin") || normalizedUrl.startsWith("/api/admin");
 
+  console.log(`[AuthDebug] Checking headers for: ${url} | Native: ${Capacitor.isNativePlatform()} | AdminRoute: ${isAdminRoute}`);
+
   if (isAdminRoute) {
-    const { value: adminToken } = await Preferences.get({ key: "@app:admin_token" });
-    if (adminToken) {
-      headers["Authorization"] = `Bearer ${adminToken}`;
+    if (Capacitor.isNativePlatform()) {
+      // Native: Use Preferences as usual
+      const { value: adminToken } = await Preferences.get({ key: "@app:admin_token" });
+      console.log(`[AuthDebug] Native Admin Token found: ${!!adminToken}`);
+      if (adminToken) {
+        headers["Authorization"] = `Bearer ${adminToken}`;
+      }
+    } else {
+      // Web: Read directly from localStorage to match AdminAuthContext
+      const adminToken = localStorage.getItem("@app:admin_token");
+      console.log(`[AuthDebug] Web Admin Token found: ${!!adminToken}`);
+      if (adminToken) {
+        headers["Authorization"] = `Bearer ${adminToken}`;
+      }
     }
   } else {
-    // Check for user token for all other routes, especially API routes
+    // User App: Continue using Preferences (consistent across web/mobile for app users)
     const { value: userToken } = await Preferences.get({ key: "@app:user_token" });
     if (userToken) {
       headers["Authorization"] = `Bearer ${userToken}`;

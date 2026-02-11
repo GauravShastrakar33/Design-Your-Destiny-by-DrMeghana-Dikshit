@@ -547,7 +547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const baseDate = req.query.date as string || new Date().toISOString().split('T')[0];
-      
+
       const dates: string[] = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date(baseDate);
@@ -594,7 +594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const days = await storage.getConsistencyMonth(req.user.sub, year, month);
-      
+
       res.json({ year, month, days });
     } catch (error) {
       console.error("Error fetching consistency month:", error);
@@ -654,11 +654,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { evaluateBadges } = await import("./services/badgeService");
-      
+
       const todayDate = new Date().toISOString().split('T')[0];
       const newlyAwardedBadges = await evaluateBadges(req.user.sub, todayDate);
 
-      res.json({ 
+      res.json({
         newBadges: newlyAwardedBadges,
         hasNewBadges: newlyAwardedBadges.length > 0
       });
@@ -718,11 +718,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const month = (req.query.month as string) || new Date().toISOString().slice(0, 7);
 
       console.log(`[monthly-stats] Fetching stats for userId=${req.user.sub}, month=${month}`);
-      
+
       const stats = await storage.getMonthlyStats(req.user.sub, month);
-      
+
       console.log(`[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, PLAYLIST=${stats.PLAYLIST.length}`);
-      
+
       res.set('Cache-Control', 'no-store');
       res.json(stats);
     } catch (error) {
@@ -849,7 +849,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Lesson Progress APIs (for Daily Abundance courses)
-  
+
   // GET /api/v1/lesson-progress - Get all completed lesson IDs for current user
   app.get("/api/v1/lesson-progress", authenticateJWT, async (req, res) => {
     try {
@@ -967,13 +967,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
-      
+
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      
+
       const sevenDaysLater = new Date(today);
       sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
-      
+
       const twentyFourHoursAgo = new Date();
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
@@ -1036,9 +1036,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Total users
         db.select({ count: count() }).from(users).where(eq(users.role, "USER")),
       ]);
-      
+
       // Users without push enabled = total users - users with push enabled
-      const usersWithNotificationsDisabled = 
+      const usersWithNotificationsDisabled =
         (totalUserCount[0]?.count ?? 0) - (usersWithDeviceTokens[0]?.count ?? 0);
 
       // Community Practices
@@ -1334,7 +1334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 John Doe,john.doe@example.com,+1234567890
 Jane Smith,jane.smith@example.com,
 Bob Wilson,bob.wilson@example.com,+9876543210`;
-    
+
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", "attachment; filename=student_upload_sample.csv");
     res.send(sampleCSV);
@@ -1357,7 +1357,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.post("/api/admin/students/bulk-upload", requireAdmin, uploadCSV.single("file"), async (req, res) => {
     try {
       const { parse } = await import("csv-parse/sync");
-      
+
       // Validate file
       if (!req.file) {
         return res.status(400).json({ error: "CSV file is required" });
@@ -1377,7 +1377,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Parse CSV
       const csvContent = req.file.buffer.toString("utf-8");
       let records: any[];
-      
+
       try {
         records = parse(csvContent, {
           columns: true,
@@ -1830,6 +1830,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .values({
           code: String(code).toUpperCase(),
           name: String(name),
+          level: req.body.level ? parseInt(String(req.body.level)) : 1,
         })
         .returning();
 
@@ -3093,7 +3094,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
               .select()
               .from(cmsCourses)
               .where(eq(cmsCourses.id, m.courseId));
-            
+
             let thumbnailUrl = null;
             if (course.thumbnailKey) {
               try {
@@ -3105,7 +3106,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                 console.error("Error generating thumbnail URL:", e);
               }
             }
-            
+
             return {
               id: course.id,
               title: course.title,
@@ -3891,7 +3892,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       const key = `session-banners/${Date.now()}-${filename}`;
       const result = await getSignedPutUrl(key, contentType);
-      
+
       if (!result.success) {
         console.error("R2 upload URL error:", result.error);
         return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
@@ -3923,7 +3924,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.post("/api/admin/v1/session-banners", requireAdmin, async (req, res) => {
     try {
       const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled, liveStartAt, liveEndAt } = req.body;
-      
+
       if (!type || !startAt || !endAt) {
         return res.status(400).json({ error: "type, startAt, and endAt are required" });
       }
@@ -4068,13 +4069,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Check if live badge should show (session banners only)
       // Runtime LIVE status: liveEnabled AND now is within liveStartAt/liveEndAt window
       const now = new Date();
-      const isLive = banner.type === "session" && 
-                     banner.liveEnabled && 
-                     status === "active" &&
-                     banner.liveStartAt && 
-                     banner.liveEndAt &&
-                     now >= new Date(banner.liveStartAt) && 
-                     now < new Date(banner.liveEndAt);
+      const isLive = banner.type === "session" &&
+        banner.liveEnabled &&
+        status === "active" &&
+        banner.liveStartAt &&
+        banner.liveEndAt &&
+        now >= new Date(banner.liveStartAt) &&
+        now < new Date(banner.liveEndAt);
 
       res.json({
         banner: {
@@ -4326,7 +4327,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Hash new password and update
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await storage.updateUserPassword(req.user.sub, hashedPassword);
-      
+
       // Clear forcePasswordChange flag if it was set
       await storage.clearForcePasswordChange(req.user.sub);
 
@@ -4369,13 +4370,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const { status, month, year } = req.query;
       const filters: { status?: string; month?: number; year?: number } = {};
-      
+
       if (status) filters.status = String(status);
       if (month) filters.month = parseInt(String(month));
       if (year) filters.year = parseInt(String(year));
 
       const events = await storage.getAllEvents(filters);
-      
+
       // Generate signed thumbnail URLs
       const eventsWithSignedUrls = await Promise.all(
         events.map(async (event) => {
@@ -4401,7 +4402,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.get("/api/admin/v1/events/upcoming", requireAdmin, async (req, res) => {
     try {
       const events = await storage.getAllEvents({ status: "UPCOMING" });
-      
+
       const eventsWithSignedUrls = await Promise.all(
         events.map(async (event) => {
           let thumbnailSignedUrl: string | null = null;
@@ -4427,9 +4428,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       // Get completed events that need recording decision or have recording published
       const allCompleted = await storage.getAllEvents({ status: "COMPLETED" });
-      
+
       // Filter: show_recording = true OR recording_url IS NULL (needs decision)
-      const latestEvents = allCompleted.filter(event => 
+      const latestEvents = allCompleted.filter(event =>
         event.showRecording === true || event.recordingUrl === null
       );
 
@@ -4464,7 +4465,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       const key = `events/${Date.now()}-${filename}`;
       const result = await getSignedPutUrl(key, contentType);
-      
+
       if (!result.success) {
         console.error("R2 upload URL error:", result.error);
         return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
@@ -4482,7 +4483,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const id = parseInt(req.params.id);
       const event = await storage.getEventById(id);
-      
+
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
@@ -4586,7 +4587,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.put("/api/admin/v1/events/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       // Convert datetime strings to Date objects for Drizzle
       const updateData = { ...req.body };
       if (updateData.startDatetime && typeof updateData.startDatetime === 'string') {
@@ -4598,9 +4599,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (updateData.recordingExpiryDate && typeof updateData.recordingExpiryDate === 'string') {
         updateData.recordingExpiryDate = updateData.recordingExpiryDate;
       }
-      
+
       const event = await storage.updateEvent(id, updateData);
-      
+
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
@@ -4628,7 +4629,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const id = parseInt(req.params.id);
       const event = await storage.cancelEvent(id);
-      
+
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
@@ -4658,7 +4659,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         recordingPasscode: null,
         recordingExpiryDate: null,
       });
-      
+
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
@@ -4687,7 +4688,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         showRecording: true,
         recordingSkipped: false,
       });
-      
+
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
@@ -4705,7 +4706,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.get("/api/events/upcoming", async (req, res) => {
     try {
       const events = await storage.getUpcomingEvents();
-      
+
       const eventsWithSignedUrls = await Promise.all(
         events.map(async (event) => {
           let thumbnailSignedUrl: string | null = null;
@@ -4715,11 +4716,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
               thumbnailSignedUrl = signedResult.url;
             }
           }
-          
+
           // Derive LIVE status
           const now = new Date();
           const isLive = event.startDatetime <= now && now <= event.endDatetime;
-          
+
           return { ...event, thumbnailSignedUrl, isLive };
         })
       );
@@ -4735,7 +4736,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.get("/api/events/latest", async (req, res) => {
     try {
       const events = await storage.getLatestEvents();
-      
+
       const eventsWithSignedUrls = await Promise.all(
         events.map(async (event) => {
           let thumbnailSignedUrl: string | null = null;
@@ -4761,7 +4762,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const id = parseInt(req.params.id);
       const event = await storage.getEventById(id);
-      
+
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
@@ -4800,10 +4801,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       const userId = req.user.sub;
-      
+
       // Fetch all POHs for user
       const userPOHs = await storage.getUserPOHs(userId);
-      
+
       const activePOH = userPOHs.find(p => p.status === "active");
       const nextPOH = userPOHs.find(p => p.status === "next");
       const horizonPOH = userPOHs.find(p => p.status === "horizon");
@@ -4815,7 +4816,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const actions = await storage.getPOHActions(activePOH.id);
         const today = new Date().toISOString().split('T')[0];
         const todayRating = await storage.getPOHRatingByDate(userId, today);
-        
+
         // Generate signed URLs for vision images
         const visionImages = activePOH.visionImages || [];
         const signedVisionImages: (string | null)[] = [];
@@ -4846,7 +4847,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             signedVisionImages.push(null);
           }
         }
-        
+
         activeResponse = {
           id: activePOH.id,
           title: activePOH.title,
@@ -4945,8 +4946,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       } else if (!hasHorizon) {
         status = "horizon";
       } else {
-        return res.status(400).json({ 
-          error: "Cannot create more POHs. You already have active, next, and horizon projects." 
+        return res.status(400).json({
+          error: "Cannot create more POHs. You already have active, next, and horizon projects."
         });
       }
 
@@ -4985,14 +4986,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Validate inputs
       const updates: any = {};
-      
+
       if (title !== undefined) {
         if (title.length > 120) {
           return res.status(400).json({ error: "Title must be <= 120 characters" });
         }
         updates.title = title;
       }
-      
+
       // Only active POH can update "why"
       if (why !== undefined) {
         if (poh.status !== "active") {
@@ -5003,7 +5004,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         }
         updates.why = why;
       }
-      
+
       if (category !== undefined) {
         if (!pohCategoryEnum.safeParse(category).success) {
           return res.status(400).json({ error: "Invalid category" });
@@ -5127,7 +5128,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Can only edit milestones on ACTIVE POH
       if (poh.status !== "active") {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: "POH_NOT_ACTIVE",
           message: "Can only edit milestones on active POH"
         });
@@ -5135,7 +5136,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Cannot edit achieved milestone
       if (milestone.achieved) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: "MILESTONE_LOCKED",
           message: "Achieved milestones cannot be edited."
         });
@@ -5187,7 +5188,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Replace all actions
       await storage.replacePOHActions(pohId, actions);
-      
+
       const updatedActions = await storage.getPOHActions(pohId);
       res.json(updatedActions);
     } catch (error) {
@@ -5229,7 +5230,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Can only rate today - no backdating allowed
       const today = new Date().toISOString().split('T')[0];
       if (local_date !== today) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: "RATING_DATE_LOCKED",
           message: "Can only submit or update rating for today"
         });
@@ -5237,7 +5238,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Check if rating exists for this date
       const existingRating = await storage.getPOHRatingByDate(userId, local_date);
-      
+
       let result;
       if (existingRating) {
         // Update existing rating
@@ -5286,7 +5287,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       const today = new Date().toISOString().split('T')[0];
-      
+
       // Complete the POH
       await storage.completePOH(pohId, {
         status: "completed",
@@ -5331,7 +5332,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       const today = new Date().toISOString().split('T')[0];
-      
+
       // Close the POH early
       await storage.completePOH(pohId, {
         status: "closed_early",
@@ -5357,10 +5358,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       const userId = req.user.sub;
-      
+
       // Get completed and closed_early POHs
       const historyPOHs = await storage.getPOHHistory(userId);
-      
+
       // Build response with only achieved milestones
       const historyWithMilestones = await Promise.all(
         historyPOHs.map(async (poh) => {
@@ -5417,7 +5418,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Validate index (3 vision slots: 0, 1, 2)
       const index = parseInt(indexStr, 10);
       if (isNaN(index) || index < 0 || index > 2) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "INVALID_INDEX",
           message: "Index must be 0, 1, or 2"
         });
@@ -5430,7 +5431,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       if (poh.status !== "active") {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: "VISION_UPLOAD_NOT_ALLOWED",
           message: "Can only upload vision images to active POH"
         });
@@ -5438,7 +5439,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Check if file was uploaded
       if (!req.file) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "INVALID_IMAGE",
           message: "No image file provided"
         });
@@ -5465,26 +5466,26 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Update vision_images array in database
       const currentImages = poh.visionImages || [];
       const newImages = [...currentImages];
-      
+
       // Ensure array has at least 3 slots (pad with nulls)
       while (newImages.length < 3) {
         newImages.push(null as any);
       }
-      
+
       // Replace the image at the specified index
       newImages[index] = uploadResult.url!;
 
       await storage.updatePOH(pohId, { visionImages: newImages });
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         vision_images: newImages,
         uploaded_index: index
       });
     } catch (error: any) {
       console.error("Error uploading vision image:", error);
       if (error.message === 'INVALID_IMAGE') {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "INVALID_IMAGE",
           message: "Only JPEG, PNG, and WebP images are allowed"
         });
@@ -5499,31 +5500,31 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.get("/api/v1/notifications", authenticateJWT, async (req, res) => {
     try {
       const userId = (req as any).user.sub;
-      
+
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
       const notifications = await storage.getUserNotifications(userId);
-      
+
       res.json(notifications);
     } catch (error) {
       console.error("Error fetching user notifications:", error);
       res.status(500).json({ error: "Failed to fetch notifications" });
     }
   });
-  
+
   // Register device token for push notifications
   app.post("/api/v1/notifications/register-device", authenticateJWT, async (req, res) => {
     try {
       const userId = (req as any).user.sub;
-      
+
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      
+
       const { token, platform } = req.body;
-      
+
       if (!token || typeof token !== "string") {
         return res.status(400).json({ error: "Token is required" });
       }
@@ -5540,17 +5541,23 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .limit(1);
 
       if (existingToken.length > 0) {
-        // Token already exists - update user/platform if different
+        // Token already exists - update user/platform/pushEnabled if needed
+        // Always force pushEnabled=true on re-registration
         const needsUpdate =
           existingToken[0].userId !== userId ||
-          existingToken[0].platform !== normalizedPlatform;
+          existingToken[0].platform !== normalizedPlatform ||
+          !existingToken[0].pushEnabled;
 
         if (needsUpdate) {
           await db.update(deviceTokens)
-            .set({ userId, platform: normalizedPlatform })
+            .set({
+              userId,
+              platform: normalizedPlatform,
+              pushEnabled: true
+            })
             .where(eq(deviceTokens.token, token));
         }
-        return res.json({ success: true, message: "Token already registered" });
+        return res.json({ success: true, message: "Token already registered and enabled" });
       }
 
       // Insert new token (default pushEnabled=true)
@@ -5572,13 +5579,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.delete("/api/v1/notifications/unregister-device", authenticateJWT, async (req, res) => {
     try {
       const userId = (req as any).user.sub;
-      
+
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      
+
       const { token } = req.body;
-      
+
       if (token) {
         // Remove specific token
         await db.delete(deviceTokens)
@@ -5599,7 +5606,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.get("/api/v1/notifications/status", authenticateJWT, async (req, res) => {
     try {
       const userId = (req as any).user.sub;
-      
+
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -5649,7 +5656,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const allTokens = await db.select().from(deviceTokens);
       const uniqueUserIds = new Set(allTokens.map(t => t.userId));
-      
+
       res.json({
         totalDevices: allTokens.length,
         uniqueUsers: uniqueUserIds.size,
@@ -5664,7 +5671,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.post("/admin/api/notifications/test", requireAdmin, async (req, res) => {
     try {
       const { title, body } = req.body;
-      
+
       if (!title || !body) {
         return res.status(400).json({ error: "Title and body are required" });
       }
@@ -5675,8 +5682,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .where(eq(deviceTokens.pushEnabled, true));
 
       if (allTokens.length === 0) {
-        return res.json({ 
-          success: true, 
+        return res.json({
+          success: true,
           message: "No devices registered",
           successCount: 0,
           failureCount: 0
@@ -5737,14 +5744,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const userId = (req as any).user.sub;
       const questions = await storage.getUserDrmQuestions(userId);
-      
+
       // Get current month in YYYY-MM format
       const now = new Date();
       const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      
+
       // Check if user has submitted a question this month
       const hasSubmittedThisMonth = questions.some(q => q.monthYear === currentMonthYear);
-      
+
       res.json({
         questions,
         currentMonthYear,
@@ -5761,18 +5768,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const userId = (req as any).user.sub;
       const questionId = parseInt(req.params.id);
-      
+
       const question = await storage.getDrmQuestionById(questionId);
-      
+
       if (!question) {
         return res.status(404).json({ error: "Question not found" });
       }
-      
+
       // Ensure user can only access their own question
       if (question.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
-      
+
       // If question has audio, generate signed URL
       let audioUrl = null;
       if (question.audioR2Key) {
@@ -5783,7 +5790,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           audioUrl = result.url;
         }
       }
-      
+
       res.json({
         ...question,
         audioUrl,
@@ -5799,37 +5806,37 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const userId = (req as any).user.sub;
       const { questionText } = req.body;
-      
+
       // Validate question text
       if (!questionText || typeof questionText !== 'string') {
         return res.status(400).json({ error: "Question text is required" });
       }
-      
+
       if (questionText.length > 240) {
         return res.status(400).json({ error: "Question exceeds 240 character limit" });
       }
-      
+
       if (questionText.trim().length === 0) {
         return res.status(400).json({ error: "Question cannot be empty" });
       }
-      
+
       // Get current month in YYYY-MM format
       const now = new Date();
       const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      
+
       // Check if user already submitted this month
       const existingQuestion = await storage.getDrmQuestionByUserMonth(userId, monthYear);
       if (existingQuestion) {
         return res.status(409).json({ error: "You have already submitted a question this month" });
       }
-      
+
       // Create the question
       const question = await storage.createDrmQuestion({
         userId,
         questionText: questionText.trim(),
         monthYear,
       });
-      
+
       res.status(201).json({
         success: true,
         message: "Your question has been sent. Dr. M will respond soon.",
@@ -5857,14 +5864,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const questionId = parseInt(req.params.id);
       const question = await storage.getDrmQuestionById(questionId);
-      
+
       if (!question) {
         return res.status(404).json({ error: "Question not found" });
       }
-      
+
       // Get user name
       const user = await storage.getUserById(question.userId);
-      
+
       // If question has audio, generate signed URL
       let audioUrl = null;
       if (question.audioR2Key) {
@@ -5873,7 +5880,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           audioUrl = result.url;
         }
       }
-      
+
       res.json({
         ...question,
         userName: user?.name || "Unknown",
@@ -5890,12 +5897,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const questionId = parseInt(req.params.id);
       const { mimeType } = req.body;
-      
+
       const question = await storage.getDrmQuestionById(questionId);
       if (!question) {
         return res.status(404).json({ error: "Question not found" });
       }
-      
+
       // Determine file extension based on mime type
       let extension = "webm";
       const contentType = mimeType || "audio/webm";
@@ -5904,15 +5911,15 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       } else if (contentType.includes("ogg")) {
         extension = "ogg";
       }
-      
+
       // Generate upload URL for audio with correct content type
       const audioKey = `drm-audio/questions/${questionId}/answer.${extension}`;
       const result = await getSignedPutUrl(audioKey, contentType);
-      
+
       if (!result.success) {
         return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
       }
-      
+
       res.json({
         uploadUrl: result.uploadUrl,
         audioKey,
@@ -5928,23 +5935,23 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const questionId = parseInt(req.params.id);
       const { audioKey } = req.body;
-      
+
       if (!audioKey) {
         return res.status(400).json({ error: "Audio key is required" });
       }
-      
+
       const question = await storage.getDrmQuestionById(questionId);
       if (!question) {
         return res.status(404).json({ error: "Question not found" });
       }
-      
+
       // Update question status
       const updatedQuestion = await storage.updateDrmQuestionAnswer(questionId, audioKey);
-      
+
       if (!updatedQuestion) {
         return res.status(500).json({ error: "Failed to update question" });
       }
-      
+
       // Create notification for the user
       const [notification] = await db.insert(notifications)
         .values({
@@ -5957,10 +5964,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           requiredProgramLevel: 0,
         })
         .returning();
-      
+
       // Get user's device tokens and send push notification
       const userTokens = await storage.getDeviceTokensByUserIds([question.userId]);
-      
+
       if (userTokens.length > 0) {
         const tokens = userTokens.map(t => t.token);
         const result = await sendPushNotification(
@@ -5969,7 +5976,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           "Your personal voice response is ready to listen.",
           { questionId: questionId.toString(), deepLink: `/dr-m/questions/${questionId}` }
         );
-        
+
         // Create notification logs
         const notificationLogRecords = userTokens.map(t => ({
           notificationId: notification.id,
@@ -5987,12 +5994,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           status: "sent",
         });
       }
-      
+
       console.log(`DrM answer submitted for question ${questionId}, notification sent to user ${question.userId}`);
-      
+
       // Generate signed URL for admin verification
       const audioUrl = await getSignedGetUrl(audioKey);
-      
+
       res.json({
         success: true,
         message: "Answer submitted and user notified",
@@ -6007,36 +6014,36 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
   // ===== ADMIN PROJECT OF HEART ROUTES =====
   // Observational only - aggregate data, no individual user data
-  
+
   // 1. Usage - Are users creating Projects of Heart?
   app.get("/admin/api/poh/usage", requireAdmin, async (req, res) => {
     try {
       // Total users count
       const totalUsersResult = await db.select({ count: count() }).from(users);
       const totalUsers = Number(totalUsersResult[0]?.count) || 0;
-      
+
       // Users with any POH (distinct user_id)
-      const usersWithPohResult = await db.select({ 
-        count: countDistinct(projectOfHearts.userId) 
+      const usersWithPohResult = await db.select({
+        count: countDistinct(projectOfHearts.userId)
       }).from(projectOfHearts);
       const usersWithPoh = Number(usersWithPohResult[0]?.count) || 0;
-      
+
       // Count by status
       const activeResult = await db.select({ count: count() })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "active"));
       const active = Number(activeResult[0]?.count) || 0;
-      
+
       const nextResult = await db.select({ count: count() })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "next"));
       const next = Number(nextResult[0]?.count) || 0;
-      
+
       const northStarResult = await db.select({ count: count() })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "horizon"));
       const northStar = Number(northStarResult[0]?.count) || 0;
-      
+
       res.json({
         total_users: totalUsers,
         users_with_poh: usersWithPoh,
@@ -6049,37 +6056,37 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to fetch usage data" });
     }
   });
-  
+
   // 2. Daily Check-ins - Are users reflecting daily?
   app.get("/admin/api/poh/daily-checkins", requireAdmin, async (req, res) => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      
+
       // Today's check-ins
-      const todayResult = await db.select({ 
-        count: countDistinct(pohDailyRatings.userId) 
+      const todayResult = await db.select({
+        count: countDistinct(pohDailyRatings.userId)
       })
         .from(pohDailyRatings)
         .where(eq(pohDailyRatings.localDate, today));
       const todayCheckedIn = Number(todayResult[0]?.count) || 0;
-      
+
       // Active users count (for percentage)
-      const activeUsersResult = await db.select({ 
-        count: countDistinct(projectOfHearts.userId) 
+      const activeUsersResult = await db.select({
+        count: countDistinct(projectOfHearts.userId)
       })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "active"));
       const activeUsers = Number(activeUsersResult[0]?.count) || 0;
-      
-      const percentOfActive = activeUsers > 0 
-        ? Math.round((todayCheckedIn / activeUsers) * 100) 
+
+      const percentOfActive = activeUsers > 0
+        ? Math.round((todayCheckedIn / activeUsers) * 100)
         : 0;
-      
+
       // Last 30 days check-ins
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-      
+
       const last30DaysResult = await db.select({
         date: pohDailyRatings.localDate,
         count: countDistinct(pohDailyRatings.userId)
@@ -6088,7 +6095,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .where(gte(pohDailyRatings.localDate, thirtyDaysAgoStr))
         .groupBy(pohDailyRatings.localDate)
         .orderBy(asc(pohDailyRatings.localDate));
-      
+
       // Fill in missing dates with 0
       const dateMap = new Map(last30DaysResult.map(r => [r.date, Number(r.count)]));
       const last30Days = [];
@@ -6101,7 +6108,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           users_checked_in: dateMap.get(dateStr) || 0
         });
       }
-      
+
       res.json({
         today: {
           date: today,
@@ -6115,22 +6122,22 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to fetch check-in data" });
     }
   });
-  
+
   // 3. Progress Signals - Are milestones being achieved?
   app.get("/admin/api/poh/progress-signals", requireAdmin, async (req, res) => {
     try {
       const today = new Date();
       const thirtyDaysAgo = new Date(today);
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
+
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-      
+
       // Completed POH count
       const completedPohResult = await db.select({ count: count() })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "completed"));
       const completedPoh = Number(completedPohResult[0]?.count) || 0;
-      
+
       // Milestones achieved in last 30 days
       const achieved30Result = await db.select({ count: count() })
         .from(pohMilestones)
@@ -6139,7 +6146,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           gte(pohMilestones.achievedAt, thirtyDaysAgoStr)
         ));
       const milestonesAchieved30 = Number(achieved30Result[0]?.count) || 0;
-      
+
       // Average days to first milestone
       // Join milestones with POH to get started_at, find first achieved milestone
       const firstMilestonesResult = await db.execute(sql`
@@ -6154,7 +6161,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         ) sub
       `);
       const avgDaysToFirst = Math.round((firstMilestonesResult.rows[0] as any)?.avg_days || 0);
-      
+
       res.json({
         completed_poh: Number(completedPoh),
         milestones_achieved_30_days: Number(milestonesAchieved30),
@@ -6165,7 +6172,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to fetch progress signals" });
     }
   });
-  
+
   // 4. Drop-offs - Where do users disengage?
   app.get("/admin/api/poh/drop-offs", requireAdmin, async (req, res) => {
     try {
@@ -6174,7 +6181,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "closed_early"));
       const closedEarly = Number(closedEarlyResult[0]?.count) || 0;
-      
+
       // Active with no achieved milestones
       const activeNoMilestonesResult = await db.execute(sql`
         SELECT COUNT(DISTINCT p.id) as count
@@ -6183,7 +6190,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         WHERE p.status = 'active' AND m.id IS NULL
       `);
       const activeNoMilestones = parseInt((activeNoMilestonesResult.rows[0] as any)?.count || '0');
-      
+
       // Average active duration (for closed_early and completed)
       const avgDurationResult = await db.execute(sql`
         SELECT AVG(ended_at::date - started_at::date)::float as avg_days
@@ -6192,7 +6199,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           AND status IN ('completed', 'closed_early')
       `);
       const avgDuration = Math.round((avgDurationResult.rows[0] as any)?.avg_days || 0);
-      
+
       res.json({
         closed_early: Number(closedEarly),
         active_with_no_milestones: Number(activeNoMilestones),
@@ -6203,7 +6210,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to fetch drop-off data" });
     }
   });
-  
+
   // 5. Life Areas - Which life categories are users focusing on?
   app.get("/admin/api/poh/life-areas", requireAdmin, async (req, res) => {
     try {
@@ -6215,7 +6222,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "active"))
         .groupBy(projectOfHearts.category);
-      
+
       // Build response object with all categories
       const categories: Record<string, number> = {
         career: 0,
@@ -6223,13 +6230,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         relationships: 0,
         wealth: 0
       };
-      
+
       categoryResult.forEach(r => {
         if (r.category in categories) {
           categories[r.category] = Number(r.count) || 0;
         }
       });
-      
+
       res.json(categories);
     } catch (error: any) {
       console.error("Error fetching life areas:", error);

@@ -17,6 +17,7 @@ import { useEffect } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Toast } from "@capacitor/toast";
 import { Capacitor } from "@capacitor/core";
+import { SplashScreen } from '@capacitor/splash-screen';
 
 function App() {
   console.log("🎯 App component rendering...");
@@ -28,13 +29,17 @@ function App() {
   console.log("🔍 isLoginPage:", isLoginPage, "| isAdminRoute:", isAdminRoute);
 
   // CRITICAL: Force redirect if on root path
+  // 🚀 App Initialized
   useEffect(() => {
-    console.log("🔄 Location effect triggered, location:", location);
-    if (location === "/" || location === "") {
-      console.log("⚠️ On root path! Forcing redirect to /login...");
-      setLocation("/login");
-    }
-  }, [location, setLocation]);
+    console.log("🚀 App component mounted");
+
+    // Hide the splash screen once the app component is ready
+    const hideSplash = async () => {
+      await SplashScreen.hide();
+    };
+
+    hideSplash();
+  }, []);
 
   // 🔴 FIX 3: Handle notifications received while app was closed/backgrounded
   useEffect(() => {
@@ -105,8 +110,21 @@ function App() {
     };
   }, []);
 
+  // Determine routing strategy:
+  // 1. Native Mobile: Always use Hash Routing (safe for file:// protocol)
+  // 2. Web Admin: Use Standard History Routing (clean URLs)
+  // 3. Web App: Default to Hash Routing to match mobile behavior (or change if desired)
+
+  const isNative = Capacitor.isNativePlatform();
+  // Check if initial load is on an admin path
+  const isAdminPath = window.location.pathname.startsWith("/admin");
+
+  // Use hash location if native OR if it's NOT an admin path
+  // Pass undefined to hook to use standard history API
+  const useHash = isNative || !isAdminPath;
+
   return (
-    <Router hook={useHashLocation}>
+    <Router hook={useHash ? useHashLocation : undefined}>
       <NetworkStatus>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>

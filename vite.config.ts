@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
   ],
 
-  base: "./", // standard relative paths for capacitor
+  base: "/", // standard relative paths for capacitor
 
   resolve: {
     alias: {

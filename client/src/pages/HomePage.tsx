@@ -214,8 +214,7 @@ export default function HomePage() {
       <div className="w-full mx-auto min-h-screen flex flex-col max-w-5xl transition-all duration-300">
         {/* Header Section */}
         <header
-          className={`sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-4 flex items-center justify-between gap-4 transition-all ${isNative ? "pt-[calc(env(safe-area-inset-top)+1rem)]" : ""
-            }`}
+          className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-4 flex items-center justify-between gap-4 transition-all"
         >
           <div className="flex-1">
             <h1 className="text-xl sm:text-xl font-bold text-slate-900 tracking-tight">
