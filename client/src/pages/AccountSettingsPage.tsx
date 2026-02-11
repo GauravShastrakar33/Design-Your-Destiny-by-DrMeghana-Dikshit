@@ -30,7 +30,9 @@ export default function AccountSettingsPage() {
   const [, setLocation] = useLocation();
   const { user, clearPasswordChangeRequirement, requiresPasswordChange, isAuthenticated } =
     useAuth();
-  const [userName, setUserName] = useState("");
+
+  // Use name from AuthContext directly
+  const userName = user?.name || "User";
 
   // Password Form States
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -54,14 +56,6 @@ export default function AccountSettingsPage() {
     },
     enabled: isAuthenticated,
   });
-
-  useEffect(() => {
-    const loadUserName = async () => {
-      const { value } = await Preferences.get({ key: "@app:userName" });
-      setUserName(value || "User");
-    };
-    loadUserName();
-  }, []);
 
   // Auto-open password form if user needs to change password
   useEffect(() => {

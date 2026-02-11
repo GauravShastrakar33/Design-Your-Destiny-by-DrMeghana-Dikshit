@@ -94,7 +94,44 @@ export function setupNativePushListeners() {
     }
   });
 
-  // ... (rest of listeners remain same) ...
+  // Handle registration errors
+  PushNotifications.addListener("registrationError", (error: any) => {
+    console.error("❌ Error on registration:", error);
+    window.dispatchEvent(
+      new CustomEvent("nativePushRegistered", { detail: { success: false } }),
+    );
+  });
+
+  // Handle incoming push notification (fg/bg)
+  PushNotifications.addListener("pushNotificationReceived", async (notification) => {
+    console.log("Push received:", notification);
+    const { fetchUnreadCount } = await import("./notificationState");
+    await fetchUnreadCount();
+  });
+
+  // Handle push notification action (tap)
+  PushNotifications.addListener("pushNotificationActionPerformed", async (notification) => {
+    console.log("Push action performed:", JSON.stringify(notification));
+    const data = notification.notification.data;
+
+    // Mark as read
+    if (data?.notificationId) {
+      try {
+        await apiRequest("PATCH", `/api/v1/notifications/${data.notificationId}/read`);
+        const { fetchUnreadCount } = await import("./notificationState");
+        await fetchUnreadCount();
+      } catch (e) {
+        console.error("Failed to mark notification read", e);
+      }
+    }
+
+    // Navigate
+    if (data?.url) {
+      navigate(data.url);
+    } else {
+      navigate("/notifications");
+    }
+  });
 }
 
 /**
@@ -168,13 +205,14 @@ export async function initPushNotifications() {
 }
 
 /**
- * Toggle push notifications based on user choice
+ * Enable push notifications - requests permissions and registers device
+ * Note: Disabling is no longer supported; users should use system settings
  */
 export async function setPushEnabled(enabled: boolean) {
   if (!isNativePlatform()) return false;
 
   if (enabled) {
-    // If enabling, we might need to request permissions again if they haven't been granted
+    // Request permissions if not granted
     const status = await checkNativePermissionStatus();
     if (status !== "granted") {
       const permStatus = await PushNotifications.requestPermissions();
@@ -183,21 +221,13 @@ export async function setPushEnabled(enabled: boolean) {
       }
     }
     await PushNotifications.register();
-    await apiRequest("POST", "/api/v1/notifications/push-enabled", {
-      enabled: true,
-    });
-    console.log("📱 Push notifications enabled and registered");
+    console.log("📱 Push notifications enabled and device registered");
+    return true;
   } else {
-    try {
-      await apiRequest("POST", "/api/v1/notifications/push-enabled", {
-        enabled: false,
-      });
-      console.log("✅ Push preference disabled");
-    } catch (error) {
-      console.error("❌ Failed to update push preference:", error);
-    }
+    // Disabling is no longer supported via app - users should use system settings
+    console.log("ℹ️ To disable notifications, please use your device's system settings");
+    return false;
   }
-  return true;
 }
 
 // Keep for backwards compatibility if needed elsewhere

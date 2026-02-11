@@ -30,7 +30,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useEvaluateBadgesOnMount } from "@/hooks/useBadges";
 import { BadgeToastManager } from "@/components/BadgeEarnedToast";
-import { getUnreadCount } from "@/lib/notificationState";
+import { fetchUnreadCount } from "@/lib/notificationState";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface BannerData {
@@ -69,7 +69,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const loadUnread = async () => {
-      const count = await getUnreadCount();
+      const count = await fetchUnreadCount();
       setUnreadCount(count);
     };
 

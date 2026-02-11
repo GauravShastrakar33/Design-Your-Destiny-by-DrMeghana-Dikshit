@@ -1029,15 +1029,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eq(notificationLogs.status, "failed"),
             gte(notificationLogs.createdAt, twentyFourHoursAgo)
           )),
-        // Count of unique users with push enabled
+        // Count of unique users with device tokens registered
         db.select({ count: countDistinct(deviceTokens.userId) })
-          .from(deviceTokens)
-          .where(eq(deviceTokens.pushEnabled, true)),
+          .from(deviceTokens),
         // Total users
         db.select({ count: count() }).from(users).where(eq(users.role, "USER")),
       ]);
 
-      // Users without push enabled = total users - users with push enabled
+      // Users without device tokens = total users - users with tokens registered
       const usersWithNotificationsDisabled =
         (totalUserCount[0]?.count ?? 0) - (usersWithDeviceTokens[0]?.count ?? 0);
 
@@ -5534,39 +5533,21 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           ? platform.trim().slice(0, 10)
           : "native";
 
-      // Check if this exact token already exists
-      const existingToken = await db.select()
-        .from(deviceTokens)
-        .where(eq(deviceTokens.token, token))
-        .limit(1);
-
-      if (existingToken.length > 0) {
-        // Token already exists - update user/platform/pushEnabled if needed
-        // Always force pushEnabled=true on re-registration
-        const needsUpdate =
-          existingToken[0].userId !== userId ||
-          existingToken[0].platform !== normalizedPlatform ||
-          !existingToken[0].pushEnabled;
-
-        if (needsUpdate) {
-          await db.update(deviceTokens)
-            .set({
-              userId,
-              platform: normalizedPlatform,
-              pushEnabled: true
-            })
-            .where(eq(deviceTokens.token, token));
-        }
-        return res.json({ success: true, message: "Token already registered and enabled" });
-      }
-
-      // Insert new token (default pushEnabled=true)
-      await db.insert(deviceTokens).values({
-        userId,
-        token,
-        platform: normalizedPlatform,
-        pushEnabled: true,
-      });
+      // Use upsert to insert or update token
+      await db.insert(deviceTokens)
+        .values({
+          userId,
+          token,
+          platform: normalizedPlatform,
+        })
+        .onConflictDoUpdate({
+          target: deviceTokens.token,
+          set: {
+            userId,
+            platform: normalizedPlatform,
+            createdAt: new Date(),
+          },
+        });
 
       res.json({ success: true, message: "Device registered successfully" });
     } catch (error: any) {
@@ -5602,55 +5583,6 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
-  // Get notification status for current user (DB source of truth)
-  app.get("/api/v1/notifications/status", authenticateJWT, async (req, res) => {
-    try {
-      const userId = (req as any).user.sub;
-
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
-      const tokens = await db.select()
-        .from(deviceTokens)
-        .where(and(
-          eq(deviceTokens.userId, userId),
-          eq(deviceTokens.pushEnabled, true),
-        ))
-        .limit(1);
-
-      res.json({ enabled: tokens.length > 0 });
-    } catch (error: any) {
-      console.error("Error getting notification status:", error);
-      res.status(500).json({ error: "Failed to get notification status" });
-    }
-  });
-
-  // Update push preference without deleting tokens
-  app.post("/api/v1/notifications/push-enabled", authenticateJWT, async (req, res) => {
-    try {
-      const userId = (req as any).user.sub;
-
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
-      const { enabled } = req.body;
-      if (typeof enabled !== "boolean") {
-        return res.status(400).json({ error: "enabled must be boolean" });
-      }
-
-      await db.update(deviceTokens)
-        .set({ pushEnabled: enabled })
-        .where(eq(deviceTokens.userId, userId));
-
-      res.json({ success: true, enabled });
-    } catch (error: any) {
-      console.error("Error updating push preference:", error);
-      res.status(500).json({ error: "Failed to update push preference" });
-    }
-  });
-
   // Admin: Get notification stats
   app.get("/admin/api/notifications/stats", requireAdmin, async (req, res) => {
     try {
@@ -5667,6 +5599,44 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
+
+  // Get unread notification count
+  app.get("/api/v1/notifications/unread-count", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.sub;
+      const count = await storage.getUnreadNotificationCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread notification count:", error);
+      res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+
+  // Mark notification as read
+  app.patch("/api/v1/notifications/:notificationId/read", authenticateJWT, async (req, res) => {
+    try {
+      const notificationId = parseInt(req.params.notificationId);
+      const userId = (req as any).user.sub;
+      await storage.markNotificationAsRead(userId, notificationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  // Mark all notifications as read
+  app.post("/api/v1/notifications/read-all", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.sub;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ error: "Failed to mark all notifications as read" });
+    }
+  });
+
   // Admin: Send test notification to all registered devices
   app.post("/admin/api/notifications/test", requireAdmin, async (req, res) => {
     try {
@@ -5678,8 +5648,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Fetch all device tokens with userId
       const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId })
-        .from(deviceTokens)
-        .where(eq(deviceTokens.pushEnabled, true));
+        .from(deviceTokens);
 
       if (allTokens.length === 0) {
         return res.json({

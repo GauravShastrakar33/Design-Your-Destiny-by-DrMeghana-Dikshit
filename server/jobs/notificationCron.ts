@@ -13,7 +13,7 @@ async function processNotifications(): Promise<void> {
   isProcessing = true;
   try {
     const pendingNotifications = await storage.getPendingNotifications();
-    
+
     for (const notification of pendingNotifications) {
       try {
         const eligibleUserIds = await storage.getEligibleUserIdsForNotification(
@@ -40,6 +40,7 @@ async function processNotifications(): Promise<void> {
             deviceToken: "in-app-only",
             status: "sent",
             error: null,
+            isRead: false,
           }));
 
         const pushLogs = deviceTokens.map(dt => ({
@@ -48,6 +49,7 @@ async function processNotifications(): Promise<void> {
           deviceToken: dt.token,
           status: "pending",
           error: null,
+          isRead: false,
         }));
 
         await storage.createNotificationLogs([...inAppOnlyLogs, ...pushLogs]);
@@ -68,7 +70,7 @@ async function processNotifications(): Promise<void> {
           type: notification.type,
           notificationId: String(notification.id),
         };
-        
+
         // Add eventId for deep linking when it's an event reminder
         if (notification.type === "event_reminder" && notification.relatedEventId) {
           dataPayload.eventId = String(notification.relatedEventId);
@@ -125,9 +127,9 @@ export function startNotificationCron(): void {
   }
 
   console.log("Starting notification cron job (runs every 60 seconds)");
-  
+
   cronInterval = setInterval(processNotifications, 60 * 1000);
-  
+
   processNotifications();
 }
 

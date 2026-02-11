@@ -497,6 +497,8 @@ var init_schema = __esm({
       deviceToken: text("device_token").notNull(),
       status: varchar("status", { length: 20 }).notNull(),
       error: text("error"),
+      isRead: boolean("is_read").notNull().default(false),
+      readAt: timestamp("read_at", { mode: "date" }),
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
     });
     insertNotificationLogSchema = createInsertSchema(notificationLogs).omit({
@@ -580,7 +582,6 @@ var init_schema = __esm({
       userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
       token: text("token").notNull().unique(),
       platform: varchar("platform", { length: 10 }).notNull().default("web"),
-      pushEnabled: boolean("push_enabled").notNull().default(true),
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
     });
     insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
@@ -1195,9 +1196,11 @@ var init_storage = __esm({
       async markUserActivityDate(userId, activityDate) {
         const [existing] = await db.select().from(userStreaks).where(and(eq(userStreaks.userId, userId), eq(userStreaks.activityDate, activityDate)));
         if (existing) {
+          await db.update(users).set({ lastActivity: /* @__PURE__ */ new Date() }).where(eq(users.id, userId));
           return existing;
         }
         const [newStreak] = await db.insert(userStreaks).values({ userId, activityDate }).returning();
+        await db.update(users).set({ lastActivity: /* @__PURE__ */ new Date() }).where(eq(users.id, userId));
         return newStreak;
       }
       async getUserStreakDates(userId, dates) {
@@ -1630,6 +1633,31 @@ var init_storage = __esm({
           )
         );
       }
+      async getUnreadNotificationCount(userId) {
+        const [result] = await db.select({ count: count() }).from(notificationLogs).where(
+          and(
+            eq(notificationLogs.userId, userId),
+            eq(notificationLogs.isRead, false)
+          )
+        );
+        return result?.count ?? 0;
+      }
+      async markNotificationAsRead(userId, notificationId) {
+        await db.update(notificationLogs).set({ isRead: true, readAt: /* @__PURE__ */ new Date() }).where(
+          and(
+            eq(notificationLogs.userId, userId),
+            eq(notificationLogs.notificationId, notificationId)
+          )
+        );
+      }
+      async markAllNotificationsAsRead(userId) {
+        await db.update(notificationLogs).set({ isRead: true, readAt: /* @__PURE__ */ new Date() }).where(
+          and(
+            eq(notificationLogs.userId, userId),
+            eq(notificationLogs.isRead, false)
+          )
+        );
+      }
       async getNotificationLogsByNotificationId(notificationId) {
         return db.select().from(notificationLogs).where(eq(notificationLogs.notificationId, notificationId));
       }
@@ -1640,10 +1668,7 @@ var init_storage = __esm({
       // ===== DEVICE TOKENS (for notifications) =====
       async getDeviceTokensByUserIds(userIds) {
         if (userIds.length === 0) return [];
-        return db.select({ userId: deviceTokens.userId, token: deviceTokens.token }).from(deviceTokens).where(and(
-          inArray(deviceTokens.userId, userIds),
-          eq(deviceTokens.pushEnabled, true)
-        ));
+        return db.select({ userId: deviceTokens.userId, token: deviceTokens.token }).from(deviceTokens).where(inArray(deviceTokens.userId, userIds));
       }
       async deleteDeviceToken(token) {
         await db.delete(deviceTokens).where(eq(deviceTokens.token, token));
@@ -2943,8 +2968,8 @@ async function registerRoutes(app2) {
           eq2(notificationLogs.status, "failed"),
           gte(notificationLogs.createdAt, twentyFourHoursAgo)
         )),
-        // Count of unique users with push enabled
-        db.select({ count: countDistinct(deviceTokens.userId) }).from(deviceTokens).where(eq2(deviceTokens.pushEnabled, true)),
+        // Count of unique users with device tokens registered
+        db.select({ count: countDistinct(deviceTokens.userId) }).from(deviceTokens),
         // Total users
         db.select({ count: count2() }).from(users).where(eq2(users.role, "USER"))
       ]);
@@ -3552,7 +3577,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
       const [newProgram] = await db.insert(programs).values({
         code: String(code).toUpperCase(),
-        name: String(name)
+        name: String(name),
+        level: req.body.level ? parseInt(String(req.body.level)) : 1
       }).returning();
       res.status(201).json(newProgram);
     } catch (error) {
@@ -6155,19 +6181,17 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(400).json({ error: "Token is required" });
       }
       const normalizedPlatform = typeof platform === "string" && platform.trim().length > 0 ? platform.trim().slice(0, 10) : "native";
-      const existingToken = await db.select().from(deviceTokens).where(eq2(deviceTokens.token, token)).limit(1);
-      if (existingToken.length > 0) {
-        const needsUpdate = existingToken[0].userId !== userId || existingToken[0].platform !== normalizedPlatform;
-        if (needsUpdate) {
-          await db.update(deviceTokens).set({ userId, platform: normalizedPlatform }).where(eq2(deviceTokens.token, token));
-        }
-        return res.json({ success: true, message: "Token already registered" });
-      }
       await db.insert(deviceTokens).values({
         userId,
         token,
-        platform: normalizedPlatform,
-        pushEnabled: true
+        platform: normalizedPlatform
+      }).onConflictDoUpdate({
+        target: deviceTokens.token,
+        set: {
+          userId,
+          platform: normalizedPlatform,
+          createdAt: /* @__PURE__ */ new Date()
+        }
       });
       res.json({ success: true, message: "Device registered successfully" });
     } catch (error) {
@@ -6193,39 +6217,6 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to unregister device" });
     }
   });
-  app2.get("/api/v1/notifications/status", authenticateJWT, async (req, res) => {
-    try {
-      const userId = req.user.sub;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      const tokens = await db.select().from(deviceTokens).where(and2(
-        eq2(deviceTokens.userId, userId),
-        eq2(deviceTokens.pushEnabled, true)
-      )).limit(1);
-      res.json({ enabled: tokens.length > 0 });
-    } catch (error) {
-      console.error("Error getting notification status:", error);
-      res.status(500).json({ error: "Failed to get notification status" });
-    }
-  });
-  app2.post("/api/v1/notifications/push-enabled", authenticateJWT, async (req, res) => {
-    try {
-      const userId = req.user.sub;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      const { enabled } = req.body;
-      if (typeof enabled !== "boolean") {
-        return res.status(400).json({ error: "enabled must be boolean" });
-      }
-      await db.update(deviceTokens).set({ pushEnabled: enabled }).where(eq2(deviceTokens.userId, userId));
-      res.json({ success: true, enabled });
-    } catch (error) {
-      console.error("Error updating push preference:", error);
-      res.status(500).json({ error: "Failed to update push preference" });
-    }
-  });
   app2.get("/admin/api/notifications/stats", requireAdmin, async (req, res) => {
     try {
       const allTokens = await db.select().from(deviceTokens);
@@ -6239,13 +6230,44 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to get stats" });
     }
   });
+  app2.get("/api/v1/notifications/unread-count", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      const count3 = await storage.getUnreadNotificationCount(userId);
+      res.json({ count: count3 });
+    } catch (error) {
+      console.error("Error fetching unread notification count:", error);
+      res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+  app2.patch("/api/v1/notifications/:notificationId/read", authenticateJWT, async (req, res) => {
+    try {
+      const notificationId = parseInt(req.params.notificationId);
+      const userId = req.user.sub;
+      await storage.markNotificationAsRead(userId, notificationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+  app2.post("/api/v1/notifications/read-all", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ error: "Failed to mark all notifications as read" });
+    }
+  });
   app2.post("/admin/api/notifications/test", requireAdmin, async (req, res) => {
     try {
       const { title, body } = req.body;
       if (!title || !body) {
         return res.status(400).json({ error: "Title and body are required" });
       }
-      const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId }).from(deviceTokens).where(eq2(deviceTokens.pushEnabled, true));
+      const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId }).from(deviceTokens);
       if (allTokens.length === 0) {
         return res.json({
           success: true,
@@ -6668,7 +6690,7 @@ var vite_config_default = defineConfig({
   plugins: [
     react()
   ],
-  base: "./",
+  base: "/",
   // standard relative paths for capacitor
   resolve: {
     alias: {
@@ -6796,14 +6818,16 @@ async function processNotifications() {
           userId,
           deviceToken: "in-app-only",
           status: "sent",
-          error: null
+          error: null,
+          isRead: false
         }));
         const pushLogs = deviceTokens2.map((dt) => ({
           notificationId: notification.id,
           userId: dt.userId,
           deviceToken: dt.token,
           status: "pending",
-          error: null
+          error: null,
+          isRead: false
         }));
         await storage.createNotificationLogs([...inAppOnlyLogs, ...pushLogs]);
         if (deviceTokens2.length === 0) {

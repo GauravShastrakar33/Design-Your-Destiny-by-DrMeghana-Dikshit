@@ -128,7 +128,13 @@ export interface IStorage {
   getPOHRatingByDate(userId: number, localDate: string): Promise<PohDailyRating | undefined>;
   createPOHRating(data: { userId: number; pohId: string; localDate: string; rating: number }): Promise<PohDailyRating>;
   updatePOHRating(ratingId: string, rating: number): Promise<PohDailyRating>;
+
+  // Notification methods
+  getUnreadNotificationCount(userId: number): Promise<number>;
+  markNotificationAsRead(userId: number, notificationId: number): Promise<void>;
+  markAllNotificationsAsRead(userId: number): Promise<void>;
 }
+
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
@@ -445,6 +451,11 @@ export class MemStorage implements IStorage {
   async getPOHRatingByDate(userId: number, localDate: string): Promise<PohDailyRating | undefined> { return undefined; }
   async createPOHRating(data: { userId: number; pohId: string; localDate: string; rating: number }): Promise<PohDailyRating> { throw new Error("Not implemented in MemStorage"); }
   async updatePOHRating(ratingId: string, rating: number): Promise<PohDailyRating> { throw new Error("Not implemented in MemStorage"); }
+
+  // Notification stubs
+  async getUnreadNotificationCount(userId: number): Promise<number> { return 0; }
+  async markNotificationAsRead(userId: number, notificationId: number): Promise<void> { }
+  async markAllNotificationsAsRead(userId: number): Promise<void> { }
 }
 
 export class DbStorage implements IStorage {
@@ -1980,6 +1991,43 @@ export class DbStorage implements IStorage {
     );
   }
 
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(notificationLogsTable)
+      .where(
+        and(
+          eq(notificationLogsTable.userId, userId),
+          eq(notificationLogsTable.isRead, false)
+        )
+      );
+    return result?.count ?? 0;
+  }
+
+  async markNotificationAsRead(userId: number, notificationId: number): Promise<void> {
+    await db
+      .update(notificationLogsTable)
+      .set({ isRead: true, readAt: new Date() })
+      .where(
+        and(
+          eq(notificationLogsTable.userId, userId),
+          eq(notificationLogsTable.notificationId, notificationId)
+        )
+      );
+  }
+
+  async markAllNotificationsAsRead(userId: number): Promise<void> {
+    await db
+      .update(notificationLogsTable)
+      .set({ isRead: true, readAt: new Date() })
+      .where(
+        and(
+          eq(notificationLogsTable.userId, userId),
+          eq(notificationLogsTable.isRead, false)
+        )
+      );
+  }
+
   async getNotificationLogsByNotificationId(notificationId: number): Promise<NotificationLog[]> {
     return db
       .select()
@@ -2002,10 +2050,7 @@ export class DbStorage implements IStorage {
     return db
       .select({ userId: deviceTokensTable.userId, token: deviceTokensTable.token })
       .from(deviceTokensTable)
-      .where(and(
-        inArray(deviceTokensTable.userId, userIds),
-        eq(deviceTokensTable.pushEnabled, true),
-      ));
+      .where(inArray(deviceTokensTable.userId, userIds));
   }
 
   async deleteDeviceToken(token: string): Promise<void> {

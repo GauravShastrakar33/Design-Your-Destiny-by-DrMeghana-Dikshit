@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
-import { clearUnread } from "@/lib/notificationState";
+import { clearUnread, fetchUnreadCount } from "@/lib/notificationState";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -45,10 +45,18 @@ export default function NotificationsPage() {
     useState<InAppNotification | null>(null);
 
   // 🔵 CLEAR RED DOT WHEN PAGE OPENS
+  // 🔵 CLEAR RED DOT WHEN PAGE OPENS
   useEffect(() => {
-    clearUnread().then(() => {
-      console.log("🔔 Unread notifications cleared");
-    });
+    const markAsRead = async () => {
+      try {
+        await apiRequest("POST", "/api/v1/notifications/read-all");
+        await fetchUnreadCount(); // Update badge
+        console.log("🔔 Unread notifications cleared");
+      } catch (e) {
+        console.error("Failed to mark notifications as read", e);
+      }
+    };
+    markAsRead();
   }, []);
 
   const { isAuthenticated } = useAuth();
@@ -206,8 +214,8 @@ export default function NotificationsPage() {
                           </h3>
                           <p
                             className={`text-sm text-slate-500 leading-relaxed mb-2 ${notification.type === "admin_test"
-                                ? "line-clamp-2"
-                                : ""
+                              ? "line-clamp-2"
+                              : ""
                               }`}
                           >
                             {notification.body}

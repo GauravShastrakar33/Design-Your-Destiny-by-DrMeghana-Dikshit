@@ -373,9 +373,9 @@ export const activityLogs = pgTable("activity_logs", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
   uniqueUserLessonFeatureDate: unique("unique_user_lesson_feature_date").on(
-    table.userId, 
-    table.lessonId, 
-    table.featureType, 
+    table.userId,
+    table.lessonId,
+    table.featureType,
     table.activityDate
   ),
 }));
@@ -552,6 +552,8 @@ export const notificationLogs = pgTable("notification_logs", {
   deviceToken: text("device_token").notNull(),
   status: varchar("status", { length: 20 }).notNull(),
   error: text("error"),
+  isRead: boolean("is_read").notNull().default(false),
+  readAt: timestamp("read_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
@@ -666,7 +668,6 @@ export const deviceTokens = pgTable("device_tokens", {
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   token: text("token").notNull().unique(),
   platform: varchar("platform", { length: 10 }).notNull().default("web"),
-  pushEnabled: boolean("push_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 

@@ -73,9 +73,12 @@ interface PrescriptionData {
 
 export default function ProfilePage() {
   const [, setLocation] = useLocation();
-  const { logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated, user } = useAuth();
   const [prescriptionExpanded, setPrescriptionExpanded] = useState(false);
-  const [userName, setUserName] = useState("User");
+
+  // Use name from AuthContext directly
+  const userName = user?.name || "User";
+
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [appVersion, setAppVersion] = useState<string>("");
@@ -115,12 +118,6 @@ export default function ProfilePage() {
   const earnedBadges = badges.slice(0, 5);
 
   useEffect(() => {
-    const loadUserName = async () => {
-      const { value } = await Preferences.get({ key: "@app:userName" });
-      setUserName(value || "User");
-    };
-    loadUserName();
-
     setupNativePushListeners();
 
     const checkStatus = async () => {
