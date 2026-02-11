@@ -4,26 +4,13 @@ import { Header } from "@/components/Header";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronLeft,
   ChevronRight,
   ChevronDown,
   Settings as SettingsIcon,
-  Bell,
-  BellOff,
-  MessageCircle,
   LogOut,
-  Eye,
-  EyeOff,
-  Star,
-  TrendingUp,
-  Circle,
   Sunrise,
-  Leaf,
   Moon,
-  Lock,
-  Sparkles,
   Heart,
-  Check,
   Sun,
   Loader2,
   Phone,
@@ -144,6 +131,28 @@ export default function ProfilePage() {
       .map((w) => w[0]?.toUpperCase())
       .join("")
       .slice(0, 2);
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      // Unregister device tokens
+      await unregisterDeviceTokens();
+    } catch (e) {
+      console.error("Failed to unregister tokens:", e);
+    }
+
+    try {
+      // Logout and wait for completion
+      await logout();
+      // Small delay to ensure logout state is propagated
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Redirect to login
+      setLocation("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -279,8 +288,9 @@ export default function ProfilePage() {
                 </div>
               </div>
               <ChevronDown
-                className={`w-6 h-6 text-gray-400 transition-transform duration-300 ${prescriptionExpanded ? "rotate-180" : ""
-                  }`}
+                className={`w-6 h-6 text-gray-400 transition-transform duration-300 ${
+                  prescriptionExpanded ? "rotate-180" : ""
+                }`}
               />
             </button>
 
@@ -463,15 +473,7 @@ export default function ProfilePage() {
                     disabled={isLoggingOut}
                     onClick={async (e) => {
                       e.preventDefault();
-                      setIsLoggingOut(true);
-                      try {
-                        await unregisterDeviceTokens();
-                      } catch (e) {
-                        console.error("Failed to unregister tokens:", e);
-                      }
-                      logout();
-                      setLocation("/login");
-                      setIsLoggingOut(false);
+                      await handleLogout();
                     }}
                     className="w-full h-12 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold shadow-lg shadow-red-200 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
                   >
