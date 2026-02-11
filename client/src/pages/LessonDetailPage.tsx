@@ -57,7 +57,7 @@ export default function LessonDetailPage() {
   const courseId = parseInt(params.courseId || "0");
   const lessonId = parseInt(params.lessonId || "0");
   const [, setLocation] = useLocation();
-  const searchString = useSearch();
+  const searchString = useSearch() || (window.location.hash.includes("?") ? window.location.hash.split("?")[1] : "");
   const { toast } = useToast();
 
   const handleBack = () => {

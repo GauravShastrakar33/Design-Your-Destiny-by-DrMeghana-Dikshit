@@ -143,7 +143,7 @@ export default function AdminCourseFormPage() {
     new Set()
   );
 
-  const searchString = useSearch();
+  const searchString = useSearch() || (window.location.hash.includes("?") ? window.location.hash.split("?")[1] : "");
 
   useEffect(() => {
     const searchParams = new URLSearchParams(searchString);
@@ -486,8 +486,8 @@ export default function AdminCourseFormPage() {
                     isActive
                       ? "bg-white border-brand text-brand shadow-lg"
                       : isCompleted
-                      ? "bg-brand border-brand text-white"
-                      : "bg-white border-gray-100 text-gray-400"
+                        ? "bg-brand border-brand text-white"
+                        : "bg-white border-gray-100 text-gray-400"
                   )}
                 >
                   {isCompleted ? (
@@ -1097,9 +1097,9 @@ export default function AdminCourseFormPage() {
                 onClick={moduleForm.handleSubmit((data) =>
                   editingModule
                     ? updateModuleMutation.mutate({
-                        id: editingModule.id,
-                        data,
-                      })
+                      id: editingModule.id,
+                      data,
+                    })
                     : createModuleMutation.mutate(data)
                 )}
                 className="bg-brand hover:bg-brand/90 h-11 px-8 rounded-lg font-bold shadow-lg shadow-brand/20"

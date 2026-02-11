@@ -230,8 +230,8 @@ export default function ModuleLessonsPage() {
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm ${isCompleted
-                              ? "bg-green-500/10 text-green-600"
-                              : "bg-amber-500/10 text-amber-600"
+                            ? "bg-green-500/10 text-green-600"
+                            : "bg-amber-500/10 text-amber-600"
                             }`}
                         >
                           {isCompleted ? (

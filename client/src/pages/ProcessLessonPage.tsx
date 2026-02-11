@@ -31,7 +31,7 @@ export default function ProcessLessonPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const searchString = useSearch();
+  const searchString = useSearch() || (window.location.hash.includes("?") ? window.location.hash.split("?")[1] : "");
   const searchParams = new URLSearchParams(searchString);
   const fromAbundance = searchParams.get("from") === "abundance";
   const courseId = searchParams.get("courseId");

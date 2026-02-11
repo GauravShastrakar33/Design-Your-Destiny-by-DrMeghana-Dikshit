@@ -48,24 +48,6 @@ if (Capacitor.isNativePlatform()) {
     const { StatusBar, Style } = await import("@capacitor/status-bar");
     const { PushNotifications } = await import("@capacitor/push-notifications");
 
-    // 🔙 Android back button handling
-    CapacitorApp.addListener("backButton", ({ canGoBack }) => {
-      const currentPath = window.location.pathname;
-      console.log("🔙 Back button pressed, canGoBack:", canGoBack, "path:", currentPath);
-
-      // Exit app if on login screen (no further back to go)
-      if (currentPath === "/login" || currentPath === "/") {
-        CapacitorApp.exitApp();
-        return;
-      }
-
-      if (canGoBack) {
-        window.history.back();
-      } else {
-        CapacitorApp.exitApp();
-      }
-    });
-    console.log("✅ Android back button handler registered");
 
     // 📱 Status bar config
     try {
