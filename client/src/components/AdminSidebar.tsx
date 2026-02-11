@@ -167,8 +167,15 @@ export default function AdminSidebar({
           effectivelyCollapsed && "justify-center p-2 mb-4"
         )}
       >
-        <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-10 h-10 shrink-0 rounded-lg bg-white shadow-[0_8px_16px_rgba(0,0,0,0.1)] flex items-center justify-center duration-500 cursor-default">
+        <div
+          className="flex items-center gap-2.5 overflow-hidden bg-white/15 p-2 rounded-xl cursor-pointer transition-colors"
+          onClick={() => {
+            setLocation("/admin");
+            setSelectedMenuId("dashboard");
+            onMobileClose?.();
+          }}
+        >
+          <div className="w-10 h-10 shrink-0 rounded-md bg-white shadow-[0_8px_16px_rgba(0,0,0,0.1)] flex items-center justify-center duration-500 cursor-default">
             <span className="text-brand font-black text-xs">Dr.M</span>
           </div>
           {!effectivelyCollapsed && (
