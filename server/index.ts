@@ -11,9 +11,8 @@ const app = express();
 
 // 2. Define allowed mobile and web origins
 const allowedOrigins = [
-  "http://localhost:5001", // Your current Mac browser port
-  "http://localhost:5173",
-  "http://localhost:5000",
+  "http://localhost:5001",
+  "http://localhost:5173", // (for my current browser testing)
   "https://app.drmeghana.com",
   "http://localhost", // Android default
   "https://localhost", // Android/iOS modern
@@ -24,13 +23,21 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl)
+      // Allow requests with no origin (like mobile apps, same-origin, or curl)
       if (!origin) return callback(null, true);
+      // Allow exact matches from the allowedOrigins list
       if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
+        return callback(null, true);
       }
+      // Allow Replit domains (webview and published apps)
+      if (
+        origin.endsWith(".replit.dev") ||
+        origin.endsWith(".replit.app") ||
+        origin.endsWith(".repl.co")
+      ) {
+        return callback(null, true);
+      }
+      callback(null, true);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],

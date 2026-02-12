@@ -13,7 +13,7 @@ async function processNotifications(): Promise<void> {
   isProcessing = true;
   try {
     const pendingNotifications = await storage.getPendingNotifications();
-
+    
     for (const notification of pendingNotifications) {
       try {
         const eligibleUserIds = await storage.getEligibleUserIdsForNotification(
@@ -28,32 +28,7 @@ async function processNotifications(): Promise<void> {
         }
 
         const deviceTokens = await storage.getDeviceTokensByUserIds(eligibleUserIds);
-
-        // ALWAYS create logs first (in-app reliability), then attempt push
-        const userIdsWithTokens = new Set(deviceTokens.map(dt => dt.userId));
-
-        const inAppOnlyLogs = eligibleUserIds
-          .filter(userId => !userIdsWithTokens.has(userId))
-          .map(userId => ({
-            notificationId: notification.id,
-            userId,
-            deviceToken: "in-app-only",
-            status: "sent",
-            error: null,
-            isRead: false,
-          }));
-
-        const pushLogs = deviceTokens.map(dt => ({
-          notificationId: notification.id,
-          userId: dt.userId,
-          deviceToken: dt.token,
-          status: "pending",
-          error: null,
-          isRead: false,
-        }));
-
-        await storage.createNotificationLogs([...inAppOnlyLogs, ...pushLogs]);
-
+        
         if (deviceTokens.length === 0) {
           console.log(`No device tokens found for notification ${notification.id}, marking as sent`);
           await storage.markNotificationSent(notification.id);
@@ -70,7 +45,7 @@ async function processNotifications(): Promise<void> {
           type: notification.type,
           notificationId: String(notification.id),
         };
-
+        
         // Add eventId for deep linking when it's an event reminder
         if (notification.type === "event_reminder" && notification.relatedEventId) {
           dataPayload.eventId = String(notification.relatedEventId);
@@ -83,17 +58,28 @@ async function processNotifications(): Promise<void> {
           dataPayload
         );
 
-        const logUpdates = tokens.map(token => {
+        const logs: Array<{
+          notificationId: number;
+          userId: number;
+          deviceToken: string;
+          status: string;
+          error: string | null;
+        }> = [];
+
+        for (const token of tokens) {
+          const userId = userIdByToken.get(token) || 0;
           const failed = result.failedTokens.includes(token);
-          return {
+          
+          logs.push({
             notificationId: notification.id,
+            userId,
             deviceToken: token,
             status: failed ? "failed" : "sent",
             error: failed ? "FCM delivery failed" : null,
-          };
-        });
+          });
+        }
 
-        await storage.updateNotificationLogsStatus(logUpdates);
+        await storage.createNotificationLogs(logs);
 
         for (const failedToken of result.failedTokens) {
           try {
@@ -127,9 +113,9 @@ export function startNotificationCron(): void {
   }
 
   console.log("Starting notification cron job (runs every 60 seconds)");
-
+  
   cronInterval = setInterval(processNotifications, 60 * 1000);
-
+  
   processNotifications();
 }
 

@@ -36,7 +36,10 @@ import {
   notifications,
   communitySessions,
 } from "@shared/schema";
-import { sendPushNotification, initializeFirebaseAdmin } from "./lib/firebaseAdmin";
+import {
+  sendPushNotification,
+  initializeFirebaseAdmin,
+} from "./lib/firebaseAdmin";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -111,7 +114,21 @@ async function extractTextWithPdf2json(buffer: Buffer): Promise<string> {
 }
 
 import { db } from "./db";
-import { eq, asc, and, ilike, or, sql, count, countDistinct, gte, desc, lt, avg, isNull } from "drizzle-orm";
+import {
+  eq,
+  asc,
+  and,
+  ilike,
+  or,
+  sql,
+  count,
+  countDistinct,
+  gte,
+  desc,
+  lt,
+  avg,
+  isNull,
+} from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { authenticateJWT, type AuthPayload } from "./middleware/auth";
@@ -528,7 +545,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { date } = req.body;
       if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        return res.status(400).json({ error: "Invalid date format. Use YYYY-MM-DD" });
+        return res
+          .status(400)
+          .json({ error: "Invalid date format. Use YYYY-MM-DD" });
       }
 
       await storage.markUserActivityDate(req.user.sub, date);
@@ -546,21 +565,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const baseDate = req.query.date as string || new Date().toISOString().split('T')[0];
+      const baseDate =
+        (req.query.date as string) || new Date().toISOString().split("T")[0];
 
       const dates: string[] = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date(baseDate);
         d.setDate(d.getDate() - i);
-        dates.push(d.toISOString().split('T')[0]);
+        dates.push(d.toISOString().split("T")[0]);
       }
 
       const activeDates = await storage.getUserStreakDates(req.user.sub, dates);
       const activeDateSet = new Set(activeDates);
 
-      const result = dates.map(date => ({
+      const result = dates.map((date) => ({
         date,
-        active: activeDateSet.has(date)
+        active: activeDateSet.has(date),
       }));
 
       res.json(result);
@@ -583,7 +603,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const monthParam = req.query.month as string;
 
       if (!yearParam || !monthParam) {
-        return res.status(400).json({ error: "year and month query parameters are required" });
+        return res
+          .status(400)
+          .json({ error: "year and month query parameters are required" });
       }
 
       const year = parseInt(yearParam, 10);
@@ -611,17 +633,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const todayDate = req.query.today as string;
       if (!todayDate || !/^\d{4}-\d{2}-\d{2}$/.test(todayDate)) {
-        return res.status(400).json({ error: "today query parameter required (YYYY-MM-DD)" });
+        return res
+          .status(400)
+          .json({ error: "today query parameter required (YYYY-MM-DD)" });
       }
 
       const currentMonth = todayDate.slice(0, 7);
       const rangeData = await storage.getConsistencyRange(req.user.sub);
-      const currentStreak = await storage.getCurrentStreak(req.user.sub, todayDate);
+      const currentStreak = await storage.getCurrentStreak(
+        req.user.sub,
+        todayDate,
+      );
 
       res.json({
         startMonth: rangeData.startMonth,
         currentMonth,
-        currentStreak
+        currentStreak,
       });
     } catch (error) {
       console.error("Error fetching consistency range:", error);
@@ -655,12 +682,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { evaluateBadges } = await import("./services/badgeService");
 
-      const todayDate = new Date().toISOString().split('T')[0];
+      const todayDate = new Date().toISOString().split("T")[0];
       const newlyAwardedBadges = await evaluateBadges(req.user.sub, todayDate);
 
       res.json({
         newBadges: newlyAwardedBadges,
-        hasNewBadges: newlyAwardedBadges.length > 0
+        hasNewBadges: newlyAwardedBadges.length > 0,
       });
     } catch (error) {
       console.error("Error evaluating badges:", error);
@@ -680,25 +707,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { lessonId, lessonName, featureType, activityDate } = req.body;
 
       // Validate required fields
-      if (!lessonId || typeof lessonId !== 'number') {
-        return res.status(400).json({ error: "lessonId is required and must be a number" });
+      if (!lessonId || typeof lessonId !== "number") {
+        return res
+          .status(400)
+          .json({ error: "lessonId is required and must be a number" });
       }
-      if (!lessonName || typeof lessonName !== 'string') {
+      if (!lessonName || typeof lessonName !== "string") {
         return res.status(400).json({ error: "lessonName is required" });
       }
-      if (!featureType || !['PROCESS', 'PLAYLIST'].includes(featureType)) {
-        return res.status(400).json({ error: "featureType must be PROCESS or PLAYLIST" });
+      if (!featureType || !["PROCESS", "PLAYLIST"].includes(featureType)) {
+        return res
+          .status(400)
+          .json({ error: "featureType must be PROCESS or PLAYLIST" });
       }
 
       // Use provided date or server date
-      const dateToUse = activityDate || new Date().toISOString().split('T')[0];
+      const dateToUse = activityDate || new Date().toISOString().split("T")[0];
 
       const result = await storage.logActivity(
         req.user.sub,
         lessonId,
         lessonName,
         featureType,
-        dateToUse
+        dateToUse,
       );
 
       res.json({ success: true, logged: result.logged });
@@ -709,27 +740,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get monthly activity stats for AI Insights
-  app.get("/api/v1/activity/monthly-stats", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app.get(
+    "/api/v1/activity/monthly-stats",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        const month =
+          (req.query.month as string) || new Date().toISOString().slice(0, 7);
+
+        console.log(
+          `[monthly-stats] Fetching stats for userId=${req.user.sub}, month=${month}`,
+        );
+
+        const stats = await storage.getMonthlyStats(req.user.sub, month);
+
+        console.log(
+          `[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, PLAYLIST=${stats.PLAYLIST.length}`,
+        );
+
+        res.set("Cache-Control", "no-store");
+        res.json(stats);
+      } catch (error) {
+        console.error("Error fetching monthly stats:", error);
+        res.status(500).json({ error: "Failed to fetch monthly stats" });
       }
-
-      const month = (req.query.month as string) || new Date().toISOString().slice(0, 7);
-
-      console.log(`[monthly-stats] Fetching stats for userId=${req.user.sub}, month=${month}`);
-
-      const stats = await storage.getMonthlyStats(req.user.sub, month);
-
-      console.log(`[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, PLAYLIST=${stats.PLAYLIST.length}`);
-
-      res.set('Cache-Control', 'no-store');
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching monthly stats:", error);
-      res.status(500).json({ error: "Failed to fetch monthly stats" });
-    }
-  });
+    },
+  );
 
   // ===== REWIRING BELIEFS ROUTES =====
 
@@ -757,10 +797,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { limitingBelief, upliftingBelief } = req.body;
 
-      if (!limitingBelief || typeof limitingBelief !== 'string' || !limitingBelief.trim()) {
+      if (
+        !limitingBelief ||
+        typeof limitingBelief !== "string" ||
+        !limitingBelief.trim()
+      ) {
         return res.status(400).json({ error: "Limiting belief is required" });
       }
-      if (!upliftingBelief || typeof upliftingBelief !== 'string' || !upliftingBelief.trim()) {
+      if (
+        !upliftingBelief ||
+        typeof upliftingBelief !== "string" ||
+        !upliftingBelief.trim()
+      ) {
         return res.status(400).json({ error: "Uplifting belief is required" });
       }
 
@@ -793,15 +841,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates: { limitingBelief?: string; upliftingBelief?: string } = {};
 
       if (limitingBelief !== undefined) {
-        if (typeof limitingBelief !== 'string' || !limitingBelief.trim()) {
-          return res.status(400).json({ error: "Limiting belief cannot be empty" });
+        if (typeof limitingBelief !== "string" || !limitingBelief.trim()) {
+          return res
+            .status(400)
+            .json({ error: "Limiting belief cannot be empty" });
         }
         updates.limitingBelief = limitingBelief.trim();
       }
 
       if (upliftingBelief !== undefined) {
-        if (typeof upliftingBelief !== 'string' || !upliftingBelief.trim()) {
-          return res.status(400).json({ error: "Uplifting belief cannot be empty" });
+        if (typeof upliftingBelief !== "string" || !upliftingBelief.trim()) {
+          return res
+            .status(400)
+            .json({ error: "Uplifting belief cannot be empty" });
         }
         updates.upliftingBelief = upliftingBelief.trim();
       }
@@ -810,10 +862,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No updates provided" });
       }
 
-      const updated = await storage.updateRewiringBelief(id, req.user.sub, updates);
+      const updated = await storage.updateRewiringBelief(
+        id,
+        req.user.sub,
+        updates,
+      );
 
       if (!updated) {
-        return res.status(404).json({ error: "Belief not found or not authorized" });
+        return res
+          .status(404)
+          .json({ error: "Belief not found or not authorized" });
       }
 
       res.json(updated);
@@ -824,29 +882,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // DELETE /api/v1/rewiring-beliefs/:id - Delete a belief (user can only delete their own)
-  app.delete("/api/v1/rewiring-beliefs/:id", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app.delete(
+    "/api/v1/rewiring-beliefs/:id",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+          return res.status(400).json({ error: "Invalid belief ID" });
+        }
+
+        const success = await storage.deleteRewiringBelief(id, req.user.sub);
+
+        if (!success) {
+          return res
+            .status(404)
+            .json({ error: "Belief not found or not authorized" });
+        }
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting rewiring belief:", error);
+        res.status(500).json({ error: "Failed to delete belief" });
       }
-
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid belief ID" });
-      }
-
-      const success = await storage.deleteRewiringBelief(id, req.user.sub);
-
-      if (!success) {
-        return res.status(404).json({ error: "Belief not found or not authorized" });
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting rewiring belief:", error);
-      res.status(500).json({ error: "Failed to delete belief" });
-    }
-  });
+    },
+  );
 
   // Lesson Progress APIs (for Daily Abundance courses)
 
@@ -857,7 +921,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const completedLessonIds = await storage.getCompletedLessonIds(req.user.sub);
+      const completedLessonIds = await storage.getCompletedLessonIds(
+        req.user.sub,
+      );
       res.json({ completedLessonIds });
     } catch (error) {
       console.error("Error fetching lesson progress:", error);
@@ -866,24 +932,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/v1/lesson-progress/:lessonId/complete - Mark a lesson as complete
-  app.post("/api/v1/lesson-progress/:lessonId/complete", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
+  app.post(
+    "/api/v1/lesson-progress/:lessonId/complete",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
 
-      const lessonId = parseInt(req.params.lessonId);
-      if (isNaN(lessonId)) {
-        return res.status(400).json({ error: "Invalid lesson ID" });
-      }
+        const lessonId = parseInt(req.params.lessonId);
+        if (isNaN(lessonId)) {
+          return res.status(400).json({ error: "Invalid lesson ID" });
+        }
 
-      const result = await storage.markLessonComplete(req.user.sub, lessonId);
-      res.json({ success: true, alreadyCompleted: result.alreadyCompleted });
-    } catch (error) {
-      console.error("Error marking lesson complete:", error);
-      res.status(500).json({ error: "Failed to mark lesson complete" });
-    }
-  });
+        const result = await storage.markLessonComplete(req.user.sub, lessonId);
+        res.json({ success: true, alreadyCompleted: result.alreadyCompleted });
+      } catch (error) {
+        console.error("Error marking lesson complete:", error);
+        res.status(500).json({ error: "Failed to mark lesson complete" });
+      }
+    },
+  );
 
   // Admin routes: Get all sessions (including inactive)
   app.get("/api/admin/sessions", requireAdmin, async (req, res) => {
@@ -966,7 +1036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+      const todayStr = today.toISOString().split("T")[0];
 
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -987,58 +1057,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Total registered users
         db.select({ count: count() }).from(users).where(eq(users.role, "USER")),
         // Users active today (lastActivity = today)
-        db.select({ count: count() }).from(users)
+        db
+          .select({ count: count() })
+          .from(users)
           .where(and(eq(users.role, "USER"), gte(users.lastActivity, today))),
         // Users who practiced today (PROCESS or PLAYLIST feature types)
-        db.select({ count: countDistinct(activityLogs.userId) }).from(activityLogs)
-          .where(and(
-            eq(activityLogs.activityDate, todayStr),
-            or(
-              eq(activityLogs.featureType, "PROCESS"),
-              eq(activityLogs.featureType, "PLAYLIST")
-            )
-          )),
+        db
+          .select({ count: countDistinct(activityLogs.userId) })
+          .from(activityLogs)
+          .where(
+            and(
+              eq(activityLogs.activityDate, todayStr),
+              or(
+                eq(activityLogs.featureType, "PROCESS"),
+                eq(activityLogs.featureType, "PLAYLIST"),
+              ),
+            ),
+          ),
         // Badges earned today
-        db.select({ count: count() }).from(userBadges)
+        db
+          .select({ count: count() })
+          .from(userBadges)
           .where(gte(userBadges.earnedAt, today)),
       ]);
 
       // Events
       const [eventsToday, upcomingEvents] = await Promise.all([
         // Events happening today
-        db.select().from(eventsTable)
-          .where(and(
-            gte(eventsTable.startDatetime, today),
-            lt(eventsTable.startDatetime, tomorrow)
-          ))
+        db
+          .select()
+          .from(eventsTable)
+          .where(
+            and(
+              gte(eventsTable.startDatetime, today),
+              lt(eventsTable.startDatetime, tomorrow),
+            ),
+          )
           .orderBy(asc(eventsTable.startDatetime)),
         // Events in next 7 days (excluding today)
-        db.select().from(eventsTable)
-          .where(and(
-            gte(eventsTable.startDatetime, tomorrow),
-            lt(eventsTable.startDatetime, sevenDaysLater)
-          ))
+        db
+          .select()
+          .from(eventsTable)
+          .where(
+            and(
+              gte(eventsTable.startDatetime, tomorrow),
+              lt(eventsTable.startDatetime, sevenDaysLater),
+            ),
+          )
           .orderBy(asc(eventsTable.startDatetime)),
       ]);
 
       // Notifications health
-      const [failedNotificationsResult, usersWithDeviceTokens, totalUserCount] = await Promise.all([
-        // Failed notifications in last 24 hours
-        db.select({ count: count() }).from(notificationLogs)
-          .where(and(
-            eq(notificationLogs.status, "failed"),
-            gte(notificationLogs.createdAt, twentyFourHoursAgo)
-          )),
-        // Count of unique users with device tokens registered
-        db.select({ count: countDistinct(deviceTokens.userId) })
-          .from(deviceTokens),
-        // Total users
-        db.select({ count: count() }).from(users).where(eq(users.role, "USER")),
-      ]);
+      const [failedNotificationsResult, usersWithDeviceTokens, totalUserCount] =
+        await Promise.all([
+          // Failed notifications in last 24 hours
+          db
+            .select({ count: count() })
+            .from(notificationLogs)
+            .where(
+              and(
+                eq(notificationLogs.status, "failed"),
+                gte(notificationLogs.createdAt, twentyFourHoursAgo),
+              ),
+            ),
+          // Count of unique users with device tokens
+          db
+            .select({ count: countDistinct(deviceTokens.userId) })
+            .from(deviceTokens),
+          // Total users
+          db
+            .select({ count: count() })
+            .from(users)
+            .where(eq(users.role, "USER")),
+        ]);
 
-      // Users without device tokens = total users - users with tokens registered
+      // Users without device tokens = total users - users with tokens
       const usersWithNotificationsDisabled =
-        (totalUserCount[0]?.count ?? 0) - (usersWithDeviceTokens[0]?.count ?? 0);
+        (totalUserCount[0]?.count ?? 0) -
+        (usersWithDeviceTokens[0]?.count ?? 0);
 
       // Community Practices
       const [communityPracticesResult] = await Promise.all([
@@ -1046,18 +1142,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ]);
 
       // CMS Health
-      const [totalCoursesResult, publishedCoursesResult, lastUpdatedCourseResult] = await Promise.all([
+      const [
+        totalCoursesResult,
+        publishedCoursesResult,
+        lastUpdatedCourseResult,
+      ] = await Promise.all([
         // Total courses
         db.select({ count: count() }).from(cmsCourses),
         // Published courses
-        db.select({ count: count() }).from(cmsCourses)
+        db
+          .select({ count: count() })
+          .from(cmsCourses)
           .where(eq(cmsCourses.isPublished, true)),
         // Last updated course
-        db.select({
-          id: cmsCourses.id,
-          title: cmsCourses.title,
-          updatedAt: cmsCourses.updatedAt,
-        }).from(cmsCourses)
+        db
+          .select({
+            id: cmsCourses.id,
+            title: cmsCourses.title,
+            updatedAt: cmsCourses.updatedAt,
+          })
+          .from(cmsCourses)
           .orderBy(desc(cmsCourses.updatedAt))
           .limit(1),
       ]);
@@ -1066,7 +1170,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const getEventStatus = (event: typeof eventsTable.$inferSelect) => {
         const now = new Date();
         if (now < event.startDatetime) return "upcoming";
-        if (now >= event.startDatetime && now <= event.endDatetime) return "live";
+        if (now >= event.startDatetime && now <= event.endDatetime)
+          return "live";
         return "completed";
       };
 
@@ -1078,14 +1183,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           badgesEarnedToday: badgesEarnedTodayResult[0]?.count ?? 0,
         },
         events: {
-          today: eventsToday.map(e => ({
+          today: eventsToday.map((e) => ({
             id: e.id,
             title: e.title,
             startDatetime: e.startDatetime,
             endDatetime: e.endDatetime,
             status: getEventStatus(e),
           })),
-          upcoming: upcomingEvents.map(e => ({
+          upcoming: upcomingEvents.map((e) => ({
             id: e.id,
             title: e.title,
             startDatetime: e.startDatetime,
@@ -1103,10 +1208,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cmsHealth: {
           totalCourses: totalCoursesResult[0]?.count ?? 0,
           publishedCourses: publishedCoursesResult[0]?.count ?? 0,
-          lastUpdatedCourse: lastUpdatedCourseResult[0] ? {
-            title: lastUpdatedCourseResult[0].title,
-            updatedAt: lastUpdatedCourseResult[0].updatedAt,
-          } : null,
+          lastUpdatedCourse: lastUpdatedCourseResult[0]
+            ? {
+                title: lastUpdatedCourseResult[0].title,
+                updatedAt: lastUpdatedCourseResult[0].updatedAt,
+              }
+            : null,
         },
       });
     } catch (error) {
@@ -1258,29 +1365,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes: Reset student password
-  app.post("/admin/v1/students/:id/reset-password", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const { password } = req.body;
+  app.post(
+    "/admin/v1/students/:id/reset-password",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const { password } = req.body;
 
-      if (!password || typeof password !== "string" || password.length < 6) {
-        return res.status(400).json({ error: "Password must be at least 6 characters" });
+        if (!password || typeof password !== "string" || password.length < 6) {
+          return res
+            .status(400)
+            .json({ error: "Password must be at least 6 characters" });
+        }
+
+        const user = await storage.getUserById(id);
+        if (!user) {
+          return res.status(404).json({ error: "Student not found" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await storage.resetUserPassword(id, hashedPassword);
+
+        res.json({ success: true, message: "Password reset successfully" });
+      } catch (error) {
+        console.error("Error resetting password:", error);
+        res.status(500).json({ error: "Failed to reset password" });
       }
-
-      const user = await storage.getUserById(id);
-      if (!user) {
-        return res.status(404).json({ error: "Student not found" });
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await storage.resetUserPassword(id, hashedPassword);
-
-      res.json({ success: true, message: "Password reset successfully" });
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      res.status(500).json({ error: "Failed to reset password" });
-    }
-  });
+    },
+  );
 
   // Admin routes: Get student badges
   app.get("/admin/v1/students/:id/badges", requireAdmin, async (req, res) => {
@@ -1301,7 +1414,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { badgeKey } = req.body;
 
       if (!badgeKey || !["ambassador", "hall_of_fame"].includes(badgeKey)) {
-        return res.status(400).json({ error: "badgeKey must be 'ambassador' or 'hall_of_fame'" });
+        return res
+          .status(400)
+          .json({ error: "badgeKey must be 'ambassador' or 'hall_of_fame'" });
       }
 
       const student = await storage.getStudentById(id);
@@ -1335,7 +1450,10 @@ Jane Smith,jane.smith@example.com,
 Bob Wilson,bob.wilson@example.com,+9876543210`;
 
     res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=student_upload_sample.csv");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=student_upload_sample.csv",
+    );
     res.send(sampleCSV);
   });
 
@@ -1353,117 +1471,129 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // Admin routes: Bulk upload students via CSV
-  app.post("/api/admin/students/bulk-upload", requireAdmin, uploadCSV.single("file"), async (req, res) => {
-    try {
-      const { parse } = await import("csv-parse/sync");
-
-      // Validate file
-      if (!req.file) {
-        return res.status(400).json({ error: "CSV file is required" });
-      }
-
-      // Validate programId
-      const programId = req.body.programId;
-      if (!programId) {
-        return res.status(400).json({ error: "Program is required" });
-      }
-
-      const program = await storage.getProgramById(parseInt(programId));
-      if (!program) {
-        return res.status(400).json({ error: "Invalid program selected" });
-      }
-
-      // Parse CSV
-      const csvContent = req.file.buffer.toString("utf-8");
-      let records: any[];
-
+  app.post(
+    "/api/admin/students/bulk-upload",
+    requireAdmin,
+    uploadCSV.single("file"),
+    async (req, res) => {
       try {
-        records = parse(csvContent, {
-          columns: true,
-          skip_empty_lines: true,
-          trim: true,
-          relax_column_count: true,
-        });
-      } catch (parseError) {
-        return res.status(400).json({ error: "Invalid CSV format. Please check file structure." });
-      }
+        const { parse } = await import("csv-parse/sync");
 
-      // Validate row limit
-      if (records.length > 1000) {
-        return res.status(400).json({ error: "Maximum 1000 rows allowed per upload" });
-      }
-
-      const errors: { row: number; reason: string }[] = [];
-      let created = 0;
-      const defaultPassword = "User@123";
-      const passwordHash = await bcrypt.hash(defaultPassword, 10);
-
-      // Email validation regex
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      // Process each row
-      for (let i = 0; i < records.length; i++) {
-        const row = records[i];
-        const rowNumber = i + 2; // CSV row number (1-indexed + header row)
-
-        // Get full_name (support both full_name and name columns)
-        const fullName = (row.full_name || row.name || "").trim();
-        if (!fullName) {
-          errors.push({ row: rowNumber, reason: "Missing full_name" });
-          continue;
+        // Validate file
+        if (!req.file) {
+          return res.status(400).json({ error: "CSV file is required" });
         }
 
-        // Get and validate email
-        const email = (row.email || "").trim().toLowerCase();
-        if (!email) {
-          errors.push({ row: rowNumber, reason: "Missing email" });
-          continue;
-        }
-        if (!emailRegex.test(email)) {
-          errors.push({ row: rowNumber, reason: "Invalid email format" });
-          continue;
+        // Validate programId
+        const programId = req.body.programId;
+        if (!programId) {
+          return res.status(400).json({ error: "Program is required" });
         }
 
-        // Check if email already exists
-        const existingUser = await storage.getUserByEmail(email);
-        if (existingUser) {
-          errors.push({ row: rowNumber, reason: "Email already exists" });
-          continue;
+        const program = await storage.getProgramById(parseInt(programId));
+        if (!program) {
+          return res.status(400).json({ error: "Invalid program selected" });
         }
 
-        // Get phone (optional)
-        const phone = (row.phone || "").trim() || null;
+        // Parse CSV
+        const csvContent = req.file.buffer.toString("utf-8");
+        let records: any[];
 
-        // Create student using existing logic (ignoring any program/password from CSV)
         try {
-          await storage.createStudent(
-            {
-              name: fullName,
-              email,
-              phone,
-              passwordHash,
-              role: "USER",
-              status: "active",
-            },
-            program.code, // Always use program from modal, not CSV
-          );
-          created++;
-        } catch (createError: any) {
-          errors.push({ row: rowNumber, reason: createError.message || "Failed to create student" });
+          records = parse(csvContent, {
+            columns: true,
+            skip_empty_lines: true,
+            trim: true,
+            relax_column_count: true,
+          });
+        } catch (parseError) {
+          return res.status(400).json({
+            error: "Invalid CSV format. Please check file structure.",
+          });
         }
-      }
 
-      res.json({
-        totalRows: records.length,
-        created,
-        skipped: errors.length,
-        errors,
-      });
-    } catch (error) {
-      console.error("Error in bulk upload:", error);
-      res.status(500).json({ error: "Failed to process bulk upload" });
-    }
-  });
+        // Validate row limit
+        if (records.length > 1000) {
+          return res
+            .status(400)
+            .json({ error: "Maximum 1000 rows allowed per upload" });
+        }
+
+        const errors: { row: number; reason: string }[] = [];
+        let created = 0;
+        const defaultPassword = "User@123";
+        const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+        // Email validation regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        // Process each row
+        for (let i = 0; i < records.length; i++) {
+          const row = records[i];
+          const rowNumber = i + 2; // CSV row number (1-indexed + header row)
+
+          // Get full_name (support both full_name and name columns)
+          const fullName = (row.full_name || row.name || "").trim();
+          if (!fullName) {
+            errors.push({ row: rowNumber, reason: "Missing full_name" });
+            continue;
+          }
+
+          // Get and validate email
+          const email = (row.email || "").trim().toLowerCase();
+          if (!email) {
+            errors.push({ row: rowNumber, reason: "Missing email" });
+            continue;
+          }
+          if (!emailRegex.test(email)) {
+            errors.push({ row: rowNumber, reason: "Invalid email format" });
+            continue;
+          }
+
+          // Check if email already exists
+          const existingUser = await storage.getUserByEmail(email);
+          if (existingUser) {
+            errors.push({ row: rowNumber, reason: "Email already exists" });
+            continue;
+          }
+
+          // Get phone (optional)
+          const phone = (row.phone || "").trim() || null;
+
+          // Create student using existing logic (ignoring any program/password from CSV)
+          try {
+            await storage.createStudent(
+              {
+                name: fullName,
+                email,
+                phone,
+                passwordHash,
+                role: "USER",
+                status: "active",
+              },
+              program.code, // Always use program from modal, not CSV
+            );
+            created++;
+          } catch (createError: any) {
+            errors.push({
+              row: rowNumber,
+              reason: createError.message || "Failed to create student",
+            });
+          }
+        }
+
+        res.json({
+          totalRows: records.length,
+          created,
+          skipped: errors.length,
+          errors,
+        });
+      } catch (error) {
+        console.error("Error in bulk upload:", error);
+        res.status(500).json({ error: "Failed to process bulk upload" });
+      }
+    },
+  );
 
   // Admin routes: Get all programs
   app.get("/admin/v1/programs", requireAdmin, async (req, res) => {
@@ -1829,7 +1959,6 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .values({
           code: String(code).toUpperCase(),
           name: String(name),
-          level: req.body.level ? parseInt(String(req.body.level)) : 1,
         })
         .returning();
 
@@ -2034,7 +2163,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         }),
       );
 
-      res.json({ ...course, programCode, thumbnailSignedUrl, modules: modulesWithContent });
+      res.json({
+        ...course,
+        programCode,
+        thumbnailSignedUrl,
+        modules: modulesWithContent,
+      });
     } catch (error) {
       console.error("Error fetching course:", error);
       res.status(500).json({ error: "Failed to fetch course" });
@@ -2703,10 +2837,25 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
         if (uploadType === "thumbnail" && courseId && programCode) {
           key = generateCourseThumnailKey(programCode, courseId);
-        } else if (lessonId && fileType && programCode && courseId && moduleId) {
-          key = generateLessonFileKey(programCode, courseId, moduleId, lessonId, fileType);
+        } else if (
+          lessonId &&
+          fileType &&
+          programCode &&
+          courseId &&
+          moduleId
+        ) {
+          key = generateLessonFileKey(
+            programCode,
+            courseId,
+            moduleId,
+            lessonId,
+            fileType,
+          );
         } else {
-          res.status(400).json({ error: "Invalid upload parameters. For thumbnails: programCode, courseId required. For lesson files: programCode, courseId, moduleId, lessonId, fileType required." });
+          res.status(400).json({
+            error:
+              "Invalid upload parameters. For thumbnails: programCode, courseId required. For lesson files: programCode, courseId, moduleId, lessonId, fileType required.",
+          });
           return;
         }
 
@@ -3002,9 +3151,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
         const allowedCodes = ["ABUNDANCE", "MASTERCLASS"];
         if (!allowedCodes.includes(code)) {
-          return res
-            .status(400)
-            .json({ error: "Reorder only allowed for ABUNDANCE and MASTERCLASS features" });
+          return res.status(400).json({
+            error:
+              "Reorder only allowed for ABUNDANCE and MASTERCLASS features",
+          });
         }
 
         if (!Array.isArray(courseIds)) {
@@ -3074,18 +3224,21 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       if (feature.displayMode === "courses") {
         // ABUNDANCE has built-ins, MASTERCLASS doesn't
-        const builtIns = code === "ABUNDANCE" ? [
-          {
-            id: "builtin-money-calendar",
-            title: "Money Calendar",
-            isBuiltIn: true,
-          },
-          {
-            id: "builtin-rewiring-belief",
-            title: "Rewiring Belief",
-            isBuiltIn: true,
-          },
-        ] : [];
+        const builtIns =
+          code === "ABUNDANCE"
+            ? [
+                {
+                  id: "builtin-money-calendar",
+                  title: "Money Calendar",
+                  isBuiltIn: true,
+                },
+                {
+                  id: "builtin-rewiring-belief",
+                  title: "Rewiring Belief",
+                  isBuiltIn: true,
+                },
+              ]
+            : [];
 
         const mappedCourses = await Promise.all(
           mappings.map(async (m) => {
@@ -3274,7 +3427,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             .where(eq(cmsLessons.moduleId, module.id))
             .orderBy(asc(cmsLessons.position));
           return { ...module, lessons };
-        })
+        }),
       );
 
       res.json({ course, modules: modulesWithLessons });
@@ -3882,50 +4035,79 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
   // GET /api/admin/v1/session-banners/upload-url - Get signed URL for R2 upload
   // NOTE: This must be BEFORE the /:id route to prevent "upload-url" being parsed as an ID
-  app.get("/api/admin/v1/session-banners/upload-url", requireAdmin, async (req, res) => {
-    try {
-      const { filename, contentType } = req.query as { filename: string; contentType: string };
-      if (!filename || !contentType) {
-        return res.status(400).json({ error: "filename and contentType are required" });
+  app.get(
+    "/api/admin/v1/session-banners/upload-url",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { filename, contentType } = req.query as {
+          filename: string;
+          contentType: string;
+        };
+        if (!filename || !contentType) {
+          return res
+            .status(400)
+            .json({ error: "filename and contentType are required" });
+        }
+
+        const key = `session-banners/${Date.now()}-${filename}`;
+        const result = await getSignedPutUrl(key, contentType);
+
+        if (!result.success) {
+          console.error("R2 upload URL error:", result.error);
+          return res
+            .status(500)
+            .json({ error: result.error || "Failed to generate upload URL" });
+        }
+
+        res.json({ key: result.key, signedUrl: result.uploadUrl });
+      } catch (error) {
+        console.error("Error generating upload URL:", error);
+        res.status(500).json({ error: "Failed to generate upload URL" });
       }
-
-      const key = `session-banners/${Date.now()}-${filename}`;
-      const result = await getSignedPutUrl(key, contentType);
-
-      if (!result.success) {
-        console.error("R2 upload URL error:", result.error);
-        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
-      }
-
-      res.json({ key: result.key, signedUrl: result.uploadUrl });
-    } catch (error) {
-      console.error("Error generating upload URL:", error);
-      res.status(500).json({ error: "Failed to generate upload URL" });
-    }
-  });
+    },
+  );
 
   // GET /api/admin/v1/session-banners/:id - Get single banner
-  app.get("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const banner = await storage.getSessionBannerById(id);
-      if (!banner) {
-        return res.status(404).json({ error: "Banner not found" });
+  app.get(
+    "/api/admin/v1/session-banners/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const banner = await storage.getSessionBannerById(id);
+        if (!banner) {
+          return res.status(404).json({ error: "Banner not found" });
+        }
+        res.json(banner);
+      } catch (error) {
+        console.error("Error fetching session banner:", error);
+        res.status(500).json({ error: "Failed to fetch session banner" });
       }
-      res.json(banner);
-    } catch (error) {
-      console.error("Error fetching session banner:", error);
-      res.status(500).json({ error: "Failed to fetch session banner" });
-    }
-  });
+    },
+  );
 
   // POST /api/admin/v1/session-banners - Create banner
   app.post("/api/admin/v1/session-banners", requireAdmin, async (req, res) => {
     try {
-      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled, liveStartAt, liveEndAt } = req.body;
+      const {
+        type,
+        thumbnailKey,
+        videoKey,
+        posterKey,
+        ctaText,
+        ctaLink,
+        startAt,
+        endAt,
+        liveEnabled,
+        liveStartAt,
+        liveEndAt,
+      } = req.body;
 
       if (!type || !startAt || !endAt) {
-        return res.status(400).json({ error: "type, startAt, and endAt are required" });
+        return res
+          .status(400)
+          .json({ error: "type, startAt, and endAt are required" });
       }
 
       const banner = await storage.createSessionBanner({
@@ -3949,78 +4131,104 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // PUT /api/admin/v1/session-banners/:id - Update banner
-  app.put("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled, liveStartAt, liveEndAt } = req.body;
+  app.put(
+    "/api/admin/v1/session-banners/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const {
+          type,
+          thumbnailKey,
+          videoKey,
+          posterKey,
+          ctaText,
+          ctaLink,
+          startAt,
+          endAt,
+          liveEnabled,
+          liveStartAt,
+          liveEndAt,
+        } = req.body;
 
-      const updateData: any = {};
-      if (type !== undefined) updateData.type = type;
-      if (thumbnailKey !== undefined) updateData.thumbnailKey = thumbnailKey;
-      if (videoKey !== undefined) updateData.videoKey = videoKey;
-      if (posterKey !== undefined) updateData.posterKey = posterKey;
-      if (ctaText !== undefined) updateData.ctaText = ctaText;
-      if (ctaLink !== undefined) updateData.ctaLink = ctaLink;
-      if (startAt !== undefined) updateData.startAt = new Date(startAt);
-      if (endAt !== undefined) updateData.endAt = new Date(endAt);
-      if (liveEnabled !== undefined) updateData.liveEnabled = liveEnabled;
-      if (liveStartAt !== undefined) updateData.liveStartAt = liveStartAt ? new Date(liveStartAt) : null;
-      if (liveEndAt !== undefined) updateData.liveEndAt = liveEndAt ? new Date(liveEndAt) : null;
+        const updateData: any = {};
+        if (type !== undefined) updateData.type = type;
+        if (thumbnailKey !== undefined) updateData.thumbnailKey = thumbnailKey;
+        if (videoKey !== undefined) updateData.videoKey = videoKey;
+        if (posterKey !== undefined) updateData.posterKey = posterKey;
+        if (ctaText !== undefined) updateData.ctaText = ctaText;
+        if (ctaLink !== undefined) updateData.ctaLink = ctaLink;
+        if (startAt !== undefined) updateData.startAt = new Date(startAt);
+        if (endAt !== undefined) updateData.endAt = new Date(endAt);
+        if (liveEnabled !== undefined) updateData.liveEnabled = liveEnabled;
+        if (liveStartAt !== undefined)
+          updateData.liveStartAt = liveStartAt ? new Date(liveStartAt) : null;
+        if (liveEndAt !== undefined)
+          updateData.liveEndAt = liveEndAt ? new Date(liveEndAt) : null;
 
-      const banner = await storage.updateSessionBanner(id, updateData);
-      if (!banner) {
-        return res.status(404).json({ error: "Banner not found" });
+        const banner = await storage.updateSessionBanner(id, updateData);
+        if (!banner) {
+          return res.status(404).json({ error: "Banner not found" });
+        }
+        res.json(banner);
+      } catch (error) {
+        console.error("Error updating session banner:", error);
+        res.status(500).json({ error: "Failed to update session banner" });
       }
-      res.json(banner);
-    } catch (error) {
-      console.error("Error updating session banner:", error);
-      res.status(500).json({ error: "Failed to update session banner" });
-    }
-  });
+    },
+  );
 
   // DELETE /api/admin/v1/session-banners/:id - Delete banner
-  app.delete("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const success = await storage.deleteSessionBanner(id);
-      if (!success) {
-        return res.status(404).json({ error: "Banner not found" });
+  app.delete(
+    "/api/admin/v1/session-banners/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const success = await storage.deleteSessionBanner(id);
+        if (!success) {
+          return res.status(404).json({ error: "Banner not found" });
+        }
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting session banner:", error);
+        res.status(500).json({ error: "Failed to delete session banner" });
       }
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting session banner:", error);
-      res.status(500).json({ error: "Failed to delete session banner" });
-    }
-  });
+    },
+  );
 
   // POST /api/admin/v1/session-banners/:id/duplicate - Duplicate banner
-  app.post("/api/admin/v1/session-banners/:id/duplicate", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const original = await storage.getSessionBannerById(id);
-      if (!original) {
-        return res.status(404).json({ error: "Banner not found" });
-      }
+  app.post(
+    "/api/admin/v1/session-banners/:id/duplicate",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const original = await storage.getSessionBannerById(id);
+        if (!original) {
+          return res.status(404).json({ error: "Banner not found" });
+        }
 
-      const duplicate = await storage.createSessionBanner({
-        type: original.type,
-        thumbnailKey: original.thumbnailKey,
-        videoKey: original.videoKey,
-        posterKey: original.posterKey,
-        ctaText: original.ctaText,
-        ctaLink: original.ctaLink,
-        startAt: original.startAt,
-        endAt: original.endAt,
-        liveEnabled: original.liveEnabled,
-        liveStartAt: original.liveStartAt,
-        liveEndAt: original.liveEndAt,
-      });
-      res.status(201).json(duplicate);
-    } catch (error) {
-      console.error("Error duplicating session banner:", error);
-      res.status(500).json({ error: "Failed to duplicate session banner" });
-    }
-  });
+        const duplicate = await storage.createSessionBanner({
+          type: original.type,
+          thumbnailKey: original.thumbnailKey,
+          videoKey: original.videoKey,
+          posterKey: original.posterKey,
+          ctaText: original.ctaText,
+          ctaLink: original.ctaLink,
+          startAt: original.startAt,
+          endAt: original.endAt,
+          liveEnabled: original.liveEnabled,
+          liveStartAt: original.liveStartAt,
+          liveEndAt: original.liveEndAt,
+        });
+        res.status(201).json(duplicate);
+      } catch (error) {
+        console.error("Error duplicating session banner:", error);
+        res.status(500).json({ error: "Failed to duplicate session banner" });
+      }
+    },
+  );
 
   // ===== SESSION BANNER PUBLIC ROUTE =====
 
@@ -4068,7 +4276,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Check if live badge should show (session banners only)
       // Runtime LIVE status: liveEnabled AND now is within liveStartAt/liveEndAt window
       const now = new Date();
-      const isLive = banner.type === "session" &&
+      const isLive =
+        banner.type === "session" &&
         banner.liveEnabled &&
         status === "active" &&
         banner.liveStartAt &&
@@ -4104,7 +4313,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const [todayQuote] = await db
         .select()
         .from(dailyQuotes)
-        .where(and(eq(dailyQuotes.isActive, true), eq(dailyQuotes.lastShownDate, today)));
+        .where(
+          and(
+            eq(dailyQuotes.isActive, true),
+            eq(dailyQuotes.lastShownDate, today),
+          ),
+        );
 
       if (todayQuote) {
         return res.json({
@@ -4122,7 +4336,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .orderBy(
           sql`CASE WHEN ${dailyQuotes.lastShownDate} IS NULL THEN 0 ELSE 1 END`,
           sql`${dailyQuotes.lastShownDate} NULLS FIRST`,
-          asc(dailyQuotes.displayOrder)
+          asc(dailyQuotes.displayOrder),
         );
 
       if (activeQuotes.length === 0) {
@@ -4167,7 +4381,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const parsed = insertDailyQuoteSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ error: "Validation failed", details: parsed.error.errors });
+        return res
+          .status(400)
+          .json({ error: "Validation failed", details: parsed.error.errors });
       }
 
       const [newQuote] = await db
@@ -4236,48 +4452,58 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   // ===== USER WELLNESS PROFILE APIs =====
 
   // Admin API: Get wellness profile for a user
-  app.get("/admin/v1/users/:userId/wellness-profile", requireAdmin, async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      if (isNaN(userId)) {
-        return res.status(400).json({ error: "Invalid user ID" });
-      }
+  app.get(
+    "/admin/v1/users/:userId/wellness-profile",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId);
+        if (isNaN(userId)) {
+          return res.status(400).json({ error: "Invalid user ID" });
+        }
 
-      const profile = await storage.getWellnessProfileByUserId(userId);
-      res.json(profile || { userId, karmicAffirmation: null, prescription: null });
-    } catch (error) {
-      console.error("Error fetching wellness profile:", error);
-      res.status(500).json({ error: "Failed to fetch wellness profile" });
-    }
-  });
+        const profile = await storage.getWellnessProfileByUserId(userId);
+        res.json(
+          profile || { userId, karmicAffirmation: null, prescription: null },
+        );
+      } catch (error) {
+        console.error("Error fetching wellness profile:", error);
+        res.status(500).json({ error: "Failed to fetch wellness profile" });
+      }
+    },
+  );
 
   // Admin API: Create or update wellness profile for a user
-  app.post("/admin/v1/users/:userId/wellness-profile", requireAdmin, async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      if (isNaN(userId)) {
-        return res.status(400).json({ error: "Invalid user ID" });
+  app.post(
+    "/admin/v1/users/:userId/wellness-profile",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId);
+        if (isNaN(userId)) {
+          return res.status(400).json({ error: "Invalid user ID" });
+        }
+
+        // Verify user exists
+        const user = await storage.getUserById(userId);
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        const { karmicAffirmation, prescription } = req.body;
+
+        const profile = await storage.upsertWellnessProfile(userId, {
+          karmicAffirmation: karmicAffirmation ?? null,
+          prescription: prescription ?? null,
+        });
+
+        res.json(profile);
+      } catch (error) {
+        console.error("Error saving wellness profile:", error);
+        res.status(500).json({ error: "Failed to save wellness profile" });
       }
-
-      // Verify user exists
-      const user = await storage.getUserById(userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      const { karmicAffirmation, prescription } = req.body;
-
-      const profile = await storage.upsertWellnessProfile(userId, {
-        karmicAffirmation: karmicAffirmation ?? null,
-        prescription: prescription ?? null,
-      });
-
-      res.json(profile);
-    } catch (error) {
-      console.error("Error saving wellness profile:", error);
-      res.status(500).json({ error: "Failed to save wellness profile" });
-    }
-  });
+    },
+  );
 
   // User API: Get own wellness profile (read-only)
   app.get("/api/v1/me/wellness-profile", authenticateJWT, async (req, res) => {
@@ -4304,11 +4530,15 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const { currentPassword, newPassword } = req.body;
 
       if (!currentPassword || !newPassword) {
-        return res.status(400).json({ error: "Current and new password are required" });
+        return res
+          .status(400)
+          .json({ error: "Current and new password are required" });
       }
 
       if (newPassword.length < 6) {
-        return res.status(400).json({ error: "New password must be at least 6 characters" });
+        return res
+          .status(400)
+          .json({ error: "New password must be at least 6 characters" });
       }
 
       const user = await storage.getUserById(req.user.sub);
@@ -4318,7 +4548,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Verify current password
       const bcrypt = await import("bcryptjs");
-      const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+      const isValidPassword = await bcrypt.compare(
+        currentPassword,
+        user.passwordHash,
+      );
       if (!isValidPassword) {
         return res.status(400).json({ error: "Current password is incorrect" });
       }
@@ -4387,7 +4620,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             }
           }
           return { ...event, thumbnailSignedUrl };
-        })
+        }),
       );
 
       res.json(eventsWithSignedUrls);
@@ -4412,7 +4645,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             }
           }
           return { ...event, thumbnailSignedUrl };
-        })
+        }),
       );
 
       res.json(eventsWithSignedUrls);
@@ -4429,8 +4662,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const allCompleted = await storage.getAllEvents({ status: "COMPLETED" });
 
       // Filter: show_recording = true OR recording_url IS NULL (needs decision)
-      const latestEvents = allCompleted.filter(event =>
-        event.showRecording === true || event.recordingUrl === null
+      const latestEvents = allCompleted.filter(
+        (event) => event.showRecording === true || event.recordingUrl === null,
       );
 
       const eventsWithSignedUrls = await Promise.all(
@@ -4443,7 +4676,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             }
           }
           return { ...event, thumbnailSignedUrl };
-        })
+        }),
       );
 
       res.json(eventsWithSignedUrls);
@@ -4457,9 +4690,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   // NOTE: This must be BEFORE the /:id route to prevent "upload-url" being parsed as an ID
   app.get("/api/admin/v1/events/upload-url", requireAdmin, async (req, res) => {
     try {
-      const { filename, contentType } = req.query as { filename: string; contentType: string };
+      const { filename, contentType } = req.query as {
+        filename: string;
+        contentType: string;
+      };
       if (!filename || !contentType) {
-        return res.status(400).json({ error: "filename and contentType are required" });
+        return res
+          .status(400)
+          .json({ error: "filename and contentType are required" });
       }
 
       const key = `events/${Date.now()}-${filename}`;
@@ -4467,7 +4705,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       if (!result.success) {
         console.error("R2 upload URL error:", result.error);
-        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
+        return res
+          .status(500)
+          .json({ error: result.error || "Failed to generate upload URL" });
       }
 
       res.json({ key: result.key, signedUrl: result.uploadUrl });
@@ -4503,7 +4743,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // Helper function to create event reminder notifications
-  async function createEventReminders(event: { id: number; title: string; startDatetime: Date; requiredProgramCode: string; requiredProgramLevel: number; status: string }) {
+  async function createEventReminders(event: {
+    id: number;
+    title: string;
+    startDatetime: Date;
+    requiredProgramCode: string;
+    requiredProgramLevel: number;
+    status: string;
+  }) {
     // Only create reminders for UPCOMING events
     if (event.status !== "UPCOMING") return;
 
@@ -4511,7 +4758,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     const now = new Date();
 
     // Format time for notification body (e.g., "3:30 PM")
-    const timeStr = startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const timeStr = startTime.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
 
     const notifications: Array<{
       title: string;
@@ -4553,7 +4804,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
     if (notifications.length > 0) {
       await storage.createNotifications(notifications);
-      console.log(`Created ${notifications.length} reminder(s) for event ${event.id}: ${event.title}`);
+      console.log(
+        `Created ${notifications.length} reminder(s) for event ${event.id}: ${event.title}`,
+      );
     }
   }
 
@@ -4562,7 +4815,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const parsed = insertEventSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ error: "Validation failed", details: parsed.error.errors });
+        return res
+          .status(400)
+          .json({ error: "Validation failed", details: parsed.error.errors });
       }
 
       const event = await storage.createEvent(parsed.data);
@@ -4589,13 +4844,22 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Convert datetime strings to Date objects for Drizzle
       const updateData = { ...req.body };
-      if (updateData.startDatetime && typeof updateData.startDatetime === 'string') {
+      if (
+        updateData.startDatetime &&
+        typeof updateData.startDatetime === "string"
+      ) {
         updateData.startDatetime = new Date(updateData.startDatetime);
       }
-      if (updateData.endDatetime && typeof updateData.endDatetime === 'string') {
+      if (
+        updateData.endDatetime &&
+        typeof updateData.endDatetime === "string"
+      ) {
         updateData.endDatetime = new Date(updateData.endDatetime);
       }
-      if (updateData.recordingExpiryDate && typeof updateData.recordingExpiryDate === 'string') {
+      if (
+        updateData.recordingExpiryDate &&
+        typeof updateData.recordingExpiryDate === "string"
+      ) {
         updateData.recordingExpiryDate = updateData.recordingExpiryDate;
       }
 
@@ -4648,56 +4912,68 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // Admin API: Skip recording for an event
-  app.post("/api/admin/v1/events/:id/skip-recording", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const event = await storage.updateEvent(id, {
-        showRecording: false,
-        recordingSkipped: true,
-        recordingUrl: null,
-        recordingPasscode: null,
-        recordingExpiryDate: null,
-      });
+  app.post(
+    "/api/admin/v1/events/:id/skip-recording",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const event = await storage.updateEvent(id, {
+          showRecording: false,
+          recordingSkipped: true,
+          recordingUrl: null,
+          recordingPasscode: null,
+          recordingExpiryDate: null,
+        });
 
-      if (!event) {
-        return res.status(404).json({ error: "Event not found" });
+        if (!event) {
+          return res.status(404).json({ error: "Event not found" });
+        }
+
+        res.json({ success: true, message: "Recording skipped" });
+      } catch (error) {
+        console.error("Error skipping recording:", error);
+        res.status(500).json({ error: "Failed to skip recording" });
       }
-
-      res.json({ success: true, message: "Recording skipped" });
-    } catch (error) {
-      console.error("Error skipping recording:", error);
-      res.status(500).json({ error: "Failed to skip recording" });
-    }
-  });
+    },
+  );
 
   // Admin API: Add recording to an event
-  app.post("/api/admin/v1/events/:id/add-recording", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const { recordingUrl, recordingPasscode, recordingExpiryDate } = req.body;
+  app.post(
+    "/api/admin/v1/events/:id/add-recording",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const { recordingUrl, recordingPasscode, recordingExpiryDate } =
+          req.body;
 
-      if (!recordingUrl || !recordingPasscode || !recordingExpiryDate) {
-        return res.status(400).json({ error: "recordingUrl, recordingPasscode, and recordingExpiryDate are required" });
+        if (!recordingUrl || !recordingPasscode || !recordingExpiryDate) {
+          return res.status(400).json({
+            error:
+              "recordingUrl, recordingPasscode, and recordingExpiryDate are required",
+          });
+        }
+
+        const event = await storage.updateEvent(id, {
+          recordingUrl,
+          recordingPasscode,
+          recordingExpiryDate,
+          showRecording: true,
+          recordingSkipped: false,
+        });
+
+        if (!event) {
+          return res.status(404).json({ error: "Event not found" });
+        }
+
+        res.json(event);
+      } catch (error) {
+        console.error("Error adding recording:", error);
+        res.status(500).json({ error: "Failed to add recording" });
       }
-
-      const event = await storage.updateEvent(id, {
-        recordingUrl,
-        recordingPasscode,
-        recordingExpiryDate,
-        showRecording: true,
-        recordingSkipped: false,
-      });
-
-      if (!event) {
-        return res.status(404).json({ error: "Event not found" });
-      }
-
-      res.json(event);
-    } catch (error) {
-      console.error("Error adding recording:", error);
-      res.status(500).json({ error: "Failed to add recording" });
-    }
-  });
+    },
+  );
 
   // ===== PUBLIC EVENT APIs (User App) =====
 
@@ -4721,7 +4997,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           const isLive = event.startDatetime <= now && now <= event.endDatetime;
 
           return { ...event, thumbnailSignedUrl, isLive };
-        })
+        }),
       );
 
       res.json(eventsWithSignedUrls);
@@ -4746,7 +5022,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             }
           }
           return { ...event, thumbnailSignedUrl };
-        })
+        }),
       );
 
       res.json(eventsWithSignedUrls);
@@ -4804,42 +5080,49 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Fetch all POHs for user
       const userPOHs = await storage.getUserPOHs(userId);
 
-      const activePOH = userPOHs.find(p => p.status === "active");
-      const nextPOH = userPOHs.find(p => p.status === "next");
-      const horizonPOH = userPOHs.find(p => p.status === "horizon");
+      const activePOH = userPOHs.find((p) => p.status === "active");
+      const nextPOH = userPOHs.find((p) => p.status === "next");
+      const horizonPOH = userPOHs.find((p) => p.status === "horizon");
 
       // Build ACTIVE POH response with full details (milestones, actions, today's rating)
       let activeResponse = null;
       if (activePOH) {
         const milestones = await storage.getPOHMilestones(activePOH.id);
         const actions = await storage.getPOHActions(activePOH.id);
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split("T")[0];
         const todayRating = await storage.getPOHRatingByDate(userId, today);
 
         // Generate signed URLs for vision images
         const visionImages = activePOH.visionImages || [];
         const signedVisionImages: (string | null)[] = [];
         for (const img of visionImages) {
-          if (img && img !== 'NULL') {
+          if (img && img !== "NULL") {
             try {
               // Extract key from stored URL - handle both direct R2 URLs and custom domains
               // Format 1: https://account.r2.cloudflarestorage.com/key
               // Format 2: https://custom-domain.com/key
               let key: string;
-              if (img.includes('.r2.cloudflarestorage.com/')) {
-                key = img.split('.r2.cloudflarestorage.com/')[1];
-              } else if (img.startsWith('http')) {
+              if (img.includes(".r2.cloudflarestorage.com/")) {
+                key = img.split(".r2.cloudflarestorage.com/")[1];
+              } else if (img.startsWith("http")) {
                 // Custom domain - extract path after domain
                 const url = new URL(img);
-                key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+                key = url.pathname.startsWith("/")
+                  ? url.pathname.slice(1)
+                  : url.pathname;
               } else {
                 // Already just a key
                 key = img;
               }
               const signedResult = await getSignedGetUrl(key, 3600); // 1 hour TTL
-              signedVisionImages.push(signedResult.success ? signedResult.url! : null);
+              signedVisionImages.push(
+                signedResult.success ? signedResult.url! : null,
+              );
             } catch (err) {
-              console.error("Error generating signed URL for vision image:", err);
+              console.error(
+                "Error generating signed URL for vision image:",
+                err,
+              );
               signedVisionImages.push(null);
             }
           } else {
@@ -4854,19 +5137,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           category: activePOH.category,
           started_at: activePOH.startedAt,
           vision_images: signedVisionImages,
-          milestones: milestones.map(m => ({
+          milestones: milestones.map((m) => ({
             id: m.id,
             text: m.text,
             achieved: m.achieved,
             achieved_at: m.achievedAt,
-            order_index: m.orderIndex
+            order_index: m.orderIndex,
           })),
-          actions: actions.map(a => ({
+          actions: actions.map((a) => ({
             id: a.id,
             text: a.text,
-            order: a.orderIndex
+            order: a.orderIndex,
           })),
-          today_rating: todayRating ? todayRating.rating : null
+          today_rating: todayRating ? todayRating.rating : null,
         };
       }
 
@@ -4879,7 +5162,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           why: nextPOH.why,
           category: nextPOH.category,
           milestones: [],
-          actions: []
+          actions: [],
         };
       }
 
@@ -4892,14 +5175,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           why: horizonPOH.why,
           category: horizonPOH.category,
           milestones: [],
-          actions: []
+          actions: [],
         };
       }
 
       res.json({
         active: activeResponse,
         next: nextResponse,
-        horizon: horizonResponse
+        horizon: horizonResponse,
       });
     } catch (error) {
       console.error("Error fetching current POH:", error);
@@ -4919,34 +5202,42 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Validate inputs
       if (!title || title.length > 120) {
-        return res.status(400).json({ error: "Title is required and must be <= 120 characters" });
+        return res
+          .status(400)
+          .json({ error: "Title is required and must be <= 120 characters" });
       }
       if (!why || why.length > 500) {
-        return res.status(400).json({ error: "Why is required and must be <= 500 characters" });
+        return res
+          .status(400)
+          .json({ error: "Why is required and must be <= 500 characters" });
       }
       if (!pohCategoryEnum.safeParse(category).success) {
-        return res.status(400).json({ error: "Invalid category. Must be: career, health, relationships, or wealth" });
+        return res.status(400).json({
+          error:
+            "Invalid category. Must be: career, health, relationships, or wealth",
+        });
       }
 
       // Check existing POHs to determine status
       const userPOHs = await storage.getUserPOHs(userId);
-      const hasActive = userPOHs.some(p => p.status === "active");
-      const hasNext = userPOHs.some(p => p.status === "next");
-      const hasHorizon = userPOHs.some(p => p.status === "horizon");
+      const hasActive = userPOHs.some((p) => p.status === "active");
+      const hasNext = userPOHs.some((p) => p.status === "next");
+      const hasHorizon = userPOHs.some((p) => p.status === "horizon");
 
       let status: "active" | "next" | "horizon";
       let startedAt: string | null = null;
 
       if (!hasActive) {
         status = "active";
-        startedAt = new Date().toISOString().split('T')[0]; // Today
+        startedAt = new Date().toISOString().split("T")[0]; // Today
       } else if (!hasNext) {
         status = "next";
       } else if (!hasHorizon) {
         status = "horizon";
       } else {
         return res.status(400).json({
-          error: "Cannot create more POHs. You already have active, next, and horizon projects."
+          error:
+            "Cannot create more POHs. You already have active, next, and horizon projects.",
         });
       }
 
@@ -4956,7 +5247,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         why,
         category,
         status,
-        startedAt
+        startedAt,
       });
 
       res.status(201).json(newPOH);
@@ -4988,7 +5279,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       if (title !== undefined) {
         if (title.length > 120) {
-          return res.status(400).json({ error: "Title must be <= 120 characters" });
+          return res
+            .status(400)
+            .json({ error: "Title must be <= 120 characters" });
         }
         updates.title = title;
       }
@@ -4996,10 +5289,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Only active POH can update "why"
       if (why !== undefined) {
         if (poh.status !== "active") {
-          return res.status(403).json({ error: "Only active POH can update 'why' field" });
+          return res
+            .status(403)
+            .json({ error: "Only active POH can update 'why' field" });
         }
         if (why.length > 500) {
-          return res.status(400).json({ error: "Why must be <= 500 characters" });
+          return res
+            .status(400)
+            .json({ error: "Why must be <= 500 characters" });
         }
         updates.why = why;
       }
@@ -5037,12 +5334,16 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       if (poh.status !== "active") {
-        return res.status(403).json({ error: "Can only add milestones to active POH" });
+        return res
+          .status(403)
+          .json({ error: "Can only add milestones to active POH" });
       }
 
       // Validate text
       if (!text || text.length > 200) {
-        return res.status(400).json({ error: "Milestone text is required and must be <= 200 characters" });
+        return res.status(400).json({
+          error: "Milestone text is required and must be <= 200 characters",
+        });
       }
 
       // Check milestone count (max 5)
@@ -5054,7 +5355,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const milestone = await storage.createPOHMilestone({
         pohId,
         text,
-        orderIndex: existingMilestones.length
+        orderIndex: existingMilestones.length,
       });
 
       res.status(201).json(milestone);
@@ -5065,43 +5366,52 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // 5. POST /api/poh/milestone/:id/achieve - Achieve milestone
-  app.post("/api/poh/milestone/:id/achieve", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app.post(
+    "/api/poh/milestone/:id/achieve",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        const userId = req.user.sub;
+        const milestoneId = req.params.id;
+
+        // Get milestone and verify ownership via POH
+        const milestone = await storage.getPOHMilestoneById(milestoneId);
+        if (!milestone) {
+          return res.status(404).json({ error: "Milestone not found" });
+        }
+
+        const poh = await storage.getPOHById(milestone.pohId);
+        if (!poh || poh.userId !== userId) {
+          return res.status(404).json({ error: "Milestone not found" });
+        }
+
+        if (poh.status !== "active") {
+          return res
+            .status(403)
+            .json({ error: "Can only achieve milestones on active POH" });
+        }
+
+        if (milestone.achieved) {
+          return res.status(400).json({ error: "Milestone already achieved" });
+        }
+
+        const today = new Date().toISOString().split("T")[0];
+        const updatedMilestone = await storage.achievePOHMilestone(
+          milestoneId,
+          today,
+        );
+
+        res.json(updatedMilestone);
+      } catch (error) {
+        console.error("Error achieving milestone:", error);
+        res.status(500).json({ error: "Failed to achieve milestone" });
       }
-
-      const userId = req.user.sub;
-      const milestoneId = req.params.id;
-
-      // Get milestone and verify ownership via POH
-      const milestone = await storage.getPOHMilestoneById(milestoneId);
-      if (!milestone) {
-        return res.status(404).json({ error: "Milestone not found" });
-      }
-
-      const poh = await storage.getPOHById(milestone.pohId);
-      if (!poh || poh.userId !== userId) {
-        return res.status(404).json({ error: "Milestone not found" });
-      }
-
-      if (poh.status !== "active") {
-        return res.status(403).json({ error: "Can only achieve milestones on active POH" });
-      }
-
-      if (milestone.achieved) {
-        return res.status(400).json({ error: "Milestone already achieved" });
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      const updatedMilestone = await storage.achievePOHMilestone(milestoneId, today);
-
-      res.json(updatedMilestone);
-    } catch (error) {
-      console.error("Error achieving milestone:", error);
-      res.status(500).json({ error: "Failed to achieve milestone" });
-    }
-  });
+    },
+  );
 
   // 6. PUT /api/poh/milestone/:id - Update milestone
   app.put("/api/poh/milestone/:id", authenticateJWT, async (req, res) => {
@@ -5129,7 +5439,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (poh.status !== "active") {
         return res.status(403).json({
           error: "POH_NOT_ACTIVE",
-          message: "Can only edit milestones on active POH"
+          message: "Can only edit milestones on active POH",
         });
       }
 
@@ -5137,15 +5447,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (milestone.achieved) {
         return res.status(403).json({
           error: "MILESTONE_LOCKED",
-          message: "Achieved milestones cannot be edited."
+          message: "Achieved milestones cannot be edited.",
         });
       }
 
       if (!text || text.length > 200) {
-        return res.status(400).json({ error: "Milestone text must be <= 200 characters" });
+        return res
+          .status(400)
+          .json({ error: "Milestone text must be <= 200 characters" });
       }
 
-      const updatedMilestone = await storage.updatePOHMilestone(milestoneId, { text });
+      const updatedMilestone = await storage.updatePOHMilestone(milestoneId, {
+        text,
+      });
       res.json(updatedMilestone);
     } catch (error) {
       console.error("Error updating milestone:", error);
@@ -5171,17 +5485,23 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       if (poh.status !== "active") {
-        return res.status(403).json({ error: "Can only update actions on active POH" });
+        return res
+          .status(403)
+          .json({ error: "Can only update actions on active POH" });
       }
 
       // Validate actions
       if (!Array.isArray(actions) || actions.length > 3) {
-        return res.status(400).json({ error: "Actions must be an array with max 3 items" });
+        return res
+          .status(400)
+          .json({ error: "Actions must be an array with max 3 items" });
       }
 
       for (const action of actions) {
-        if (typeof action !== 'string' || action.length === 0) {
-          return res.status(400).json({ error: "Each action must be a non-empty string" });
+        if (typeof action !== "string" || action.length === 0) {
+          return res
+            .status(400)
+            .json({ error: "Each action must be a non-empty string" });
         }
       }
 
@@ -5217,26 +5537,33 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       // Validate rating
-      if (typeof rating !== 'number' || rating < 0 || rating > 10) {
-        return res.status(400).json({ error: "Rating must be between 0 and 10" });
+      if (typeof rating !== "number" || rating < 0 || rating > 10) {
+        return res
+          .status(400)
+          .json({ error: "Rating must be between 0 and 10" });
       }
 
       // Validate date format
       if (!local_date || !/^\d{4}-\d{2}-\d{2}$/.test(local_date)) {
-        return res.status(400).json({ error: "Invalid date format. Use YYYY-MM-DD" });
+        return res
+          .status(400)
+          .json({ error: "Invalid date format. Use YYYY-MM-DD" });
       }
 
       // Can only rate today - no backdating allowed
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       if (local_date !== today) {
         return res.status(403).json({
           error: "RATING_DATE_LOCKED",
-          message: "Can only submit or update rating for today"
+          message: "Can only submit or update rating for today",
         });
       }
 
       // Check if rating exists for this date
-      const existingRating = await storage.getPOHRatingByDate(userId, local_date);
+      const existingRating = await storage.getPOHRatingByDate(
+        userId,
+        local_date,
+      );
 
       let result;
       if (existingRating) {
@@ -5248,7 +5575,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           userId,
           pohId: poh_id,
           localDate: local_date,
-          rating
+          rating,
         });
       }
 
@@ -5282,16 +5609,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Validate reflection
       if (!closing_reflection || closing_reflection.length < 20) {
-        return res.status(400).json({ error: "Closing reflection is required (minimum 20 characters)" });
+        return res.status(400).json({
+          error: "Closing reflection is required (minimum 20 characters)",
+        });
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
 
       // Complete the POH
       await storage.completePOH(pohId, {
         status: "completed",
         endedAt: today,
-        closingReflection: closing_reflection
+        closingReflection: closing_reflection,
       });
 
       // Promote NEXT -> ACTIVE and HORIZON -> NEXT
@@ -5327,16 +5656,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Validate reflection
       if (!closing_reflection || closing_reflection.length < 20) {
-        return res.status(400).json({ error: "Closing reflection is required (minimum 20 characters)" });
+        return res.status(400).json({
+          error: "Closing reflection is required (minimum 20 characters)",
+        });
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
 
       // Close the POH early
       await storage.completePOH(pohId, {
         status: "closed_early",
         endedAt: today,
-        closingReflection: closing_reflection
+        closingReflection: closing_reflection,
       });
 
       // Promote NEXT -> ACTIVE and HORIZON -> NEXT
@@ -5366,8 +5697,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         historyPOHs.map(async (poh) => {
           const milestones = await storage.getPOHMilestones(poh.id);
           const achievedMilestones = milestones
-            .filter(m => m.achieved)
-            .map(m => m.text);
+            .filter((m) => m.achieved)
+            .map((m) => m.text);
 
           return {
             id: poh.id,
@@ -5377,9 +5708,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             started_at: poh.startedAt,
             ended_at: poh.endedAt,
             closing_reflection: poh.closingReflection,
-            milestones: achievedMilestones
+            milestones: achievedMilestones,
           };
-        })
+        }),
       );
 
       res.json(historyWithMilestones);
@@ -5394,104 +5725,113 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
       if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('INVALID_IMAGE'));
+        cb(new Error("INVALID_IMAGE"));
       }
-    }
+    },
   });
 
   // 12. POST /api/poh/:id/vision - Upload vision image
-  app.post("/api/poh/:id/vision", authenticateJWT, uploadPOHVision.single('image'), async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
+  app.post(
+    "/api/poh/:id/vision",
+    authenticateJWT,
+    uploadPOHVision.single("image"),
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
 
-      const userId = req.user.sub;
-      const pohId = req.params.id;
-      const indexStr = req.body.index;
+        const userId = req.user.sub;
+        const pohId = req.params.id;
+        const indexStr = req.body.index;
 
-      // Validate index (3 vision slots: 0, 1, 2)
-      const index = parseInt(indexStr, 10);
-      if (isNaN(index) || index < 0 || index > 2) {
-        return res.status(400).json({
-          error: "INVALID_INDEX",
-          message: "Index must be 0, 1, or 2"
+        // Validate index (3 vision slots: 0, 1, 2)
+        const index = parseInt(indexStr, 10);
+        if (isNaN(index) || index < 0 || index > 2) {
+          return res.status(400).json({
+            error: "INVALID_INDEX",
+            message: "Index must be 0, 1, or 2",
+          });
+        }
+
+        // Verify POH ownership and status
+        const poh = await storage.getPOHById(pohId);
+        if (!poh || poh.userId !== userId) {
+          return res.status(404).json({ error: "POH not found" });
+        }
+
+        if (poh.status !== "active") {
+          return res.status(403).json({
+            error: "VISION_UPLOAD_NOT_ALLOWED",
+            message: "Can only upload vision images to active POH",
+          });
+        }
+
+        // Check if file was uploaded
+        if (!req.file) {
+          return res.status(400).json({
+            error: "INVALID_IMAGE",
+            message: "No image file provided",
+          });
+        }
+
+        // Determine file extension
+        const extMap: { [key: string]: string } = {
+          "image/jpeg": "jpg",
+          "image/png": "png",
+          "image/webp": "webp",
+        };
+        const ext = extMap[req.file.mimetype] || "jpg";
+
+        // Deterministic path: poh-visions/{user_id}/{poh_id}/vision-{index}.{ext}
+        const key = `poh-visions/${userId}/${pohId}/vision-${index}.${ext}`;
+
+        // Upload to R2
+        const uploadResult = await uploadBufferToR2(
+          req.file.buffer,
+          key,
+          req.file.mimetype,
+        );
+        if (!uploadResult.success) {
+          console.error("R2 upload failed:", uploadResult.error);
+          return res.status(500).json({ error: "Failed to upload image" });
+        }
+
+        // Update vision_images array in database
+        const currentImages = poh.visionImages || [];
+        const newImages = [...currentImages];
+
+        // Ensure array has at least 3 slots (pad with nulls)
+        while (newImages.length < 3) {
+          newImages.push(null as any);
+        }
+
+        // Replace the image at the specified index
+        newImages[index] = uploadResult.url!;
+
+        await storage.updatePOH(pohId, { visionImages: newImages });
+
+        res.json({
+          success: true,
+          vision_images: newImages,
+          uploaded_index: index,
         });
+      } catch (error: any) {
+        console.error("Error uploading vision image:", error);
+        if (error.message === "INVALID_IMAGE") {
+          return res.status(400).json({
+            error: "INVALID_IMAGE",
+            message: "Only JPEG, PNG, and WebP images are allowed",
+          });
+        }
+        res.status(500).json({ error: "Failed to upload vision image" });
       }
-
-      // Verify POH ownership and status
-      const poh = await storage.getPOHById(pohId);
-      if (!poh || poh.userId !== userId) {
-        return res.status(404).json({ error: "POH not found" });
-      }
-
-      if (poh.status !== "active") {
-        return res.status(403).json({
-          error: "VISION_UPLOAD_NOT_ALLOWED",
-          message: "Can only upload vision images to active POH"
-        });
-      }
-
-      // Check if file was uploaded
-      if (!req.file) {
-        return res.status(400).json({
-          error: "INVALID_IMAGE",
-          message: "No image file provided"
-        });
-      }
-
-      // Determine file extension
-      const extMap: { [key: string]: string } = {
-        'image/jpeg': 'jpg',
-        'image/png': 'png',
-        'image/webp': 'webp'
-      };
-      const ext = extMap[req.file.mimetype] || 'jpg';
-
-      // Deterministic path: poh-visions/{user_id}/{poh_id}/vision-{index}.{ext}
-      const key = `poh-visions/${userId}/${pohId}/vision-${index}.${ext}`;
-
-      // Upload to R2
-      const uploadResult = await uploadBufferToR2(req.file.buffer, key, req.file.mimetype);
-      if (!uploadResult.success) {
-        console.error("R2 upload failed:", uploadResult.error);
-        return res.status(500).json({ error: "Failed to upload image" });
-      }
-
-      // Update vision_images array in database
-      const currentImages = poh.visionImages || [];
-      const newImages = [...currentImages];
-
-      // Ensure array has at least 3 slots (pad with nulls)
-      while (newImages.length < 3) {
-        newImages.push(null as any);
-      }
-
-      // Replace the image at the specified index
-      newImages[index] = uploadResult.url!;
-
-      await storage.updatePOH(pohId, { visionImages: newImages });
-
-      res.json({
-        success: true,
-        vision_images: newImages,
-        uploaded_index: index
-      });
-    } catch (error: any) {
-      console.error("Error uploading vision image:", error);
-      if (error.message === 'INVALID_IMAGE') {
-        return res.status(400).json({
-          error: "INVALID_IMAGE",
-          message: "Only JPEG, PNG, and WebP images are allowed"
-        });
-      }
-      res.status(500).json({ error: "Failed to upload vision image" });
-    }
-  });
+    },
+  );
 
   // ===== PUSH NOTIFICATIONS =====
 
@@ -5514,50 +5854,102 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // Register device token for push notifications
-  app.post("/api/v1/notifications/register-device", authenticateJWT, async (req, res) => {
-    try {
-      const userId = (req as any).user.sub;
+  app.post(
+    "/api/v1/notifications/register-device",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        const userId = (req as any).user.sub;
 
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+        if (!userId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
 
-      const { token, platform } = req.body;
+        const { token } = req.body;
 
-      if (!token || typeof token !== "string") {
-        return res.status(400).json({ error: "Token is required" });
-      }
+        if (!token || typeof token !== "string") {
+          return res.status(400).json({ error: "Token is required" });
+        }
 
-      const normalizedPlatform =
-        typeof platform === "string" && platform.trim().length > 0
-          ? platform.trim().slice(0, 10)
-          : "native";
+        // Check if this exact token already exists
+        const existingToken = await db
+          .select()
+          .from(deviceTokens)
+          .where(eq(deviceTokens.token, token))
+          .limit(1);
 
-      // Use upsert to insert or update token
-      await db.insert(deviceTokens)
-        .values({
+        if (existingToken.length > 0) {
+          // Token already exists - update user_id if different
+          if (existingToken[0].userId !== userId) {
+            await db
+              .update(deviceTokens)
+              .set({ userId })
+              .where(eq(deviceTokens.token, token));
+          }
+          return res.json({
+            success: true,
+            message: "Token already registered",
+          });
+        }
+
+        // UPSERT: Delete any old tokens for this user first, then insert new one
+        // This ensures only the latest token is stored per user (tokens change on browser refresh)
+        await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
+
+        // Insert new token
+        await db.insert(deviceTokens).values({
           userId,
           token,
-          platform: normalizedPlatform,
-        })
-        .onConflictDoUpdate({
-          target: deviceTokens.token,
-          set: {
-            userId,
-            platform: normalizedPlatform,
-            createdAt: new Date(),
-          },
+          platform: "web",
         });
 
-      res.json({ success: true, message: "Device registered successfully" });
-    } catch (error: any) {
-      console.error("Error registering device token:", error);
-      res.status(500).json({ error: "Failed to register device" });
-    }
-  });
+        res.json({ success: true, message: "Device registered successfully" });
+      } catch (error: any) {
+        console.error("Error registering device token:", error);
+        res.status(500).json({ error: "Failed to register device" });
+      }
+    },
+  );
 
   // Unregister device token (called on logout or manual opt-out)
-  app.delete("/api/v1/notifications/unregister-device", authenticateJWT, async (req, res) => {
+  app.delete(
+    "/api/v1/notifications/unregister-device",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        const userId = (req as any).user.sub;
+
+        if (!userId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const { token } = req.body;
+
+        if (token) {
+          // Remove specific token
+          await db
+            .delete(deviceTokens)
+            .where(
+              and(
+                eq(deviceTokens.userId, userId),
+                eq(deviceTokens.token, token),
+              ),
+            );
+        } else {
+          // Remove all tokens for this user (used on logout)
+          await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
+        }
+
+        res.json({ success: true, message: "Device unregistered" });
+      } catch (error: any) {
+        console.error("Error unregistering device token:", error);
+        res.status(500).json({ error: "Failed to unregister device" });
+      }
+    },
+  );
+
+  // Get notification status for current user (DB source of truth)
+  app.get("/api/v1/notifications/status", authenticateJWT, async (req, res) => {
     try {
       const userId = (req as any).user.sub;
 
@@ -5565,21 +5957,16 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const { token } = req.body;
+      const tokens = await db
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.userId, userId))
+        .limit(1);
 
-      if (token) {
-        // Remove specific token
-        await db.delete(deviceTokens)
-          .where(and(eq(deviceTokens.userId, userId), eq(deviceTokens.token, token)));
-      } else {
-        // Remove all tokens for this user (used on logout)
-        await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
-      }
-
-      res.json({ success: true, message: "Device unregistered" });
+      res.json({ enabled: tokens.length > 0 });
     } catch (error: any) {
-      console.error("Error unregistering device token:", error);
-      res.status(500).json({ error: "Failed to unregister device" });
+      console.error("Error getting notification status:", error);
+      res.status(500).json({ error: "Failed to get notification status" });
     }
   });
 
@@ -5587,7 +5974,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.get("/admin/api/notifications/stats", requireAdmin, async (req, res) => {
     try {
       const allTokens = await db.select().from(deviceTokens);
-      const uniqueUserIds = new Set(allTokens.map(t => t.userId));
+      const uniqueUserIds = new Set(allTokens.map((t) => t.userId));
 
       res.json({
         totalDevices: allTokens.length,
@@ -5596,44 +5983,6 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     } catch (error: any) {
       console.error("Error getting notification stats:", error);
       res.status(500).json({ error: "Failed to get stats" });
-    }
-  });
-
-
-  // Get unread notification count
-  app.get("/api/v1/notifications/unread-count", authenticateJWT, async (req, res) => {
-    try {
-      const userId = (req as any).user.sub;
-      const count = await storage.getUnreadNotificationCount(userId);
-      res.json({ count });
-    } catch (error) {
-      console.error("Error fetching unread notification count:", error);
-      res.status(500).json({ error: "Failed to fetch unread count" });
-    }
-  });
-
-  // Mark notification as read
-  app.patch("/api/v1/notifications/:notificationId/read", authenticateJWT, async (req, res) => {
-    try {
-      const notificationId = parseInt(req.params.notificationId);
-      const userId = (req as any).user.sub;
-      await storage.markNotificationAsRead(userId, notificationId);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      res.status(500).json({ error: "Failed to mark notification as read" });
-    }
-  });
-
-  // Mark all notifications as read
-  app.post("/api/v1/notifications/read-all", authenticateJWT, async (req, res) => {
-    try {
-      const userId = (req as any).user.sub;
-      await storage.markAllNotificationsAsRead(userId);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      res.status(500).json({ error: "Failed to mark all notifications as read" });
     }
   });
 
@@ -5647,7 +5996,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       // Fetch all device tokens with userId
-      const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId })
+      const allTokens = await db
+        .select({ token: deviceTokens.token, userId: deviceTokens.userId })
         .from(deviceTokens);
 
       if (allTokens.length === 0) {
@@ -5655,12 +6005,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           success: true,
           message: "No devices registered",
           successCount: 0,
-          failureCount: 0
+          failureCount: 0,
         });
       }
 
       // Create a notification record for in-app display
-      const [notification] = await db.insert(notifications)
+      const [notification] = await db
+        .insert(notifications)
         .values({
           title,
           body,
@@ -5672,12 +6023,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         })
         .returning();
 
-      const tokens = allTokens.map(t => t.token);
+      const tokens = allTokens.map((t) => t.token);
       const result = await sendPushNotification(tokens, title, body);
 
       // Create notification logs for each device token that received the push
       if (allTokens.length > 0 && notification) {
-        const notificationLogRecords = allTokens.map(t => ({
+        const notificationLogRecords = allTokens.map((t) => ({
           notificationId: notification.id,
           userId: t.userId,
           deviceToken: t.token,
@@ -5689,7 +6040,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Clean up failed tokens (invalid tokens)
       if (result.failedTokens.length > 0) {
         for (const failedToken of result.failedTokens) {
-          await db.delete(deviceTokens).where(eq(deviceTokens.token, failedToken));
+          await db
+            .delete(deviceTokens)
+            .where(eq(deviceTokens.token, failedToken));
         }
       }
 
@@ -5698,7 +6051,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         message: `Notification sent`,
         successCount: result.successCount,
         failureCount: result.failureCount,
-        tokensCleanedUp: result.failedTokens.length
+        tokensCleanedUp: result.failedTokens.length,
       });
     } catch (error: any) {
       console.error("Error sending test notification:", error);
@@ -5716,10 +6069,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Get current month in YYYY-MM format
       const now = new Date();
-      const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
       // Check if user has submitted a question this month
-      const hasSubmittedThisMonth = questions.some(q => q.monthYear === currentMonthYear);
+      const hasSubmittedThisMonth = questions.some(
+        (q) => q.monthYear === currentMonthYear,
+      );
 
       res.json({
         questions,
@@ -5754,7 +6109,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (question.audioR2Key) {
         console.log("DrM audio R2 key:", question.audioR2Key);
         const result = await getSignedGetUrl(question.audioR2Key);
-        console.log("DrM signed URL result:", result.success, result.url ? "URL generated" : "No URL", result.error || "");
+        console.log(
+          "DrM signed URL result:",
+          result.success,
+          result.url ? "URL generated" : "No URL",
+          result.error || "",
+        );
         if (result.success && result.url) {
           audioUrl = result.url;
         }
@@ -5777,12 +6137,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const { questionText } = req.body;
 
       // Validate question text
-      if (!questionText || typeof questionText !== 'string') {
+      if (!questionText || typeof questionText !== "string") {
         return res.status(400).json({ error: "Question text is required" });
       }
 
       if (questionText.length > 240) {
-        return res.status(400).json({ error: "Question exceeds 240 character limit" });
+        return res
+          .status(400)
+          .json({ error: "Question exceeds 240 character limit" });
       }
 
       if (questionText.trim().length === 0) {
@@ -5791,12 +6153,17 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Get current month in YYYY-MM format
       const now = new Date();
-      const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
       // Check if user already submitted this month
-      const existingQuestion = await storage.getDrmQuestionByUserMonth(userId, monthYear);
+      const existingQuestion = await storage.getDrmQuestionByUserMonth(
+        userId,
+        monthYear,
+      );
       if (existingQuestion) {
-        return res.status(409).json({ error: "You have already submitted a question this month" });
+        return res
+          .status(409)
+          .json({ error: "You have already submitted a question this month" });
       }
 
       // Create the question
@@ -5862,124 +6229,145 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // Admin: Upload audio answer for a question
-  app.post("/admin/api/drm/questions/:id/answer", requireAdmin, async (req, res) => {
-    try {
-      const questionId = parseInt(req.params.id);
-      const { mimeType } = req.body;
+  app.post(
+    "/admin/api/drm/questions/:id/answer",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const questionId = parseInt(req.params.id);
+        const { mimeType } = req.body;
 
-      const question = await storage.getDrmQuestionById(questionId);
-      if (!question) {
-        return res.status(404).json({ error: "Question not found" });
+        const question = await storage.getDrmQuestionById(questionId);
+        if (!question) {
+          return res.status(404).json({ error: "Question not found" });
+        }
+
+        // Determine file extension based on mime type
+        let extension = "webm";
+        const contentType = mimeType || "audio/webm";
+        if (contentType.includes("mp4") || contentType.includes("m4a")) {
+          extension = "mp4";
+        } else if (contentType.includes("ogg")) {
+          extension = "ogg";
+        }
+
+        // Generate upload URL for audio with correct content type
+        const audioKey = `drm-audio/questions/${questionId}/answer.${extension}`;
+        const result = await getSignedPutUrl(audioKey, contentType);
+
+        if (!result.success) {
+          return res
+            .status(500)
+            .json({ error: result.error || "Failed to generate upload URL" });
+        }
+
+        res.json({
+          uploadUrl: result.uploadUrl,
+          audioKey,
+        });
+      } catch (error) {
+        console.error("Error generating audio upload URL:", error);
+        res.status(500).json({ error: "Failed to generate upload URL" });
       }
-
-      // Determine file extension based on mime type
-      let extension = "webm";
-      const contentType = mimeType || "audio/webm";
-      if (contentType.includes("mp4") || contentType.includes("m4a")) {
-        extension = "mp4";
-      } else if (contentType.includes("ogg")) {
-        extension = "ogg";
-      }
-
-      // Generate upload URL for audio with correct content type
-      const audioKey = `drm-audio/questions/${questionId}/answer.${extension}`;
-      const result = await getSignedPutUrl(audioKey, contentType);
-
-      if (!result.success) {
-        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
-      }
-
-      res.json({
-        uploadUrl: result.uploadUrl,
-        audioKey,
-      });
-    } catch (error) {
-      console.error("Error generating audio upload URL:", error);
-      res.status(500).json({ error: "Failed to generate upload URL" });
-    }
-  });
+    },
+  );
 
   // Admin: Confirm audio answer uploaded and trigger notification
-  app.post("/admin/api/drm/questions/:id/confirm-answer", requireAdmin, async (req, res) => {
-    try {
-      const questionId = parseInt(req.params.id);
-      const { audioKey } = req.body;
+  app.post(
+    "/admin/api/drm/questions/:id/confirm-answer",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const questionId = parseInt(req.params.id);
+        const { audioKey } = req.body;
 
-      if (!audioKey) {
-        return res.status(400).json({ error: "Audio key is required" });
-      }
+        if (!audioKey) {
+          return res.status(400).json({ error: "Audio key is required" });
+        }
 
-      const question = await storage.getDrmQuestionById(questionId);
-      if (!question) {
-        return res.status(404).json({ error: "Question not found" });
-      }
+        const question = await storage.getDrmQuestionById(questionId);
+        if (!question) {
+          return res.status(404).json({ error: "Question not found" });
+        }
 
-      // Update question status
-      const updatedQuestion = await storage.updateDrmQuestionAnswer(questionId, audioKey);
-
-      if (!updatedQuestion) {
-        return res.status(500).json({ error: "Failed to update question" });
-      }
-
-      // Create notification for the user
-      const [notification] = await db.insert(notifications)
-        .values({
-          title: "Dr. M has answered your question 🎧",
-          body: "Your personal voice response is ready to listen.",
-          type: "drm_answer",
-          scheduledAt: new Date(),
-          sent: true,
-          requiredProgramCode: "",
-          requiredProgramLevel: 0,
-        })
-        .returning();
-
-      // Get user's device tokens and send push notification
-      const userTokens = await storage.getDeviceTokensByUserIds([question.userId]);
-
-      if (userTokens.length > 0) {
-        const tokens = userTokens.map(t => t.token);
-        const result = await sendPushNotification(
-          tokens,
-          "Dr. M has answered your question 🎧",
-          "Your personal voice response is ready to listen.",
-          { questionId: questionId.toString(), deepLink: `/dr-m/questions/${questionId}` }
+        // Update question status
+        const updatedQuestion = await storage.updateDrmQuestionAnswer(
+          questionId,
+          audioKey,
         );
 
-        // Create notification logs
-        const notificationLogRecords = userTokens.map(t => ({
-          notificationId: notification.id,
-          userId: t.userId,
-          deviceToken: t.token,
-          status: result.successCount > 0 ? "sent" : "failed",
-        }));
-        await db.insert(notificationLogs).values(notificationLogRecords);
-      } else {
-        // Still create notification log for in-app display
-        await db.insert(notificationLogs).values({
-          notificationId: notification.id,
-          userId: question.userId,
-          deviceToken: "in-app-only",
-          status: "sent",
+        if (!updatedQuestion) {
+          return res.status(500).json({ error: "Failed to update question" });
+        }
+
+        // Create notification for the user
+        const [notification] = await db
+          .insert(notifications)
+          .values({
+            title: "Dr. M has answered your question 🎧",
+            body: "Your personal voice response is ready to listen.",
+            type: "drm_answer",
+            scheduledAt: new Date(),
+            sent: true,
+            requiredProgramCode: "",
+            requiredProgramLevel: 0,
+          })
+          .returning();
+
+        // Get user's device tokens and send push notification
+        const userTokens = await storage.getDeviceTokensByUserIds([
+          question.userId,
+        ]);
+
+        if (userTokens.length > 0) {
+          const tokens = userTokens.map((t) => t.token);
+          const result = await sendPushNotification(
+            tokens,
+            "Dr. M has answered your question 🎧",
+            "Your personal voice response is ready to listen.",
+            {
+              questionId: questionId.toString(),
+              deepLink: `/dr-m/questions/${questionId}`,
+            },
+          );
+
+          // Create notification logs
+          const notificationLogRecords = userTokens.map((t) => ({
+            notificationId: notification.id,
+            userId: t.userId,
+            deviceToken: t.token,
+            status: result.successCount > 0 ? "sent" : "failed",
+          }));
+          await db.insert(notificationLogs).values(notificationLogRecords);
+        } else {
+          // Still create notification log for in-app display
+          await db.insert(notificationLogs).values({
+            notificationId: notification.id,
+            userId: question.userId,
+            deviceToken: "in-app-only",
+            status: "sent",
+          });
+        }
+
+        console.log(
+          `DrM answer submitted for question ${questionId}, notification sent to user ${question.userId}`,
+        );
+
+        // Generate signed URL for admin verification
+        const audioUrl = await getSignedGetUrl(audioKey);
+
+        res.json({
+          success: true,
+          message: "Answer submitted and user notified",
+          question: updatedQuestion,
+          audioUrl,
         });
+      } catch (error) {
+        console.error("Error confirming DrM answer:", error);
+        res.status(500).json({ error: "Failed to confirm answer" });
       }
-
-      console.log(`DrM answer submitted for question ${questionId}, notification sent to user ${question.userId}`);
-
-      // Generate signed URL for admin verification
-      const audioUrl = await getSignedGetUrl(audioKey);
-
-      res.json({
-        success: true,
-        message: "Answer submitted and user notified",
-        question: updatedQuestion,
-        audioUrl,
-      });
-    } catch (error) {
-      console.error("Error confirming DrM answer:", error);
-      res.status(500).json({ error: "Failed to confirm answer" });
-    }
-  });
+    },
+  );
 
   // ===== ADMIN PROJECT OF HEART ROUTES =====
   // Observational only - aggregate data, no individual user data
@@ -5992,23 +6380,28 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const totalUsers = Number(totalUsersResult[0]?.count) || 0;
 
       // Users with any POH (distinct user_id)
-      const usersWithPohResult = await db.select({
-        count: countDistinct(projectOfHearts.userId)
-      }).from(projectOfHearts);
+      const usersWithPohResult = await db
+        .select({
+          count: countDistinct(projectOfHearts.userId),
+        })
+        .from(projectOfHearts);
       const usersWithPoh = Number(usersWithPohResult[0]?.count) || 0;
 
       // Count by status
-      const activeResult = await db.select({ count: count() })
+      const activeResult = await db
+        .select({ count: count() })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "active"));
       const active = Number(activeResult[0]?.count) || 0;
 
-      const nextResult = await db.select({ count: count() })
+      const nextResult = await db
+        .select({ count: count() })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "next"));
       const next = Number(nextResult[0]?.count) || 0;
 
-      const northStarResult = await db.select({ count: count() })
+      const northStarResult = await db
+        .select({ count: count() })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "horizon"));
       const northStar = Number(northStarResult[0]?.count) || 0;
@@ -6018,7 +6411,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         users_with_poh: usersWithPoh,
         active,
         next,
-        north_star: northStar
+        north_star: northStar,
       });
     } catch (error: any) {
       console.error("Error fetching POH usage:", error);
@@ -6029,52 +6422,56 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   // 2. Daily Check-ins - Are users reflecting daily?
   app.get("/admin/api/poh/daily-checkins", requireAdmin, async (req, res) => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
 
       // Today's check-ins
-      const todayResult = await db.select({
-        count: countDistinct(pohDailyRatings.userId)
-      })
+      const todayResult = await db
+        .select({
+          count: countDistinct(pohDailyRatings.userId),
+        })
         .from(pohDailyRatings)
         .where(eq(pohDailyRatings.localDate, today));
       const todayCheckedIn = Number(todayResult[0]?.count) || 0;
 
       // Active users count (for percentage)
-      const activeUsersResult = await db.select({
-        count: countDistinct(projectOfHearts.userId)
-      })
+      const activeUsersResult = await db
+        .select({
+          count: countDistinct(projectOfHearts.userId),
+        })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "active"));
       const activeUsers = Number(activeUsersResult[0]?.count) || 0;
 
-      const percentOfActive = activeUsers > 0
-        ? Math.round((todayCheckedIn / activeUsers) * 100)
-        : 0;
+      const percentOfActive =
+        activeUsers > 0 ? Math.round((todayCheckedIn / activeUsers) * 100) : 0;
 
       // Last 30 days check-ins
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
-      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
 
-      const last30DaysResult = await db.select({
-        date: pohDailyRatings.localDate,
-        count: countDistinct(pohDailyRatings.userId)
-      })
+      const last30DaysResult = await db
+        .select({
+          date: pohDailyRatings.localDate,
+          count: countDistinct(pohDailyRatings.userId),
+        })
         .from(pohDailyRatings)
         .where(gte(pohDailyRatings.localDate, thirtyDaysAgoStr))
         .groupBy(pohDailyRatings.localDate)
         .orderBy(asc(pohDailyRatings.localDate));
 
       // Fill in missing dates with 0
-      const dateMap = new Map(last30DaysResult.map(r => [r.date, Number(r.count)]));
+      const dateMap = new Map(
+        last30DaysResult.map((r) => [r.date, Number(r.count)]),
+      );
       const last30Days = [];
       for (let i = 29; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = d.toISOString().split("T")[0];
         last30Days.push({
           date: dateStr,
-          users_checked_in: dateMap.get(dateStr) || 0
+          users_checked_in: dateMap.get(dateStr) || 0,
         });
       }
 
@@ -6082,9 +6479,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         today: {
           date: today,
           users_checked_in: todayCheckedIn,
-          percent_of_active_users: percentOfActive
+          percent_of_active_users: percentOfActive,
         },
-        last_30_days: last30Days
+        last_30_days: last30Days,
       });
     } catch (error: any) {
       console.error("Error fetching daily check-ins:", error);
@@ -6099,21 +6496,25 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const thirtyDaysAgo = new Date(today);
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
 
       // Completed POH count
-      const completedPohResult = await db.select({ count: count() })
+      const completedPohResult = await db
+        .select({ count: count() })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "completed"));
       const completedPoh = Number(completedPohResult[0]?.count) || 0;
 
       // Milestones achieved in last 30 days
-      const achieved30Result = await db.select({ count: count() })
+      const achieved30Result = await db
+        .select({ count: count() })
         .from(pohMilestones)
-        .where(and(
-          eq(pohMilestones.achieved, true),
-          gte(pohMilestones.achievedAt, thirtyDaysAgoStr)
-        ));
+        .where(
+          and(
+            eq(pohMilestones.achieved, true),
+            gte(pohMilestones.achievedAt, thirtyDaysAgoStr),
+          ),
+        );
       const milestonesAchieved30 = Number(achieved30Result[0]?.count) || 0;
 
       // Average days to first milestone
@@ -6129,12 +6530,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           GROUP BY p.id
         ) sub
       `);
-      const avgDaysToFirst = Math.round((firstMilestonesResult.rows[0] as any)?.avg_days || 0);
+      const avgDaysToFirst = Math.round(
+        (firstMilestonesResult.rows[0] as any)?.avg_days || 0,
+      );
 
       res.json({
         completed_poh: Number(completedPoh),
         milestones_achieved_30_days: Number(milestonesAchieved30),
-        avg_days_to_first_milestone: Number(avgDaysToFirst) || 0
+        avg_days_to_first_milestone: Number(avgDaysToFirst) || 0,
       });
     } catch (error: any) {
       console.error("Error fetching progress signals:", error);
@@ -6146,7 +6549,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.get("/admin/api/poh/drop-offs", requireAdmin, async (req, res) => {
     try {
       // Closed early count
-      const closedEarlyResult = await db.select({ count: count() })
+      const closedEarlyResult = await db
+        .select({ count: count() })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "closed_early"));
       const closedEarly = Number(closedEarlyResult[0]?.count) || 0;
@@ -6158,7 +6562,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         LEFT JOIN poh_milestones m ON m.poh_id = p.id AND m.achieved = true
         WHERE p.status = 'active' AND m.id IS NULL
       `);
-      const activeNoMilestones = parseInt((activeNoMilestonesResult.rows[0] as any)?.count || '0');
+      const activeNoMilestones = parseInt(
+        (activeNoMilestonesResult.rows[0] as any)?.count || "0",
+      );
 
       // Average active duration (for closed_early and completed)
       const avgDurationResult = await db.execute(sql`
@@ -6167,12 +6573,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         WHERE ended_at IS NOT NULL AND started_at IS NOT NULL
           AND status IN ('completed', 'closed_early')
       `);
-      const avgDuration = Math.round((avgDurationResult.rows[0] as any)?.avg_days || 0);
+      const avgDuration = Math.round(
+        (avgDurationResult.rows[0] as any)?.avg_days || 0,
+      );
 
       res.json({
         closed_early: Number(closedEarly),
         active_with_no_milestones: Number(activeNoMilestones),
-        avg_active_duration_days: Number(avgDuration) || 0
+        avg_active_duration_days: Number(avgDuration) || 0,
       });
     } catch (error: any) {
       console.error("Error fetching drop-offs:", error);
@@ -6184,10 +6592,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.get("/admin/api/poh/life-areas", requireAdmin, async (req, res) => {
     try {
       // Count by category (prefer active, but include all)
-      const categoryResult = await db.select({
-        category: projectOfHearts.category,
-        count: count()
-      })
+      const categoryResult = await db
+        .select({
+          category: projectOfHearts.category,
+          count: count(),
+        })
         .from(projectOfHearts)
         .where(eq(projectOfHearts.status, "active"))
         .groupBy(projectOfHearts.category);
@@ -6197,10 +6606,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         career: 0,
         health: 0,
         relationships: 0,
-        wealth: 0
+        wealth: 0,
       };
 
-      categoryResult.forEach(r => {
+      categoryResult.forEach((r) => {
         if (r.category in categories) {
           categories[r.category] = Number(r.count) || 0;
         }
