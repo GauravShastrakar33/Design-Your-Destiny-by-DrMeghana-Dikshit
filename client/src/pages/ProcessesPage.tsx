@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { Header } from "@/components/Header";
 import {
   ArrowLeft,
@@ -61,8 +61,9 @@ function LessonItem({
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className={`px-5 py-3.5 flex items-center gap-4 cursor-pointer transition-all hover:bg-brand/5 group/lesson border-b border-gray-100 ${isLast ? "border-b-0" : ""
-        } last:border-b-0`}
+      className={`px-5 py-3.5 flex items-center gap-4 cursor-pointer transition-all hover:bg-brand/5 group/lesson border-b border-gray-100 ${
+        isLast ? "border-b-0" : ""
+      } last:border-b-0`}
       onClick={() => onClick(lesson.id, moduleId)}
       data-testid={`lesson-item-${lesson.id}`}
     >
@@ -113,8 +114,9 @@ function FolderAccordion({
             </div>
 
             <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isOpen ? "bg-amber-500 text-white" : "text-gray-300"
-                }`}
+              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+                isOpen ? "bg-amber-500 text-white" : "text-gray-300"
+              }`}
             >
               {isOpen ? (
                 <ChevronDown className="w-4 h-4" />
@@ -157,11 +159,13 @@ function ModuleAccordion({
   index,
   isOpen,
   onToggle,
+  featureType,
 }: {
   module: CmsModule;
   index: number;
   isOpen: boolean;
   onToggle: () => void;
+  featureType: string;
 }) {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth(); // Imported from AuthContext
@@ -169,7 +173,10 @@ function ModuleAccordion({
   const { data, isLoading } = useQuery<ModuleLessonsResponse>({
     queryKey: ["/api/public/v1/modules", module.id],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/public/v1/modules/${module.id}`);
+      const response = await apiRequest(
+        "GET",
+        `/api/public/v1/modules/${module.id}`
+      );
       return response.json();
     },
     enabled: isOpen && isAuthenticated,
@@ -183,7 +190,9 @@ function ModuleAccordion({
     allLessons.filter((l) => l.folderId === folderId);
 
   const handleLessonClick = (lessonId: number, moduleId: number) => {
-    setLocation(`/processes/lesson/${lessonId}?moduleId=${moduleId}`);
+    setLocation(
+      `/processes/lesson/${lessonId}?moduleId=${moduleId}&feature=${featureType}`
+    );
   };
 
   const hasContent = folders.length > 0 || rootLessons.length > 0;
@@ -196,10 +205,11 @@ function ModuleAccordion({
     >
       <Collapsible open={isOpen} onOpenChange={onToggle}>
         <Card
-          className={`overflow-hidden transition-all duration-300 border-0 shadow-lg shadow-black/[0.03] rounded-2xl group/module mb-3 ${isOpen
-            ? "ring-2 ring-brand/10 bg-white"
-            : "hover:shadow-xl hover:shadow-black/[0.04] bg-white"
-            }`}
+          className={`overflow-hidden transition-all duration-300 border-0 shadow-lg shadow-black/[0.03] rounded-2xl group/module mb-3 ${
+            isOpen
+              ? "ring-2 ring-brand/10 bg-white"
+              : "hover:shadow-xl hover:shadow-black/[0.04] bg-white"
+          }`}
           data-testid={`card-module-${module.id}`}
         >
           <CollapsibleTrigger asChild>
@@ -210,10 +220,11 @@ function ModuleAccordion({
 
               <div className="flex-1 min-w-0">
                 <h3
-                  className={`text-base font-bold transition-colors truncate ${isOpen
-                    ? "text-brand"
-                    : "text-gray-900 group-hover/module:text-brand"
-                    }`}
+                  className={`text-base font-bold transition-colors truncate ${
+                    isOpen
+                      ? "text-brand"
+                      : "text-gray-900 group-hover/module:text-brand"
+                  }`}
                   title={module.title}
                 >
                   {module.title}
@@ -221,10 +232,11 @@ function ModuleAccordion({
               </div>
 
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isOpen
-                  ? "bg-brand text-white"
-                  : "bg-gray-50 text-muted-foreground group-hover/module:bg-brand/5 group-hover/module:text-brand"
-                  }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                  isOpen
+                    ? "bg-brand text-white"
+                    : "bg-gray-50 text-muted-foreground group-hover/module:bg-brand/5 group-hover/module:text-brand"
+                }`}
               >
                 {isOpen ? (
                   <ChevronDown className="w-4 h-4" />
@@ -306,11 +318,13 @@ function ModulesList({
   isLoading,
   error,
   featureLabel,
+  featureType,
 }: {
   modules: CmsModule[];
   isLoading: boolean;
   error: Error | null;
   featureLabel: string;
+  featureType: string;
 }) {
   const [openModuleId, setOpenModuleId] = useState<number | null>(null);
 
@@ -361,6 +375,7 @@ function ModulesList({
           onToggle={() =>
             setOpenModuleId(openModuleId === module.id ? null : module.id)
           }
+          featureType={featureType}
         />
       ))}
     </div>
@@ -369,8 +384,20 @@ function ModulesList({
 
 export default function ProcessesPage() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState("DYD");
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const tabFromUrl = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(
+    tabFromUrl === "USM" ? "USM" : "DYD"
+  );
   const { isAuthenticated } = useAuth();
+
+  // Update active tab when URL changes
+  useEffect(() => {
+    if (tabFromUrl === "USM" || tabFromUrl === "DYD") {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   const {
     data: dydData,
@@ -479,6 +506,7 @@ export default function ProcessesPage() {
                     isLoading={dydLoading}
                     error={dydError as Error | null}
                     featureLabel="DYD"
+                    featureType="DYD"
                   />
                 </TabsContent>
 
@@ -491,6 +519,7 @@ export default function ProcessesPage() {
                     isLoading={usmLoading}
                     error={usmError as Error | null}
                     featureLabel="USM"
+                    featureType="USM"
                   />
                 </TabsContent>
               </motion.div>

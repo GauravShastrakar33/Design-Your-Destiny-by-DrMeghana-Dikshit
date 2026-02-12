@@ -97,7 +97,7 @@ export default function AdminNotificationsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Stats Card 1 */}
-          <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative">
+          <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative col-span-2">
             <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -129,7 +129,7 @@ export default function AdminNotificationsPage() {
           </Card>
 
           {/* Stats Card 2 */}
-          <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative">
+          <Card className="hidden p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative">
             <div className="absolute top-0 left-0 w-1 h-full bg-secondary" />
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">

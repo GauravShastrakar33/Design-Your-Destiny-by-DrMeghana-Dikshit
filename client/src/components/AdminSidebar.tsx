@@ -161,14 +161,51 @@ export default function AdminSidebar({
         effectivelyCollapsed ? "w-20" : "w-60"
       )}
     >
+      {/* Custom Scrollbar Styles - Scoped to this sidebar only */}
+      <style>
+        {`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+          
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+          }
+          
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            transition: background 0.2s ease;
+          }
+          
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+          }
+          
+          /* Firefox */
+          .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+          }
+        `}
+      </style>
+
       <div
         className={cn(
-          "p-4 mb-2 flex items-center justify-between",
+          "p-2 mb-2 flex items-center justify-between",
           effectivelyCollapsed && "justify-center p-2 mb-4"
         )}
       >
-        <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-10 h-10 shrink-0 rounded-lg bg-white shadow-[0_8px_16px_rgba(0,0,0,0.1)] flex items-center justify-center duration-500 cursor-default">
+        <div
+          className="flex items-center gap-2.5 overflow-hidden cursor-pointer transition-colors"
+          onClick={() => {
+            setLocation("/admin");
+            setSelectedMenuId("dashboard");
+            onMobileClose?.();
+          }}
+        >
+          <div className="w-10 h-10 shrink-0 rounded-md bg-white shadow-[0_8px_16px_rgba(0,0,0,0.1)] flex items-center justify-center duration-500 cursor-default">
             <span className="text-brand font-black text-xs">Dr.M</span>
           </div>
           {!effectivelyCollapsed && (

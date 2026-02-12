@@ -33,6 +33,7 @@ import {
   Users,
   Banknote,
   Quote,
+  Eye,
 } from "lucide-react";
 import {
   Dialog,
@@ -291,6 +292,13 @@ export default function ProjectOfHeartPage() {
   const pendingVisionIndex = useRef<number | null>(null);
   const visionScrollRef = useRef<HTMLDivElement>(null);
 
+  // Image preview state
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(
+    null
+  );
+
   const scrollVision = (direction: "left" | "right") => {
     if (visionScrollRef.current) {
       const scrollAmount = 200;
@@ -326,8 +334,6 @@ export default function ProjectOfHeartPage() {
   );
   const [editMilestoneText, setEditMilestoneText] = useState("");
   const [savingMilestone, setSavingMilestone] = useState(false);
-
-
 
   const fetchPOHData = async () => {
     try {
@@ -399,11 +405,9 @@ export default function ProjectOfHeartPage() {
     setCreatingMilestones(true);
     try {
       for (const text of validMilestones) {
-        await apiRequest(
-          "POST",
-          `/api/poh/${pohState.active.id}/milestones`,
-          { text: text.trim() }
-        );
+        await apiRequest("POST", `/api/poh/${pohState.active.id}/milestones`, {
+          text: text.trim(),
+        });
       }
       setShowMilestoneModal(false);
       setNewMilestones([""]);
@@ -591,6 +595,17 @@ export default function ProjectOfHeartPage() {
   const handleVisionSlotClick = (index: number) => {
     if (uploadingVisionIndex !== null || !pohState.active) return;
 
+    const hasImage = pohState.active?.vision_images?.[index];
+
+    // If image exists, open preview
+    if (hasImage) {
+      setPreviewImageUrl(hasImage);
+      setPreviewImageIndex(index);
+      setShowImagePreview(true);
+      return;
+    }
+
+    // If no image, proceed with upload
     // ✅ Native Android / iOS → use Capacitor gallery
     if (Capacitor.isNativePlatform()) {
       pickVisionImageNative(index);
@@ -600,6 +615,25 @@ export default function ProjectOfHeartPage() {
     // 🌐 Web fallback
     pendingVisionIndex.current = index;
     visionInputRef.current?.click();
+  };
+
+  const handleReplaceImage = () => {
+    if (previewImageIndex === null) return;
+
+    // Close preview modal
+    setShowImagePreview(false);
+
+    // Trigger image upload for the same index
+    if (Capacitor.isNativePlatform()) {
+      pickVisionImageNative(previewImageIndex);
+    } else {
+      pendingVisionIndex.current = previewImageIndex;
+      visionInputRef.current?.click();
+    }
+
+    // Reset preview state
+    setPreviewImageUrl(null);
+    setPreviewImageIndex(null);
   };
 
   const handleVisionFileChange = async (
@@ -684,8 +718,8 @@ export default function ProjectOfHeartPage() {
       target === "active"
         ? pohState.active
         : target === "next"
-          ? pohState.next
-          : pohState.horizon;
+        ? pohState.next
+        : pohState.horizon;
     if (!poh) return;
 
     setRealignTarget(target);
@@ -702,8 +736,8 @@ export default function ProjectOfHeartPage() {
       realignTarget === "active"
         ? pohState.active
         : realignTarget === "next"
-          ? pohState.next
-          : pohState.horizon;
+        ? pohState.next
+        : pohState.horizon;
     if (!poh) return;
 
     setSavingRealign(true);
@@ -992,10 +1026,11 @@ export default function ProjectOfHeartPage() {
                       onClick={() =>
                         setNewPOH((p) => ({ ...p, category: cat }))
                       }
-                      className={`w-full p-4 rounded-lg text-left border transition-all ${newPOH.category === cat
-                        ? "border-purple-500 bg-purple-50"
-                        : "border-gray-200 bg-white hover:border-gray-300"
-                        }`}
+                      className={`w-full p-4 rounded-lg text-left border transition-all ${
+                        newPOH.category === cat
+                          ? "border-purple-500 bg-purple-50"
+                          : "border-gray-200 bg-white hover:border-gray-300"
+                      }`}
                       data-testid={`button-category-${cat}`}
                     >
                       <span className="font-medium capitalize">{cat}</span>
@@ -1148,10 +1183,11 @@ export default function ProjectOfHeartPage() {
             transition={{ duration: 0.4, delay: 0.1 }}
           >
             <div
-              className={`relative overflow-hidden group transition-all duration-500 rounded-2xl bg-white p-6 shadow-sm ${pohState.active.category === "wealth"
-                ? "ring-1 ring-amber-100 shadow-amber-50/50 shadow-lg"
-                : ""
-                }`}
+              className={`relative overflow-hidden group transition-all duration-500 rounded-2xl bg-white p-6 shadow-sm ${
+                pohState.active.category === "wealth"
+                  ? "ring-1 ring-amber-100 shadow-amber-50/50 shadow-lg"
+                  : ""
+              }`}
             >
               {/* Header Row - Category Left, Status Right */}
               <div className="flex items-center justify-between mb-5">
@@ -1200,28 +1236,31 @@ export default function ProjectOfHeartPage() {
               {/* Why */}
               {pohState.active.why && (
                 <div
-                  className={`mb-6 p-4 rounded-xl border transition-all duration-300 ${(
-                    CATEGORY_CONFIG[pohState.active.category as Category] ||
-                    CATEGORY_CONFIG.other
-                  ).theme.whyBg
-                    } ${(
+                  className={`mb-6 p-4 rounded-xl border transition-all duration-300 ${
+                    (
+                      CATEGORY_CONFIG[pohState.active.category as Category] ||
+                      CATEGORY_CONFIG.other
+                    ).theme.whyBg
+                  } ${
+                    (
                       CATEGORY_CONFIG[pohState.active.category as Category] ||
                       CATEGORY_CONFIG.other
                     ).theme.whyBorder
-                    }`}
+                  }`}
                 >
                   <p
-                    className={`text-xs font-semibold mb-2 uppercase tracking-wide flex items-start gap-1.5 ${(
-                      CATEGORY_CONFIG[pohState.active.category as Category] ||
-                      CATEGORY_CONFIG.other
-                    ).theme.whyText
-                      }`}
+                    className={`text-xs font-semibold mb-2 uppercase tracking-wide flex items-start gap-1.5 ${
+                      (
+                        CATEGORY_CONFIG[pohState.active.category as Category] ||
+                        CATEGORY_CONFIG.other
+                      ).theme.whyText
+                    }`}
                   >
                     <span>
                       {
                         (
                           CATEGORY_CONFIG[
-                          pohState.active.category as Category
+                            pohState.active.category as Category
                           ] || CATEGORY_CONFIG.other
                         ).theme.whyIcon
                       }
@@ -1252,22 +1291,8 @@ export default function ProjectOfHeartPage() {
                   </span>
                 </div>
 
-                <div className="relative group/carousel">
-                  <style>
-                    {`
-                      .vision-carousel-scroll::-webkit-scrollbar {
-                        display: none;
-                      }
-                      .vision-carousel-scroll {
-                        -ms-overflow-style: none;
-                        scrollbar-width: none;
-                      }
-                    `}
-                  </style>
-                  <div
-                    ref={visionScrollRef}
-                    className="flex gap-4 overflow-x-auto pb-4 vision-carousel-scroll snap-x relative z-10 scroll-smooth"
-                  >
+                <div className="relative">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 pb-4">
                     {[0, 1, 2].map((index) => {
                       const hasImage = pohState.active?.vision_images?.[index];
                       const isUploading = uploadingVisionIndex === index;
@@ -1275,15 +1300,16 @@ export default function ProjectOfHeartPage() {
                       return (
                         <motion.div
                           key={index}
-                          className="relative flex-shrink-0 w-40 sm:w-44 aspect-square snap-start group/image"
+                          className="relative w-full aspect-square group/image"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
                           <div
-                            className={`w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${hasImage
-                              ? "shadow-md hover:shadow-lg border border-black/5"
-                              : "border-2 border-dashed hover:border-brand hover:bg-brand/5"
-                              }`}
+                            className={`w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                              hasImage
+                                ? "shadow-md hover:shadow-lg border border-black/5"
+                                : "border-2 border-dashed hover:border-brand hover:bg-brand/5"
+                            }`}
                             onClick={() => handleVisionSlotClick(index)}
                             data-testid={`button-vision-image-${index}`}
                             style={{
@@ -1307,21 +1333,21 @@ export default function ProjectOfHeartPage() {
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover/image:scale-110"
                                 />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center backdrop-blur-[2px]">
-                                  <ImageIcon className="w-5 h-5 text-white mb-1" />
+                                  <Eye className="w-5 h-5 text-white mb-1" />
                                   <span className="text-white text-[10px] font-medium">
-                                    Change
+                                    View
                                   </span>
                                 </div>
                               </>
                             ) : (
-                              <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
-                                <div className="w-10 h-10 rounded-full bg-brand/5 flex items-center justify-center group-hover/image:bg-brand/10 transition-colors">
+                              <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-1 text-center">
+                                <div className="w-8 h-8 rounded-full bg-brand/5 flex items-center justify-center group-hover/image:bg-brand/10 transition-colors">
                                   <Plus
-                                    className="w-5 h-5 text-brand/40 group-hover/image:text-brand"
+                                    className="w-4 h-4 text-brand/40 group-hover/image:text-brand"
                                     strokeWidth={2.5}
                                   />
                                 </div>
-                                <p className="text-[11px] font-semibold text-gray-500 group-hover/image:text-brand transition-colors">
+                                <p className="text-[10px] font-semibold text-gray-500 group-hover/image:text-brand transition-colors hidden sm:block">
                                   Add Vision
                                 </p>
                               </div>
@@ -1331,26 +1357,10 @@ export default function ProjectOfHeartPage() {
                       );
                     })}
                   </div>
-
-                  {/* Carousel Controls */}
-                  <button
-                    onClick={() => scrollVision("left")}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/90 shadow-md rounded-full flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity -ml-4 border border-gray-100 hover:bg-white"
-                    aria-label="Previous vision"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <button
-                    onClick={() => scrollVision("right")}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/90 shadow-md rounded-full flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity -mr-4 border border-gray-100 hover:bg-white"
-                    aria-label="Next vision"
-                  >
-                    <ChevronRight className="w-5 h-5 text-gray-600" />
-                  </button>
                 </div>
 
                 <p className="text-xs text-gray-500 mt-4 text-center italic">
-                  Add images that represent your vision and inspire you daily
+                  Images that represent your vision and inspire you daily
                 </p>
 
                 <input
@@ -1381,7 +1391,7 @@ export default function ProjectOfHeartPage() {
                 </div>
 
                 {!pohState.active.milestones ||
-                  pohState.active.milestones.length === 0 ? (
+                pohState.active.milestones.length === 0 ? (
                   <Button
                     variant="outline"
                     onClick={() => setShowMilestoneModal(true)}
@@ -1396,32 +1406,35 @@ export default function ProjectOfHeartPage() {
                     {pohState?.active?.milestones?.map((milestone) => (
                       <motion.div
                         key={milestone.id}
-                        className={`group relative flex items-start gap-3 p-2 rounded-xl transition-all duration-300 ${milestone.achieved
-                          ? `${(
-                            CATEGORY_CONFIG[
-                            pohState?.active?.category as Category
-                            ] || CATEGORY_CONFIG.other
-                          ).theme.milestoneBg
-                          } border ${(
-                            CATEGORY_CONFIG[
-                            pohState?.active?.category as Category
-                            ] || CATEGORY_CONFIG.other
-                          ).theme.milestoneBorder
-                          }`
-                          : "bg-gray-50/50 hover:bg-gray-100/80 cursor-pointer border border-transparent"
-                          }`}
+                        className={`group relative flex items-start gap-3 p-2 rounded-xl transition-all duration-300 ${
+                          milestone.achieved
+                            ? `${
+                                (
+                                  CATEGORY_CONFIG[
+                                    pohState?.active?.category as Category
+                                  ] || CATEGORY_CONFIG.other
+                                ).theme.milestoneBg
+                              } border ${
+                                (
+                                  CATEGORY_CONFIG[
+                                    pohState?.active?.category as Category
+                                  ] || CATEGORY_CONFIG.other
+                                ).theme.milestoneBorder
+                              }`
+                            : "bg-gray-50/50 hover:bg-gray-100/80 cursor-pointer border border-transparent"
+                        }`}
                         onClick={() => handleMilestoneClick(milestone)}
                         data-testid={`milestone-${milestone.id}`}
                         animate={
                           justAchievedId === milestone.id
                             ? {
-                              scale: [1, 1.03, 1],
-                              boxShadow: [
-                                "0 0 0 0 rgba(34, 197, 94, 0)",
-                                "0 0 0 8px rgba(34, 197, 94, 0.2)",
-                                "0 0 0 0 rgba(34, 197, 94, 0)",
-                              ],
-                            }
+                                scale: [1, 1.03, 1],
+                                boxShadow: [
+                                  "0 0 0 0 rgba(34, 197, 94, 0)",
+                                  "0 0 0 8px rgba(34, 197, 94, 0.2)",
+                                  "0 0 0 0 rgba(34, 197, 94, 0)",
+                                ],
+                              }
                             : {}
                         }
                         transition={{ duration: 0.8 }}
@@ -1474,10 +1487,11 @@ export default function ProjectOfHeartPage() {
 
                         {/* Milestone Text */}
                         <span
-                          className={`text-sm sm:text-base leading-relaxed flex-1 min-w-0 break-words transition-colors duration-300 ${milestone.achieved
-                            ? "text-gray-600 font-medium"
-                            : "text-gray-700 group-hover:text-gray-900"
-                            }`}
+                          className={`text-sm sm:text-base leading-relaxed flex-1 min-w-0 break-words transition-colors duration-300 ${
+                            milestone.achieved
+                              ? "text-gray-600 font-medium"
+                              : "text-gray-700 group-hover:text-gray-900"
+                          }`}
                         >
                           {milestone.text}
                         </span>
@@ -1535,12 +1549,13 @@ export default function ProjectOfHeartPage() {
                         className="absolute top-0 left-0 h-full bg-gradient-to-r from-brand via-purple-500 to-brand rounded-full"
                         initial={{ width: 0 }}
                         animate={{
-                          width: `${(pohState.active.milestones.filter(
-                            (m) => m.achieved
-                          ).length /
-                            pohState.active.milestones.length) *
+                          width: `${
+                            (pohState.active.milestones.filter(
+                              (m) => m.achieved
+                            ).length /
+                              pohState.active.milestones.length) *
                             100
-                            }%`,
+                          }%`,
                         }}
                         transition={{ duration: 1, ease: "easeOut" }}
                       >
@@ -1553,11 +1568,12 @@ export default function ProjectOfHeartPage() {
                         .length === 0
                         ? "Start achieving your milestones!"
                         : pohState.active.milestones.filter((m) => m.achieved)
-                          .length === pohState.active.milestones.length
-                          ? "🎉 All milestones completed! Ready to close?"
-                          : `Keep going! ${pohState.active.milestones.length -
-                          pohState.active.milestones.filter((m) => m.achieved)
-                            .length
+                            .length === pohState.active.milestones.length
+                        ? "🎉 All milestones completed! Ready to close?"
+                        : `Keep going! ${
+                            pohState.active.milestones.length -
+                            pohState.active.milestones.filter((m) => m.achieved)
+                              .length
                           } more to go!`}
                     </p>
                   </div>
@@ -1762,12 +1778,12 @@ export default function ProjectOfHeartPage() {
                       animate={{
                         scale:
                           sliderValue >= item.range[0] &&
-                            sliderValue <= item.range[1]
+                          sliderValue <= item.range[1]
                             ? 1.15
                             : 1,
                         opacity:
                           sliderValue >= item.range[0] &&
-                            sliderValue <= item.range[1]
+                          sliderValue <= item.range[1]
                             ? 1
                             : 0.4,
                       }}
@@ -1802,14 +1818,14 @@ export default function ProjectOfHeartPage() {
                         sliderValue === 0
                           ? "#6B7280"
                           : sliderValue <= 3
-                            ? "#DC2626"
-                            : sliderValue <= 5
-                              ? "#D97706"
-                              : sliderValue <= 7
-                                ? "#16A34A"
-                                : sliderValue <= 9
-                                  ? "#7C3AED"
-                                  : "#5B21B6",
+                          ? "#DC2626"
+                          : sliderValue <= 5
+                          ? "#D97706"
+                          : sliderValue <= 7
+                          ? "#16A34A"
+                          : sliderValue <= 9
+                          ? "#7C3AED"
+                          : "#5B21B6",
                     }}
                   >
                     {sliderValue}
@@ -1825,29 +1841,29 @@ export default function ProjectOfHeartPage() {
                         sliderValue === 0
                           ? "#9CA3AF"
                           : sliderValue <= 3
-                            ? "#EF4444"
-                            : sliderValue <= 5
-                              ? "#F59E0B"
-                              : sliderValue <= 7
-                                ? "#22C55E"
-                                : sliderValue <= 9
-                                  ? "#8B5CF6"
-                                  : "#703DFA",
+                          ? "#EF4444"
+                          : sliderValue <= 5
+                          ? "#F59E0B"
+                          : sliderValue <= 7
+                          ? "#22C55E"
+                          : sliderValue <= 9
+                          ? "#8B5CF6"
+                          : "#703DFA",
                     }}
                   >
                     {sliderValue === 0
                       ? "Rate your alignment"
                       : sliderValue <= 2
-                        ? "Room for improvement"
-                        : sliderValue <= 4
-                          ? "Making progress"
-                          : sliderValue <= 6
-                            ? "Good alignment today!"
-                            : sliderValue <= 8
-                              ? "Great work staying aligned!"
-                              : sliderValue === 9
-                                ? "Excellent alignment!"
-                                : "Excellent alignment achieved! 🎉"}
+                      ? "Room for improvement"
+                      : sliderValue <= 4
+                      ? "Making progress"
+                      : sliderValue <= 6
+                      ? "Good alignment today!"
+                      : sliderValue <= 8
+                      ? "Great work staying aligned!"
+                      : sliderValue === 9
+                      ? "Excellent alignment!"
+                      : "Excellent alignment achieved! 🎉"}
                   </motion.p>
                 </div>
               </div>
@@ -2065,10 +2081,12 @@ export default function ProjectOfHeartPage() {
             <DialogTitle>Create Milestones</DialogTitle>
             <DialogDescription>
               {pohState.active?.milestones &&
-                pohState.active.milestones.length > 0
-                ? `You have ${pohState.active.milestones.length
-                } milestones. You can add up to ${5 - pohState.active.milestones.length
-                } more.`
+              pohState.active.milestones.length > 0
+                ? `You have ${
+                    pohState.active.milestones.length
+                  } milestones. You can add up to ${
+                    5 - pohState.active.milestones.length
+                  } more.`
                 : "Add up to 5 milestones that reflect shifts in you."}
             </DialogDescription>
           </DialogHeader>
@@ -2101,14 +2119,14 @@ export default function ProjectOfHeartPage() {
             ))}
             {newMilestones.length <
               5 - (pohState.active?.milestones?.length || 0) && (
-                <button
-                  onClick={() => setNewMilestones([...newMilestones, ""])}
-                  className="text-sm font-semibold text-brand hover:text-brand/80 transition-colors py-1 flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add another milestone
-                </button>
-              )}
+              <button
+                onClick={() => setNewMilestones([...newMilestones, ""])}
+                className="text-sm font-semibold text-brand hover:text-brand/80 transition-colors py-1 flex items-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                Add another milestone
+              </button>
+            )}
           </div>
           <div className="flex gap-3 pt-2">
             <Button
@@ -2176,17 +2194,20 @@ export default function ProjectOfHeartPage() {
           </DialogHeader>
           <div className="py-4">
             <div
-              className={`flex gap-3 mb-6 transition-all duration-300 ${allMilestonesCompleted ? "justify-center" : ""
-                }`}
+              className={`flex gap-3 mb-6 transition-all duration-300 ${
+                allMilestonesCompleted ? "justify-center" : ""
+              }`}
             >
               <Button
                 variant={completeMode === "complete" ? "default" : "outline"}
                 onClick={() => setCompleteMode("complete")}
-                className={`h-11 text-sm sm:text-sm font-semibold rounded-xl shadow-md transition-all duration-300 ${allMilestonesCompleted ? "w-full" : "flex-1"
-                  } ${completeMode === "complete"
+                className={`h-11 text-sm sm:text-sm font-semibold rounded-xl shadow-md transition-all duration-300 ${
+                  allMilestonesCompleted ? "w-full" : "flex-1"
+                } ${
+                  completeMode === "complete"
                     ? "bg-green-500 hover:bg-green-600 text-white shadow-green-500/20"
                     : "border-indigo-100 bg-white hover:bg-brand/5 text-indigo-600"
-                  }`}
+                }`}
               >
                 {allMilestonesCompleted ? "🎉 Complete" : "Complete"}
               </Button>
@@ -2194,10 +2215,11 @@ export default function ProjectOfHeartPage() {
                 <Button
                   variant={completeMode === "close" ? "default" : "outline"}
                   onClick={() => setCompleteMode("close")}
-                  className={`flex-1 h-11 text-xs sm:text-sm font-semibold rounded-xl shadow-md transition-all duration-300 ${completeMode === "close"
-                    ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
-                    : "border-indigo-100 bg-white hover:bg-brand/5 text-indigo-600"
-                    }`}
+                  className={`flex-1 h-11 text-xs sm:text-sm font-semibold rounded-xl shadow-md transition-all duration-300 ${
+                    completeMode === "close"
+                      ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
+                      : "border-indigo-100 bg-white hover:bg-brand/5 text-indigo-600"
+                  }`}
                 >
                   Close Early
                 </Button>
@@ -2421,10 +2443,11 @@ export default function ProjectOfHeartPage() {
             <div className="flex p-1 bg-gray-100 rounded-lg">
               {pohState.active && (
                 <button
-                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${realignTarget === "active"
-                    ? "bg-white text-brand shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                    }`}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                    realignTarget === "active"
+                      ? "bg-white text-brand shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
                   onClick={() => openRealignFor("active")}
                 >
                   Active Project
@@ -2432,10 +2455,11 @@ export default function ProjectOfHeartPage() {
               )}
               {pohState.next && (
                 <button
-                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${realignTarget === "next"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                    }`}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                    realignTarget === "next"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
                   onClick={() => openRealignFor("next")}
                 >
                   Next Project
@@ -2443,10 +2467,11 @@ export default function ProjectOfHeartPage() {
               )}
               {pohState.horizon && (
                 <button
-                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${realignTarget === "horizon"
-                    ? "bg-white text-yellow-600 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                    }`}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                    realignTarget === "horizon"
+                      ? "bg-white text-yellow-600 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
                   onClick={() => openRealignFor("horizon")}
                 >
                   North Star
@@ -2541,8 +2566,9 @@ export default function ProjectOfHeartPage() {
                           className="flex items-start gap-3 group"
                         >
                           <div
-                            className={`mt-2.5 w-2 h-2 rounded-full ${m.achieved ? "bg-green-500" : "bg-gray-300"
-                              }`}
+                            className={`mt-2.5 w-2 h-2 rounded-full ${
+                              m.achieved ? "bg-green-500" : "bg-gray-300"
+                            }`}
                           />
 
                           {editingMilestoneId === m.id ? (
@@ -2578,10 +2604,11 @@ export default function ProjectOfHeartPage() {
                           ) : (
                             <div className="flex-1 flex justify-between gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
                               <span
-                                className={`text-sm leading-relaxed ${m.achieved
-                                  ? "text-gray-400 line-through"
-                                  : "text-gray-700"
-                                  }`}
+                                className={`text-sm leading-relaxed ${
+                                  m.achieved
+                                    ? "text-gray-400 line-through"
+                                    : "text-gray-700"
+                                }`}
                               >
                                 {m.text}
                               </span>
@@ -2689,6 +2716,50 @@ export default function ProjectOfHeartPage() {
                 ) : null}
                 Save Reflection
               </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Preview Modal */}
+      <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
+        <DialogContent className="w-[95%] max-w-2xl rounded-2xl bg-white p-0 border-0 shadow-2xl overflow-hidden [&>button]:hidden">
+          <div className="relative">
+            {/* Image Container */}
+            <div className="relative bg-gradient-to-br from-gray-50 to-gray-100">
+              {previewImageUrl && (
+                <motion.img
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  src={previewImageUrl}
+                  alt="Vision preview"
+                  className="w-full max-h-[70vh] object-contain"
+                />
+              )}
+
+              {/* Close Button */}
+              <button
+                onClick={() => setShowImagePreview(false)}
+                className="absolute top-4 right-4 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 backdrop-blur-sm z-10"
+                aria-label="Close preview"
+              >
+                <X className="w-5 h-5 text-gray-700" />
+              </button>
+            </div>
+
+            {/* Bottom Action Bar */}
+            <div className="p-4 sm:p-6 bg-white border-t border-gray-100">
+              <Button
+                onClick={handleReplaceImage}
+                className="mx-auto bg-white hover:bg-brand/90 hover:text-white border border-brand hover:border-white text-brand font-semibold rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                Replace Image
+              </Button>
+              <p className="text-xs text-gray-400 text-center mt-3 italic">
+                Choose a new image to replace this vision
+              </p>
             </div>
           </div>
         </DialogContent>
