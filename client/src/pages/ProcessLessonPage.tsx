@@ -36,13 +36,16 @@ export default function ProcessLessonPage() {
   const fromAbundance = searchParams.get("from") === "abundance";
   const courseId = searchParams.get("courseId");
   const moduleId = searchParams.get("moduleId");
+  const featureType = searchParams.get("feature");
   const isMasterclass = location.startsWith("/masterclasses");
 
   const handleBack = () => {
     if (isMasterclass && courseId) {
       setLocation(`/masterclasses/course/${courseId}`);
     } else {
-      setLocation("/processes");
+      // Navigate back to processes with the correct tab
+      const tabParam = featureType ? `?tab=${featureType}` : "";
+      setLocation(`/processes${tabParam}`);
     }
   };
 
@@ -96,7 +99,10 @@ export default function ProcessLessonPage() {
     queryKey: ["/api/public/v1/lessons", lessonId],
     queryFn: async () => {
       // Use apiRequest even for public endpoints to ensure consistency with base URL handling
-      const response = await apiRequest("GET", `/api/public/v1/lessons/${lessonId}`);
+      const response = await apiRequest(
+        "GET",
+        `/api/public/v1/lessons/${lessonId}`
+      );
       return response.json();
     },
     enabled: !!lessonId,
