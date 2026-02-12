@@ -9,7 +9,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { path: "/", label: "Home", icon: Home },
+  { path: "/home", label: "Home", icon: Home },
   { path: "/events", label: "Events", icon: Calendar },
   { path: "/drm", label: "Dr.M", icon: Bot },
   { path: "/heart", label: "Project", icon: Heart },
@@ -25,7 +25,9 @@ export default function BottomNav() {
         <div className="bg-[#F8F7FF]/95 backdrop-blur-2xl border border-brand/10 shadow-[0_4px_20px_-4px_rgba(112,61,250,0.15)] rounded-2xl px-1 py-1.5 flex items-center justify-between">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location === item.path;
+            const isActive =
+              location === item.path ||
+              (item.path !== "/" && location.startsWith(item.path));
             const isDrM = item.label === "Dr.M";
 
             return (
