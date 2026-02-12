@@ -1210,9 +1210,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           publishedCourses: publishedCoursesResult[0]?.count ?? 0,
           lastUpdatedCourse: lastUpdatedCourseResult[0]
             ? {
-                title: lastUpdatedCourseResult[0].title,
-                updatedAt: lastUpdatedCourseResult[0].updatedAt,
-              }
+              title: lastUpdatedCourseResult[0].title,
+              updatedAt: lastUpdatedCourseResult[0].updatedAt,
+            }
             : null,
         },
       });
@@ -1959,6 +1959,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .values({
           code: String(code).toUpperCase(),
           name: String(name),
+          level: req.body.level ? parseInt(String(req.body.level)) : 1,
         })
         .returning();
 
@@ -3227,17 +3228,17 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const builtIns =
           code === "ABUNDANCE"
             ? [
-                {
-                  id: "builtin-money-calendar",
-                  title: "Money Calendar",
-                  isBuiltIn: true,
-                },
-                {
-                  id: "builtin-rewiring-belief",
-                  title: "Rewiring Belief",
-                  isBuiltIn: true,
-                },
-              ]
+              {
+                id: "builtin-money-calendar",
+                title: "Money Calendar",
+                isBuiltIn: true,
+              },
+              {
+                id: "builtin-rewiring-belief",
+                title: "Rewiring Belief",
+                isBuiltIn: true,
+              },
+            ]
             : [];
 
         const mappedCourses = await Promise.all(
