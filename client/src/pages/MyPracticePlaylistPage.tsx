@@ -190,8 +190,9 @@ const FullScreenPlayer = ({
         <Button
           variant="ghost"
           onClick={() => setShowQueue(!showQueue)}
-          className={`w-12 h-12 rounded-full transition-colors shrink-0 flex items-center justify-center p-0 [&_svg]:size-6 ${showQueue ? "bg-brand/10 text-brand" : "text-slate-600"
-            }`}
+          className={`w-12 h-12 rounded-full transition-colors shrink-0 flex items-center justify-center p-0 [&_svg]:size-6 ${
+            showQueue ? "bg-brand/10 text-brand" : "text-slate-600"
+          }`}
         >
           <ListMusic strokeWidth={1.5} size={24} />
         </Button>
@@ -317,10 +318,11 @@ const FullScreenPlayer = ({
                       <DropdownMenuItem
                         key={speed}
                         onClick={() => onPlaybackRateChange(speed)}
-                        className={`text-[11px] font-black rounded-lg ${playbackRate === speed
+                        className={`text-[11px] font-black rounded-lg ${
+                          playbackRate === speed
                             ? "bg-brand/10 text-brand"
                             : "text-slate-600"
-                          }`}
+                        }`}
                       >
                         {speed === 1 ? "Normal" : `${speed}x`}
                       </DropdownMenuItem>
@@ -362,10 +364,11 @@ const FullScreenPlayer = ({
                   <div
                     key={item.id}
                     onClick={() => onTrackClick(idx)}
-                    className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all ${idx === currentIdx
+                    className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all ${
+                      idx === currentIdx
                         ? "bg-brand/10 border border-brand/10"
                         : "hover:bg-white"
-                      }`}
+                    }`}
                   >
                     <div className="w-8 flex items-center justify-center text-xs font-black tabular-nums">
                       {idx === currentIdx && isPlaying ? (
@@ -386,8 +389,9 @@ const FullScreenPlayer = ({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`font-bold text-sm truncate ${idx === currentIdx ? "text-brand" : "text-slate-800"
-                          }`}
+                        className={`font-bold text-sm truncate ${
+                          idx === currentIdx ? "text-brand" : "text-slate-800"
+                        }`}
                       >
                         {item.lesson?.title || `Lesson ${item.lessonId}`}
                       </p>
@@ -440,20 +444,25 @@ export default function MyPracticePlaylistPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Data Queries
-  const { data: playlists = [], isLoading: playlistsLoading } = useQuery<
-    Playlist[]
-  >({
+  const {
+    data: playlists = [],
+    isLoading: playlistsLoading,
+    isFetching: isFetchingPlaylists,
+  } = useQuery<Playlist[]>({
     queryKey: ["/api/public/v1/playlists"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: isAuthenticated,
   });
 
-  const { data: expandedPlaylistData, isLoading: expandedLoading } =
-    useQuery<PlaylistWithItems>({
-      queryKey: ["/api/public/v1/playlists", expandedPlaylistId],
-      queryFn: getQueryFn({ on401: "returnNull" }),
-      enabled: !!expandedPlaylistId && isAuthenticated,
-    });
+  const {
+    data: expandedPlaylistData,
+    isLoading: expandedLoading,
+    isFetching: isFetchingExpanded,
+  } = useQuery<PlaylistWithItems>({
+    queryKey: ["/api/public/v1/playlists", expandedPlaylistId],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!expandedPlaylistId && isAuthenticated,
+  });
 
   const { data: playlistSource, isLoading: sourceLoading } =
     useQuery<PlaylistSourceData>({
@@ -496,10 +505,19 @@ export default function MyPracticePlaylistPage() {
     mutationFn: async (id: number) => {
       await apiRequest("DELETE", `/api/public/v1/playlists/${id}`);
     },
-    onSuccess: () => {
+    onSuccess: (_, deletedId) => {
       queryClient.invalidateQueries({ queryKey: ["/api/public/v1/playlists"] });
       setPlaylistToDelete(null);
-      if (expandedPlaylistId === playlistToDelete) {
+
+      // Stop playback if the current playlist is deleted
+      if (currentPlaylistId === deletedId) {
+        setIsPlaying(false);
+        setIsPlayerInitialized(false);
+        setPlayingItems([]);
+        setCurrentPlaylistId(null);
+      }
+
+      if (expandedPlaylistId === deletedId) {
         setExpandedPlaylistId(null);
       }
       toast({ title: "Playlist deleted!" });
@@ -543,10 +561,21 @@ export default function MyPracticePlaylistPage() {
         `/api/public/v1/playlists/${playlistId}/items/${itemId}`
       );
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["/api/public/v1/playlists", expandedPlaylistId],
       });
+
+      // Stop playback if the removed track is the one currently playing
+      if (
+        currentPlaylistId === variables.playlistId &&
+        playingItems[currentTrackIndex]?.id === variables.itemId
+      ) {
+        setIsPlaying(false);
+        setIsPlayerInitialized(false);
+        setPlayingItems([]);
+      }
+
       setTrackItemToDelete(null);
       toast({ title: "Item removed!" });
     },
@@ -676,10 +705,11 @@ export default function MyPracticePlaylistPage() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col transition-colors duration-500 ${expandedPlaylistId
+      className={`min-h-screen flex flex-col transition-colors duration-500 ${
+        expandedPlaylistId
           ? "bg-gradient-to-b from-brand/[0.08] via-[#F8F9FB] to-[#F8F9FB]"
           : "bg-[#F8F9FB]"
-        }`}
+      }`}
     >
       <Header
         title={expandedPlaylistId ? "" : "My Playlist"}
@@ -688,16 +718,21 @@ export default function MyPracticePlaylistPage() {
           expandedPlaylistId ? setExpandedPlaylistId(null) : setLocation("/")
         }
         rightContent={
-          !expandedPlaylistId && (
-            <Button
-              variant="default"
-              size="icon"
-              onClick={() => setCreateDialogOpen(true)}
-              className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 hover:bg-white shadow-md hover:shadow-md hover:text-brand transition-all active:scale-95"
-            >
-              <Plus className="w-6 h-6" />
-            </Button>
-          )
+          <div className="flex items-center gap-3">
+            {(isFetchingPlaylists || isFetchingExpanded) && (
+              <Loader2 className="w-4 h-4 animate-spin text-brand/40" />
+            )}
+            {!expandedPlaylistId && (
+              <Button
+                variant="default"
+                size="icon"
+                onClick={() => setCreateDialogOpen(true)}
+                className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 hover:bg-white shadow-md hover:shadow-md hover:text-brand transition-all active:scale-95"
+              >
+                <Plus className="w-6 h-6" />
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -850,10 +885,11 @@ export default function MyPracticePlaylistPage() {
                       <div
                         key={item.id}
                         onClick={() => handleTrackClick(idx)}
-                        className={`group flex items-center gap-4 p-1 rounded-md cursor-pointer transition-all ${isActive
+                        className={`group flex items-center gap-4 p-1 rounded-md cursor-pointer transition-all ${
+                          isActive
                             ? "bg-brand/5 shadow-sm"
                             : "hover:bg-slate-50"
-                          }`}
+                        }`}
                       >
                         {/* Indicator */}
                         <div className="w-8 flex items-center justify-center shrink-0">
@@ -865,8 +901,9 @@ export default function MyPracticePlaylistPage() {
                             </div>
                           ) : (
                             <Music
-                              className={`w-6 h-6 ${isActive ? "text-brand" : "text-slate-300"
-                                }`}
+                              className={`w-6 h-6 ${
+                                isActive ? "text-brand" : "text-slate-300"
+                              }`}
                             />
                           )}
                         </div>
@@ -874,8 +911,9 @@ export default function MyPracticePlaylistPage() {
                         {/* Text Content */}
                         <div className="flex-1 min-w-0">
                           <h4
-                            className={`font-bold text-sm truncate  ${isActive ? "text-brand" : "text-slate-900"
-                              }`}
+                            className={`font-bold text-sm truncate  ${
+                              isActive ? "text-brand" : "text-slate-900"
+                            }`}
                           >
                             {item.lesson?.title || `Lesson ${item.lessonId}`}
                           </h4>
@@ -1053,8 +1091,9 @@ export default function MyPracticePlaylistPage() {
                 if (createError) setCreateError("");
               }}
               placeholder="e.g., Morning Meditation"
-              className={`border-slate-300 rounded-lg bg-slate-50 focus:bg-white transition-colors ${createError ? "border-red-500 focus:ring-red-500" : ""
-                }`}
+              className={`border-slate-300 rounded-lg bg-slate-50 focus:bg-white transition-colors ${
+                createError ? "border-red-500 focus:ring-red-500" : ""
+              }`}
             />
             {createError && (
               <p className="text-xs font-bold text-red-500 px-1 animate-in fade-in slide-in-from-top-1">
@@ -1078,9 +1117,14 @@ export default function MyPracticePlaylistPage() {
                 }
                 createPlaylistMutation.mutate(createTitle);
               }}
+              disabled={createPlaylistMutation.isPending}
               className="flex-1 bg-brand text-white rounded-lg shadow-lg shadow-brand/20"
             >
-              Create
+              {createPlaylistMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Create"
+              )}
             </Button>
           </div>
         </DialogContent>
@@ -1109,8 +1153,9 @@ export default function MyPracticePlaylistPage() {
                 setNewTitle(e.target.value);
                 if (renameError) setRenameError("");
               }}
-              className={`border-slate-300 rounded-lg bg-slate-50 ${renameError ? "border-red-500 focus:ring-red-500" : ""
-                }`}
+              className={`border-slate-300 rounded-lg bg-slate-50 ${
+                renameError ? "border-red-500 focus:ring-red-500" : ""
+              }`}
             />
             {renameError && (
               <p className="text-xs font-bold text-red-500 px-1 animate-in fade-in slide-in-from-top-1">
@@ -1137,9 +1182,14 @@ export default function MyPracticePlaylistPage() {
                   title: newTitle,
                 });
               }}
+              disabled={renamePlaylistMutation.isPending}
               className="flex-1 bg-brand text-white rounded-lg shadow-lg shadow-brand/20"
             >
-              Save
+              {renamePlaylistMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Save"
+              )}
             </Button>
           </div>
         </DialogContent>
@@ -1170,9 +1220,14 @@ export default function MyPracticePlaylistPage() {
             </Button>
             <Button
               onClick={() => deletePlaylistMutation.mutate(playlistToDelete!)}
+              disabled={deletePlaylistMutation.isPending}
               className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg shadow-red-500/20"
             >
-              Delete
+              {deletePlaylistMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Delete"
+              )}
             </Button>
           </div>
         </DialogContent>
@@ -1205,9 +1260,14 @@ export default function MyPracticePlaylistPage() {
                 trackItemToDelete &&
                 removeItemMutation.mutate(trackItemToDelete)
               }
+              disabled={removeItemMutation.isPending}
               className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg shadow-red-500/20"
             >
-              Remove
+              {removeItemMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Remove"
+              )}
             </Button>
           </div>
         </DialogContent>
@@ -1252,16 +1312,18 @@ export default function MyPracticePlaylistPage() {
                           className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
                         >
                           <span
-                            className={`text-sm font-bold ${isSelected ? "text-brand" : "text-slate-700"
-                              }`}
+                            className={`text-sm font-bold ${
+                              isSelected ? "text-brand" : "text-slate-700"
+                            }`}
                           >
                             {lesson.title}
                           </span>
                           <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                              isSelected
                                 ? "bg-brand border-brand text-white"
                                 : "border-slate-200"
-                              }`}
+                            }`}
                           >
                             {isSelected && (
                               <Check className="w-4 h-4" strokeWidth={4} />
@@ -1289,9 +1351,17 @@ export default function MyPracticePlaylistPage() {
                   lessonIds: selectedLessonIds,
                 })
               }
-              className="flex-1 bg-brand text-white rounded-lg shadow-lg shadow-brand/20"
+              disabled={setItemsMutation.isPending}
+              className="flex-1 bg-brand text-white rounded-lg shadow-lg shadow-brand/20 min-w-[140px]"
             >
-              Save Selection
+              {setItemsMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              ) : (
+                "Save Selection"
+              )}
             </Button>
           </div>
         </DialogContent>
