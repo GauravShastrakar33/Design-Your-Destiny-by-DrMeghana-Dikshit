@@ -12,6 +12,7 @@ import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/Header";
+import { apiRequest } from "@/lib/queryClient";
 
 interface SearchResult {
   type: "module" | "lesson" | "course";
@@ -87,12 +88,12 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     setHasSearched(true);
 
     try {
-      const response = await fetch(
+      const response = await apiRequest(
+        "GET",
         `/api/public/v1/search?q=${encodeURIComponent(searchQuery)}`,
+        undefined,
         { signal: controller.signal }
       );
-
-      if (!response.ok) throw new Error("Search failed");
 
       const data: SearchResponse = await response.json();
       setResults(data.results);

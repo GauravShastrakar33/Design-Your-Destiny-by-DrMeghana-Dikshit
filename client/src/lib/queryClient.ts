@@ -59,6 +59,7 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  options?: RequestInit,
 ): Promise<Response> {
   // 1. Clean the URL by removing leading slashes only.
   // We NO LONGER append a trailing slash automatically because backend routes
@@ -74,6 +75,7 @@ export async function apiRequest(
 
   const headers: Record<string, string> = {
     ...authHeaders,
+    ...(options?.headers as Record<string, string>),
   };
 
   let body: BodyInit | null | undefined;
@@ -84,13 +86,16 @@ export async function apiRequest(
   } else if (data) {
     headers["Content-Type"] = "application/json";
     body = JSON.stringify(data);
+  } else if (options?.body) {
+    body = options.body;
   }
 
   const res = await fetch(fullUrl, {
+    ...options,
     method,
     headers,
     body,
-    credentials: "include", // This handles cookies for web
+    credentials: options?.credentials || "include", // This handles cookies for web
   });
 
   await throwIfResNotOk(res);
