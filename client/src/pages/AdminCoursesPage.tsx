@@ -255,12 +255,12 @@ export default function AdminCoursesPage() {
         <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1
-              className="text-2xl font-bold text-gray-900 tracking-tight"
+              className="text-xl font-bold text-gray-900 leading-none"
               data-testid="text-page-title"
             >
               Courses
             </h1>
-            <p className="text-sm font-medium text-gray-500 mt-1">
+            <p className="text-sm font-semibold text-gray-600 mt-1">
               Manage course content and curriculum hierarchy.
             </p>
           </div>

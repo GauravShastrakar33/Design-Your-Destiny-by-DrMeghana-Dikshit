@@ -161,36 +161,6 @@ export default function AdminSidebar({
         effectivelyCollapsed ? "w-20" : "w-60"
       )}
     >
-      {/* Custom Scrollbar Styles - Scoped to this sidebar only */}
-      <style>
-        {`
-          .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-          }
-          
-          .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-          }
-          
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            transition: background 0.2s ease;
-          }
-          
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
-          }
-          
-          /* Firefox */
-          .custom-scrollbar {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
-          }
-        `}
-      </style>
-
       <div
         className={cn(
           "p-2 mb-2 flex items-center justify-between",
