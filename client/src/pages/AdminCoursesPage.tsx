@@ -284,7 +284,7 @@ export default function AdminCoursesPage() {
                 >
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/50">
-                      <th className="py-4 px-6 text-xs font-bold uppercase tracking-widest text-gray-600 w-[4%]"></th>
+                      {/* <th className="py-4 px-6 text-xs font-bold uppercase tracking-widest text-gray-600 w-[4%]"></th> */}
                       <th className="py-4 px-6 text-xs font-bold uppercase tracking-widest text-gray-600 w-[9%]">
                         Thumbnail
                       </th>
@@ -331,7 +331,7 @@ export default function AdminCoursesPage() {
                           className="group transition-colors hover:bg-gray-50/50"
                           data-testid={`row-course-${course.id}`}
                         >
-                          <td className="py-4 px-6">
+                          {/* <td className="py-4 px-6">
                             <div className="flex flex-col gap-1 text-gray-400">
                               <button
                                 onClick={() => handleMoveUp(index)}
@@ -348,7 +348,7 @@ export default function AdminCoursesPage() {
                                 <ChevronDown className="w-4 h-4" />
                               </button>
                             </div>
-                          </td>
+                          </td> */}
                           <td className="py-4 px-6">
                             {course.thumbnailSignedUrl ? (
                               <div className="w-16 h-10 rounded-lg overflow-hidden shadow-sm border border-gray-100 relative group/thumb">
