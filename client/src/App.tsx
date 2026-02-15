@@ -107,6 +107,7 @@ const useHashLocation = () => {
 function AppContent() {
   const [location, setLocation] = useLocation();
   const locationRef = useRef(location);
+  const lastBackPressTime = useRef<number>(0);
 
   useEffect(() => {
     locationRef.current = location;
@@ -132,22 +133,66 @@ function AppContent() {
     checkUnreadOnLaunch();
   }, []);
 
-  // Android Back Button
+  // Android Back Button with Double-Tap to Exit
   useEffect(() => {
-    if (Capacitor.getPlatform() !== "android") return;
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") {
+      return;
+    }
+
     const listener = CapacitorApp.addListener("backButton", async (event) => {
+      const currentPath = locationRef.current;
+      console.log("🔙 Back button pressed", { 
+        canGoBack: event.canGoBack, 
+        currentPath 
+      });
+      
+      // PRIORITY 1: Check if we're on a root page (home/login)
+      // These pages should use double-tap to exit logic
+      if (currentPath === "/home" || currentPath === "/login") {
+        const currentTime = Date.now();
+        const timeSinceLastPress = currentTime - lastBackPressTime.current;
+        
+        console.log("⏱️ On root page. Time since last press:", timeSinceLastPress);
+        
+        if (timeSinceLastPress < 2000) {
+          // Second press within 2 seconds - exit app
+          console.log("✅ Exiting app");
+          CapacitorApp.exitApp();
+        } else {
+          // First press - update time and show toast
+          lastBackPressTime.current = currentTime;
+          console.log("⚠️ Showing toast - press again to exit");
+          
+          // Dynamically import Toast to avoid loading it on web
+          import("@capacitor/toast").then(({ Toast }) => {
+            Toast.show({
+              text: "Press back again to exit",
+              duration: "short",
+              position: "bottom",
+            }).catch((err) => {
+              console.error("Toast error:", err);
+              console.log("📢 Press back again to exit");
+            });
+          }).catch((err) => {
+            console.error("Failed to import Toast:", err);
+          });
+        }
+        return; // Important: Don't proceed to history.back()
+      }
+      
+      // PRIORITY 2: We're on a sub-page, navigate back or to home
       if (event.canGoBack) {
+        console.log("📜 Going back in history");
         window.history.back();
       } else {
-        const currentPath = locationRef.current;
-        if (currentPath !== "/home" && currentPath !== "/login") {
-          setLocation("/home");
-        } else {
-          CapacitorApp.exitApp();
-        }
+        console.log("🏠 No history, navigating to home");
+        setLocation("/home");
       }
     });
-    return () => { listener.then(l => l.remove()); };
+
+    return () => {
+      listener.then((l) => l.remove());
+    };
   }, [setLocation]);
 
   return (
