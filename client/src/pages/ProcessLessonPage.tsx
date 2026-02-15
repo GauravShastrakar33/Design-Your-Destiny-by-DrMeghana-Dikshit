@@ -57,7 +57,6 @@ export default function ProcessLessonPage() {
         lessonId: params.lessonId,
         lessonName: params.lessonName,
         featureType: "PROCESS",
-        activityDate: new Date().toISOString().split("T")[0],
       });
       return res.json();
     },

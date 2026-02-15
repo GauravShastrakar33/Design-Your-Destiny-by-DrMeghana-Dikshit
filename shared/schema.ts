@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   forcePasswordChange: boolean("force_password_change").notNull().default(false),
   lastLogin: timestamp("last_login", { mode: "date" }),
   lastActivity: timestamp("last_activity", { mode: "date" }),
+  timezone: varchar("timezone", { length: 50 }).notNull().default("UTC"),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
@@ -31,8 +32,7 @@ export type User = typeof users.$inferSelect;
 export const communitySessions = pgTable("community_sessions", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  time: text("time").notNull(),
-  displayTime: text("display_time").notNull(),
+  time: text("time").notNull(), // 24-hour format: "21:00"
   meetingLink: text("meeting_link").notNull(),
   participants: integer("participants").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),

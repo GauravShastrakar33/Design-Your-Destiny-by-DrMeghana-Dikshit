@@ -186,6 +186,7 @@ export class MemStorage implements IStorage {
       forcePasswordChange: false,
       lastLogin: null,
       lastActivity: null,
+      timezone: "UTC",
       createdAt: new Date()
     };
     this.users.set(id.toString(), user);
@@ -493,7 +494,10 @@ export class DbStorage implements IStorage {
   }
 
   async updateUserLastLogin(id: number): Promise<void> {
-    await db.update(usersTable).set({ lastLogin: new Date() }).where(eq(usersTable.id, id));
+    await db.update(usersTable).set({ 
+      lastLogin: new Date(),
+      lastActivity: new Date() 
+    }).where(eq(usersTable.id, id));
   }
 
   async updateUserPassword(id: number, hashedPassword: string): Promise<void> {
@@ -514,6 +518,10 @@ export class DbStorage implements IStorage {
   async updateUserName(id: number, name: string): Promise<User | undefined> {
     const [user] = await db.update(usersTable).set({ name }).where(eq(usersTable.id, id)).returning();
     return user;
+  }
+
+  async updateUserTimezone(id: number, timezone: string): Promise<void> {
+    await db.update(usersTable).set({ timezone }).where(eq(usersTable.id, id));
   }
 
   async getAllCommunitySessions(): Promise<CommunitySession[]> {
@@ -1322,19 +1330,10 @@ export class DbStorage implements IStorage {
     featureType: FeatureType,
     activityDate: string
   ): Promise<{ logged: boolean; activity: ActivityLog }> {
-    // Validate date format (YYYY-MM-DD)
+    // Validate date format only
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(activityDate)) {
-      // Fall back to server date if invalid
-      activityDate = new Date().toISOString().split('T')[0];
-    }
-
-    // Validate date is within ±1 day of server time
-    const serverDate = new Date();
-    const inputDate = new Date(activityDate + 'T12:00:00');
-    const diffDays = Math.abs((serverDate.getTime() - inputDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays > 1) {
-      activityDate = serverDate.toISOString().split('T')[0];
+      throw new Error(`Invalid date format: ${activityDate}`);
     }
 
     // Check if already logged for this user/lesson/feature/date
@@ -1349,6 +1348,11 @@ export class DbStorage implements IStorage {
       ));
 
     if (existing) {
+      // Update lastActivity even if already logged (for accurate "Active Today" tracking)
+      await db
+        .update(usersTable)
+        .set({ lastActivity: new Date() })
+        .where(eq(usersTable.id, userId));
       return { logged: false, activity: existing };
     }
 
@@ -1357,6 +1361,12 @@ export class DbStorage implements IStorage {
       .insert(activityLogsTable)
       .values({ userId, lessonId, lessonName, featureType, activityDate })
       .returning();
+
+    // Update users.lastActivity to track recent activity for Admin Dashboard
+    await db
+      .update(usersTable)
+      .set({ lastActivity: new Date() })
+      .where(eq(usersTable.id, userId));
 
     return { logged: true, activity: newLog };
   }

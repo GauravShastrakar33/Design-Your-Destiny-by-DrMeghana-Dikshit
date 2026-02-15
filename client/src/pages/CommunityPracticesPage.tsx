@@ -8,6 +8,24 @@ import { useToast } from "@/hooks/use-toast";
 import type { CommunitySession } from "@shared/schema";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Format 24h time to 12h display format
+const formatDisplayTime = (time24: string): string => {
+  const [hours, minutes] = time24.split(":").map(Number);
+
+  if (isNaN(hours) || isNaN(minutes)) {
+    return time24; // fallback to raw time
+  }
+
+  const isPM = hours >= 12;
+  const displayHours = hours % 12 || 12;
+  const period = isPM ? "PM" : "AM";
+
+  return `${displayHours}:${minutes
+    .toString()
+    .padStart(2, "0")} ${period}`;
+};
+
+
 export default function CommunityPracticesPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -16,9 +34,10 @@ export default function CommunityPracticesPage() {
     queryKey: ["/api/sessions"],
   });
 
-  const handleJoin = (meetingLink: string, displayTime: string) => {
+  const handleJoin = (meetingLink: string, time: string, title: string) => {
     if (meetingLink) {
       window.open(meetingLink, "_blank");
+      const displayTime = formatDisplayTime(time);
       toast({
         title: "Opening Session",
         description: `Launching ${displayTime} practice session...`,
@@ -34,20 +53,30 @@ export default function CommunityPracticesPage() {
 
   const getCurrentStatus = (sessionTime: string) => {
     const now = new Date();
+    // 1. Parse 24h time (HH:mm)
     const [hours, minutes] = sessionTime.split(":").map(Number);
-    const sessionDate = new Date();
+    // Create session date for today
+    let sessionDate = new Date();
     sessionDate.setHours(hours, minutes, 0, 0);
-
+    // 2. Calculate time difference in minutes
     const diffMinutes = Math.floor(
-      (sessionDate.getTime() - now.getTime()) / (1000 * 60)
+      (sessionDate.getTime() - now.getTime()) / (1000 * 60),
     );
-
-    if (diffMinutes < -30) {
-      return { status: "ended", label: "Ended" };
-    } else if (diffMinutes <= 0 && diffMinutes >= -30) {
-      return { status: "live", label: "Live Now" };
-    } else if (diffMinutes <= 15) {
+    // 3. Status Mapping with Midnight Reset
+    // Sessions automatically reset to "Upcoming" at midnight (start of new day)
+    if (diffMinutes > 15) {
+      // More than 15 minutes before start
+      return { status: "upcoming", label: "Upcoming" };
+    } else if (diffMinutes > 0 && diffMinutes <= 15) {
+      // 15 minutes before start - Join opens
       return { status: "starting-soon", label: "Starting Soon" };
+    } else if (diffMinutes <= 0 && diffMinutes >= -120) {
+      // From start time until 2 hours later - Session is live
+      return { status: "live", label: "Live Now" };
+    } else if (diffMinutes < -120) {
+      // More than 2 hours after start - Session ended for today
+      // Will naturally reset to "Upcoming" at midnight when new day starts
+      return { status: "ended", label: "Ended" };
     } else {
       return { status: "upcoming", label: "Upcoming" };
     }
@@ -152,26 +181,28 @@ export default function CommunityPracticesPage() {
                             )}
                           </div>
                           <p className="text-sm text-gray-600 font-medium">
-                            {session.displayTime}
+                            {formatDisplayTime(session.time)}
                           </p>
                         </div>
 
                         {/* Action Button */}
                         <Button
                           onClick={() =>
-                            handleJoin(session.meetingLink, session.displayTime)
+                            handleJoin(session.meetingLink, session.time, session.title)
                           }
                           variant={status === "live" ? "default" : "outline"}
                           size="default"
-                          disabled={status === "ended"}
+                          disabled={status === "upcoming" || status === "ended"}
                           className={
                             status === "live"
                               ? "rounded-lg bg-brand hover:bg-brand/90 text-white font-bold shadow-lg shadow-brand/20"
-                              : "rounded-lg font-bold border-gray-200 text-gray-600 hover:bg-gray-50"
+                              : status === "starting-soon"
+                              ? "rounded-lg font-bold border-amber-500 text-amber-600 hover:bg-amber-50"
+                              : "rounded-lg font-bold border-gray-200 text-gray-600"
                           }
                           data-testid={`button-join-${session.id}`}
                         >
-                          {status === "ended" ? "Ended" : "Join"}
+                          {status === "ended" ? "Ended" : status === "upcoming" ? "Upcoming" : "Join"}
                         </Button>
                       </div>
                     </Card>
@@ -190,7 +221,7 @@ export default function CommunityPracticesPage() {
         >
           <Card className="bg-white/50 border-0 shadow-none p-4">
             <p className="text-xs text-gray-500 text-center font-medium">
-              Sessions are open 30 minutes before scheduled time
+              Sessions are open 15 minutes before scheduled time and stay live for 2 hours
             </p>
           </Card>
         </motion.div>

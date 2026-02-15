@@ -543,15 +543,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const { date } = req.body;
-      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        return res
-          .status(400)
-          .json({ error: "Invalid date format. Use YYYY-MM-DD" });
+      // Get user's timezone and calculate today
+      const user = await storage.getUserById(req.user.sub);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
       }
 
-      await storage.markUserActivityDate(req.user.sub, date);
-      res.json({ success: true, date });
+      const { getTodayForUser } = await import("./utils/timezone");
+      const todayDate = getTodayForUser(user.timezone);
+
+      await storage.markUserActivityDate(req.user.sub, todayDate);
+      res.json({ success: true, date: todayDate });
     } catch (error) {
       console.error("Error marking streak:", error);
       res.status(500).json({ error: "Failed to mark activity" });
@@ -587,6 +589,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching streak:", error);
       res.status(500).json({ error: "Failed to fetch streak data" });
+    }
+  });
+
+  // ===== USER TIMEZONE ROUTE =====
+
+  // Update user's timezone
+  app.put("/api/v1/user/timezone", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { timezone } = req.body;
+
+      // Validate timezone format (basic check)
+      if (!timezone || typeof timezone !== "string" || timezone.length > 50) {
+        return res.status(400).json({ error: "Invalid timezone format" });
+      }
+
+      await storage.updateUserTimezone(req.user.sub, timezone);
+      res.json({ success: true, timezone });
+    } catch (error) {
+      console.error("Error updating timezone:", error);
+      res.status(500).json({ error: "Failed to update timezone" });
     }
   });
 
@@ -704,7 +730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const { lessonId, lessonName, featureType, activityDate } = req.body;
+      const { lessonId, lessonName, featureType } = req.body;
 
       // Validate required fields
       if (!lessonId || typeof lessonId !== "number") {
@@ -721,15 +747,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .json({ error: "featureType must be PROCESS or PLAYLIST" });
       }
 
-      // Use provided date or server date
-      const dateToUse = activityDate || new Date().toISOString().split("T")[0];
+      // Get user's timezone and calculate today
+      const user = await storage.getUserById(req.user.sub);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+
+      const { getTodayForUser } = await import("./utils/timezone");
+      const activityDate = getTodayForUser(user.timezone);
 
       const result = await storage.logActivity(
         req.user.sub,
         lessonId,
         lessonName,
         featureType,
-        dateToUse,
+        activityDate,
       );
 
       res.json({ success: true, logged: result.logged });
@@ -1056,29 +1088,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ] = await Promise.all([
         // Total registered users
         db.select({ count: count() }).from(users).where(eq(users.role, "USER")),
-        // Users active today (lastActivity = today)
+        // Active Today: Users active in last 24 hours
         db
           .select({ count: count() })
           .from(users)
-          .where(and(eq(users.role, "USER"), gte(users.lastActivity, today))),
-        // Users who practiced today (PROCESS or PLAYLIST feature types)
+          .where(
+            and(
+              eq(users.role, "USER"),
+              gte(users.lastActivity, twentyFourHoursAgo)
+            )
+          ),
+        // Practised Today: Users who logged activity in last 24 hours
         db
           .select({ count: countDistinct(activityLogs.userId) })
           .from(activityLogs)
           .where(
             and(
-              eq(activityLogs.activityDate, todayStr),
+              gte(activityLogs.createdAt, twentyFourHoursAgo), // Use created_at, not activityDate
               or(
                 eq(activityLogs.featureType, "PROCESS"),
                 eq(activityLogs.featureType, "PLAYLIST"),
               ),
             ),
           ),
-        // Badges earned today
+        // Badges earned in last 24 hours (keep consistent)
         db
           .select({ count: count() })
           .from(userBadges)
-          .where(gte(userBadges.earnedAt, today)),
+          .where(gte(userBadges.earnedAt, twentyFourHoursAgo)),
       ]);
 
       // Events

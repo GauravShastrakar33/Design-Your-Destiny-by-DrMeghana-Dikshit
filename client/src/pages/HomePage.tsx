@@ -139,10 +139,8 @@ export default function HomePage() {
 
   // Mark today mutation
   const markTodayMutation = useMutation({
-    mutationFn: async (date: string) => {
-      const res = await apiRequest("POST", "/api/v1/streak/mark-today", {
-        date,
-      });
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/v1/streak/mark-today");
       return res.json();
     },
     onSuccess: () => {
@@ -158,9 +156,8 @@ export default function HomePage() {
   // Mark today on page load (only once per session, only if authenticated)
   useEffect(() => {
     if (!markAttempted && isAuthenticated) {
-      const today = new Date().toISOString().split("T")[0];
       setMarkAttempted(true);
-      markTodayMutation.mutate(today);
+      markTodayMutation.mutate();
     }
   }, [markAttempted, isAuthenticated]);
 
@@ -171,6 +168,24 @@ export default function HomePage() {
       evaluate();
     }
   }, [badgeEvaluated, isAuthenticated, evaluate]);
+
+  // Update user timezone on mount
+  useEffect(() => {
+    const updateTimezone = async () => {
+      try {
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        await apiRequest("PUT", "/api/v1/user/timezone", {
+          timezone: userTimezone,
+        });
+        console.log(`Timezone updated to: ${userTimezone}`);
+      } catch (error) {
+        console.error("Failed to update timezone:", error);
+      }
+    };
+    if (isAuthenticated) {
+      updateTimezone();
+    }
+  }, [isAuthenticated]);
 
   const banner = bannerData?.banner;
   const bannerStatus = bannerData?.status;
