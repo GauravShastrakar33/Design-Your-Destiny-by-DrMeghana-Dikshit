@@ -107,6 +107,7 @@ var init_schema = __esm({
       forcePasswordChange: boolean("force_password_change").notNull().default(false),
       lastLogin: timestamp("last_login", { mode: "date" }),
       lastActivity: timestamp("last_activity", { mode: "date" }),
+      timezone: varchar("timezone", { length: 50 }).notNull().default("UTC"),
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
     });
     insertUserSchema = createInsertSchema(users).omit({
@@ -120,7 +121,7 @@ var init_schema = __esm({
       id: serial("id").primaryKey(),
       title: text("title").notNull(),
       time: text("time").notNull(),
-      displayTime: text("display_time").notNull(),
+      // 24-hour format: "21:00"
       meetingLink: text("meeting_link").notNull(),
       participants: integer("participants").notNull().default(0),
       isActive: boolean("is_active").notNull().default(true)
@@ -403,7 +404,9 @@ var init_schema = __esm({
       // YYYY-MM-DD format
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
       updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
-    });
+    }, (table) => ({
+      uniqueDisplayOrder: unique("unique_display_order").on(table.displayOrder)
+    }));
     insertDailyQuoteSchema = createInsertSchema(dailyQuotes).omit({
       id: true,
       lastShownDate: true,
@@ -705,7 +708,10 @@ var init_storage = __esm({
         return user;
       }
       async updateUserLastLogin(id) {
-        await db.update(users).set({ lastLogin: /* @__PURE__ */ new Date() }).where(eq(users.id, id));
+        await db.update(users).set({
+          lastLogin: /* @__PURE__ */ new Date(),
+          lastActivity: /* @__PURE__ */ new Date()
+        }).where(eq(users.id, id));
       }
       async updateUserPassword(id, hashedPassword) {
         await db.update(users).set({ passwordHash: hashedPassword }).where(eq(users.id, id));
@@ -722,6 +728,9 @@ var init_storage = __esm({
       async updateUserName(id, name) {
         const [user] = await db.update(users).set({ name }).where(eq(users.id, id)).returning();
         return user;
+      }
+      async updateUserTimezone(id, timezone) {
+        await db.update(users).set({ timezone }).where(eq(users.id, id));
       }
       async getAllCommunitySessions() {
         return await db.query.communitySessions.findMany({
@@ -1254,13 +1263,7 @@ var init_storage = __esm({
       async logActivity(userId, lessonId, lessonName, featureType, activityDate) {
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         if (!dateRegex.test(activityDate)) {
-          activityDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-        }
-        const serverDate = /* @__PURE__ */ new Date();
-        const inputDate = /* @__PURE__ */ new Date(activityDate + "T12:00:00");
-        const diffDays = Math.abs((serverDate.getTime() - inputDate.getTime()) / (1e3 * 60 * 60 * 24));
-        if (diffDays > 1) {
-          activityDate = serverDate.toISOString().split("T")[0];
+          throw new Error(`Invalid date format: ${activityDate}`);
         }
         const [existing] = await db.select().from(activityLogs).where(and(
           eq(activityLogs.userId, userId),
@@ -1269,9 +1272,11 @@ var init_storage = __esm({
           eq(activityLogs.activityDate, activityDate)
         ));
         if (existing) {
+          await db.update(users).set({ lastActivity: /* @__PURE__ */ new Date() }).where(eq(users.id, userId));
           return { logged: false, activity: existing };
         }
         const [newLog] = await db.insert(activityLogs).values({ userId, lessonId, lessonName, featureType, activityDate }).returning();
+        await db.update(users).set({ lastActivity: /* @__PURE__ */ new Date() }).where(eq(users.id, userId));
         return { logged: true, activity: newLog };
       }
       async getMonthlyStats(userId, month) {
@@ -1816,6 +1821,39 @@ var init_storage = __esm({
       }
     };
     storage = new DbStorage();
+  }
+});
+
+// server/utils/timezone.ts
+var timezone_exports = {};
+__export(timezone_exports, {
+  getStartOfDayInUserTZ: () => getStartOfDayInUserTZ,
+  getTodayForUser: () => getTodayForUser
+});
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+function getTodayForUser(timezone) {
+  try {
+    return formatInTimeZone(/* @__PURE__ */ new Date(), timezone, "yyyy-MM-dd");
+  } catch (error) {
+    console.error(`Invalid timezone ${timezone}, falling back to UTC:`, error);
+    return (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+  }
+}
+function getStartOfDayInUserTZ(timezone, date2 = /* @__PURE__ */ new Date()) {
+  try {
+    const zonedDate = toZonedTime(date2, timezone);
+    zonedDate.setHours(0, 0, 0, 0);
+    return zonedDate;
+  } catch (error) {
+    console.error(`Invalid timezone ${timezone}:`, error);
+    const utcDate = new Date(date2);
+    utcDate.setUTCHours(0, 0, 0, 0);
+    return utcDate;
+  }
+}
+var init_timezone = __esm({
+  "server/utils/timezone.ts"() {
+    "use strict";
   }
 });
 
@@ -2602,12 +2640,14 @@ async function registerRoutes(app2) {
       if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      const { date: date2 } = req.body;
-      if (!date2 || !/^\d{4}-\d{2}-\d{2}$/.test(date2)) {
-        return res.status(400).json({ error: "Invalid date format. Use YYYY-MM-DD" });
+      const user = await storage.getUserById(req.user.sub);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
       }
-      await storage.markUserActivityDate(req.user.sub, date2);
-      res.json({ success: true, date: date2 });
+      const { getTodayForUser: getTodayForUser2 } = await Promise.resolve().then(() => (init_timezone(), timezone_exports));
+      const todayDate = getTodayForUser2(user.timezone);
+      await storage.markUserActivityDate(req.user.sub, todayDate);
+      res.json({ success: true, date: todayDate });
     } catch (error) {
       console.error("Error marking streak:", error);
       res.status(500).json({ error: "Failed to mark activity" });
@@ -2635,6 +2675,22 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Error fetching streak:", error);
       res.status(500).json({ error: "Failed to fetch streak data" });
+    }
+  });
+  app2.put("/api/v1/user/timezone", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const { timezone } = req.body;
+      if (!timezone || typeof timezone !== "string" || timezone.length > 50) {
+        return res.status(400).json({ error: "Invalid timezone format" });
+      }
+      await storage.updateUserTimezone(req.user.sub, timezone);
+      res.json({ success: true, timezone });
+    } catch (error) {
+      console.error("Error updating timezone:", error);
+      res.status(500).json({ error: "Failed to update timezone" });
     }
   });
   app2.get("/api/v1/consistency/month", authenticateJWT, async (req, res) => {
@@ -2715,10 +2771,11 @@ async function registerRoutes(app2) {
   });
   app2.post("/api/v1/activity/log", authenticateJWT, async (req, res) => {
     try {
+      console.log("\u{1F525} LOCAL BACKEND HIT - Activity Log", (/* @__PURE__ */ new Date()).toISOString());
       if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      const { lessonId, lessonName, featureType, activityDate } = req.body;
+      const { lessonId, lessonName, featureType } = req.body;
       if (!lessonId || typeof lessonId !== "number") {
         return res.status(400).json({ error: "lessonId is required and must be a number" });
       }
@@ -2728,13 +2785,18 @@ async function registerRoutes(app2) {
       if (!featureType || !["PROCESS", "PLAYLIST"].includes(featureType)) {
         return res.status(400).json({ error: "featureType must be PROCESS or PLAYLIST" });
       }
-      const dateToUse = activityDate || (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      const user = await storage.getUserById(req.user.sub);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+      const { getTodayForUser: getTodayForUser2 } = await Promise.resolve().then(() => (init_timezone(), timezone_exports));
+      const activityDate = getTodayForUser2(user.timezone);
       const result = await storage.logActivity(
         req.user.sub,
         lessonId,
         lessonName,
         featureType,
-        dateToUse
+        activityDate
       );
       res.json({ success: true, logged: result.logged });
     } catch (error) {
@@ -2973,20 +3035,26 @@ async function registerRoutes(app2) {
       ] = await Promise.all([
         // Total registered users
         db.select({ count: count2() }).from(users).where(eq2(users.role, "USER")),
-        // Users active today (lastActivity = today)
-        db.select({ count: count2() }).from(users).where(and2(eq2(users.role, "USER"), gte(users.lastActivity, today))),
-        // Users who practiced today (PROCESS or PLAYLIST feature types)
+        // Active Today: Users active in last 24 hours
+        db.select({ count: count2() }).from(users).where(
+          and2(
+            eq2(users.role, "USER"),
+            gte(users.lastActivity, twentyFourHoursAgo)
+          )
+        ),
+        // Practised Today: Users who logged activity in last 24 hours
         db.select({ count: countDistinct(activityLogs.userId) }).from(activityLogs).where(
           and2(
-            eq2(activityLogs.activityDate, todayStr),
+            gte(activityLogs.createdAt, twentyFourHoursAgo),
+            // Use created_at, not activityDate
             or2(
               eq2(activityLogs.featureType, "PROCESS"),
               eq2(activityLogs.featureType, "PLAYLIST")
             )
           )
         ),
-        // Badges earned today
-        db.select({ count: count2() }).from(userBadges).where(gte(userBadges.earnedAt, today))
+        // Badges earned in last 24 hours (keep consistent)
+        db.select({ count: count2() }).from(userBadges).where(gte(userBadges.earnedAt, twentyFourHoursAgo))
       ]);
       const [eventsToday, upcomingEvents] = await Promise.all([
         // Events happening today
@@ -4630,8 +4698,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                   type: "module",
                   feature: feature.code,
                   id: module.id,
+                  course_id: courseId,
                   title: module.title,
-                  navigate_to: `/processes/module/${module.id}`
+                  navigate_to: `/course/${courseId}/module/${module.id}`
                 });
               }
               const lessons = await db.select().from(cmsLessons).where(eq2(cmsLessons.moduleId, module.id)).orderBy(asc2(cmsLessons.position));
@@ -5301,25 +5370,35 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
   app2.post("/api/admin/quotes", requireAdmin, async (req, res) => {
     try {
-      const parsed = insertDailyQuoteSchema.safeParse(req.body);
+      const { displayOrder, ...bodyWithoutOrder } = req.body;
+      const parsed = insertDailyQuoteSchema.safeParse(bodyWithoutOrder);
       if (!parsed.success) {
         return res.status(400).json({ error: "Validation failed", details: parsed.error.errors });
       }
-      const [newQuote] = await db.insert(dailyQuotes).values(parsed.data).returning();
+      const maxOrderResult = await db.select({ maxOrder: sql3`COALESCE(MAX(${dailyQuotes.displayOrder}), 0)` }).from(dailyQuotes);
+      const nextOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
+      const [newQuote] = await db.insert(dailyQuotes).values({
+        ...parsed.data,
+        displayOrder: nextOrder
+      }).returning();
       res.status(201).json(newQuote);
     } catch (error) {
       console.error("Error creating quote:", error);
+      if (error.code === "23505" && error.constraint === "unique_display_order") {
+        return res.status(400).json({
+          error: "Display order conflict detected. Please try again."
+        });
+      }
       res.status(500).json({ error: "Failed to create quote" });
     }
   });
   app2.put("/api/admin/quotes/:id", requireAdmin, async (req, res) => {
     try {
       const quoteId = parseInt(req.params.id);
-      const { quoteText, author, displayOrder, isActive } = req.body;
+      const { quoteText, author, isActive } = req.body;
       const [updated] = await db.update(dailyQuotes).set({
         ...quoteText !== void 0 && { quoteText },
         ...author !== void 0 && { author },
-        ...displayOrder !== void 0 && { displayOrder },
         ...isActive !== void 0 && { isActive },
         updatedAt: /* @__PURE__ */ new Date()
       }).where(eq2(dailyQuotes.id, quoteId)).returning();
@@ -5335,11 +5414,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app2.delete("/api/admin/quotes/:id", requireAdmin, async (req, res) => {
     try {
       const quoteId = parseInt(req.params.id);
-      const [updated] = await db.update(dailyQuotes).set({ isActive: false, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(dailyQuotes.id, quoteId)).returning();
-      if (!updated) {
+      const [deleted] = await db.delete(dailyQuotes).where(eq2(dailyQuotes.id, quoteId)).returning();
+      if (!deleted) {
         return res.status(404).json({ error: "Quote not found" });
       }
-      res.json({ success: true, message: "Quote deactivated" });
+      res.json({ success: true, message: "Quote deleted" });
     } catch (error) {
       console.error("Error deleting quote:", error);
       res.status(500).json({ error: "Failed to delete quote" });

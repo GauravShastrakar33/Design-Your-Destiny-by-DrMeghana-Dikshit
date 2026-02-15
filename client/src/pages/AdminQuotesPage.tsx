@@ -46,18 +46,13 @@ import { cn } from "@/lib/utils";
 import { FormInput } from "@/components/ui/form-input";
 import { FormTextarea } from "@/components/ui/form-textarea";
 
-// Form Schema
+// Form Schema - displayOrder is auto-managed by backend
 const quoteSchema = yup.object().shape({
   quoteText: yup
     .string()
     .required("Quote text is required")
     .min(5, "Quote is too short"),
   author: yup.string().nullable().optional(),
-  displayOrder: yup
-    .number()
-    .required("Display order is required")
-    .positive("Order must be positive")
-    .integer("Order must be an integer"),
 });
 
 type QuoteFormData = yup.InferType<typeof quoteSchema>;
@@ -87,7 +82,7 @@ export default function AdminQuotesPage() {
   // react-hook-form for Create
   const createForm = useForm<QuoteFormData>({
     resolver: yupResolver(quoteSchema),
-    defaultValues: { quoteText: "", author: "", displayOrder: 1 },
+    defaultValues: { quoteText: "", author: "" },
   });
 
   // react-hook-form for Edit
@@ -106,7 +101,6 @@ export default function AdminQuotesPage() {
       createForm.reset({
         quoteText: "",
         author: "",
-        displayOrder: quotes.length + 1,
       });
     },
     onError: (error: any) => {
@@ -151,7 +145,7 @@ export default function AdminQuotesPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/quotes"] });
       toast({
         title: "Success",
-        description: "Quote deactivated successfully",
+        description: "Quote deleted successfully",
       });
       setDeleteDialogOpen(false);
       setSelectedQuote(null);
@@ -159,7 +153,7 @@ export default function AdminQuotesPage() {
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error?.message || "Failed to deactivate quote",
+        description: error?.message || "Failed to delete quote",
         variant: "destructive",
       });
     },
@@ -183,11 +177,7 @@ export default function AdminQuotesPage() {
   });
 
   const handleCreate = () => {
-    const maxOrder =
-      quotes.length > 0
-        ? Math.max(...quotes.map((q) => q.displayOrder)) + 1
-        : 1;
-    createForm.reset({ quoteText: "", author: "", displayOrder: maxOrder });
+    createForm.reset({ quoteText: "", author: "" });
     setCreateDialogOpen(true);
   };
 
@@ -196,7 +186,6 @@ export default function AdminQuotesPage() {
     editForm.reset({
       quoteText: quote.quoteText,
       author: quote.author || "",
-      displayOrder: quote.displayOrder,
     });
     setEditDialogOpen(true);
   };
@@ -210,35 +199,17 @@ export default function AdminQuotesPage() {
     toggleMutation.mutate({ id: quote.id, isActive: !quote.isActive });
   };
 
-  const validateOrderUniqueness = (order: number, excludeId?: number) => {
-    const exists = quotes.find(
-      (q) => q.displayOrder === order && q.id !== excludeId
-    );
-    if (exists) {
-      toast({
-        title: "Validation Error",
-        description: `Display Order ${order} is already used by another quote.`,
-        variant: "destructive",
-      });
-      return false;
-    }
-    return true;
-  };
-
   const onSubmitCreate = (data: QuoteFormData) => {
-    if (!validateOrderUniqueness(data.displayOrder)) return;
     createMutation.mutate(data);
   };
 
   const onSubmitUpdate = (data: QuoteFormData) => {
     if (!selectedQuote) return;
-    if (!validateOrderUniqueness(data.displayOrder, selectedQuote.id)) return;
     updateMutation.mutate({
       id: selectedQuote.id,
       data: {
         quoteText: data.quoteText.trim(),
         author: data.author?.trim() || null,
-        displayOrder: data.displayOrder,
       },
     });
   };
@@ -435,20 +406,12 @@ export default function AdminQuotesPage() {
                   className="min-h-[100px]"
                   data-testid="input-quote-text"
                 />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormInput
-                    name="author"
-                    label="Author (Optional)"
-                    placeholder="e.g. Rumi"
-                    data-testid="input-quote-author"
-                  />
-                  <FormInput
-                    name="displayOrder"
-                    label="Display Order"
-                    type="number"
-                    data-testid="input-quote-order"
-                  />
-                </div>
+                <FormInput
+                  name="author"
+                  label="Author (Optional)"
+                  placeholder="e.g. Rumi"
+                  data-testid="input-quote-author"
+                />
               </div>
               <DialogFooter>
                 <Button
@@ -494,20 +457,12 @@ export default function AdminQuotesPage() {
                   className="min-h-[100px]"
                   data-testid="input-edit-quote-text"
                 />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormInput
-                    name="author"
-                    label="Author (Optional)"
-                    placeholder="e.g. Rumi"
-                    data-testid="input-edit-quote-author"
-                  />
-                  <FormInput
-                    name="displayOrder"
-                    label="Display Order"
-                    type="number"
-                    data-testid="input-edit-quote-order"
-                  />
-                </div>
+                <FormInput
+                  name="author"
+                  label="Author (Optional)"
+                  placeholder="e.g. Rumi"
+                  data-testid="input-edit-quote-author"
+                />
               </div>
               <DialogFooter>
                 <Button
@@ -538,10 +493,9 @@ export default function AdminQuotesPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate Quote?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Quote?</AlertDialogTitle>
             <AlertDialogDescription>
-              This inspiration will no longer be visible to users. You can
-              re-enable it anytime from the status toggle.
+              This quote will be permanently deleted. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -551,7 +505,7 @@ export default function AdminQuotesPage() {
               className="bg-red-600 hover:bg-red-700"
               data-testid="button-confirm-delete"
             >
-              {deleteMutation.isPending ? "Processing..." : "Deactivate"}
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

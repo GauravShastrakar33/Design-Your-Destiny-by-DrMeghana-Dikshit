@@ -726,6 +726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Log user activity (practice/breath/checklist)
   app.post("/api/v1/activity/log", authenticateJWT, async (req, res) => {
     try {
+      console.log("🔥 LOCAL BACKEND HIT - Activity Log", new Date().toISOString());
       if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
@@ -3482,6 +3483,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     feature: string;
     id: number;
     title: string;
+    course_id?: number;
     module_id?: number;
     navigate_to: string;
   }
@@ -3522,8 +3524,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                   type: "module",
                   feature: feature.code,
                   id: module.id,
+                  course_id: courseId,
                   title: module.title,
-                  navigate_to: `/processes/module/${module.id}`,
+                  navigate_to: `/course/${courseId}/module/${module.id}`,
                 });
               }
 
@@ -4417,21 +4420,42 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   // Admin API: Create a new quote
   app.post("/api/admin/quotes", requireAdmin, async (req, res) => {
     try {
-      const parsed = insertDailyQuoteSchema.safeParse(req.body);
+      // Remove displayOrder from request body - we auto-assign it
+      const { displayOrder, ...bodyWithoutOrder } = req.body;
+      
+      const parsed = insertDailyQuoteSchema.safeParse(bodyWithoutOrder);
       if (!parsed.success) {
         return res
           .status(400)
           .json({ error: "Validation failed", details: parsed.error.errors });
       }
 
+      // Auto-assign displayOrder as MAX + 1
+      const maxOrderResult = await db
+        .select({ maxOrder: sql<number>`COALESCE(MAX(${dailyQuotes.displayOrder}), 0)` })
+        .from(dailyQuotes);
+      
+      const nextOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
+
       const [newQuote] = await db
         .insert(dailyQuotes)
-        .values(parsed.data)
+        .values({
+          ...parsed.data,
+          displayOrder: nextOrder,
+        })
         .returning();
 
       res.status(201).json(newQuote);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating quote:", error);
+      
+      // Catch PostgreSQL unique violation error (code 23505)
+      if (error.code === "23505" && error.constraint === "unique_display_order") {
+        return res.status(400).json({ 
+          error: "Display order conflict detected. Please try again." 
+        });
+      }
+      
       res.status(500).json({ error: "Failed to create quote" });
     }
   });
@@ -4440,14 +4464,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app.put("/api/admin/quotes/:id", requireAdmin, async (req, res) => {
     try {
       const quoteId = parseInt(req.params.id);
-      const { quoteText, author, displayOrder, isActive } = req.body;
+      // displayOrder is now auto-managed and cannot be updated
+      const { quoteText, author, isActive } = req.body;
 
       const [updated] = await db
         .update(dailyQuotes)
         .set({
           ...(quoteText !== undefined && { quoteText }),
           ...(author !== undefined && { author }),
-          ...(displayOrder !== undefined && { displayOrder }),
           ...(isActive !== undefined && { isActive }),
           updatedAt: new Date(),
         })
@@ -4465,22 +4489,21 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
-  // Admin API: Soft delete a quote (set isActive = false)
+  // Admin API: Hard delete a quote
   app.delete("/api/admin/quotes/:id", requireAdmin, async (req, res) => {
     try {
       const quoteId = parseInt(req.params.id);
 
-      const [updated] = await db
-        .update(dailyQuotes)
-        .set({ isActive: false, updatedAt: new Date() })
+      const [deleted] = await db
+        .delete(dailyQuotes)
         .where(eq(dailyQuotes.id, quoteId))
         .returning();
 
-      if (!updated) {
+      if (!deleted) {
         return res.status(404).json({ error: "Quote not found" });
       }
 
-      res.json({ success: true, message: "Quote deactivated" });
+      res.json({ success: true, message: "Quote deleted" });
     } catch (error) {
       console.error("Error deleting quote:", error);
       res.status(500).json({ error: "Failed to delete quote" });

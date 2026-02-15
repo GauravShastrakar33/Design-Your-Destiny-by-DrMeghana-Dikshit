@@ -1,0 +1,1 @@
+ALTER TABLE "daily_quotes" ADD CONSTRAINT "unique_display_order" UNIQUE("display_order");

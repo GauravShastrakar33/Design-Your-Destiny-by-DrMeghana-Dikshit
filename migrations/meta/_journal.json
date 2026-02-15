@@ -15,6 +15,13 @@
       "when": 1771165388175,
       "tag": "0001_amusing_groot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771184937404,
+      "tag": "0002_high_genesis",
+      "breakpoints": true
     }
   ]
 }

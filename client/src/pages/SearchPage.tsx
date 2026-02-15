@@ -9,6 +9,7 @@ interface SearchResult {
   feature: string;
   id: number;
   title: string;
+  course_id?: number;
   module_id?: number;
   navigate_to: string;
 }

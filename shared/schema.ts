@@ -419,7 +419,9 @@ export const dailyQuotes = pgTable("daily_quotes", {
   lastShownDate: varchar("last_shown_date", { length: 10 }), // YYYY-MM-DD format
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
-});
+}, (table) => ({
+  uniqueDisplayOrder: unique("unique_display_order").on(table.displayOrder),
+}));
 
 export const insertDailyQuoteSchema = createInsertSchema(dailyQuotes).omit({
   id: true,
