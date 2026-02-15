@@ -16,6 +16,12 @@ import {
   SkipForward,
   ExternalLink,
   AlertTriangle,
+  Search,
+  Users,
+  Image as ImageIcon,
+  MoreHorizontal,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { format, isAfter, isBefore } from "date-fns";
@@ -30,6 +36,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type EventWithSignedUrl = Event & { thumbnailSignedUrl?: string | null };
 
@@ -90,6 +106,7 @@ export default function AdminEventsPage() {
     }
     return "upcoming";
   });
+  const [searchQuery, setSearchQuery] = useState("");
   const [recordingDialogEvent, setRecordingDialogEvent] =
     useState<EventWithSignedUrl | null>(null);
   const [recordingUrl, setRecordingUrl] = useState("");
@@ -97,6 +114,9 @@ export default function AdminEventsPage() {
   const [recordingExpiryDate, setRecordingExpiryDate] = useState("");
   const [skipConfirmEvent, setSkipConfirmEvent] =
     useState<EventWithSignedUrl | null>(null);
+  const [latestSubTab, setLatestSubTab] = useState("decision");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [eventToDeleteId, setEventToDeleteId] = useState<number | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("@app:admin_token");
@@ -143,6 +163,8 @@ export default function AdminEventsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/events/latest"] });
       queryClient.invalidateQueries({ queryKey: ["/api/events/upcoming"] });
       toast({ title: "Event cancelled successfully" });
+      setDeleteDialogOpen(false);
+      setEventToDeleteId(null);
     },
     onError: () => {
       toast({ title: "Failed to cancel event", variant: "destructive" });
@@ -202,8 +224,13 @@ export default function AdminEventsPage() {
   });
 
   const handleCancel = (id: number) => {
-    if (confirm("Are you sure you want to cancel this event?")) {
-      cancelMutation.mutate(id);
+    setEventToDeleteId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (eventToDeleteId) {
+      cancelMutation.mutate(eventToDeleteId);
     }
   };
 
@@ -226,13 +253,20 @@ export default function AdminEventsPage() {
     });
   };
 
-  const upcomingEvents = allEvents.filter(
+  const filteredEvents = allEvents.filter((event) => {
+    const searchMatch =
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (event.coachName || "").toLowerCase().includes(searchQuery.toLowerCase());
+    return searchMatch;
+  });
+
+  const upcomingEvents = filteredEvents.filter(
     (e) =>
       e.status === "UPCOMING" && isAfter(new Date(e.endDatetime), new Date())
   );
 
   // Latest Events: Show COMPLETED only (never CANCELLED), hide expired recordings, hide skipped
-  const latestEvents = allEvents.filter((e) => {
+  const latestEvents = filteredEvents.filter((e) => {
     // Only show COMPLETED events, never CANCELLED
     if (e.status !== "COMPLETED") return false;
 
@@ -265,242 +299,406 @@ export default function AdminEventsPage() {
     const needsDecision = needsRecordingDecision(event);
 
     return (
-      <Card key={event.id} className="p-4">
-        <div className="flex gap-4">
-          {event.thumbnailSignedUrl ? (
-            <img
-              src={event.thumbnailSignedUrl}
-              alt={event.title}
-              className="w-24 h-24 object-cover rounded-md flex-shrink-0"
-            />
-          ) : (
-            <div className="w-24 h-24 bg-muted rounded-md flex items-center justify-center flex-shrink-0">
-              <Calendar className="w-8 h-8 text-muted-foreground" />
+      <Card
+        key={event.id}
+        className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row"
+      >
+        <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
+
+        <div className="p-5 flex flex-col md:flex-row gap-5 flex-1">
+          {/* Thumbnail */}
+          <div className="w-full md:w-40 h-28 rounded-xl overflow-hidden shadow-sm border border-gray-100 bg-gray-50 flex-shrink-0 relative">
+            {event.thumbnailSignedUrl ? (
+              <img
+                src={event.thumbnailSignedUrl}
+                alt={event.title}
+                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Calendar className="w-8 h-8 text-gray-200" />
+              </div>
+            )}
+            <div className="absolute top-2 right-2">
+              {getStatusBadge(displayStatus)}
             </div>
-          )}
+          </div>
+
+          {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 overflow-x-hidden">
-              <div className="min-w-0">
-                <h3 className="font-semibold truncate" title={event.title}>
+            <div className="flex flex-col h-full">
+              <div className="flex-1">
+                <h3
+                  className="text-lg font-bold text-gray-900 leading-snug truncate"
+                  title={event.title}
+                >
                   {event.title}
                 </h3>
                 {event.coachName && (
-                  <p className="text-sm text-muted-foreground">
-                    by {event.coachName}
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-1 text-gray-500">
+                    <Users className="w-3.5 h-3.5" />
+                    <span className="text-sm font-medium">
+                      {event.coachName}
+                    </span>
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap items-center gap-y-2 gap-x-4">
+                  <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                    <Calendar className="w-3.5 h-3.5 text-brand" />
+                    <span className="text-xs font-bold leading-none">
+                      {format(new Date(event.startDatetime), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                    <Clock className="w-3.5 h-3.5 text-brand" />
+                    <span className="text-xs font-bold leading-none">
+                      {format(new Date(event.startDatetime), "h:mm a")}
+                    </span>
+                  </div>
+                  {event.requiredProgramCode && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-brand/5 text-brand border-brand/10 hover:bg-brand/10 font-black tracking-widest text-[10px]"
+                    >
+                      {event.requiredProgramCode}
+                    </Badge>
+                  )}
+                </div>
+
+                {event.showRecording && event.recordingUrl && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="px-2 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-black tracking-wide flex items-center gap-1">
+                      <Video className="w-3 h-3" />
+                      Recording Published
+                    </div>
+                    {event.recordingExpiryDate && (
+                      <span className="text-[10px] font-bold text-gray-400">
+                        Exp:{" "}
+                        {format(
+                          new Date(event.recordingExpiryDate),
+                          "MMM d, yyyy"
+                        )}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
-              {getStatusBadge(displayStatus)}
-            </div>
-            <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                {format(new Date(event.startDatetime), "MMM d, yyyy")}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                {format(new Date(event.startDatetime), "h:mm a")}
-              </span>
-            </div>
-            {event.requiredProgramCode && (
-              <Badge variant="outline" className="mt-2">
-                {event.requiredProgramCode}
-              </Badge>
-            )}
-            {event.showRecording && event.recordingUrl && (
-              <Badge variant="secondary" className="mt-2 ml-2">
-                <Video className="w-3 h-3 mr-1" />
-                {event.recordingExpiryDate
-                  ? `Recording available till ${format(
-                      new Date(event.recordingExpiryDate),
-                      "MMM d, yyyy"
-                    )}`
-                  : "Recording Available"}
-              </Badge>
-            )}
-          </div>
-        </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {showDecisionActions && needsDecision ? (
-            <>
-              {/* Decision pending: Only show Add Recording and Skip Recording */}
-              <Button
-                size="sm"
-                onClick={() => setRecordingDialogEvent(event)}
-                className="bg-brand hover:bg-brand/90"
-                data-testid={`button-add-recording-${event.id}`}
-              >
-                <Video className="w-4 h-4 mr-1" />
-                Add Recording
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setSkipConfirmEvent(event)}
-                data-testid={`button-skip-recording-${event.id}`}
-              >
-                <SkipForward className="w-4 h-4 mr-1" />
-                Skip Recording
-              </Button>
-            </>
-          ) : showDecisionActions &&
-            event.showRecording &&
-            event.recordingUrl ? null : !showDecisionActions ? ( // Recording published: No actions needed (already shows "Recording available till...")
-            <>
-              {/* Standard actions for non-decision cards */}
-              {event.status !== "COMPLETED" && event.status !== "CANCELLED" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    setLocation(
-                      `/admin/events/${event.id}/edit?tab=${activeTab}`
-                    )
-                  }
-                  data-testid={`button-edit-event-${event.id}`}
-                >
-                  <Edit className="w-4 h-4 mr-1" />
-                  Edit
-                </Button>
-              )}
-              {event.joinUrl &&
-                event.status !== "COMPLETED" &&
-                event.status !== "CANCELLED" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => window.open(event.joinUrl!, "_blank")}
-                    data-testid={`button-join-event-${event.id}`}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    Join Link
-                  </Button>
+              {/* Actions */}
+              <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-gray-50">
+                {showDecisionActions && needsDecision ? (
+                  <>
+                    <Button
+                      size="sm"
+                      onClick={() => setRecordingDialogEvent(event)}
+                      className="bg-brand hover:bg-brand/90 font-bold"
+                      data-testid={`button-add-recording-${event.id}`}
+                    >
+                      <Video className="w-4 h-4 mr-1.5" />
+                      Add Recording
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSkipConfirmEvent(event)}
+                      className="font-bold text-gray-600"
+                      data-testid={`button-skip-recording-${event.id}`}
+                    >
+                      <SkipForward className="w-4 h-4 mr-1.5" />
+                      Skip Recording
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {event.status !== "COMPLETED" &&
+                      event.status !== "CANCELLED" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setLocation(
+                              `/admin/events/${event.id}/edit?tab=${activeTab}`
+                            )
+                          }
+                          className="bg-white border-gray-200 hover:border-brand hover:text-brand font-bold shadow-sm"
+                          data-testid={`button-edit-event-${event.id}`}
+                        >
+                          <Edit className="w-4 h-4 mr-1.5" />
+                          Edit
+                        </Button>
+                      )}
+                    {event.joinUrl &&
+                      event.status !== "COMPLETED" &&
+                      event.status !== "CANCELLED" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(event.joinUrl!, "_blank")}
+                          className="bg-white border-gray-200 hover:bg-gray-50 font-bold shadow-sm"
+                          data-testid={`button-join-event-${event.id}`}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-1.5" />
+                          Registration Link
+                        </Button>
+                      )}
+                    {event.status !== "CANCELLED" &&
+                      (event.status !== "COMPLETED" || activeTab === "all") && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleCancel(event.id)}
+                          disabled={cancelMutation.isPending}
+                          className="text-gray-400 hover:text-red-600 hover:bg-red-50 ml-auto"
+                          data-testid={`button-cancel-event-${event.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                  </>
                 )}
-              {event.status !== "CANCELLED" && event.status !== "COMPLETED" && (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleCancel(event.id)}
-                  disabled={cancelMutation.isPending}
-                  data-testid={`button-cancel-event-${event.id}`}
-                >
-                  <XCircle className="w-4 h-4 mr-1" />
-                  Cancel
-                </Button>
-              )}
-            </>
-          ) : null}
+              </div>
+            </div>
+          </div>
         </div>
       </Card>
     );
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Event Calendar</h1>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1
+            className="text-xl font-bold text-gray-900 leading-none"
+            data-testid="text-page-title"
+          >
+            Events
+          </h1>
+          <p className="text-sm font-semibold text-gray-600 mt-1">
+            Manage your live sessions, recordings, and event schedules.
+          </p>
+        </div>
         <Button
           onClick={() => setLocation(`/admin/events/new?tab=${activeTab}`)}
-          className="bg-brand hover:bg-brand/90"
+          className="bg-brand hover:bg-brand/90 font-bold text-xs h-10 px-6 rounded-lg shadow-sm gap-2 w-fit"
           data-testid="button-add-event"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-5 h-5 mr-2" />
           Add Event
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="upcoming" data-testid="tab-upcoming">
-            Upcoming ({upcomingEvents.length})
-          </TabsTrigger>
-          <TabsTrigger value="latest" data-testid="tab-latest">
-            Latest
-            {eventsNeedingDecision.length > 0 && (
-              <Badge className="ml-2 bg-amber-500">
-                {eventsNeedingDecision.length}
+      {/* Filter & Search Bar */}
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full space-y-8"
+      >
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-4 items-center justify-between">
+          <TabsList className="bg-gray-100/80 p-1 w-full lg:w-auto">
+            <TabsTrigger
+              value="upcoming"
+              className="font-bold px-5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg"
+              data-testid="tab-upcoming"
+            >
+              Upcoming
+              <Badge className="ml-2 bg-brand/10 text-brand border-none hover:bg-brand/10 hidden">
+                {upcomingEvents.length}
               </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="all" data-testid="tab-all">
-            All Events ({allEvents.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="upcoming">
-          {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
-          ) : upcomingEvents.length === 0 ? (
-            <Card className="p-8 text-center">
-              <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">No upcoming events</p>
-              <Button onClick={() => setLocation("/admin/events/new")}>
-                <Plus className="w-4 h-4 mr-2" />
-                Schedule an Event
-              </Button>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {upcomingEvents.map((event) => renderEventCard(event))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="latest">
-          {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
-          ) : (
-            <div className="space-y-6">
+            </TabsTrigger>
+            <TabsTrigger
+              value="latest"
+              className="font-bold px-5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg"
+              data-testid="tab-latest"
+            >
+              Latest
               {eventsNeedingDecision.length > 0 && (
-                <div>
-                  <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-                    Needs Recording Decision
-                  </h2>
-                  <div className="space-y-4">
-                    {eventsNeedingDecision.map((event) =>
-                      renderEventCard(event, true)
-                    )}
-                  </div>
-                </div>
+                <Badge className="ml-2 bg-amber-500 border-none animate-pulse hidden">
+                  {eventsNeedingDecision.length}
+                </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="all"
+              className="font-bold px-5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg"
+              data-testid="tab-all"
+            >
+              All Events
+            </TabsTrigger>
+          </TabsList>
 
-              {eventsWithRecordings.length > 0 && (
-                <div>
-                  <h2 className="text-lg font-semibold mb-3">
-                    Recording Published
-                  </h2>
-                  <div className="space-y-4">
-                    {eventsWithRecordings.map((event) =>
-                      renderEventCard(event, true)
-                    )}
+          <div className="relative w-full lg:w-80">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search events, coaches..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-gray-50/50 border-gray-200 rounded-lg focus:ring-brand/20 focus:border-brand transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="w-full">
+          <TabsContent
+            value="upcoming"
+            className="mt-0 focus-visible:outline-none focus-visible:ring-0"
+          >
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 grayscale opacity-60">
+                <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
+                <p className="text-gray-500 font-bold">
+                  Loading upcoming events...
+                </p>
+              </div>
+            ) : upcomingEvents.length === 0 ? (
+              <Card className="p-20 text-center border border-slate-200 rounded-2xl bg-white">
+                <Calendar className="w-16 h-16 mx-auto text-gray-200 mb-6" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  No upcoming events
+                </h3>
+                <p className="text-gray-500 mb-8 max-w-sm mx-auto">
+                  Stay on top of your schedule. Create a new event to get
+                  started.
+                </p>
+                <Button
+                  onClick={() => setLocation("/admin/events/new")}
+                  className="bg-brand/10 text-brand hover:bg-brand/20 font-bold px-8"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Schedule an Event
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {upcomingEvents.map((event) => renderEventCard(event))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent
+            value="latest"
+            className="mt-0 focus-visible:outline-none focus-visible:ring-0"
+          >
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 grayscale opacity-60">
+                <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
+                <p className="text-gray-500 font-bold">
+                  Loading latest events...
+                </p>
+              </div>
+            ) : (
+              <Tabs
+                value={latestSubTab}
+                onValueChange={setLatestSubTab}
+                className="w-full space-y-4"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <Video className="w-4 h-4 text-brand" />
+                    <h2 className="text-sm font-bold text-gray-900">
+                      Recording Management
+                    </h2>
                   </div>
+                  <TabsList className="bg-gray-100/50 p-1">
+                    <TabsTrigger
+                      value="decision"
+                      className="text-xs font-bold px-4 data-[state=active]:bg-white data-[state=active]:shadow-xs rounded-md"
+                    >
+                      Needs Decision
+                      {eventsNeedingDecision.length > 0 && (
+                        <Badge className="ml-2 bg-amber-500 border-none h-4 px-1 text-[10px]">
+                          {eventsNeedingDecision.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="published"
+                      className="text-xs font-bold px-4 data-[state=active]:bg-white data-[state=active]:shadow-xs rounded-md"
+                    >
+                      Published
+                      {eventsWithRecordings.length > 0 && (
+                        <Badge className="ml-2 bg-blue-500 border-none h-4 px-1 text-[10px]">
+                          {eventsWithRecordings.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                  </TabsList>
                 </div>
-              )}
-            </div>
-          )}
-        </TabsContent>
 
-        <TabsContent value="all">
-          {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
-          ) : allEvents.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">
-                No events created yet
-              </p>
-              <Button onClick={() => setLocation("/admin/events/new")}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create First Event
-              </Button>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {allEvents.map((event) => renderEventCard(event))}
-            </div>
-          )}
-        </TabsContent>
+                <TabsContent value="decision" className="mt-0 outline-none">
+                  {eventsNeedingDecision.length === 0 ? (
+                    <Card className="p-16 text-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/30">
+                      <AlertTriangle className="w-12 h-12 mx-auto text-gray-200 mb-4" />
+                      <h3 className="text-lg font-bold text-gray-900 mb-1">
+                        All caught up!
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        No events are waiting for a recording decision.
+                      </p>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                      {eventsNeedingDecision.map((event) =>
+                        renderEventCard(event, true)
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="published" className="mt-0 outline-none">
+                  {eventsWithRecordings.length === 0 ? (
+                    <Card className="p-16 text-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/30">
+                      <Video className="w-12 h-12 mx-auto text-gray-200 mb-4" />
+                      <h3 className="text-lg font-bold text-gray-900 mb-1">
+                        No recordings yet
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Events with published recordings will appear here.
+                      </p>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                      {eventsWithRecordings.map((event) =>
+                        renderEventCard(event, true)
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            )}
+          </TabsContent>
+
+          <TabsContent
+            value="all"
+            className="mt-0 focus-visible:outline-none focus-visible:ring-0"
+          >
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 grayscale opacity-60">
+                <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
+                <p className="text-gray-500 font-bold">Loading all events...</p>
+              </div>
+            ) : allEvents.length === 0 ? (
+              <Card className="p-20 text-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/30">
+                <p className="text-gray-500 font-bold mb-4">
+                  No events created yet
+                </p>
+                <Button
+                  onClick={() => setLocation("/admin/events/new")}
+                  className="bg-brand text-white hover:bg-brand/90 font-bold"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Event
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {filteredEvents.map((event) => renderEventCard(event))}
+              </div>
+            )}
+          </TabsContent>
+        </div>
       </Tabs>
 
       <Dialog
@@ -608,6 +806,30 @@ export default function AdminEventsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This event will be cancelled and users will no longer see it in
+              the upcoming schedule. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 font-bold"
+              data-testid="button-confirm-delete"
+            >
+              {cancelMutation.isPending
+                ? "Cancelling..."
+                : "Confirm Cancellation"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

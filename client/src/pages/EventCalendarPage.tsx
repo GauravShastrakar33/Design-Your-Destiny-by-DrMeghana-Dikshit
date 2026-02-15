@@ -383,11 +383,11 @@ export default function EventCalendarPage() {
                                   onClick={() =>
                                     event.joinUrl && handleJoin(event.joinUrl)
                                   }
-                                  disabled={!live || !event.joinUrl}
+                                  // disabled={!live || !event.joinUrl}
                                   className="w-full bg-white text-brand font-semibold rounded-lg border border-brand hover:translate-y-[-2px] transition-all text-xs uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
                                   data-testid={`button-join-${event.id}`}
                                 >
-                                  Join Now
+                                  Register Now
                                   <ExternalLink className="w-3.5 h-3.5 ml-2" />
                                 </Button>
                               </div>

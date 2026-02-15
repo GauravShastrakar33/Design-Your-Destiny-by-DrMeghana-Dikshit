@@ -26,9 +26,25 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { ArrowLeft, Upload, ImageIcon, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Upload,
+  ImageIcon,
+  Loader2,
+  Calendar,
+  Sparkles,
+  AlertCircle,
+  Trash2,
+  X,
+} from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import type { Event, Program } from "@shared/schema";
+import { FormProvider, Controller } from "react-hook-form";
+import { FormInput } from "@/components/ui/form-input";
+import { FormSelect } from "@/components/ui/form-select";
+import { FormTextarea } from "@/components/ui/form-textarea";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { cn } from "@/lib/utils";
 
 const eventFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -37,7 +53,10 @@ const eventFormSchema = z.object({
   thumbnailUrl: z.string().optional(),
   startDatetime: z.string().min(1, "Start date/time is required"),
   endDatetime: z.string().min(1, "End date/time is required"),
-  joinUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  joinUrl: z
+    .string()
+    .min(1, "Registration link is required")
+    .url("Must be a valid URL"),
   requiredProgramCode: z.string().min(1, "Program is required"),
   requiredProgramLevel: z.number().min(1),
   status: z.enum(["DRAFT", "UPCOMING", "COMPLETED", "CANCELLED"]),
@@ -235,6 +254,8 @@ export default function AdminEventFormPage() {
     }
   };
 
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   const onSubmit = (data: EventFormData) => {
     if (isEditing) {
       updateMutation.mutate(data);
@@ -252,286 +273,372 @@ export default function AdminEventFormPage() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <Button
-        variant="ghost"
-        onClick={() => {
-          const searchParams = new URLSearchParams(window.location.search);
-          const tab = searchParams.get("tab");
-          setLocation(tab ? `/admin/events?tab=${tab}` : "/admin/events");
-        }}
-        className="mb-4"
-        data-testid="button-back"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Events
-      </Button>
+    <div className="p-6 pb-20">
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            const searchParams = new URLSearchParams(window.location.search);
+            const tab = searchParams.get("tab");
+            setLocation(tab ? `/admin/events?tab=${tab}` : "/admin/events");
+          }}
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-500" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold">
+            {isEditing ? "Edit Event" : "Create New Event"}
+          </h1>
+        </div>
+      </div>
 
-      <h1 className="text-2xl font-bold mb-6">
-        {isEditing ? "Edit Event" : "Create New Event"}
-      </h1>
+      <Card className="relative overflow-hidden p-0 bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-brand z-10" />
 
-      <Card className="p-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Enter event title"
-                      data-testid="input-event-title"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
+            {/* Top Section: Media & Basic Info */}
+            <div className="p-6 space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                {/* Left: Media Upload */}
+                <div className="lg:col-span-4 space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ImageIcon className="w-4 h-4 text-brand" />
+                    <span className="text-sm font-semibold text-gray-500">
+                      Event Thumbnail
+                    </span>
+                  </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Enter event description"
-                      rows={4}
-                      data-testid="input-event-description"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  {form.watch("thumbnailUrl") || thumbnailPreview ? (
+                    <div className="relative group w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm">
+                      {thumbnailPreview || form.watch("thumbnailUrl") ? (
+                        <img
+                          src={thumbnailPreview || form.watch("thumbnailUrl")}
+                          alt="Preview"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                          <Upload className="w-8 h-8 mb-2 opacity-30" />
+                          <span className="text-sm font-medium">
+                            Image Uploaded
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleThumbnailUpload(file);
+                            }}
+                          />
+                          <div className="bg-white/90 hover:bg-white text-black px-4 py-1.5 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2">
+                            <Upload className="w-4 h-4" />
+                            Change
+                          </div>
+                        </label>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          className="w-9 h-9 rounded-xl shadow-lg"
+                          onClick={() => {
+                            setThumbnailPreview(null);
+                            form.setValue("thumbnailUrl", "");
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label
+                      className={cn(
+                        "w-full aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-gray-50 hover:border-brand/40 group",
+                        form.formState.errors.thumbnailUrl
+                          ? "border-red-200 bg-red-50/30"
+                          : "border-gray-200"
+                      )}
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleThumbnailUpload(file);
+                        }}
+                        data-testid="input-thumbnail"
+                      />
+                      <div className="p-3 bg-brand/5 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                        {isUploading ? (
+                          <Loader2 className="w-6 h-6 text-brand animate-spin" />
+                        ) : (
+                          <Upload className="w-6 h-6 text-brand" />
+                        )}
+                      </div>
+                      <span className="text-sm font-bold text-gray-900">
+                        Upload Thumbnail
+                      </span>
+                      <span className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-black">
+                        JPEG, PNG recommended
+                      </span>
+                    </label>
+                  )}
+                  {form.formState.errors.thumbnailUrl && (
+                    <p className="text-xs font-bold text-red-500 mt-1">
+                      {form.formState.errors.thumbnailUrl.message}
+                    </p>
+                  )}
+                </div>
 
-            <FormField
-              control={form.control}
-              name="coachName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Coach / Host Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Enter coach or host name"
+                {/* Right: Basic Info */}
+                <div className="lg:col-span-8 space-y-6">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="w-4 h-4 text-brand" />
+                    <span className="text-sm font-semibold text-gray-500">
+                      Basic Details
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <FormInput
+                        name="title"
+                        label="Event Title"
+                        placeholder="e.g. Masterclass on Wealth Creation"
+                        required
+                        data-testid="input-event-title"
+                      />
+                    </div>
+                    <FormInput
+                      name="coachName"
+                      label="Coach / Host Name"
+                      placeholder="e.g. Dr. Meghana Dikshit"
                       data-testid="input-coach-name"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div>
-              <Label>Thumbnail</Label>
-              <div className="mt-2">
-                {thumbnailPreview ? (
-                  <div className="relative w-48 h-32">
-                    <img
-                      src={thumbnailPreview}
-                      alt="Thumbnail preview"
-                      className="w-full h-full object-cover rounded-md"
+                    <FormSelect
+                      name="status"
+                      label="Status"
+                      required
+                      options={[
+                        { label: "Draft", value: "DRAFT" },
+                        { label: "Upcoming (Published)", value: "UPCOMING" },
+                        ...(isEditing
+                          ? [
+                              { label: "Completed", value: "COMPLETED" },
+                              { label: "Cancelled", value: "CANCELLED" },
+                            ]
+                          : []),
+                      ]}
+                      data-testid="select-status"
                     />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      className="absolute bottom-2 right-2"
-                      onClick={() => {
-                        setThumbnailPreview(null);
-                        form.setValue("thumbnailUrl", "");
-                      }}
-                    >
-                      Remove
-                    </Button>
+                    <div className="md:col-span-2">
+                      <FormTextarea
+                        name="description"
+                        label="Description"
+                        placeholder="What will users learn during this session?"
+                        rows={4}
+                        data-testid="input-event-description"
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-48 h-32 border-2 border-dashed rounded-md cursor-pointer hover:border-primary transition-colors">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleThumbnailUpload(file);
-                      }}
-                      data-testid="input-thumbnail"
-                    />
-                    {isUploading ? (
-                      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                    ) : (
-                      <>
-                        <ImageIcon className="w-8 h-8 text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">
-                          Upload Thumbnail
-                        </span>
-                      </>
-                    )}
-                  </label>
-                )}
+                </div>
+              </div>
+
+              {/* Middle Section: Schedule & Access */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10 border-t border-gray-100">
+                {/* Left: Schedule */}
+                <div className="lg:col-span-4 space-y-6">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Calendar className="w-4 h-4 text-brand" />
+                    <span className="text-sm font-semibold text-gray-500">
+                      Schedule
+                    </span>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-gray-500 tracking-wider">
+                        Start Date & Time
+                      </Label>
+                      <Controller
+                        name="startDatetime"
+                        control={form.control}
+                        render={({ field }) => (
+                          <DateTimePicker
+                            date={
+                              field.value ? new Date(field.value) : undefined
+                            }
+                            setDate={(date) =>
+                              field.onChange(date?.toISOString() || "")
+                            }
+                            placeholder="Select start date"
+                            error={!!form.formState.errors.startDatetime}
+                          />
+                        )}
+                      />
+                      {form.formState.errors.startDatetime && (
+                        <p className="text-xs font-bold text-red-500 mt-1">
+                          {form.formState.errors.startDatetime.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-gray-500 tracking-wider">
+                        End Date & Time
+                      </Label>
+                      <Controller
+                        name="endDatetime"
+                        control={form.control}
+                        render={({ field }) => (
+                          <DateTimePicker
+                            date={
+                              field.value ? new Date(field.value) : undefined
+                            }
+                            setDate={(date) =>
+                              field.onChange(date?.toISOString() || "")
+                            }
+                            minDate={
+                              form.watch("startDatetime")
+                                ? new Date(form.watch("startDatetime"))
+                                : undefined
+                            }
+                            placeholder="Select end date"
+                            error={!!form.formState.errors.endDatetime}
+                          />
+                        )}
+                      />
+                      {form.formState.errors.endDatetime && (
+                        <p className="text-xs font-bold text-red-500 mt-1">
+                          {form.formState.errors.endDatetime.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Access & Links */}
+                <div className="lg:col-span-8 space-y-6">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertCircle className="w-4 h-4 text-brand" />
+                    <span className="text-sm font-semibold text-gray-500">
+                      Access & Links
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-gray-700">
+                        Required Program{" "}
+                        <span className="text-destructive ml-1">*</span>
+                      </Label>
+                      <Controller
+                        name="requiredProgramCode"
+                        control={form.control}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value}
+                            onValueChange={(code: string) => {
+                              field.onChange(code);
+                              const p = programs.find((pg) => pg.code === code);
+                              if (p) {
+                                form.setValue("requiredProgramLevel", p.level);
+                              }
+                            }}
+                          >
+                            <SelectTrigger
+                              className={cn(
+                                form.formState.errors.requiredProgramCode &&
+                                  "!border-destructive"
+                              )}
+                            >
+                              <SelectValue placeholder="Select program" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[...programs]
+                                .sort((a, b) => b.level - a.level)
+                                .map((p) => (
+                                  <SelectItem key={p.code} value={p.code}>
+                                    {p.code} — {p.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {form.formState.errors.requiredProgramCode && (
+                        <p className="text-xs font-medium text-destructive">
+                          {form.formState.errors.requiredProgramCode.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-gray-700">
+                        Registration Link{" "}
+                        <span className="text-destructive ml-1">*</span>
+                      </Label>
+                      <Input
+                        {...form.register("joinUrl")}
+                        placeholder="Enter registration link"
+                        className={cn(
+                          form.formState.errors.joinUrl && "!border-destructive"
+                        )}
+                        data-testid="input-join-url"
+                      />
+                      {form.formState.errors.joinUrl && (
+                        <p className="text-xs font-medium text-red-500">
+                          {form.formState.errors.joinUrl.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <p className="text-xs text-gray-500 leading-relaxed italic">
+                      Users will be able to register for this event if they
+                      belong to the selected program or higher.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startDatetime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date & Time</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="datetime-local"
-                        data-testid="input-start-datetime"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="endDatetime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Date & Time</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="datetime-local"
-                        data-testid="input-end-datetime"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="joinUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Meeting / Join URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="https://zoom.us/j/..."
-                      data-testid="input-join-url"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    The link users will click to join the live session
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="requiredProgramCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Required Program</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(code) => {
-                      const program = programs.find((p) => p.code === code);
-                      if (!program) return;
-                      form.setValue("requiredProgramCode", program.code);
-                      form.setValue("requiredProgramLevel", program.level);
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger data-testid="select-program">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {[...programs]
-                        .sort((a, b) => b.level - a.level)
-                        .map((program) => (
-                          <SelectItem key={program.code} value={program.code}>
-                            {program.code} — {program.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    Select minimum program level required to access this event
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-status">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="DRAFT">Draft</SelectItem>
-                      <SelectItem value="UPCOMING">
-                        Upcoming (Published)
-                      </SelectItem>
-                      {isEditing && (
-                        <>
-                          <SelectItem value="COMPLETED">Completed</SelectItem>
-                          <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    Only "Upcoming" events are visible to users
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex gap-4 pt-4">
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-                className="bg-brand hover:bg-brand/90"
-                data-testid="button-save-event"
-              >
-                {createMutation.isPending || updateMutation.isPending
-                  ? "Saving..."
-                  : isEditing
-                  ? "Update Event"
-                  : "Create Event"}
-              </Button>
+            {/* Form Footer / Actions */}
+            <div className="p-8 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between gap-4">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={() => setLocation("/admin/events")}
+                className="font-bold text-xs h-10 px-6 rounded-lg shadow-sm gap-2 w-fit border border-slate-300"
               >
                 Cancel
               </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-brand hover:bg-brand/90 font-bold text-xs h-10 px-6 rounded-lg shadow-sm gap-2 w-fit"
+                data-testid="button-save-event"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : isEditing ? (
+                  "Update Event"
+                ) : (
+                  "Create Event"
+                )}
+              </Button>
             </div>
           </form>
-        </Form>
+        </FormProvider>
       </Card>
     </div>
   );
