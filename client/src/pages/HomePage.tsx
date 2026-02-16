@@ -425,7 +425,7 @@ export default function HomePage() {
                   <span className="flex-1 text-sm md:text-lg font-bold text-slate-800 leading-tight line-clamp-2 pr-1">
                     {card.title}
                   </span>
-                  <div className="text-slate-400 group-hover:text-brand transition-colors shrink-0">
+                  <div className="text-slate-400 group-hover:text-brand transition-colors shrink-0 hidden">
                     <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
                   </div>
                 </button>
