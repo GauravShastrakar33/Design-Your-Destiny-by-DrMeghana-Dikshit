@@ -57,7 +57,7 @@ export default function LessonDetailPage() {
   const courseId = parseInt(params.courseId || "0");
   const lessonId = parseInt(params.lessonId || "0");
   const [, setLocation] = useLocation();
-  const searchString = useSearch();
+  const searchString = useSearch() || (window.location.hash.includes("?") ? window.location.hash.split("?")[1] : "");
   const { toast } = useToast();
 
   const handleBack = () => {
@@ -518,8 +518,8 @@ export default function LessonDetailPage() {
                         item.color === "blue"
                           ? "bg-blue-50 text-blue-500"
                           : item.color === "green"
-                          ? "bg-green-50 text-green-500"
-                          : "bg-orange-50 text-orange-500"
+                            ? "bg-green-50 text-green-500"
+                            : "bg-orange-50 text-orange-500"
                       )}
                     >
                       <item.icon className="w-6 h-6" />

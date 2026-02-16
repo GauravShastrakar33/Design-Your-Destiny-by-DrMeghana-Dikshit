@@ -195,11 +195,6 @@ export default function AdminPlaylistMappingPage() {
 
   const isLoading = coursesLoading || mappingLoading;
 
-  const totalAudioLessons = modules.reduce(
-    (sum, m) => sum + (m.audioLessonCount || 0),
-    0
-  );
-
   return (
     <div className="min-h-screen bg-[#f8f9fa] p-8">
       <div>
@@ -299,19 +294,13 @@ export default function AdminPlaylistMappingPage() {
                         <List className="w-4 h-4 text-teal-500" />
                       </div>
                       <h2 className="text-md font-bold text-gray-900">
-                        Available Audio Content
+                        Available Modules
                       </h2>
-                    </div>
-                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                      <Music className="w-4 h-4 text-brand" />
-                      <span className="text-sm font-bold text-gray-700">
-                        {totalAudioLessons} Tracks Total
-                      </span>
                     </div>
                   </div>
                   <p className="text-sm text-gray-400 font-medium mb-6">
-                    Preview of modules and audio tracks that will be visible in
-                    the user's playlist builder.
+                    Preview of modules that will be visible in the user's
+                    playlist builder.
                   </p>
 
                   {modulesLoading ? (
@@ -337,17 +326,6 @@ export default function AdminPlaylistMappingPage() {
                             <span className="text-sm font-bold text-gray-700">
                               {module.title}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                              {module.lessonCount || 0} Lessons
-                            </span>
-                            <div className="flex items-center gap-1.5 bg-brand/5 px-2 py-1 rounded-md">
-                              <Music className="w-3 h-3 text-brand" />
-                              <span className="text-xs font-black text-brand">
-                                {module.audioLessonCount || 0} Audio
-                              </span>
-                            </div>
                           </div>
                         </div>
                       ))}

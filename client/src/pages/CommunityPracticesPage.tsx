@@ -1,4 +1,4 @@
-import { ArrowLeft, Users, Video } from "lucide-react";
+import { Users, Video, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/Header";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +6,25 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { CommunitySession } from "@shared/schema";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Format 24h time to 12h display format
+const formatDisplayTime = (time24: string): string => {
+  const [hours, minutes] = time24.split(":").map(Number);
+
+  if (isNaN(hours) || isNaN(minutes)) {
+    return time24; // fallback to raw time
+  }
+
+  const isPM = hours >= 12;
+  const displayHours = hours % 12 || 12;
+  const period = isPM ? "PM" : "AM";
+
+  return `${displayHours}:${minutes
+    .toString()
+    .padStart(2, "0")} ${period}`;
+};
+
 
 export default function CommunityPracticesPage() {
   const [, setLocation] = useLocation();
@@ -15,9 +34,10 @@ export default function CommunityPracticesPage() {
     queryKey: ["/api/sessions"],
   });
 
-  const handleJoin = (meetingLink: string, displayTime: string) => {
+  const handleJoin = (meetingLink: string, time: string, title: string) => {
     if (meetingLink) {
       window.open(meetingLink, "_blank");
+      const displayTime = formatDisplayTime(time);
       toast({
         title: "Opening Session",
         description: `Launching ${displayTime} practice session...`,
@@ -33,128 +53,179 @@ export default function CommunityPracticesPage() {
 
   const getCurrentStatus = (sessionTime: string) => {
     const now = new Date();
+    // 1. Parse 24h time (HH:mm)
     const [hours, minutes] = sessionTime.split(":").map(Number);
-    const sessionDate = new Date();
+    // Create session date for today
+    let sessionDate = new Date();
     sessionDate.setHours(hours, minutes, 0, 0);
-
+    // 2. Calculate time difference in minutes
     const diffMinutes = Math.floor(
-      (sessionDate.getTime() - now.getTime()) / (1000 * 60)
+      (sessionDate.getTime() - now.getTime()) / (1000 * 60),
     );
-
-    if (diffMinutes < -30) {
-      return { status: "ended", label: "Ended" };
-    } else if (diffMinutes <= 0 && diffMinutes >= -30) {
-      return { status: "live", label: "Live Now" };
-    } else if (diffMinutes <= 15) {
+    // 3. Status Mapping with Midnight Reset
+    // Sessions automatically reset to "Upcoming" at midnight (start of new day)
+    if (diffMinutes > 15) {
+      // More than 15 minutes before start
+      return { status: "upcoming", label: "Upcoming" };
+    } else if (diffMinutes > 0 && diffMinutes <= 15) {
+      // 15 minutes before start - Join opens
       return { status: "starting-soon", label: "Starting Soon" };
+    } else if (diffMinutes <= 0 && diffMinutes >= -120) {
+      // From start time until 2 hours later - Session is live
+      return { status: "live", label: "Live Now" };
+    } else if (diffMinutes < -120) {
+      // More than 2 hours after start - Session ended for today
+      // Will naturally reset to "Upcoming" at midnight when new day starts
+      return { status: "ended", label: "Ended" };
     } else {
       return { status: "upcoming", label: "Upcoming" };
     }
   };
 
   return (
-    <div className="min-h-screen bg-page-bg pb-20">
-      <div className="max-w-md mx-auto">
-        <Header
-          title="Community Practices"
-          hasBackButton={true}
-          onBack={() => setLocation("/")}
-        />
+    <div className="min-h-screen bg-[#F9FAFB] pb-24">
+      <Header
+        title="Community Practices"
+        hasBackButton={true}
+        onBack={() => setLocation("/")}
+      />
 
-        <div className="px-4 py-6">
-          <Card className="bg-white border border-gray-200 p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <Users className="w-5 h-5 text-brand mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">
-                  Practice Together
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Join our community for guided group practices. Sessions run
-                  daily at scheduled times.
-                </p>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Intro Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card className="bg-transparent border-0 shadow-none overflow-hidden relative">
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-1">
+                <Users className="w-6 h-6 text-brand" />
               </div>
+              <h2 className="text-lg font-bold text-gray-900 leading-tight mb-2">
+                Practice Together
+              </h2>
+              <p className="text-gray-700 text-sm max-w-md font-medium">
+                Join our community for guided group practices. Sessions run
+                daily at scheduled times.
+              </p>
             </div>
           </Card>
+        </motion.div>
 
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              Today's Sessions
-            </h2>
-            {isLoading ? (
-              <p className="text-center text-gray-500 py-8">
-                Loading sessions...
+        {/* Sessions List */}
+        <div className="space-y-4">
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="h-24 bg-white border border-gray-100 rounded-2xl animate-pulse"
+                />
+              ))}
+            </div>
+          ) : sessions.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl border-gray-200 p-8 text-center"
+            >
+              <h3 className="text-lg font-bold text-gray-900 mb-1">
+                No Sessions Yet
+              </h3>
+              <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                Check back soon for upcoming community practice sessions.
               </p>
-            ) : sessions.length === 0 ? (
-              <Card className="bg-white border border-gray-200 p-8">
-                <p className="text-center text-gray-500">
-                  No sessions scheduled yet
-                </p>
-              </Card>
-            ) : (
-              sessions.map((session) => {
+            </motion.div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {sessions.map((session, idx) => {
                 const { status, label } = getCurrentStatus(session.time);
 
                 return (
-                  <Card
+                  <motion.div
                     key={session.id}
-                    className="bg-white border border-gray-200 p-4"
-                    data-testid={`session-${session.id}`}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ delay: idx * 0.05 }}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-14 h-14 bg-brand/10 rounded-lg flex items-center justify-center">
-                          <Video className="w-7 h-7 text-brand" />
+                    <Card
+                      className="bg-white rounded-2xl shadow-lg shadow-black/[0.03] border-0 overflow-hidden group"
+                      data-testid={`session-${session.id}`}
+                    >
+                      <div className="p-4 flex items-center gap-4">
+                        {/* Icon */}
+                        <div className="flex-shrink-0">
+                          <div className="w-14 h-14 bg-brand/10 rounded-xl flex items-center justify-center group-hover:bg-brand/20 transition-colors">
+                            <Video className="w-7 h-7 text-brand" />
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {session.title}
-                          </h3>
-                          {status === "live" && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 text-xs font-medium">
-                              <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse" />
-                              {label}
-                            </span>
-                          )}
-                          {status === "starting-soon" && (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-medium">
-                              {label}
-                            </span>
-                          )}
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="text-base font-bold text-gray-900">
+                              {session.title}
+                            </h3>
+                            {status === "live" && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 text-xs font-bold">
+                                <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse" />
+                                {label}
+                              </span>
+                            )}
+                            {status === "starting-soon" && (
+                              <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-bold">
+                                {label}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 font-medium">
+                            {formatDisplayTime(session.time)}
+                          </p>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {session.displayTime}
-                        </p>
-                      </div>
 
-                      <Button
-                        onClick={() =>
-                          handleJoin(session.meetingLink, session.displayTime)
-                        }
-                        variant={status === "live" ? "default" : "outline"}
-                        size="default"
-                        disabled={status === "ended"}
-                        data-testid={`button-join-${session.id}`}
-                      >
-                        {status === "ended" ? "Ended" : "Join"}
-                      </Button>
-                    </div>
-                  </Card>
+                        {/* Action Button */}
+                        <Button
+                          onClick={() =>
+                            handleJoin(session.meetingLink, session.time, session.title)
+                          }
+                          variant={status === "live" ? "default" : "outline"}
+                          size="default"
+                          disabled={status === "upcoming" || status === "ended"}
+                          className={
+                            status === "live"
+                              ? "rounded-lg bg-brand hover:bg-brand/90 text-white font-bold shadow-lg shadow-brand/20"
+                              : status === "starting-soon"
+                              ? "rounded-lg font-bold border-amber-500 text-amber-600 hover:bg-amber-50"
+                              : "rounded-lg font-bold border-gray-200 text-gray-600"
+                          }
+                          data-testid={`button-join-${session.id}`}
+                        >
+                          {status === "ended" ? "Ended" : status === "upcoming" ? "Upcoming" : "Join"}
+                        </Button>
+                      </div>
+                    </Card>
+                  </motion.div>
                 );
-              })
-            )}
-          </div>
+              })}
+            </AnimatePresence>
+          )}
+        </div>
 
-          <Card className="mt-6 p-4 bg-white border border-gray-200">
-            <p className="text-sm text-gray-600 text-center">
-              Sessions are open 30 minutes before and after scheduled time
+        {/* Info Footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="bg-white/50 border-0 shadow-none p-4">
+            <p className="text-xs text-gray-500 text-center font-medium">
+              Sessions are open 15 minutes before scheduled time and stay live for 2 hours
             </p>
           </Card>
-        </div>
-      </div>
+        </motion.div>
+      </main>
     </div>
   );
 }

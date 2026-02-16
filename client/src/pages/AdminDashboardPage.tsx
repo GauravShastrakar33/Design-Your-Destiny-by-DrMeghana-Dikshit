@@ -388,7 +388,7 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="hidden items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
                 <BellOff className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold text-gray-900">

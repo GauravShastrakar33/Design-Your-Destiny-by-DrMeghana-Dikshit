@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   forcePasswordChange: boolean("force_password_change").notNull().default(false),
   lastLogin: timestamp("last_login", { mode: "date" }),
   lastActivity: timestamp("last_activity", { mode: "date" }),
+  timezone: varchar("timezone", { length: 50 }).notNull().default("UTC"),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
@@ -31,8 +32,7 @@ export type User = typeof users.$inferSelect;
 export const communitySessions = pgTable("community_sessions", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  time: text("time").notNull(),
-  displayTime: text("display_time").notNull(),
+  time: text("time").notNull(), // 24-hour format: "21:00"
   meetingLink: text("meeting_link").notNull(),
   participants: integer("participants").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
@@ -326,14 +326,17 @@ export const sessionBanners = pgTable("session_banners", {
   posterKey: text("poster_key"),
   ctaText: text("cta_text"),
   ctaLink: text("cta_link"),
-  startAt: timestamp("start_at", { mode: "date" }).notNull(),
-  endAt: timestamp("end_at", { mode: "date" }).notNull(),
+  startAt: timestamp("start_at", { withTimezone: true, mode: "date" }).notNull(),
+  endAt: timestamp("end_at", { withTimezone: true, mode: "date" }).notNull(),
   liveEnabled: boolean("live_enabled").notNull().default(false),
-  liveStartAt: timestamp("live_start_at", { mode: "date" }),
-  liveEndAt: timestamp("live_end_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
-});
+  liveStartAt: timestamp("live_start_at", { withTimezone: true, mode: "date" }),
+  liveEndAt: timestamp("live_end_at", { withTimezone: true, mode: "date" }),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueDefaultBanner: uniqueIndex("unique_default_banner").on(table.isDefault).where(sql`${table.isDefault} = true`),
+}));
 
 export const insertSessionBannerSchema = createInsertSchema(sessionBanners).omit({
   id: true,
@@ -373,9 +376,9 @@ export const activityLogs = pgTable("activity_logs", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
   uniqueUserLessonFeatureDate: unique("unique_user_lesson_feature_date").on(
-    table.userId, 
-    table.lessonId, 
-    table.featureType, 
+    table.userId,
+    table.lessonId,
+    table.featureType,
     table.activityDate
   ),
 }));
@@ -419,7 +422,9 @@ export const dailyQuotes = pgTable("daily_quotes", {
   lastShownDate: varchar("last_shown_date", { length: 10 }), // YYYY-MM-DD format
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
-});
+}, (table) => ({
+  uniqueDisplayOrder: unique("unique_display_order").on(table.displayOrder),
+}));
 
 export const insertDailyQuoteSchema = createInsertSchema(dailyQuotes).omit({
   id: true,
@@ -552,6 +557,8 @@ export const notificationLogs = pgTable("notification_logs", {
   deviceToken: text("device_token").notNull(),
   status: varchar("status", { length: 20 }).notNull(),
   error: text("error"),
+  isRead: boolean("is_read").notNull().default(false),
+  readAt: timestamp("read_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
@@ -666,7 +673,6 @@ export const deviceTokens = pgTable("device_tokens", {
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   token: text("token").notNull().unique(),
   platform: varchar("platform", { length: 10 }).notNull().default("web"),
-  pushEnabled: boolean("push_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 

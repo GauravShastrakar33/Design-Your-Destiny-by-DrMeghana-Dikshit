@@ -12,36 +12,19 @@ interface EvaluateBadgesResponse {
 }
 
 export function useBadges() {
-  const userToken = localStorage.getItem("@app:user_token");
-
   const { data, isLoading, refetch } = useQuery<BadgesResponse>({
     queryKey: ["/api/v1/badges"],
     queryFn: async () => {
-      const response = await fetch("/api/v1/badges", {
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch badges");
-      }
-      return response.json();
+      const response = await apiRequest("GET", "/api/v1/badges");
+      return response.json(); // apiRequest throws if not ok
     },
-    enabled: !!userToken,
+    // We rely on apiRequest to handle auth. If 401, it throws.
+    retry: false,
   });
 
   const evaluateMutation = useMutation<EvaluateBadgesResponse>({
     mutationFn: async () => {
-      const response = await fetch("/api/v1/badges/evaluate", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to evaluate badges");
-      }
+      const response = await apiRequest("POST", "/api/v1/badges/evaluate");
       return response.json();
     },
     onSuccess: () => {
@@ -65,31 +48,13 @@ interface EvaluateBadgesOptions {
 }
 
 export function useEvaluateBadgesOnMount(options?: EvaluateBadgesOptions | ((badgeKeys: string[]) => void)) {
-  const userToken = localStorage.getItem("@app:user_token");
-  
-  const opts: EvaluateBadgesOptions = typeof options === "function" 
-    ? { onNewBadges: options } 
+  const opts: EvaluateBadgesOptions = typeof options === "function"
+    ? { onNewBadges: options }
     : (options ?? {});
 
   const { mutate: evaluate, data, reset } = useMutation<EvaluateBadgesResponse>({
     mutationFn: async () => {
-      const token = localStorage.getItem("@app:user_token");
-      if (!token) {
-        throw new Error("Not authenticated");
-      }
-      const response = await fetch("/api/v1/badges/evaluate", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error("Session expired");
-        }
-        throw new Error("Failed to evaluate badges");
-      }
+      const response = await apiRequest("POST", "/api/v1/badges/evaluate");
       return response.json();
     },
     onSuccess: (result) => {

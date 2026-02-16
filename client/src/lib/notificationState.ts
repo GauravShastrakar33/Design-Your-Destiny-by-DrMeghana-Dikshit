@@ -1,4 +1,17 @@
 import { Preferences } from "@capacitor/preferences";
+import { apiRequest } from "@/lib/queryClient";
+
+export async function fetchUnreadCount(): Promise<number> {
+  try {
+    const res = await apiRequest("GET", "/api/v1/notifications/unread-count");
+    const data = await res.json();
+    await setUnreadCount(data.count);
+    return data.count;
+  } catch (e) {
+    console.error("Failed to fetch unread count:", e);
+    return getUnreadCount();
+  }
+}
 
 const UNREAD_COUNT_KEY = "unreadNotificationCount";
 const LAST_SEEN_ID_KEY = "lastSeenNotificationId";

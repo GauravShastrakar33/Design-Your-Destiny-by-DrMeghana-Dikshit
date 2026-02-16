@@ -43,6 +43,24 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { FormInput } from "@/components/ui/form-input";
 
+// Format 24h time to 12h display format
+const formatDisplayTime = (time24: string): string => {
+  const [hours, minutes] = time24.split(":").map(Number);
+
+  if (isNaN(hours) || isNaN(minutes)) {
+    return time24; // fallback to raw time
+  }
+
+  const isPM = hours >= 12;
+  const displayHours = hours % 12 || 12;
+  const period = isPM ? "PM" : "AM";
+
+  return `${displayHours}:${minutes
+    .toString()
+    .padStart(2, "0")} ${period}`;
+};
+
+
 // Form Schema
 const sessionSchema = yup.object().shape({
   title: yup
@@ -56,10 +74,6 @@ const sessionSchema = yup.object().shape({
       /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
       "Time must be in HH:MM format (24h)"
     ),
-  displayTime: yup
-    .string()
-    .required("Display time is required")
-    .min(4, "Display time is too short"),
   meetingLink: yup
     .string()
     .required("Meeting link is required")
@@ -84,7 +98,6 @@ export default function AdminSessionsPage() {
     defaultValues: {
       title: "",
       time: "",
-      displayTime: "",
       meetingLink: "",
       isActive: true,
     },
@@ -137,7 +150,6 @@ export default function AdminSessionsPage() {
       createForm.reset({
         title: "",
         time: "",
-        displayTime: "",
         meetingLink: "",
         isActive: true,
       });
@@ -235,7 +247,6 @@ export default function AdminSessionsPage() {
     createForm.reset({
       title: "",
       time: "",
-      displayTime: "",
       meetingLink: "",
       isActive: true,
     });
@@ -247,7 +258,6 @@ export default function AdminSessionsPage() {
     editForm.reset({
       title: session.title,
       time: session.time,
-      displayTime: session.displayTime,
       meetingLink: session.meetingLink,
       isActive: session.isActive,
     });
@@ -376,7 +386,7 @@ export default function AdminSessionsPage() {
                         >
                           <div className="flex items-center gap-2">
                             <Clock className="w-3.5 h-3.5 text-gray-400" />
-                            {session.displayTime}
+                            {formatDisplayTime(session.time)}
                           </div>
                         </td>
                         <td
@@ -457,18 +467,21 @@ export default function AdminSessionsPage() {
                   data-testid="input-session-title"
                 />
                 <div className="grid grid-cols-2 gap-4">
-                  <FormInput
-                    name="time"
-                    label="Time (24h)"
-                    placeholder="07:00"
-                    data-testid="input-session-time"
-                  />
-                  <FormInput
-                    name="displayTime"
-                    label="Display Time"
-                    placeholder="7:00 AM"
-                    data-testid="input-session-display-time"
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="time">Time</Label>
+                    <Input
+                      id="time"
+                      type="time"
+                      {...createForm.register("time")}
+                      className="w-full"
+                      data-testid="input-session-time"
+                    />
+                    {createForm.formState.errors.time && (
+                      <p className="text-sm text-red-500">
+                        {createForm.formState.errors.time.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <FormInput
                   name="meetingLink"
@@ -530,16 +543,20 @@ export default function AdminSessionsPage() {
                   placeholder="e.g., Morning Meditation"
                 />
                 <div className="grid grid-cols-2 gap-4">
-                  <FormInput
-                    name="time"
-                    label="Time (24h)"
-                    placeholder="07:00"
-                  />
-                  <FormInput
-                    name="displayTime"
-                    label="Display Time"
-                    placeholder="7:00 AM"
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-time">Time</Label>
+                    <Input
+                      id="edit-time"
+                      type="time"
+                      {...editForm.register("time")}
+                      className="w-full"
+                    />
+                    {editForm.formState.errors.time && (
+                      <p className="text-sm text-red-500">
+                        {editForm.formState.errors.time.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <FormInput
                   name="meetingLink"

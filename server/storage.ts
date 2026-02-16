@@ -1,6 +1,6 @@
-import { 
+import {
   type User, type InsertUser, type UserWithPrograms,
-  type CommunitySession, type InsertCommunitySession, 
+  type CommunitySession, type InsertCommunitySession,
   type Category, type InsertCategory,
   type Article, type InsertArticle,
   type Program, type InsertProgram,
@@ -62,7 +62,7 @@ export interface IStorage {
   updateUserName(id: number, name: string): Promise<User | undefined>;
   resetUserPassword(id: number, hashedPassword: string): Promise<void>;
   clearForcePasswordChange(id: number): Promise<void>;
-  
+
   getAllCommunitySessions(): Promise<CommunitySession[]>;
   getCommunitySession(id: number): Promise<CommunitySession | undefined>;
   createCommunitySession(session: InsertCommunitySession): Promise<CommunitySession>;
@@ -128,7 +128,13 @@ export interface IStorage {
   getPOHRatingByDate(userId: number, localDate: string): Promise<PohDailyRating | undefined>;
   createPOHRating(data: { userId: number; pohId: string; localDate: string; rating: number }): Promise<PohDailyRating>;
   updatePOHRating(ratingId: string, rating: number): Promise<PohDailyRating>;
+
+  // Notification methods
+  getUnreadNotificationCount(userId: number): Promise<number>;
+  markNotificationAsRead(userId: number, notificationId: number): Promise<void>;
+  markAllNotificationsAsRead(userId: number): Promise<void>;
 }
+
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
@@ -171,8 +177,8 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = Array.from(this.users.values()).length + 1;
-    const user: User = { 
-      ...insertUser, 
+    const user: User = {
+      ...insertUser,
       id,
       phone: insertUser.phone || null,
       role: insertUser.role || "USER",
@@ -180,6 +186,7 @@ export class MemStorage implements IStorage {
       forcePasswordChange: false,
       lastLogin: null,
       lastActivity: null,
+      timezone: "UTC",
       createdAt: new Date()
     };
     this.users.set(id.toString(), user);
@@ -239,8 +246,8 @@ export class MemStorage implements IStorage {
 
   async createCommunitySession(session: InsertCommunitySession): Promise<CommunitySession> {
     const id = this.nextSessionId++;
-    const newSession: CommunitySession = { 
-      ...session, 
+    const newSession: CommunitySession = {
+      ...session,
       id,
       participants: session.participants ?? 0,
       isActive: session.isActive ?? true,
@@ -252,7 +259,7 @@ export class MemStorage implements IStorage {
   async updateCommunitySession(id: number, session: Partial<InsertCommunitySession>): Promise<CommunitySession | undefined> {
     const existing = this.communitySessions.get(id);
     if (!existing) return undefined;
-    
+
     const updated: CommunitySession = { ...existing, ...session };
     this.communitySessions.set(id, updated);
     return updated;
@@ -291,8 +298,8 @@ export class MemStorage implements IStorage {
 
   async createArticle(article: InsertArticle): Promise<Article> {
     const id = this.nextArticleId++;
-    const newArticle: Article = { 
-      ...article, 
+    const newArticle: Article = {
+      ...article,
       id,
       isPublished: article.isPublished ?? false,
       createdAt: new Date().toISOString(),
@@ -304,7 +311,7 @@ export class MemStorage implements IStorage {
   async updateArticle(id: number, article: Partial<InsertArticle>): Promise<Article | undefined> {
     const existing = this.articles.get(id);
     if (!existing) return undefined;
-    
+
     const updated: Article = { ...existing, ...article };
     this.articles.set(id, updated);
     return updated;
@@ -432,8 +439,8 @@ export class MemStorage implements IStorage {
   async getPOHById(pohId: string): Promise<ProjectOfHeart | undefined> { return undefined; }
   async createPOH(data: { userId: number; title: string; why: string; category: string; status: string; startedAt: string | null }): Promise<ProjectOfHeart> { throw new Error("Not implemented in MemStorage"); }
   async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string; visionImages: (string | null)[] }>): Promise<ProjectOfHeart> { throw new Error("Not implemented in MemStorage"); }
-  async completePOH(pohId: string, data: { status: string; endedAt: string; closingReflection: string }): Promise<void> {}
-  async promotePOHs(userId: number, today: string): Promise<void> {}
+  async completePOH(pohId: string, data: { status: string; endedAt: string; closingReflection: string }): Promise<void> { }
+  async promotePOHs(userId: number, today: string): Promise<void> { }
   async getPOHHistory(userId: number): Promise<ProjectOfHeart[]> { return []; }
   async getPOHMilestones(pohId: string): Promise<PohMilestone[]> { return []; }
   async getPOHMilestoneById(milestoneId: string): Promise<PohMilestone | undefined> { return undefined; }
@@ -441,10 +448,15 @@ export class MemStorage implements IStorage {
   async updatePOHMilestone(milestoneId: string, updates: { text: string }): Promise<PohMilestone> { throw new Error("Not implemented in MemStorage"); }
   async achievePOHMilestone(milestoneId: string, achievedAt: string): Promise<PohMilestone> { throw new Error("Not implemented in MemStorage"); }
   async getPOHActions(pohId: string): Promise<PohAction[]> { return []; }
-  async replacePOHActions(pohId: string, actions: string[]): Promise<void> {}
+  async replacePOHActions(pohId: string, actions: string[]): Promise<void> { }
   async getPOHRatingByDate(userId: number, localDate: string): Promise<PohDailyRating | undefined> { return undefined; }
   async createPOHRating(data: { userId: number; pohId: string; localDate: string; rating: number }): Promise<PohDailyRating> { throw new Error("Not implemented in MemStorage"); }
   async updatePOHRating(ratingId: string, rating: number): Promise<PohDailyRating> { throw new Error("Not implemented in MemStorage"); }
+
+  // Notification stubs
+  async getUnreadNotificationCount(userId: number): Promise<number> { return 0; }
+  async markNotificationAsRead(userId: number, notificationId: number): Promise<void> { }
+  async markAllNotificationsAsRead(userId: number): Promise<void> { }
 }
 
 export class DbStorage implements IStorage {
@@ -482,7 +494,10 @@ export class DbStorage implements IStorage {
   }
 
   async updateUserLastLogin(id: number): Promise<void> {
-    await db.update(usersTable).set({ lastLogin: new Date() }).where(eq(usersTable.id, id));
+    await db.update(usersTable).set({ 
+      lastLogin: new Date(),
+      lastActivity: new Date() 
+    }).where(eq(usersTable.id, id));
   }
 
   async updateUserPassword(id: number, hashedPassword: string): Promise<void> {
@@ -490,9 +505,9 @@ export class DbStorage implements IStorage {
   }
 
   async resetUserPassword(id: number, hashedPassword: string): Promise<void> {
-    await db.update(usersTable).set({ 
-      passwordHash: hashedPassword, 
-      forcePasswordChange: true 
+    await db.update(usersTable).set({
+      passwordHash: hashedPassword,
+      forcePasswordChange: true
     }).where(eq(usersTable.id, id));
   }
 
@@ -503,6 +518,10 @@ export class DbStorage implements IStorage {
   async updateUserName(id: number, name: string): Promise<User | undefined> {
     const [user] = await db.update(usersTable).set({ name }).where(eq(usersTable.id, id)).returning();
     return user;
+  }
+
+  async updateUserTimezone(id: number, timezone: string): Promise<void> {
+    await db.update(usersTable).set({ timezone }).where(eq(usersTable.id, id));
   }
 
   async getAllCommunitySessions(): Promise<CommunitySession[]> {
@@ -623,7 +642,7 @@ export class DbStorage implements IStorage {
   async getUserPrograms(userId: number): Promise<string[]> {
     const userProgramLinks = await db.select().from(userProgramsTable).where(eq(userProgramsTable.userId, userId));
     if (userProgramLinks.length === 0) return [];
-    
+
     const programIds = userProgramLinks.map(up => up.programId);
     const programs = await db.select().from(programsTable).where(inArray(programsTable.id, programIds));
     return programs.map(p => p.code);
@@ -655,7 +674,7 @@ export class DbStorage implements IStorage {
     }
 
     const conditions = [eq(usersTable.role, "USER")];
-    
+
     if (search) {
       conditions.push(
         or(
@@ -705,7 +724,7 @@ export class DbStorage implements IStorage {
       where: (users, { eq, and }) => and(eq(users.id, id), eq(users.role, "USER")),
     });
     if (!student) return undefined;
-    
+
     const programs = await this.getUserPrograms(id);
     return { ...student, programs };
   }
@@ -775,7 +794,7 @@ export class DbStorage implements IStorage {
         eq(usersTable.role, "COACH")
       )!
     ];
-    
+
     if (search) {
       conditions.push(
         or(
@@ -869,7 +888,7 @@ export class DbStorage implements IStorage {
       .from(featureCourseMapTable)
       .where(eq(featureCourseMapTable.featureId, featureId))
       .orderBy(asc(featureCourseMapTable.position));
-    
+
     const result = await Promise.all(mappings.map(async (mapping) => {
       const courseResult = await db.select({ id: cmsCourses.id, title: cmsCourses.title }).from(cmsCourses).where(eq(cmsCourses.id, mapping.courseId));
       return {
@@ -968,7 +987,7 @@ export class DbStorage implements IStorage {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
-    
+
     let daysToAverage: number;
     if (year === currentYear && month === currentMonth) {
       // Current month: divide by today's date (day of month)
@@ -977,7 +996,7 @@ export class DbStorage implements IStorage {
       // Past month: divide by total days in that month
       daysToAverage = lastDay;
     }
-    
+
     const average = daysToAverage > 0 ? Math.round(total / daysToAverage) : 0;
 
     return {
@@ -1041,7 +1060,7 @@ export class DbStorage implements IStorage {
 
   async setPlaylistItems(playlistId: number, lessonIds: number[]): Promise<PlaylistItem[]> {
     await db.delete(playlistItemsTable).where(eq(playlistItemsTable.playlistId, playlistId));
-    
+
     if (lessonIds.length === 0) return [];
 
     const items = lessonIds.map((lessonId, index) => ({
@@ -1075,19 +1094,19 @@ export class DbStorage implements IStorage {
     if (!course) return null;
 
     const modules = await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId)).orderBy(asc(cmsModules.position));
-    
+
     const modulesWithLessons = await Promise.all(modules.map(async (module) => {
       const lessons = await db.select().from(cmsLessons).where(eq(cmsLessons.moduleId, module.id)).orderBy(asc(cmsLessons.position));
-      
+
       const lessonsWithAudio = await Promise.all(lessons.map(async (lesson) => {
         const audioFiles = await db
           .select()
           .from(cmsLessonFiles)
           .where(and(eq(cmsLessonFiles.lessonId, lesson.id), eq(cmsLessonFiles.fileType, 'audio')))
           .orderBy(asc(cmsLessonFiles.position));
-        
+
         if (audioFiles.length === 0) return null;
-        
+
         return {
           ...lesson,
           audioFiles
@@ -1174,31 +1193,35 @@ export class DbStorage implements IStorage {
           sql`${sessionBannersTable.endAt} > ${now}`
         )
       )
-      .orderBy(desc(sessionBannersTable.startAt))
+      .orderBy(desc(sessionBannersTable.updatedAt))
       .limit(1);
     return active;
   }
 
-  async getNextScheduledBanner(): Promise<SessionBanner | undefined> {
-    const now = new Date();
-    const [scheduled] = await db
+  async getDefaultBanner(): Promise<SessionBanner | undefined> {
+    const [defaultBanner] = await db
       .select()
       .from(sessionBannersTable)
-      .where(sql`${sessionBannersTable.startAt} > ${now}`)
-      .orderBy(asc(sessionBannersTable.startAt))
+      .where(eq(sessionBannersTable.isDefault, true))
       .limit(1);
-    return scheduled;
+    return defaultBanner;
   }
 
-  async getLastExpiredBanner(): Promise<SessionBanner | undefined> {
-    const now = new Date();
-    const [expired] = await db
-      .select()
-      .from(sessionBannersTable)
-      .where(sql`${sessionBannersTable.endAt} <= ${now}`)
-      .orderBy(desc(sessionBannersTable.endAt))
-      .limit(1);
-    return expired;
+  async setDefaultBanner(id: number): Promise<SessionBanner | undefined> {
+    // Unset any existing default
+    await db
+      .update(sessionBannersTable)
+      .set({ isDefault: false })
+      .where(eq(sessionBannersTable.isDefault, true));
+
+    // Set new default
+    const [updated] = await db
+      .update(sessionBannersTable)
+      .set({ isDefault: true, updatedAt: new Date() })
+      .where(eq(sessionBannersTable.id, id))
+      .returning();
+
+    return updated;
   }
 
   // ===== USER STREAKS =====
@@ -1208,8 +1231,10 @@ export class DbStorage implements IStorage {
       .select()
       .from(userStreaksTable)
       .where(and(eq(userStreaksTable.userId, userId), eq(userStreaksTable.activityDate, activityDate)));
-    
+
     if (existing) {
+      // Update lastActivity even if streak already exists (for accurate "Active Today" tracking)
+      await db.update(usersTable).set({ lastActivity: new Date() }).where(eq(usersTable.id, userId));
       return existing;
     }
 
@@ -1217,12 +1242,16 @@ export class DbStorage implements IStorage {
       .insert(userStreaksTable)
       .values({ userId, activityDate })
       .returning();
+
+    // Update users.lastActivity to track recent activity for Admin Dashboard
+    await db.update(usersTable).set({ lastActivity: new Date() }).where(eq(usersTable.id, userId));
+
     return newStreak;
   }
 
   async getUserStreakDates(userId: number, dates: string[]): Promise<string[]> {
     if (dates.length === 0) return [];
-    
+
     const records = await db
       .select({ activityDate: userStreaksTable.activityDate })
       .from(userStreaksTable)
@@ -1230,14 +1259,14 @@ export class DbStorage implements IStorage {
         eq(userStreaksTable.userId, userId),
         inArray(userStreaksTable.activityDate, dates)
       ));
-    
+
     return records.map(r => r.activityDate);
   }
 
   async getConsistencyMonth(userId: number, year: number, month: number): Promise<{ date: string; active: boolean }[]> {
     const daysInMonth = new Date(year, month, 0).getDate();
     const allDates: string[] = [];
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       allDates.push(dateStr);
@@ -1261,7 +1290,7 @@ export class DbStorage implements IStorage {
       .limit(1);
 
     const startMonth = earliest ? earliest.activityDate.slice(0, 7) : null;
-    
+
     return { startMonth, currentMonth: "current" };
   }
 
@@ -1275,10 +1304,10 @@ export class DbStorage implements IStorage {
     if (allRecords.length === 0) return 0;
 
     const activeDates = new Set(allRecords.map(r => r.activityDate));
-    
+
     let streak = 0;
     let checkDate = new Date(todayDate + 'T12:00:00');
-    
+
     if (!activeDates.has(todayDate)) {
       checkDate.setDate(checkDate.getDate() - 1);
     }
@@ -1305,19 +1334,10 @@ export class DbStorage implements IStorage {
     featureType: FeatureType,
     activityDate: string
   ): Promise<{ logged: boolean; activity: ActivityLog }> {
-    // Validate date format (YYYY-MM-DD)
+    // Validate date format only
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(activityDate)) {
-      // Fall back to server date if invalid
-      activityDate = new Date().toISOString().split('T')[0];
-    }
-
-    // Validate date is within ±1 day of server time
-    const serverDate = new Date();
-    const inputDate = new Date(activityDate + 'T12:00:00');
-    const diffDays = Math.abs((serverDate.getTime() - inputDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays > 1) {
-      activityDate = serverDate.toISOString().split('T')[0];
+      throw new Error(`Invalid date format: ${activityDate}`);
     }
 
     // Check if already logged for this user/lesson/feature/date
@@ -1332,6 +1352,11 @@ export class DbStorage implements IStorage {
       ));
 
     if (existing) {
+      // Update lastActivity even if already logged (for accurate "Active Today" tracking)
+      await db
+        .update(usersTable)
+        .set({ lastActivity: new Date() })
+        .where(eq(usersTable.id, userId));
       return { logged: false, activity: existing };
     }
 
@@ -1340,6 +1365,12 @@ export class DbStorage implements IStorage {
       .insert(activityLogsTable)
       .values({ userId, lessonId, lessonName, featureType, activityDate })
       .returning();
+
+    // Update users.lastActivity to track recent activity for Admin Dashboard
+    await db
+      .update(usersTable)
+      .set({ lastActivity: new Date() })
+      .where(eq(usersTable.id, userId));
 
     return { logged: true, activity: newLog };
   }
@@ -1513,7 +1544,7 @@ export class DbStorage implements IStorage {
     data: { karmicAffirmation?: string | null; prescription?: unknown }
   ): Promise<UserWellnessProfile> {
     const existing = await this.getWellnessProfileByUserId(userId);
-    
+
     if (existing) {
       const [updated] = await db
         .update(userWellnessProfilesTable)
@@ -1558,11 +1589,11 @@ export class DbStorage implements IStorage {
     // Auto-complete events that have ended
     await this.autoCompleteEvents();
     const conditions: any[] = [];
-    
+
     if (filters?.status) {
       conditions.push(eq(eventsTable.status, filters.status));
     }
-    
+
     if (filters?.month && filters?.year) {
       const startOfMonth = new Date(filters.year, filters.month - 1, 1);
       const endOfMonth = new Date(filters.year, filters.month, 0, 23, 59, 59);
@@ -1588,7 +1619,7 @@ export class DbStorage implements IStorage {
       .from(eventsTable)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(eventsTable.startDatetime));
-    
+
     return events;
   }
 
@@ -1618,10 +1649,10 @@ export class DbStorage implements IStorage {
   async getLatestEvents(): Promise<Event[]> {
     // Auto-complete events that have ended
     await this.autoCompleteEvents();
-    
+
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
-    
+
     const events = await db
       .select()
       .from(eventsTable)
@@ -1722,7 +1753,7 @@ export class DbStorage implements IStorage {
   async promotePOHs(userId: number, today: string): Promise<void> {
     // Get all user POHs
     const userPOHs = await this.getUserPOHs(userId);
-    
+
     // Find NEXT and HORIZON
     const nextPOH = userPOHs.find(p => p.status === "next");
     const horizonPOH = userPOHs.find(p => p.status === "horizon");
@@ -1974,6 +2005,43 @@ export class DbStorage implements IStorage {
     );
   }
 
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(notificationLogsTable)
+      .where(
+        and(
+          eq(notificationLogsTable.userId, userId),
+          eq(notificationLogsTable.isRead, false)
+        )
+      );
+    return result?.count ?? 0;
+  }
+
+  async markNotificationAsRead(userId: number, notificationId: number): Promise<void> {
+    await db
+      .update(notificationLogsTable)
+      .set({ isRead: true, readAt: new Date() })
+      .where(
+        and(
+          eq(notificationLogsTable.userId, userId),
+          eq(notificationLogsTable.notificationId, notificationId)
+        )
+      );
+  }
+
+  async markAllNotificationsAsRead(userId: number): Promise<void> {
+    await db
+      .update(notificationLogsTable)
+      .set({ isRead: true, readAt: new Date() })
+      .where(
+        and(
+          eq(notificationLogsTable.userId, userId),
+          eq(notificationLogsTable.isRead, false)
+        )
+      );
+  }
+
   async getNotificationLogsByNotificationId(notificationId: number): Promise<NotificationLog[]> {
     return db
       .select()
@@ -1996,10 +2064,7 @@ export class DbStorage implements IStorage {
     return db
       .select({ userId: deviceTokensTable.userId, token: deviceTokensTable.token })
       .from(deviceTokensTable)
-      .where(and(
-        inArray(deviceTokensTable.userId, userIds),
-        eq(deviceTokensTable.pushEnabled, true),
-      ));
+      .where(inArray(deviceTokensTable.userId, userIds));
   }
 
   async deleteDeviceToken(token: string): Promise<void> {
@@ -2151,7 +2216,7 @@ export class DbStorage implements IStorage {
         )
       )
       .orderBy(desc(notificationLogsTable.createdAt));
-    
+
     // Deduplicate by notification ID (user may have multiple device tokens)
     // Keep the most recent entry per notification
     const seen = new Set<number>();

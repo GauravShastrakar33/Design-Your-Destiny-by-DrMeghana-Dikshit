@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Menu,
   ChevronLeft,
+  Loader2,
 } from "lucide-react";
 import { useAdminSidebar, MenuItem } from "@/contexts/AdminSidebarContext";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -25,6 +26,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
@@ -54,6 +65,8 @@ export default function AdminSidebar({
   const { logout } = useAdminAuth();
   const [openItems, setOpenItems] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Use a derived state for collapse to force expansion on mobile drawer
   const effectivelyCollapsed = isCollapsed && !isMobileDrawer;
@@ -150,12 +163,19 @@ export default function AdminSidebar({
     >
       <div
         className={cn(
-          "p-4 mb-2 flex items-center justify-between",
+          "p-2 mb-2 flex items-center justify-between",
           effectivelyCollapsed && "justify-center p-2 mb-4"
         )}
       >
-        <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-10 h-10 shrink-0 rounded-lg bg-white shadow-[0_8px_16px_rgba(0,0,0,0.1)] flex items-center justify-center duration-500 cursor-default">
+        <div
+          className="flex items-center gap-2.5 overflow-hidden cursor-pointer transition-colors"
+          onClick={() => {
+            setLocation("/admin");
+            setSelectedMenuId("dashboard");
+            onMobileClose?.();
+          }}
+        >
+          <div className="w-10 h-10 shrink-0 rounded-md bg-white shadow-[0_8px_16px_rgba(0,0,0,0.1)] flex items-center justify-center duration-500 cursor-default">
             <span className="text-brand font-black text-xs">Dr.M</span>
           </div>
           {!effectivelyCollapsed && (
@@ -246,7 +266,7 @@ export default function AdminSidebar({
       <div className="p-3 mt-auto">
         <div className="bg-white/5 rounded-lg p-1.5 border border-white/5">
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutDialog(true)}
             data-testid="button-logout"
             className={cn(
               "w-full flex items-center gap-3 px-2 py-1.5 rounded-md text-white/80 hover:bg-white/10 hover:text-white transition-all group",
@@ -266,6 +286,42 @@ export default function AdminSidebar({
       {/* Decorative Blur / Gradient Background */}
       <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-white/5 rounded-lg blur-3xl pointer-events-none" />
       <div className="absolute -top-24 -right-24 w-64 h-64 bg-brand-light/10 rounded-lg blur-3xl pointer-events-none" />
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent data-testid="dialog-logout-confirm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Logout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to logout?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoggingOut}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async (e) => {
+                e.preventDefault();
+                setIsLoggingOut(true);
+                try {
+                  handleLogout();
+                } catch (error) {
+                  console.error("Logout failed:", error);
+                } finally {
+                  setIsLoggingOut(false);
+                  setShowLogoutDialog(false);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 flex items-center gap-2"
+              data-testid="button-logout-confirm"
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut && <Loader2 className="w-4 h-4 animate-spin" />}
+              Logout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

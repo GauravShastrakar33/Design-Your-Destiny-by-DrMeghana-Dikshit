@@ -1,25 +1,16 @@
 package com.dyd.drmeghana;
+
 import com.getcapacitor.BridgeActivity;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.net.http.SslError;
-import android.webkit.SslErrorHandler;
+import android.os.Bundle; // Added
+import androidx.core.view.WindowCompat; // Added
 
 public class MainActivity extends BridgeActivity {
-
     @Override
-    public void onStart() {
-        super.onStart();
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-        getBridge().getWebView().setWebViewClient(new WebViewClient() {
-
-            @Override
-            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                // Load local offline page instead of showing URL error
-                view.loadUrl("file:///android_asset/offline.html");
-            }
-        });
+        // This line tells the Android OS (especially ColorOS/OxygenOS):
+        // "Respect the system bars. Do not let my webview slide behind the clock."
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
     }
 }
-
-

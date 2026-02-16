@@ -8,7 +8,7 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    width: 5px;
+    width: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -16,12 +16,25 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Support for dark backgrounds or dark mode */
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb,
+  .bg-brand .custom-scrollbar::-webkit-scrollbar-thumb,
+  .bg-gradient-to-b .custom-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+  .bg-brand .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+  .bg-gradient-to-b .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
 
   .hvr-pop {
@@ -37,18 +50,26 @@
 
 /* Safe area handling for mobile devices (notch, status bar) */
 html {
-  padding-top: env(safe-area-inset-top, 0px);
+  height: 100%;
+  width: 100%;
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
 }
 
 body {
+  height: 100%;
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
 }
 
 /* Remove breathing room for Android devices - 12px extra top padding */
 #root {
+  height: 100%;
+  width: 100%;
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
   /* padding-top: 12px; */
 }
 

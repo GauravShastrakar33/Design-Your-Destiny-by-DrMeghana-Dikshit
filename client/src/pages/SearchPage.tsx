@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Search, Loader2, BookOpen, FileText, GraduationCap } from "lucide-react";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
+import { apiRequest } from "@/lib/queryClient";
 
 interface SearchResult {
   type: "module" | "lesson" | "course";
   feature: string;
   id: number;
   title: string;
+  course_id?: number;
   module_id?: number;
   navigate_to: string;
 }
@@ -43,8 +45,7 @@ export default function SearchPage() {
     setHasSearched(true);
 
     try {
-      const response = await fetch(`/api/public/v1/search?q=${encodeURIComponent(searchQuery)}`);
-      if (!response.ok) throw new Error("Search failed");
+      const response = await apiRequest("GET", `/api/public/v1/search?q=${encodeURIComponent(searchQuery)}`);
       const data: SearchResponse = await response.json();
       setResults(data.results);
     } catch (error) {

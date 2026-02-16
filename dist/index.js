@@ -107,6 +107,7 @@ var init_schema = __esm({
       forcePasswordChange: boolean("force_password_change").notNull().default(false),
       lastLogin: timestamp("last_login", { mode: "date" }),
       lastActivity: timestamp("last_activity", { mode: "date" }),
+      timezone: varchar("timezone", { length: 50 }).notNull().default("UTC"),
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
     });
     insertUserSchema = createInsertSchema(users).omit({
@@ -120,7 +121,7 @@ var init_schema = __esm({
       id: serial("id").primaryKey(),
       title: text("title").notNull(),
       time: text("time").notNull(),
-      displayTime: text("display_time").notNull(),
+      // 24-hour format: "21:00"
       meetingLink: text("meeting_link").notNull(),
       participants: integer("participants").notNull().default(0),
       isActive: boolean("is_active").notNull().default(true)
@@ -403,7 +404,9 @@ var init_schema = __esm({
       // YYYY-MM-DD format
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
       updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
-    });
+    }, (table) => ({
+      uniqueDisplayOrder: unique("unique_display_order").on(table.displayOrder)
+    }));
     insertDailyQuoteSchema = createInsertSchema(dailyQuotes).omit({
       id: true,
       lastShownDate: true,
@@ -497,6 +500,8 @@ var init_schema = __esm({
       deviceToken: text("device_token").notNull(),
       status: varchar("status", { length: 20 }).notNull(),
       error: text("error"),
+      isRead: boolean("is_read").notNull().default(false),
+      readAt: timestamp("read_at", { mode: "date" }),
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
     });
     insertNotificationLogSchema = createInsertSchema(notificationLogs).omit({
@@ -580,7 +585,6 @@ var init_schema = __esm({
       userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
       token: text("token").notNull().unique(),
       platform: varchar("platform", { length: 10 }).notNull().default("web"),
-      pushEnabled: boolean("push_enabled").notNull().default(true),
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
     });
     insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
@@ -704,7 +708,10 @@ var init_storage = __esm({
         return user;
       }
       async updateUserLastLogin(id) {
-        await db.update(users).set({ lastLogin: /* @__PURE__ */ new Date() }).where(eq(users.id, id));
+        await db.update(users).set({
+          lastLogin: /* @__PURE__ */ new Date(),
+          lastActivity: /* @__PURE__ */ new Date()
+        }).where(eq(users.id, id));
       }
       async updateUserPassword(id, hashedPassword) {
         await db.update(users).set({ passwordHash: hashedPassword }).where(eq(users.id, id));
@@ -721,6 +728,9 @@ var init_storage = __esm({
       async updateUserName(id, name) {
         const [user] = await db.update(users).set({ name }).where(eq(users.id, id)).returning();
         return user;
+      }
+      async updateUserTimezone(id, timezone) {
+        await db.update(users).set({ timezone }).where(eq(users.id, id));
       }
       async getAllCommunitySessions() {
         return await db.query.communitySessions.findMany({
@@ -1195,9 +1205,11 @@ var init_storage = __esm({
       async markUserActivityDate(userId, activityDate) {
         const [existing] = await db.select().from(userStreaks).where(and(eq(userStreaks.userId, userId), eq(userStreaks.activityDate, activityDate)));
         if (existing) {
+          await db.update(users).set({ lastActivity: /* @__PURE__ */ new Date() }).where(eq(users.id, userId));
           return existing;
         }
         const [newStreak] = await db.insert(userStreaks).values({ userId, activityDate }).returning();
+        await db.update(users).set({ lastActivity: /* @__PURE__ */ new Date() }).where(eq(users.id, userId));
         return newStreak;
       }
       async getUserStreakDates(userId, dates) {
@@ -1251,13 +1263,7 @@ var init_storage = __esm({
       async logActivity(userId, lessonId, lessonName, featureType, activityDate) {
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         if (!dateRegex.test(activityDate)) {
-          activityDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-        }
-        const serverDate = /* @__PURE__ */ new Date();
-        const inputDate = /* @__PURE__ */ new Date(activityDate + "T12:00:00");
-        const diffDays = Math.abs((serverDate.getTime() - inputDate.getTime()) / (1e3 * 60 * 60 * 24));
-        if (diffDays > 1) {
-          activityDate = serverDate.toISOString().split("T")[0];
+          throw new Error(`Invalid date format: ${activityDate}`);
         }
         const [existing] = await db.select().from(activityLogs).where(and(
           eq(activityLogs.userId, userId),
@@ -1266,9 +1272,11 @@ var init_storage = __esm({
           eq(activityLogs.activityDate, activityDate)
         ));
         if (existing) {
+          await db.update(users).set({ lastActivity: /* @__PURE__ */ new Date() }).where(eq(users.id, userId));
           return { logged: false, activity: existing };
         }
         const [newLog] = await db.insert(activityLogs).values({ userId, lessonId, lessonName, featureType, activityDate }).returning();
+        await db.update(users).set({ lastActivity: /* @__PURE__ */ new Date() }).where(eq(users.id, userId));
         return { logged: true, activity: newLog };
       }
       async getMonthlyStats(userId, month) {
@@ -1630,6 +1638,31 @@ var init_storage = __esm({
           )
         );
       }
+      async getUnreadNotificationCount(userId) {
+        const [result] = await db.select({ count: count() }).from(notificationLogs).where(
+          and(
+            eq(notificationLogs.userId, userId),
+            eq(notificationLogs.isRead, false)
+          )
+        );
+        return result?.count ?? 0;
+      }
+      async markNotificationAsRead(userId, notificationId) {
+        await db.update(notificationLogs).set({ isRead: true, readAt: /* @__PURE__ */ new Date() }).where(
+          and(
+            eq(notificationLogs.userId, userId),
+            eq(notificationLogs.notificationId, notificationId)
+          )
+        );
+      }
+      async markAllNotificationsAsRead(userId) {
+        await db.update(notificationLogs).set({ isRead: true, readAt: /* @__PURE__ */ new Date() }).where(
+          and(
+            eq(notificationLogs.userId, userId),
+            eq(notificationLogs.isRead, false)
+          )
+        );
+      }
       async getNotificationLogsByNotificationId(notificationId) {
         return db.select().from(notificationLogs).where(eq(notificationLogs.notificationId, notificationId));
       }
@@ -1640,10 +1673,7 @@ var init_storage = __esm({
       // ===== DEVICE TOKENS (for notifications) =====
       async getDeviceTokensByUserIds(userIds) {
         if (userIds.length === 0) return [];
-        return db.select({ userId: deviceTokens.userId, token: deviceTokens.token }).from(deviceTokens).where(and(
-          inArray(deviceTokens.userId, userIds),
-          eq(deviceTokens.pushEnabled, true)
-        ));
+        return db.select({ userId: deviceTokens.userId, token: deviceTokens.token }).from(deviceTokens).where(inArray(deviceTokens.userId, userIds));
       }
       async deleteDeviceToken(token) {
         await db.delete(deviceTokens).where(eq(deviceTokens.token, token));
@@ -1791,6 +1821,39 @@ var init_storage = __esm({
       }
     };
     storage = new DbStorage();
+  }
+});
+
+// server/utils/timezone.ts
+var timezone_exports = {};
+__export(timezone_exports, {
+  getStartOfDayInUserTZ: () => getStartOfDayInUserTZ,
+  getTodayForUser: () => getTodayForUser
+});
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+function getTodayForUser(timezone) {
+  try {
+    return formatInTimeZone(/* @__PURE__ */ new Date(), timezone, "yyyy-MM-dd");
+  } catch (error) {
+    console.error(`Invalid timezone ${timezone}, falling back to UTC:`, error);
+    return (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+  }
+}
+function getStartOfDayInUserTZ(timezone, date2 = /* @__PURE__ */ new Date()) {
+  try {
+    const zonedDate = toZonedTime(date2, timezone);
+    zonedDate.setHours(0, 0, 0, 0);
+    return zonedDate;
+  } catch (error) {
+    console.error(`Invalid timezone ${timezone}:`, error);
+    const utcDate = new Date(date2);
+    utcDate.setUTCHours(0, 0, 0, 0);
+    return utcDate;
+  }
+}
+var init_timezone = __esm({
+  "server/utils/timezone.ts"() {
+    "use strict";
   }
 });
 
@@ -2189,7 +2252,18 @@ async function uploadBufferToR2(buffer, key, contentType) {
 // server/routes.ts
 init_db();
 import PDFParser from "pdf2json";
-import { eq as eq2, asc as asc2, and as and2, or as or2, sql as sql3, count as count2, countDistinct, gte, desc as desc2, lt } from "drizzle-orm";
+import {
+  eq as eq2,
+  asc as asc2,
+  and as and2,
+  or as or2,
+  sql as sql3,
+  count as count2,
+  countDistinct,
+  gte,
+  desc as desc2,
+  lt
+} from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt2 from "jsonwebtoken";
 
@@ -2566,12 +2640,14 @@ async function registerRoutes(app2) {
       if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      const { date: date2 } = req.body;
-      if (!date2 || !/^\d{4}-\d{2}-\d{2}$/.test(date2)) {
-        return res.status(400).json({ error: "Invalid date format. Use YYYY-MM-DD" });
+      const user = await storage.getUserById(req.user.sub);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
       }
-      await storage.markUserActivityDate(req.user.sub, date2);
-      res.json({ success: true, date: date2 });
+      const { getTodayForUser: getTodayForUser2 } = await Promise.resolve().then(() => (init_timezone(), timezone_exports));
+      const todayDate = getTodayForUser2(user.timezone);
+      await storage.markUserActivityDate(req.user.sub, todayDate);
+      res.json({ success: true, date: todayDate });
     } catch (error) {
       console.error("Error marking streak:", error);
       res.status(500).json({ error: "Failed to mark activity" });
@@ -2599,6 +2675,22 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Error fetching streak:", error);
       res.status(500).json({ error: "Failed to fetch streak data" });
+    }
+  });
+  app2.put("/api/v1/user/timezone", authenticateJWT, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const { timezone } = req.body;
+      if (!timezone || typeof timezone !== "string" || timezone.length > 50) {
+        return res.status(400).json({ error: "Invalid timezone format" });
+      }
+      await storage.updateUserTimezone(req.user.sub, timezone);
+      res.json({ success: true, timezone });
+    } catch (error) {
+      console.error("Error updating timezone:", error);
+      res.status(500).json({ error: "Failed to update timezone" });
     }
   });
   app2.get("/api/v1/consistency/month", authenticateJWT, async (req, res) => {
@@ -2634,7 +2726,10 @@ async function registerRoutes(app2) {
       }
       const currentMonth = todayDate.slice(0, 7);
       const rangeData = await storage.getConsistencyRange(req.user.sub);
-      const currentStreak = await storage.getCurrentStreak(req.user.sub, todayDate);
+      const currentStreak = await storage.getCurrentStreak(
+        req.user.sub,
+        todayDate
+      );
       res.json({
         startMonth: rangeData.startMonth,
         currentMonth,
@@ -2676,10 +2771,11 @@ async function registerRoutes(app2) {
   });
   app2.post("/api/v1/activity/log", authenticateJWT, async (req, res) => {
     try {
+      console.log("\u{1F525} LOCAL BACKEND HIT - Activity Log", (/* @__PURE__ */ new Date()).toISOString());
       if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      const { lessonId, lessonName, featureType, activityDate } = req.body;
+      const { lessonId, lessonName, featureType } = req.body;
       if (!lessonId || typeof lessonId !== "number") {
         return res.status(400).json({ error: "lessonId is required and must be a number" });
       }
@@ -2689,13 +2785,18 @@ async function registerRoutes(app2) {
       if (!featureType || !["PROCESS", "PLAYLIST"].includes(featureType)) {
         return res.status(400).json({ error: "featureType must be PROCESS or PLAYLIST" });
       }
-      const dateToUse = activityDate || (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      const user = await storage.getUserById(req.user.sub);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+      const { getTodayForUser: getTodayForUser2 } = await Promise.resolve().then(() => (init_timezone(), timezone_exports));
+      const activityDate = getTodayForUser2(user.timezone);
       const result = await storage.logActivity(
         req.user.sub,
         lessonId,
         lessonName,
         featureType,
-        dateToUse
+        activityDate
       );
       res.json({ success: true, logged: result.logged });
     } catch (error) {
@@ -2703,22 +2804,30 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to log activity" });
     }
   });
-  app2.get("/api/v1/activity/monthly-stats", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app2.get(
+    "/api/v1/activity/monthly-stats",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+        const month = req.query.month || (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
+        console.log(
+          `[monthly-stats] Fetching stats for userId=${req.user.sub}, month=${month}`
+        );
+        const stats = await storage.getMonthlyStats(req.user.sub, month);
+        console.log(
+          `[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, PLAYLIST=${stats.PLAYLIST.length}`
+        );
+        res.set("Cache-Control", "no-store");
+        res.json(stats);
+      } catch (error) {
+        console.error("Error fetching monthly stats:", error);
+        res.status(500).json({ error: "Failed to fetch monthly stats" });
       }
-      const month = req.query.month || (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
-      console.log(`[monthly-stats] Fetching stats for userId=${req.user.sub}, month=${month}`);
-      const stats = await storage.getMonthlyStats(req.user.sub, month);
-      console.log(`[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, PLAYLIST=${stats.PLAYLIST.length}`);
-      res.set("Cache-Control", "no-store");
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching monthly stats:", error);
-      res.status(500).json({ error: "Failed to fetch monthly stats" });
     }
-  });
+  );
   app2.get("/api/v1/rewiring-beliefs", authenticateJWT, async (req, res) => {
     try {
       if (!req.user) {
@@ -2780,7 +2889,11 @@ async function registerRoutes(app2) {
       if (Object.keys(updates).length === 0) {
         return res.status(400).json({ error: "No updates provided" });
       }
-      const updated = await storage.updateRewiringBelief(id, req.user.sub, updates);
+      const updated = await storage.updateRewiringBelief(
+        id,
+        req.user.sub,
+        updates
+      );
       if (!updated) {
         return res.status(404).json({ error: "Belief not found or not authorized" });
       }
@@ -2790,53 +2903,63 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to update belief" });
     }
   });
-  app2.delete("/api/v1/rewiring-beliefs/:id", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app2.delete(
+    "/api/v1/rewiring-beliefs/:id",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+          return res.status(400).json({ error: "Invalid belief ID" });
+        }
+        const success = await storage.deleteRewiringBelief(id, req.user.sub);
+        if (!success) {
+          return res.status(404).json({ error: "Belief not found or not authorized" });
+        }
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting rewiring belief:", error);
+        res.status(500).json({ error: "Failed to delete belief" });
       }
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid belief ID" });
-      }
-      const success = await storage.deleteRewiringBelief(id, req.user.sub);
-      if (!success) {
-        return res.status(404).json({ error: "Belief not found or not authorized" });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting rewiring belief:", error);
-      res.status(500).json({ error: "Failed to delete belief" });
     }
-  });
+  );
   app2.get("/api/v1/lesson-progress", authenticateJWT, async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      const completedLessonIds = await storage.getCompletedLessonIds(req.user.sub);
+      const completedLessonIds = await storage.getCompletedLessonIds(
+        req.user.sub
+      );
       res.json({ completedLessonIds });
     } catch (error) {
       console.error("Error fetching lesson progress:", error);
       res.status(500).json({ error: "Failed to fetch lesson progress" });
     }
   });
-  app2.post("/api/v1/lesson-progress/:lessonId/complete", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app2.post(
+    "/api/v1/lesson-progress/:lessonId/complete",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+        const lessonId = parseInt(req.params.lessonId);
+        if (isNaN(lessonId)) {
+          return res.status(400).json({ error: "Invalid lesson ID" });
+        }
+        const result = await storage.markLessonComplete(req.user.sub, lessonId);
+        res.json({ success: true, alreadyCompleted: result.alreadyCompleted });
+      } catch (error) {
+        console.error("Error marking lesson complete:", error);
+        res.status(500).json({ error: "Failed to mark lesson complete" });
       }
-      const lessonId = parseInt(req.params.lessonId);
-      if (isNaN(lessonId)) {
-        return res.status(400).json({ error: "Invalid lesson ID" });
-      }
-      const result = await storage.markLessonComplete(req.user.sub, lessonId);
-      res.json({ success: true, alreadyCompleted: result.alreadyCompleted });
-    } catch (error) {
-      console.error("Error marking lesson complete:", error);
-      res.status(500).json({ error: "Failed to mark lesson complete" });
     }
-  });
+  );
   app2.get("/api/admin/sessions", requireAdmin, async (req, res) => {
     try {
       const sessions = await storage.getAllCommunitySessions();
@@ -2912,39 +3035,53 @@ async function registerRoutes(app2) {
       ] = await Promise.all([
         // Total registered users
         db.select({ count: count2() }).from(users).where(eq2(users.role, "USER")),
-        // Users active today (lastActivity = today)
-        db.select({ count: count2() }).from(users).where(and2(eq2(users.role, "USER"), gte(users.lastActivity, today))),
-        // Users who practiced today (PROCESS or PLAYLIST feature types)
-        db.select({ count: countDistinct(activityLogs.userId) }).from(activityLogs).where(and2(
-          eq2(activityLogs.activityDate, todayStr),
-          or2(
-            eq2(activityLogs.featureType, "PROCESS"),
-            eq2(activityLogs.featureType, "PLAYLIST")
+        // Active Today: Users active in last 24 hours
+        db.select({ count: count2() }).from(users).where(
+          and2(
+            eq2(users.role, "USER"),
+            gte(users.lastActivity, twentyFourHoursAgo)
           )
-        )),
-        // Badges earned today
-        db.select({ count: count2() }).from(userBadges).where(gte(userBadges.earnedAt, today))
+        ),
+        // Practised Today: Users who logged activity in last 24 hours
+        db.select({ count: countDistinct(activityLogs.userId) }).from(activityLogs).where(
+          and2(
+            gte(activityLogs.createdAt, twentyFourHoursAgo),
+            // Use created_at, not activityDate
+            or2(
+              eq2(activityLogs.featureType, "PROCESS"),
+              eq2(activityLogs.featureType, "PLAYLIST")
+            )
+          )
+        ),
+        // Badges earned in last 24 hours (keep consistent)
+        db.select({ count: count2() }).from(userBadges).where(gte(userBadges.earnedAt, twentyFourHoursAgo))
       ]);
       const [eventsToday, upcomingEvents] = await Promise.all([
         // Events happening today
-        db.select().from(events).where(and2(
-          gte(events.startDatetime, today),
-          lt(events.startDatetime, tomorrow)
-        )).orderBy(asc2(events.startDatetime)),
+        db.select().from(events).where(
+          and2(
+            gte(events.startDatetime, today),
+            lt(events.startDatetime, tomorrow)
+          )
+        ).orderBy(asc2(events.startDatetime)),
         // Events in next 7 days (excluding today)
-        db.select().from(events).where(and2(
-          gte(events.startDatetime, tomorrow),
-          lt(events.startDatetime, sevenDaysLater)
-        )).orderBy(asc2(events.startDatetime))
+        db.select().from(events).where(
+          and2(
+            gte(events.startDatetime, tomorrow),
+            lt(events.startDatetime, sevenDaysLater)
+          )
+        ).orderBy(asc2(events.startDatetime))
       ]);
       const [failedNotificationsResult, usersWithDeviceTokens, totalUserCount] = await Promise.all([
         // Failed notifications in last 24 hours
-        db.select({ count: count2() }).from(notificationLogs).where(and2(
-          eq2(notificationLogs.status, "failed"),
-          gte(notificationLogs.createdAt, twentyFourHoursAgo)
-        )),
-        // Count of unique users with push enabled
-        db.select({ count: countDistinct(deviceTokens.userId) }).from(deviceTokens).where(eq2(deviceTokens.pushEnabled, true)),
+        db.select({ count: count2() }).from(notificationLogs).where(
+          and2(
+            eq2(notificationLogs.status, "failed"),
+            gte(notificationLogs.createdAt, twentyFourHoursAgo)
+          )
+        ),
+        // Count of unique users with device tokens
+        db.select({ count: countDistinct(deviceTokens.userId) }).from(deviceTokens),
         // Total users
         db.select({ count: count2() }).from(users).where(eq2(users.role, "USER"))
       ]);
@@ -2952,7 +3089,11 @@ async function registerRoutes(app2) {
       const [communityPracticesResult] = await Promise.all([
         db.select({ count: count2() }).from(communitySessions)
       ]);
-      const [totalCoursesResult, publishedCoursesResult, lastUpdatedCourseResult] = await Promise.all([
+      const [
+        totalCoursesResult,
+        publishedCoursesResult,
+        lastUpdatedCourseResult
+      ] = await Promise.all([
         // Total courses
         db.select({ count: count2() }).from(cmsCourses),
         // Published courses
@@ -2967,7 +3108,8 @@ async function registerRoutes(app2) {
       const getEventStatus = (event) => {
         const now = /* @__PURE__ */ new Date();
         if (now < event.startDatetime) return "upcoming";
-        if (now >= event.startDatetime && now <= event.endDatetime) return "live";
+        if (now >= event.startDatetime && now <= event.endDatetime)
+          return "live";
         return "completed";
       };
       res.json({
@@ -3125,25 +3267,29 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to delete student" });
     }
   });
-  app2.post("/admin/v1/students/:id/reset-password", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const { password } = req.body;
-      if (!password || typeof password !== "string" || password.length < 6) {
-        return res.status(400).json({ error: "Password must be at least 6 characters" });
+  app2.post(
+    "/admin/v1/students/:id/reset-password",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const { password } = req.body;
+        if (!password || typeof password !== "string" || password.length < 6) {
+          return res.status(400).json({ error: "Password must be at least 6 characters" });
+        }
+        const user = await storage.getUserById(id);
+        if (!user) {
+          return res.status(404).json({ error: "Student not found" });
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await storage.resetUserPassword(id, hashedPassword);
+        res.json({ success: true, message: "Password reset successfully" });
+      } catch (error) {
+        console.error("Error resetting password:", error);
+        res.status(500).json({ error: "Failed to reset password" });
       }
-      const user = await storage.getUserById(id);
-      if (!user) {
-        return res.status(404).json({ error: "Student not found" });
-      }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await storage.resetUserPassword(id, hashedPassword);
-      res.json({ success: true, message: "Password reset successfully" });
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      res.status(500).json({ error: "Failed to reset password" });
     }
-  });
+  );
   app2.get("/admin/v1/students/:id/badges", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -3185,7 +3331,10 @@ John Doe,john.doe@example.com,+1234567890
 Jane Smith,jane.smith@example.com,
 Bob Wilson,bob.wilson@example.com,+9876543210`;
     res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=student_upload_sample.csv");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=student_upload_sample.csv"
+    );
     res.send(sampleCSV);
   });
   const uploadCSV = multer({
@@ -3200,92 +3349,102 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
     }
   });
-  app2.post("/api/admin/students/bulk-upload", requireAdmin, uploadCSV.single("file"), async (req, res) => {
-    try {
-      const { parse } = await import("csv-parse/sync");
-      if (!req.file) {
-        return res.status(400).json({ error: "CSV file is required" });
-      }
-      const programId = req.body.programId;
-      if (!programId) {
-        return res.status(400).json({ error: "Program is required" });
-      }
-      const program = await storage.getProgramById(parseInt(programId));
-      if (!program) {
-        return res.status(400).json({ error: "Invalid program selected" });
-      }
-      const csvContent = req.file.buffer.toString("utf-8");
-      let records;
+  app2.post(
+    "/api/admin/students/bulk-upload",
+    requireAdmin,
+    uploadCSV.single("file"),
+    async (req, res) => {
       try {
-        records = parse(csvContent, {
-          columns: true,
-          skip_empty_lines: true,
-          trim: true,
-          relax_column_count: true
-        });
-      } catch (parseError) {
-        return res.status(400).json({ error: "Invalid CSV format. Please check file structure." });
-      }
-      if (records.length > 1e3) {
-        return res.status(400).json({ error: "Maximum 1000 rows allowed per upload" });
-      }
-      const errors = [];
-      let created = 0;
-      const defaultPassword = "User@123";
-      const passwordHash = await bcrypt.hash(defaultPassword, 10);
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      for (let i = 0; i < records.length; i++) {
-        const row = records[i];
-        const rowNumber = i + 2;
-        const fullName = (row.full_name || row.name || "").trim();
-        if (!fullName) {
-          errors.push({ row: rowNumber, reason: "Missing full_name" });
-          continue;
+        const { parse } = await import("csv-parse/sync");
+        if (!req.file) {
+          return res.status(400).json({ error: "CSV file is required" });
         }
-        const email = (row.email || "").trim().toLowerCase();
-        if (!email) {
-          errors.push({ row: rowNumber, reason: "Missing email" });
-          continue;
+        const programId = req.body.programId;
+        if (!programId) {
+          return res.status(400).json({ error: "Program is required" });
         }
-        if (!emailRegex.test(email)) {
-          errors.push({ row: rowNumber, reason: "Invalid email format" });
-          continue;
+        const program = await storage.getProgramById(parseInt(programId));
+        if (!program) {
+          return res.status(400).json({ error: "Invalid program selected" });
         }
-        const existingUser = await storage.getUserByEmail(email);
-        if (existingUser) {
-          errors.push({ row: rowNumber, reason: "Email already exists" });
-          continue;
-        }
-        const phone = (row.phone || "").trim() || null;
+        const csvContent = req.file.buffer.toString("utf-8");
+        let records;
         try {
-          await storage.createStudent(
-            {
-              name: fullName,
-              email,
-              phone,
-              passwordHash,
-              role: "USER",
-              status: "active"
-            },
-            program.code
-            // Always use program from modal, not CSV
-          );
-          created++;
-        } catch (createError) {
-          errors.push({ row: rowNumber, reason: createError.message || "Failed to create student" });
+          records = parse(csvContent, {
+            columns: true,
+            skip_empty_lines: true,
+            trim: true,
+            relax_column_count: true
+          });
+        } catch (parseError) {
+          return res.status(400).json({
+            error: "Invalid CSV format. Please check file structure."
+          });
         }
+        if (records.length > 1e3) {
+          return res.status(400).json({ error: "Maximum 1000 rows allowed per upload" });
+        }
+        const errors = [];
+        let created = 0;
+        const defaultPassword = "User@123";
+        const passwordHash = await bcrypt.hash(defaultPassword, 10);
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        for (let i = 0; i < records.length; i++) {
+          const row = records[i];
+          const rowNumber = i + 2;
+          const fullName = (row.full_name || row.name || "").trim();
+          if (!fullName) {
+            errors.push({ row: rowNumber, reason: "Missing full_name" });
+            continue;
+          }
+          const email = (row.email || "").trim().toLowerCase();
+          if (!email) {
+            errors.push({ row: rowNumber, reason: "Missing email" });
+            continue;
+          }
+          if (!emailRegex.test(email)) {
+            errors.push({ row: rowNumber, reason: "Invalid email format" });
+            continue;
+          }
+          const existingUser = await storage.getUserByEmail(email);
+          if (existingUser) {
+            errors.push({ row: rowNumber, reason: "Email already exists" });
+            continue;
+          }
+          const phone = (row.phone || "").trim() || null;
+          try {
+            await storage.createStudent(
+              {
+                name: fullName,
+                email,
+                phone,
+                passwordHash,
+                role: "USER",
+                status: "active"
+              },
+              program.code
+              // Always use program from modal, not CSV
+            );
+            created++;
+          } catch (createError) {
+            errors.push({
+              row: rowNumber,
+              reason: createError.message || "Failed to create student"
+            });
+          }
+        }
+        res.json({
+          totalRows: records.length,
+          created,
+          skipped: errors.length,
+          errors
+        });
+      } catch (error) {
+        console.error("Error in bulk upload:", error);
+        res.status(500).json({ error: "Failed to process bulk upload" });
       }
-      res.json({
-        totalRows: records.length,
-        created,
-        skipped: errors.length,
-        errors
-      });
-    } catch (error) {
-      console.error("Error in bulk upload:", error);
-      res.status(500).json({ error: "Failed to process bulk upload" });
     }
-  });
+  );
   app2.get("/admin/v1/programs", requireAdmin, async (req, res) => {
     try {
       const programs2 = await storage.getAllPrograms();
@@ -3552,7 +3711,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
       const [newProgram] = await db.insert(programs).values({
         code: String(code).toUpperCase(),
-        name: String(name)
+        name: String(name),
+        level: req.body.level ? parseInt(String(req.body.level)) : 1
       }).returning();
       res.status(201).json(newProgram);
     } catch (error) {
@@ -3677,7 +3837,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return { ...module, folders, lessons: lessonsWithFiles };
         })
       );
-      res.json({ ...course, programCode, thumbnailSignedUrl, modules: modulesWithContent });
+      res.json({
+        ...course,
+        programCode,
+        thumbnailSignedUrl,
+        modules: modulesWithContent
+      });
     } catch (error) {
       console.error("Error fetching course:", error);
       res.status(500).json({ error: "Failed to fetch course" });
@@ -4101,9 +4266,17 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         if (uploadType === "thumbnail" && courseId && programCode) {
           key = generateCourseThumnailKey(programCode, courseId);
         } else if (lessonId && fileType && programCode && courseId && moduleId) {
-          key = generateLessonFileKey(programCode, courseId, moduleId, lessonId, fileType);
+          key = generateLessonFileKey(
+            programCode,
+            courseId,
+            moduleId,
+            lessonId,
+            fileType
+          );
         } else {
-          res.status(400).json({ error: "Invalid upload parameters. For thumbnails: programCode, courseId required. For lesson files: programCode, courseId, moduleId, lessonId, fileType required." });
+          res.status(400).json({
+            error: "Invalid upload parameters. For thumbnails: programCode, courseId required. For lesson files: programCode, courseId, moduleId, lessonId, fileType required."
+          });
           return;
         }
         const result = await getSignedPutUrl(key, contentType);
@@ -4322,7 +4495,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const { courseIds } = req.body;
         const allowedCodes = ["ABUNDANCE", "MASTERCLASS"];
         if (!allowedCodes.includes(code)) {
-          return res.status(400).json({ error: "Reorder only allowed for ABUNDANCE and MASTERCLASS features" });
+          return res.status(400).json({
+            error: "Reorder only allowed for ABUNDANCE and MASTERCLASS features"
+          });
         }
         if (!Array.isArray(courseIds)) {
           return res.status(400).json({ error: "courseIds must be an array" });
@@ -4523,8 +4698,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                   type: "module",
                   feature: feature.code,
                   id: module.id,
+                  course_id: courseId,
                   title: module.title,
-                  navigate_to: `/processes/module/${module.id}`
+                  navigate_to: `/course/${courseId}/module/${module.id}`
                 });
               }
               const lessons = await db.select().from(cmsLessons).where(eq2(cmsLessons.moduleId, module.id)).orderBy(asc2(cmsLessons.position));
@@ -4935,40 +5111,60 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to fetch session banners" });
     }
   });
-  app2.get("/api/admin/v1/session-banners/upload-url", requireAdmin, async (req, res) => {
-    try {
-      const { filename, contentType } = req.query;
-      if (!filename || !contentType) {
-        return res.status(400).json({ error: "filename and contentType are required" });
+  app2.get(
+    "/api/admin/v1/session-banners/upload-url",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { filename, contentType } = req.query;
+        if (!filename || !contentType) {
+          return res.status(400).json({ error: "filename and contentType are required" });
+        }
+        const key = `session-banners/${Date.now()}-${filename}`;
+        const result = await getSignedPutUrl(key, contentType);
+        if (!result.success) {
+          console.error("R2 upload URL error:", result.error);
+          return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
+        }
+        res.json({ key: result.key, signedUrl: result.uploadUrl });
+      } catch (error) {
+        console.error("Error generating upload URL:", error);
+        res.status(500).json({ error: "Failed to generate upload URL" });
       }
-      const key = `session-banners/${Date.now()}-${filename}`;
-      const result = await getSignedPutUrl(key, contentType);
-      if (!result.success) {
-        console.error("R2 upload URL error:", result.error);
-        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
-      }
-      res.json({ key: result.key, signedUrl: result.uploadUrl });
-    } catch (error) {
-      console.error("Error generating upload URL:", error);
-      res.status(500).json({ error: "Failed to generate upload URL" });
     }
-  });
-  app2.get("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const banner = await storage.getSessionBannerById(id);
-      if (!banner) {
-        return res.status(404).json({ error: "Banner not found" });
+  );
+  app2.get(
+    "/api/admin/v1/session-banners/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const banner = await storage.getSessionBannerById(id);
+        if (!banner) {
+          return res.status(404).json({ error: "Banner not found" });
+        }
+        res.json(banner);
+      } catch (error) {
+        console.error("Error fetching session banner:", error);
+        res.status(500).json({ error: "Failed to fetch session banner" });
       }
-      res.json(banner);
-    } catch (error) {
-      console.error("Error fetching session banner:", error);
-      res.status(500).json({ error: "Failed to fetch session banner" });
     }
-  });
+  );
   app2.post("/api/admin/v1/session-banners", requireAdmin, async (req, res) => {
     try {
-      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled, liveStartAt, liveEndAt } = req.body;
+      const {
+        type,
+        thumbnailKey,
+        videoKey,
+        posterKey,
+        ctaText,
+        ctaLink,
+        startAt,
+        endAt,
+        liveEnabled,
+        liveStartAt,
+        liveEndAt
+      } = req.body;
       if (!type || !startAt || !endAt) {
         return res.status(400).json({ error: "type, startAt, and endAt are required" });
       }
@@ -4991,71 +5187,97 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to create session banner" });
     }
   });
-  app2.put("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const { type, thumbnailKey, videoKey, posterKey, ctaText, ctaLink, startAt, endAt, liveEnabled, liveStartAt, liveEndAt } = req.body;
-      const updateData = {};
-      if (type !== void 0) updateData.type = type;
-      if (thumbnailKey !== void 0) updateData.thumbnailKey = thumbnailKey;
-      if (videoKey !== void 0) updateData.videoKey = videoKey;
-      if (posterKey !== void 0) updateData.posterKey = posterKey;
-      if (ctaText !== void 0) updateData.ctaText = ctaText;
-      if (ctaLink !== void 0) updateData.ctaLink = ctaLink;
-      if (startAt !== void 0) updateData.startAt = new Date(startAt);
-      if (endAt !== void 0) updateData.endAt = new Date(endAt);
-      if (liveEnabled !== void 0) updateData.liveEnabled = liveEnabled;
-      if (liveStartAt !== void 0) updateData.liveStartAt = liveStartAt ? new Date(liveStartAt) : null;
-      if (liveEndAt !== void 0) updateData.liveEndAt = liveEndAt ? new Date(liveEndAt) : null;
-      const banner = await storage.updateSessionBanner(id, updateData);
-      if (!banner) {
-        return res.status(404).json({ error: "Banner not found" });
+  app2.put(
+    "/api/admin/v1/session-banners/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const {
+          type,
+          thumbnailKey,
+          videoKey,
+          posterKey,
+          ctaText,
+          ctaLink,
+          startAt,
+          endAt,
+          liveEnabled,
+          liveStartAt,
+          liveEndAt
+        } = req.body;
+        const updateData = {};
+        if (type !== void 0) updateData.type = type;
+        if (thumbnailKey !== void 0) updateData.thumbnailKey = thumbnailKey;
+        if (videoKey !== void 0) updateData.videoKey = videoKey;
+        if (posterKey !== void 0) updateData.posterKey = posterKey;
+        if (ctaText !== void 0) updateData.ctaText = ctaText;
+        if (ctaLink !== void 0) updateData.ctaLink = ctaLink;
+        if (startAt !== void 0) updateData.startAt = new Date(startAt);
+        if (endAt !== void 0) updateData.endAt = new Date(endAt);
+        if (liveEnabled !== void 0) updateData.liveEnabled = liveEnabled;
+        if (liveStartAt !== void 0)
+          updateData.liveStartAt = liveStartAt ? new Date(liveStartAt) : null;
+        if (liveEndAt !== void 0)
+          updateData.liveEndAt = liveEndAt ? new Date(liveEndAt) : null;
+        const banner = await storage.updateSessionBanner(id, updateData);
+        if (!banner) {
+          return res.status(404).json({ error: "Banner not found" });
+        }
+        res.json(banner);
+      } catch (error) {
+        console.error("Error updating session banner:", error);
+        res.status(500).json({ error: "Failed to update session banner" });
       }
-      res.json(banner);
-    } catch (error) {
-      console.error("Error updating session banner:", error);
-      res.status(500).json({ error: "Failed to update session banner" });
     }
-  });
-  app2.delete("/api/admin/v1/session-banners/:id", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const success = await storage.deleteSessionBanner(id);
-      if (!success) {
-        return res.status(404).json({ error: "Banner not found" });
+  );
+  app2.delete(
+    "/api/admin/v1/session-banners/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const success = await storage.deleteSessionBanner(id);
+        if (!success) {
+          return res.status(404).json({ error: "Banner not found" });
+        }
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting session banner:", error);
+        res.status(500).json({ error: "Failed to delete session banner" });
       }
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting session banner:", error);
-      res.status(500).json({ error: "Failed to delete session banner" });
     }
-  });
-  app2.post("/api/admin/v1/session-banners/:id/duplicate", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const original = await storage.getSessionBannerById(id);
-      if (!original) {
-        return res.status(404).json({ error: "Banner not found" });
+  );
+  app2.post(
+    "/api/admin/v1/session-banners/:id/duplicate",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const original = await storage.getSessionBannerById(id);
+        if (!original) {
+          return res.status(404).json({ error: "Banner not found" });
+        }
+        const duplicate = await storage.createSessionBanner({
+          type: original.type,
+          thumbnailKey: original.thumbnailKey,
+          videoKey: original.videoKey,
+          posterKey: original.posterKey,
+          ctaText: original.ctaText,
+          ctaLink: original.ctaLink,
+          startAt: original.startAt,
+          endAt: original.endAt,
+          liveEnabled: original.liveEnabled,
+          liveStartAt: original.liveStartAt,
+          liveEndAt: original.liveEndAt
+        });
+        res.status(201).json(duplicate);
+      } catch (error) {
+        console.error("Error duplicating session banner:", error);
+        res.status(500).json({ error: "Failed to duplicate session banner" });
       }
-      const duplicate = await storage.createSessionBanner({
-        type: original.type,
-        thumbnailKey: original.thumbnailKey,
-        videoKey: original.videoKey,
-        posterKey: original.posterKey,
-        ctaText: original.ctaText,
-        ctaLink: original.ctaLink,
-        startAt: original.startAt,
-        endAt: original.endAt,
-        liveEnabled: original.liveEnabled,
-        liveStartAt: original.liveStartAt,
-        liveEndAt: original.liveEndAt
-      });
-      res.status(201).json(duplicate);
-    } catch (error) {
-      console.error("Error duplicating session banner:", error);
-      res.status(500).json({ error: "Failed to duplicate session banner" });
     }
-  });
+  );
   app2.get("/api/public/v1/session-banner", async (req, res) => {
     try {
       let banner = await storage.getActiveBanner();
@@ -5106,7 +5328,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app2.get("/api/quotes/today", async (req, res) => {
     try {
       const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-      const [todayQuote] = await db.select().from(dailyQuotes).where(and2(eq2(dailyQuotes.isActive, true), eq2(dailyQuotes.lastShownDate, today)));
+      const [todayQuote] = await db.select().from(dailyQuotes).where(
+        and2(
+          eq2(dailyQuotes.isActive, true),
+          eq2(dailyQuotes.lastShownDate, today)
+        )
+      );
       if (todayQuote) {
         return res.json({
           quote: todayQuote.quoteText,
@@ -5143,25 +5370,35 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
   app2.post("/api/admin/quotes", requireAdmin, async (req, res) => {
     try {
-      const parsed = insertDailyQuoteSchema.safeParse(req.body);
+      const { displayOrder, ...bodyWithoutOrder } = req.body;
+      const parsed = insertDailyQuoteSchema.safeParse(bodyWithoutOrder);
       if (!parsed.success) {
         return res.status(400).json({ error: "Validation failed", details: parsed.error.errors });
       }
-      const [newQuote] = await db.insert(dailyQuotes).values(parsed.data).returning();
+      const maxOrderResult = await db.select({ maxOrder: sql3`COALESCE(MAX(${dailyQuotes.displayOrder}), 0)` }).from(dailyQuotes);
+      const nextOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
+      const [newQuote] = await db.insert(dailyQuotes).values({
+        ...parsed.data,
+        displayOrder: nextOrder
+      }).returning();
       res.status(201).json(newQuote);
     } catch (error) {
       console.error("Error creating quote:", error);
+      if (error.code === "23505" && error.constraint === "unique_display_order") {
+        return res.status(400).json({
+          error: "Display order conflict detected. Please try again."
+        });
+      }
       res.status(500).json({ error: "Failed to create quote" });
     }
   });
   app2.put("/api/admin/quotes/:id", requireAdmin, async (req, res) => {
     try {
       const quoteId = parseInt(req.params.id);
-      const { quoteText, author, displayOrder, isActive } = req.body;
+      const { quoteText, author, isActive } = req.body;
       const [updated] = await db.update(dailyQuotes).set({
         ...quoteText !== void 0 && { quoteText },
         ...author !== void 0 && { author },
-        ...displayOrder !== void 0 && { displayOrder },
         ...isActive !== void 0 && { isActive },
         updatedAt: /* @__PURE__ */ new Date()
       }).where(eq2(dailyQuotes.id, quoteId)).returning();
@@ -5177,50 +5414,60 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   app2.delete("/api/admin/quotes/:id", requireAdmin, async (req, res) => {
     try {
       const quoteId = parseInt(req.params.id);
-      const [updated] = await db.update(dailyQuotes).set({ isActive: false, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(dailyQuotes.id, quoteId)).returning();
-      if (!updated) {
+      const [deleted] = await db.delete(dailyQuotes).where(eq2(dailyQuotes.id, quoteId)).returning();
+      if (!deleted) {
         return res.status(404).json({ error: "Quote not found" });
       }
-      res.json({ success: true, message: "Quote deactivated" });
+      res.json({ success: true, message: "Quote deleted" });
     } catch (error) {
       console.error("Error deleting quote:", error);
       res.status(500).json({ error: "Failed to delete quote" });
     }
   });
-  app2.get("/admin/v1/users/:userId/wellness-profile", requireAdmin, async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      if (isNaN(userId)) {
-        return res.status(400).json({ error: "Invalid user ID" });
+  app2.get(
+    "/admin/v1/users/:userId/wellness-profile",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId);
+        if (isNaN(userId)) {
+          return res.status(400).json({ error: "Invalid user ID" });
+        }
+        const profile = await storage.getWellnessProfileByUserId(userId);
+        res.json(
+          profile || { userId, karmicAffirmation: null, prescription: null }
+        );
+      } catch (error) {
+        console.error("Error fetching wellness profile:", error);
+        res.status(500).json({ error: "Failed to fetch wellness profile" });
       }
-      const profile = await storage.getWellnessProfileByUserId(userId);
-      res.json(profile || { userId, karmicAffirmation: null, prescription: null });
-    } catch (error) {
-      console.error("Error fetching wellness profile:", error);
-      res.status(500).json({ error: "Failed to fetch wellness profile" });
     }
-  });
-  app2.post("/admin/v1/users/:userId/wellness-profile", requireAdmin, async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      if (isNaN(userId)) {
-        return res.status(400).json({ error: "Invalid user ID" });
+  );
+  app2.post(
+    "/admin/v1/users/:userId/wellness-profile",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId);
+        if (isNaN(userId)) {
+          return res.status(400).json({ error: "Invalid user ID" });
+        }
+        const user = await storage.getUserById(userId);
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+        const { karmicAffirmation, prescription } = req.body;
+        const profile = await storage.upsertWellnessProfile(userId, {
+          karmicAffirmation: karmicAffirmation ?? null,
+          prescription: prescription ?? null
+        });
+        res.json(profile);
+      } catch (error) {
+        console.error("Error saving wellness profile:", error);
+        res.status(500).json({ error: "Failed to save wellness profile" });
       }
-      const user = await storage.getUserById(userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      const { karmicAffirmation, prescription } = req.body;
-      const profile = await storage.upsertWellnessProfile(userId, {
-        karmicAffirmation: karmicAffirmation ?? null,
-        prescription: prescription ?? null
-      });
-      res.json(profile);
-    } catch (error) {
-      console.error("Error saving wellness profile:", error);
-      res.status(500).json({ error: "Failed to save wellness profile" });
     }
-  });
+  );
   app2.get("/api/v1/me/wellness-profile", authenticateJWT, async (req, res) => {
     try {
       if (!req.user) {
@@ -5250,7 +5497,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(404).json({ error: "User not found" });
       }
       const bcrypt2 = await import("bcryptjs");
-      const isValidPassword = await bcrypt2.compare(currentPassword, user.passwordHash);
+      const isValidPassword = await bcrypt2.compare(
+        currentPassword,
+        user.passwordHash
+      );
       if (!isValidPassword) {
         return res.status(400).json({ error: "Current password is incorrect" });
       }
@@ -5395,7 +5645,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     if (event.status !== "UPCOMING") return;
     const startTime = new Date(event.startDatetime);
     const now = /* @__PURE__ */ new Date();
-    const timeStr = startTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    const timeStr = startTime.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    });
     const notifications2 = [];
     const reminder24h = new Date(startTime.getTime() - 24 * 60 * 60 * 1e3);
     if (reminder24h > now) {
@@ -5423,7 +5677,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
     if (notifications2.length > 0) {
       await storage.createNotifications(notifications2);
-      console.log(`Created ${notifications2.length} reminder(s) for event ${event.id}: ${event.title}`);
+      console.log(
+        `Created ${notifications2.length} reminder(s) for event ${event.id}: ${event.title}`
+      );
     }
   }
   app2.post("/api/admin/v1/events", requireAdmin, async (req, res) => {
@@ -5491,48 +5747,58 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to cancel event" });
     }
   });
-  app2.post("/api/admin/v1/events/:id/skip-recording", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const event = await storage.updateEvent(id, {
-        showRecording: false,
-        recordingSkipped: true,
-        recordingUrl: null,
-        recordingPasscode: null,
-        recordingExpiryDate: null
-      });
-      if (!event) {
-        return res.status(404).json({ error: "Event not found" });
+  app2.post(
+    "/api/admin/v1/events/:id/skip-recording",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const event = await storage.updateEvent(id, {
+          showRecording: false,
+          recordingSkipped: true,
+          recordingUrl: null,
+          recordingPasscode: null,
+          recordingExpiryDate: null
+        });
+        if (!event) {
+          return res.status(404).json({ error: "Event not found" });
+        }
+        res.json({ success: true, message: "Recording skipped" });
+      } catch (error) {
+        console.error("Error skipping recording:", error);
+        res.status(500).json({ error: "Failed to skip recording" });
       }
-      res.json({ success: true, message: "Recording skipped" });
-    } catch (error) {
-      console.error("Error skipping recording:", error);
-      res.status(500).json({ error: "Failed to skip recording" });
     }
-  });
-  app2.post("/api/admin/v1/events/:id/add-recording", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const { recordingUrl, recordingPasscode, recordingExpiryDate } = req.body;
-      if (!recordingUrl || !recordingPasscode || !recordingExpiryDate) {
-        return res.status(400).json({ error: "recordingUrl, recordingPasscode, and recordingExpiryDate are required" });
+  );
+  app2.post(
+    "/api/admin/v1/events/:id/add-recording",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const { recordingUrl, recordingPasscode, recordingExpiryDate } = req.body;
+        if (!recordingUrl || !recordingPasscode || !recordingExpiryDate) {
+          return res.status(400).json({
+            error: "recordingUrl, recordingPasscode, and recordingExpiryDate are required"
+          });
+        }
+        const event = await storage.updateEvent(id, {
+          recordingUrl,
+          recordingPasscode,
+          recordingExpiryDate,
+          showRecording: true,
+          recordingSkipped: false
+        });
+        if (!event) {
+          return res.status(404).json({ error: "Event not found" });
+        }
+        res.json(event);
+      } catch (error) {
+        console.error("Error adding recording:", error);
+        res.status(500).json({ error: "Failed to add recording" });
       }
-      const event = await storage.updateEvent(id, {
-        recordingUrl,
-        recordingPasscode,
-        recordingExpiryDate,
-        showRecording: true,
-        recordingSkipped: false
-      });
-      if (!event) {
-        return res.status(404).json({ error: "Event not found" });
-      }
-      res.json(event);
-    } catch (error) {
-      console.error("Error adding recording:", error);
-      res.status(500).json({ error: "Failed to add recording" });
     }
-  });
+  );
   app2.get("/api/events/upcoming", async (req, res) => {
     try {
       const events2 = await storage.getUpcomingEvents();
@@ -5633,9 +5899,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                 key = img;
               }
               const signedResult = await getSignedGetUrl(key, 3600);
-              signedVisionImages.push(signedResult.success ? signedResult.url : null);
+              signedVisionImages.push(
+                signedResult.success ? signedResult.url : null
+              );
             } catch (err) {
-              console.error("Error generating signed URL for vision image:", err);
+              console.error(
+                "Error generating signed URL for vision image:",
+                err
+              );
               signedVisionImages.push(null);
             }
           } else {
@@ -5710,7 +5981,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(400).json({ error: "Why is required and must be <= 500 characters" });
       }
       if (!pohCategoryEnum.safeParse(category).success) {
-        return res.status(400).json({ error: "Invalid category. Must be: career, health, relationships, or wealth" });
+        return res.status(400).json({
+          error: "Invalid category. Must be: career, health, relationships, or wealth"
+        });
       }
       const userPOHs = await storage.getUserPOHs(userId);
       const hasActive = userPOHs.some((p) => p.status === "active");
@@ -5801,7 +6074,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(403).json({ error: "Can only add milestones to active POH" });
       }
       if (!text2 || text2.length > 200) {
-        return res.status(400).json({ error: "Milestone text is required and must be <= 200 characters" });
+        return res.status(400).json({
+          error: "Milestone text is required and must be <= 200 characters"
+        });
       }
       const existingMilestones = await storage.getPOHMilestones(pohId);
       if (existingMilestones.length >= 5) {
@@ -5818,35 +6093,42 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to create milestone" });
     }
   });
-  app2.post("/api/poh/milestone/:id/achieve", authenticateJWT, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
+  app2.post(
+    "/api/poh/milestone/:id/achieve",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+        const userId = req.user.sub;
+        const milestoneId = req.params.id;
+        const milestone = await storage.getPOHMilestoneById(milestoneId);
+        if (!milestone) {
+          return res.status(404).json({ error: "Milestone not found" });
+        }
+        const poh = await storage.getPOHById(milestone.pohId);
+        if (!poh || poh.userId !== userId) {
+          return res.status(404).json({ error: "Milestone not found" });
+        }
+        if (poh.status !== "active") {
+          return res.status(403).json({ error: "Can only achieve milestones on active POH" });
+        }
+        if (milestone.achieved) {
+          return res.status(400).json({ error: "Milestone already achieved" });
+        }
+        const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        const updatedMilestone = await storage.achievePOHMilestone(
+          milestoneId,
+          today
+        );
+        res.json(updatedMilestone);
+      } catch (error) {
+        console.error("Error achieving milestone:", error);
+        res.status(500).json({ error: "Failed to achieve milestone" });
       }
-      const userId = req.user.sub;
-      const milestoneId = req.params.id;
-      const milestone = await storage.getPOHMilestoneById(milestoneId);
-      if (!milestone) {
-        return res.status(404).json({ error: "Milestone not found" });
-      }
-      const poh = await storage.getPOHById(milestone.pohId);
-      if (!poh || poh.userId !== userId) {
-        return res.status(404).json({ error: "Milestone not found" });
-      }
-      if (poh.status !== "active") {
-        return res.status(403).json({ error: "Can only achieve milestones on active POH" });
-      }
-      if (milestone.achieved) {
-        return res.status(400).json({ error: "Milestone already achieved" });
-      }
-      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-      const updatedMilestone = await storage.achievePOHMilestone(milestoneId, today);
-      res.json(updatedMilestone);
-    } catch (error) {
-      console.error("Error achieving milestone:", error);
-      res.status(500).json({ error: "Failed to achieve milestone" });
     }
-  });
+  );
   app2.put("/api/poh/milestone/:id", authenticateJWT, async (req, res) => {
     try {
       if (!req.user) {
@@ -5878,7 +6160,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!text2 || text2.length > 200) {
         return res.status(400).json({ error: "Milestone text must be <= 200 characters" });
       }
-      const updatedMilestone = await storage.updatePOHMilestone(milestoneId, { text: text2 });
+      const updatedMilestone = await storage.updatePOHMilestone(milestoneId, {
+        text: text2
+      });
       res.json(updatedMilestone);
     } catch (error) {
       console.error("Error updating milestone:", error);
@@ -5943,7 +6227,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           message: "Can only submit or update rating for today"
         });
       }
-      const existingRating = await storage.getPOHRatingByDate(userId, local_date);
+      const existingRating = await storage.getPOHRatingByDate(
+        userId,
+        local_date
+      );
       let result;
       if (existingRating) {
         result = await storage.updatePOHRating(existingRating.id, rating);
@@ -5977,7 +6264,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(403).json({ error: "Can only complete active POH" });
       }
       if (!closing_reflection || closing_reflection.length < 20) {
-        return res.status(400).json({ error: "Closing reflection is required (minimum 20 characters)" });
+        return res.status(400).json({
+          error: "Closing reflection is required (minimum 20 characters)"
+        });
       }
       const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
       await storage.completePOH(pohId, {
@@ -6008,7 +6297,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(403).json({ error: "Can only close active POH" });
       }
       if (!closing_reflection || closing_reflection.length < 20) {
-        return res.status(400).json({ error: "Closing reflection is required (minimum 20 characters)" });
+        return res.status(400).json({
+          error: "Closing reflection is required (minimum 20 characters)"
+        });
       }
       const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
       await storage.completePOH(pohId, {
@@ -6065,72 +6356,81 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
     }
   });
-  app2.post("/api/poh/:id/vision", authenticateJWT, uploadPOHVision.single("image"), async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
-      const userId = req.user.sub;
-      const pohId = req.params.id;
-      const indexStr = req.body.index;
-      const index = parseInt(indexStr, 10);
-      if (isNaN(index) || index < 0 || index > 2) {
-        return res.status(400).json({
-          error: "INVALID_INDEX",
-          message: "Index must be 0, 1, or 2"
+  app2.post(
+    "/api/poh/:id/vision",
+    authenticateJWT,
+    uploadPOHVision.single("image"),
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+        const userId = req.user.sub;
+        const pohId = req.params.id;
+        const indexStr = req.body.index;
+        const index = parseInt(indexStr, 10);
+        if (isNaN(index) || index < 0 || index > 2) {
+          return res.status(400).json({
+            error: "INVALID_INDEX",
+            message: "Index must be 0, 1, or 2"
+          });
+        }
+        const poh = await storage.getPOHById(pohId);
+        if (!poh || poh.userId !== userId) {
+          return res.status(404).json({ error: "POH not found" });
+        }
+        if (poh.status !== "active") {
+          return res.status(403).json({
+            error: "VISION_UPLOAD_NOT_ALLOWED",
+            message: "Can only upload vision images to active POH"
+          });
+        }
+        if (!req.file) {
+          return res.status(400).json({
+            error: "INVALID_IMAGE",
+            message: "No image file provided"
+          });
+        }
+        const extMap = {
+          "image/jpeg": "jpg",
+          "image/png": "png",
+          "image/webp": "webp"
+        };
+        const ext = extMap[req.file.mimetype] || "jpg";
+        const key = `poh-visions/${userId}/${pohId}/vision-${index}.${ext}`;
+        const uploadResult = await uploadBufferToR2(
+          req.file.buffer,
+          key,
+          req.file.mimetype
+        );
+        if (!uploadResult.success) {
+          console.error("R2 upload failed:", uploadResult.error);
+          return res.status(500).json({ error: "Failed to upload image" });
+        }
+        const currentImages = poh.visionImages || [];
+        const newImages = [...currentImages];
+        while (newImages.length < 3) {
+          newImages.push(null);
+        }
+        newImages[index] = uploadResult.url;
+        await storage.updatePOH(pohId, { visionImages: newImages });
+        res.json({
+          success: true,
+          vision_images: newImages,
+          uploaded_index: index
         });
+      } catch (error) {
+        console.error("Error uploading vision image:", error);
+        if (error.message === "INVALID_IMAGE") {
+          return res.status(400).json({
+            error: "INVALID_IMAGE",
+            message: "Only JPEG, PNG, and WebP images are allowed"
+          });
+        }
+        res.status(500).json({ error: "Failed to upload vision image" });
       }
-      const poh = await storage.getPOHById(pohId);
-      if (!poh || poh.userId !== userId) {
-        return res.status(404).json({ error: "POH not found" });
-      }
-      if (poh.status !== "active") {
-        return res.status(403).json({
-          error: "VISION_UPLOAD_NOT_ALLOWED",
-          message: "Can only upload vision images to active POH"
-        });
-      }
-      if (!req.file) {
-        return res.status(400).json({
-          error: "INVALID_IMAGE",
-          message: "No image file provided"
-        });
-      }
-      const extMap = {
-        "image/jpeg": "jpg",
-        "image/png": "png",
-        "image/webp": "webp"
-      };
-      const ext = extMap[req.file.mimetype] || "jpg";
-      const key = `poh-visions/${userId}/${pohId}/vision-${index}.${ext}`;
-      const uploadResult = await uploadBufferToR2(req.file.buffer, key, req.file.mimetype);
-      if (!uploadResult.success) {
-        console.error("R2 upload failed:", uploadResult.error);
-        return res.status(500).json({ error: "Failed to upload image" });
-      }
-      const currentImages = poh.visionImages || [];
-      const newImages = [...currentImages];
-      while (newImages.length < 3) {
-        newImages.push(null);
-      }
-      newImages[index] = uploadResult.url;
-      await storage.updatePOH(pohId, { visionImages: newImages });
-      res.json({
-        success: true,
-        vision_images: newImages,
-        uploaded_index: index
-      });
-    } catch (error) {
-      console.error("Error uploading vision image:", error);
-      if (error.message === "INVALID_IMAGE") {
-        return res.status(400).json({
-          error: "INVALID_IMAGE",
-          message: "Only JPEG, PNG, and WebP images are allowed"
-        });
-      }
-      res.status(500).json({ error: "Failed to upload vision image" });
     }
-  });
+  );
   app2.get("/api/v1/notifications", authenticateJWT, async (req, res) => {
     try {
       const userId = req.user.sub;
@@ -6144,86 +6444,80 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to fetch notifications" });
     }
   });
-  app2.post("/api/v1/notifications/register-device", authenticateJWT, async (req, res) => {
-    try {
-      const userId = req.user.sub;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      const { token, platform } = req.body;
-      if (!token || typeof token !== "string") {
-        return res.status(400).json({ error: "Token is required" });
-      }
-      const normalizedPlatform = typeof platform === "string" && platform.trim().length > 0 ? platform.trim().slice(0, 10) : "native";
-      const existingToken = await db.select().from(deviceTokens).where(eq2(deviceTokens.token, token)).limit(1);
-      if (existingToken.length > 0) {
-        const needsUpdate = existingToken[0].userId !== userId || existingToken[0].platform !== normalizedPlatform;
-        if (needsUpdate) {
-          await db.update(deviceTokens).set({ userId, platform: normalizedPlatform }).where(eq2(deviceTokens.token, token));
+  app2.post(
+    "/api/v1/notifications/register-device",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        const userId = req.user.sub;
+        if (!userId) {
+          return res.status(401).json({ error: "Unauthorized" });
         }
-        return res.json({ success: true, message: "Token already registered" });
-      }
-      await db.insert(deviceTokens).values({
-        userId,
-        token,
-        platform: normalizedPlatform,
-        pushEnabled: true
-      });
-      res.json({ success: true, message: "Device registered successfully" });
-    } catch (error) {
-      console.error("Error registering device token:", error);
-      res.status(500).json({ error: "Failed to register device" });
-    }
-  });
-  app2.delete("/api/v1/notifications/unregister-device", authenticateJWT, async (req, res) => {
-    try {
-      const userId = req.user.sub;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      const { token } = req.body;
-      if (token) {
-        await db.delete(deviceTokens).where(and2(eq2(deviceTokens.userId, userId), eq2(deviceTokens.token, token)));
-      } else {
+        const { token } = req.body;
+        if (!token || typeof token !== "string") {
+          return res.status(400).json({ error: "Token is required" });
+        }
+        const existingToken = await db.select().from(deviceTokens).where(eq2(deviceTokens.token, token)).limit(1);
+        if (existingToken.length > 0) {
+          if (existingToken[0].userId !== userId) {
+            await db.update(deviceTokens).set({ userId }).where(eq2(deviceTokens.token, token));
+          }
+          return res.json({
+            success: true,
+            message: "Token already registered"
+          });
+        }
         await db.delete(deviceTokens).where(eq2(deviceTokens.userId, userId));
+        await db.insert(deviceTokens).values({
+          userId,
+          token,
+          platform: "web"
+        });
+        res.json({ success: true, message: "Device registered successfully" });
+      } catch (error) {
+        console.error("Error registering device token:", error);
+        res.status(500).json({ error: "Failed to register device" });
       }
-      res.json({ success: true, message: "Device unregistered" });
-    } catch (error) {
-      console.error("Error unregistering device token:", error);
-      res.status(500).json({ error: "Failed to unregister device" });
     }
-  });
+  );
+  app2.delete(
+    "/api/v1/notifications/unregister-device",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        const userId = req.user.sub;
+        if (!userId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+        const { token } = req.body;
+        if (token) {
+          await db.delete(deviceTokens).where(
+            and2(
+              eq2(deviceTokens.userId, userId),
+              eq2(deviceTokens.token, token)
+            )
+          );
+        } else {
+          await db.delete(deviceTokens).where(eq2(deviceTokens.userId, userId));
+        }
+        res.json({ success: true, message: "Device unregistered" });
+      } catch (error) {
+        console.error("Error unregistering device token:", error);
+        res.status(500).json({ error: "Failed to unregister device" });
+      }
+    }
+  );
   app2.get("/api/v1/notifications/status", authenticateJWT, async (req, res) => {
     try {
       const userId = req.user.sub;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const tokens = await db.select().from(deviceTokens).where(and2(
-        eq2(deviceTokens.userId, userId),
-        eq2(deviceTokens.pushEnabled, true)
-      )).limit(1);
+      const tokens = await db.select().from(deviceTokens).where(eq2(deviceTokens.userId, userId)).limit(1);
       res.json({ enabled: tokens.length > 0 });
     } catch (error) {
       console.error("Error getting notification status:", error);
       res.status(500).json({ error: "Failed to get notification status" });
-    }
-  });
-  app2.post("/api/v1/notifications/push-enabled", authenticateJWT, async (req, res) => {
-    try {
-      const userId = req.user.sub;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      const { enabled } = req.body;
-      if (typeof enabled !== "boolean") {
-        return res.status(400).json({ error: "enabled must be boolean" });
-      }
-      await db.update(deviceTokens).set({ pushEnabled: enabled }).where(eq2(deviceTokens.userId, userId));
-      res.json({ success: true, enabled });
-    } catch (error) {
-      console.error("Error updating push preference:", error);
-      res.status(500).json({ error: "Failed to update push preference" });
     }
   });
   app2.get("/admin/api/notifications/stats", requireAdmin, async (req, res) => {
@@ -6245,7 +6539,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!title || !body) {
         return res.status(400).json({ error: "Title and body are required" });
       }
-      const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId }).from(deviceTokens).where(eq2(deviceTokens.pushEnabled, true));
+      const allTokens = await db.select({ token: deviceTokens.token, userId: deviceTokens.userId }).from(deviceTokens);
       if (allTokens.length === 0) {
         return res.json({
           success: true,
@@ -6297,7 +6591,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const questions = await storage.getUserDrmQuestions(userId);
       const now = /* @__PURE__ */ new Date();
       const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      const hasSubmittedThisMonth = questions.some((q) => q.monthYear === currentMonthYear);
+      const hasSubmittedThisMonth = questions.some(
+        (q) => q.monthYear === currentMonthYear
+      );
       res.json({
         questions,
         currentMonthYear,
@@ -6323,7 +6619,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (question.audioR2Key) {
         console.log("DrM audio R2 key:", question.audioR2Key);
         const result = await getSignedGetUrl(question.audioR2Key);
-        console.log("DrM signed URL result:", result.success, result.url ? "URL generated" : "No URL", result.error || "");
+        console.log(
+          "DrM signed URL result:",
+          result.success,
+          result.url ? "URL generated" : "No URL",
+          result.error || ""
+        );
         if (result.success && result.url) {
           audioUrl = result.url;
         }
@@ -6352,7 +6653,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
       const now = /* @__PURE__ */ new Date();
       const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      const existingQuestion = await storage.getDrmQuestionByUserMonth(userId, monthYear);
+      const existingQuestion = await storage.getDrmQuestionByUserMonth(
+        userId,
+        monthYear
+      );
       if (existingQuestion) {
         return res.status(409).json({ error: "You have already submitted a question this month" });
       }
@@ -6405,96 +6709,114 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to fetch question" });
     }
   });
-  app2.post("/admin/api/drm/questions/:id/answer", requireAdmin, async (req, res) => {
-    try {
-      const questionId = parseInt(req.params.id);
-      const { mimeType } = req.body;
-      const question = await storage.getDrmQuestionById(questionId);
-      if (!question) {
-        return res.status(404).json({ error: "Question not found" });
-      }
-      let extension = "webm";
-      const contentType = mimeType || "audio/webm";
-      if (contentType.includes("mp4") || contentType.includes("m4a")) {
-        extension = "mp4";
-      } else if (contentType.includes("ogg")) {
-        extension = "ogg";
-      }
-      const audioKey = `drm-audio/questions/${questionId}/answer.${extension}`;
-      const result = await getSignedPutUrl(audioKey, contentType);
-      if (!result.success) {
-        return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
-      }
-      res.json({
-        uploadUrl: result.uploadUrl,
-        audioKey
-      });
-    } catch (error) {
-      console.error("Error generating audio upload URL:", error);
-      res.status(500).json({ error: "Failed to generate upload URL" });
-    }
-  });
-  app2.post("/admin/api/drm/questions/:id/confirm-answer", requireAdmin, async (req, res) => {
-    try {
-      const questionId = parseInt(req.params.id);
-      const { audioKey } = req.body;
-      if (!audioKey) {
-        return res.status(400).json({ error: "Audio key is required" });
-      }
-      const question = await storage.getDrmQuestionById(questionId);
-      if (!question) {
-        return res.status(404).json({ error: "Question not found" });
-      }
-      const updatedQuestion = await storage.updateDrmQuestionAnswer(questionId, audioKey);
-      if (!updatedQuestion) {
-        return res.status(500).json({ error: "Failed to update question" });
-      }
-      const [notification] = await db.insert(notifications).values({
-        title: "Dr. M has answered your question \u{1F3A7}",
-        body: "Your personal voice response is ready to listen.",
-        type: "drm_answer",
-        scheduledAt: /* @__PURE__ */ new Date(),
-        sent: true,
-        requiredProgramCode: "",
-        requiredProgramLevel: 0
-      }).returning();
-      const userTokens = await storage.getDeviceTokensByUserIds([question.userId]);
-      if (userTokens.length > 0) {
-        const tokens = userTokens.map((t) => t.token);
-        const result = await sendPushNotification(
-          tokens,
-          "Dr. M has answered your question \u{1F3A7}",
-          "Your personal voice response is ready to listen.",
-          { questionId: questionId.toString(), deepLink: `/dr-m/questions/${questionId}` }
-        );
-        const notificationLogRecords = userTokens.map((t) => ({
-          notificationId: notification.id,
-          userId: t.userId,
-          deviceToken: t.token,
-          status: result.successCount > 0 ? "sent" : "failed"
-        }));
-        await db.insert(notificationLogs).values(notificationLogRecords);
-      } else {
-        await db.insert(notificationLogs).values({
-          notificationId: notification.id,
-          userId: question.userId,
-          deviceToken: "in-app-only",
-          status: "sent"
+  app2.post(
+    "/admin/api/drm/questions/:id/answer",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const questionId = parseInt(req.params.id);
+        const { mimeType } = req.body;
+        const question = await storage.getDrmQuestionById(questionId);
+        if (!question) {
+          return res.status(404).json({ error: "Question not found" });
+        }
+        let extension = "webm";
+        const contentType = mimeType || "audio/webm";
+        if (contentType.includes("mp4") || contentType.includes("m4a")) {
+          extension = "mp4";
+        } else if (contentType.includes("ogg")) {
+          extension = "ogg";
+        }
+        const audioKey = `drm-audio/questions/${questionId}/answer.${extension}`;
+        const result = await getSignedPutUrl(audioKey, contentType);
+        if (!result.success) {
+          return res.status(500).json({ error: result.error || "Failed to generate upload URL" });
+        }
+        res.json({
+          uploadUrl: result.uploadUrl,
+          audioKey
         });
+      } catch (error) {
+        console.error("Error generating audio upload URL:", error);
+        res.status(500).json({ error: "Failed to generate upload URL" });
       }
-      console.log(`DrM answer submitted for question ${questionId}, notification sent to user ${question.userId}`);
-      const audioUrl = await getSignedGetUrl(audioKey);
-      res.json({
-        success: true,
-        message: "Answer submitted and user notified",
-        question: updatedQuestion,
-        audioUrl
-      });
-    } catch (error) {
-      console.error("Error confirming DrM answer:", error);
-      res.status(500).json({ error: "Failed to confirm answer" });
     }
-  });
+  );
+  app2.post(
+    "/admin/api/drm/questions/:id/confirm-answer",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const questionId = parseInt(req.params.id);
+        const { audioKey } = req.body;
+        if (!audioKey) {
+          return res.status(400).json({ error: "Audio key is required" });
+        }
+        const question = await storage.getDrmQuestionById(questionId);
+        if (!question) {
+          return res.status(404).json({ error: "Question not found" });
+        }
+        const updatedQuestion = await storage.updateDrmQuestionAnswer(
+          questionId,
+          audioKey
+        );
+        if (!updatedQuestion) {
+          return res.status(500).json({ error: "Failed to update question" });
+        }
+        const [notification] = await db.insert(notifications).values({
+          title: "Dr. M has answered your question \u{1F3A7}",
+          body: "Your personal voice response is ready to listen.",
+          type: "drm_answer",
+          scheduledAt: /* @__PURE__ */ new Date(),
+          sent: true,
+          requiredProgramCode: "",
+          requiredProgramLevel: 0
+        }).returning();
+        const userTokens = await storage.getDeviceTokensByUserIds([
+          question.userId
+        ]);
+        if (userTokens.length > 0) {
+          const tokens = userTokens.map((t) => t.token);
+          const result = await sendPushNotification(
+            tokens,
+            "Dr. M has answered your question \u{1F3A7}",
+            "Your personal voice response is ready to listen.",
+            {
+              questionId: questionId.toString(),
+              deepLink: `/dr-m/questions/${questionId}`
+            }
+          );
+          const notificationLogRecords = userTokens.map((t) => ({
+            notificationId: notification.id,
+            userId: t.userId,
+            deviceToken: t.token,
+            status: result.successCount > 0 ? "sent" : "failed"
+          }));
+          await db.insert(notificationLogs).values(notificationLogRecords);
+        } else {
+          await db.insert(notificationLogs).values({
+            notificationId: notification.id,
+            userId: question.userId,
+            deviceToken: "in-app-only",
+            status: "sent"
+          });
+        }
+        console.log(
+          `DrM answer submitted for question ${questionId}, notification sent to user ${question.userId}`
+        );
+        const audioUrl = await getSignedGetUrl(audioKey);
+        res.json({
+          success: true,
+          message: "Answer submitted and user notified",
+          question: updatedQuestion,
+          audioUrl
+        });
+      } catch (error) {
+        console.error("Error confirming DrM answer:", error);
+        res.status(500).json({ error: "Failed to confirm answer" });
+      }
+    }
+  );
   app2.get("/admin/api/poh/usage", requireAdmin, async (req, res) => {
     try {
       const totalUsersResult = await db.select({ count: count2() }).from(users);
@@ -6540,7 +6862,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         date: pohDailyRatings.localDate,
         count: countDistinct(pohDailyRatings.userId)
       }).from(pohDailyRatings).where(gte(pohDailyRatings.localDate, thirtyDaysAgoStr)).groupBy(pohDailyRatings.localDate).orderBy(asc2(pohDailyRatings.localDate));
-      const dateMap = new Map(last30DaysResult.map((r) => [r.date, Number(r.count)]));
+      const dateMap = new Map(
+        last30DaysResult.map((r) => [r.date, Number(r.count)])
+      );
       const last30Days = [];
       for (let i = 29; i >= 0; i--) {
         const d = /* @__PURE__ */ new Date();
@@ -6572,10 +6896,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
       const completedPohResult = await db.select({ count: count2() }).from(projectOfHearts).where(eq2(projectOfHearts.status, "completed"));
       const completedPoh = Number(completedPohResult[0]?.count) || 0;
-      const achieved30Result = await db.select({ count: count2() }).from(pohMilestones).where(and2(
-        eq2(pohMilestones.achieved, true),
-        gte(pohMilestones.achievedAt, thirtyDaysAgoStr)
-      ));
+      const achieved30Result = await db.select({ count: count2() }).from(pohMilestones).where(
+        and2(
+          eq2(pohMilestones.achieved, true),
+          gte(pohMilestones.achievedAt, thirtyDaysAgoStr)
+        )
+      );
       const milestonesAchieved30 = Number(achieved30Result[0]?.count) || 0;
       const firstMilestonesResult = await db.execute(sql3`
         SELECT AVG(days_to_first)::float as avg_days FROM (
@@ -6588,7 +6914,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           GROUP BY p.id
         ) sub
       `);
-      const avgDaysToFirst = Math.round(firstMilestonesResult.rows[0]?.avg_days || 0);
+      const avgDaysToFirst = Math.round(
+        firstMilestonesResult.rows[0]?.avg_days || 0
+      );
       res.json({
         completed_poh: Number(completedPoh),
         milestones_achieved_30_days: Number(milestonesAchieved30),
@@ -6609,14 +6937,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         LEFT JOIN poh_milestones m ON m.poh_id = p.id AND m.achieved = true
         WHERE p.status = 'active' AND m.id IS NULL
       `);
-      const activeNoMilestones = parseInt(activeNoMilestonesResult.rows[0]?.count || "0");
+      const activeNoMilestones = parseInt(
+        activeNoMilestonesResult.rows[0]?.count || "0"
+      );
       const avgDurationResult = await db.execute(sql3`
         SELECT AVG(ended_at::date - started_at::date)::float as avg_days
         FROM project_of_hearts
         WHERE ended_at IS NOT NULL AND started_at IS NOT NULL
           AND status IN ('completed', 'closed_early')
       `);
-      const avgDuration = Math.round(avgDurationResult.rows[0]?.avg_days || 0);
+      const avgDuration = Math.round(
+        avgDurationResult.rows[0]?.avg_days || 0
+      );
       res.json({
         closed_early: Number(closedEarly),
         active_with_no_milestones: Number(activeNoMilestones),
@@ -6664,20 +6996,12 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path2 from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 var vite_config_default = defineConfig({
   plugins: [
-    react(),
-    runtimeErrorOverlay(),
-    ...process.env.NODE_ENV !== "production" && process.env.REPL_ID !== void 0 ? [
-      await import("@replit/vite-plugin-cartographer").then(
-        (m) => m.cartographer()
-      ),
-      await import("@replit/vite-plugin-dev-banner").then(
-        (m) => m.devBanner()
-      )
-    ] : []
+    react()
   ],
+  base: "/",
+  // standard relative paths for capacitor
   resolve: {
     alias: {
       "@": path2.resolve(import.meta.dirname, "client", "src"),
@@ -6688,19 +7012,20 @@ var vite_config_default = defineConfig({
   root: path2.resolve(import.meta.dirname, "client"),
   build: {
     outDir: path2.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true
+    emptyOutDir: true,
+    target: "es2020",
+    // 📱 Better compatibility for older Android WebViews
+    modulePreload: {
+      polyfill: true
+      // 🔧 Ensure ESM polyfills are included
+    }
   },
+  publicDir: path2.resolve(import.meta.dirname, "client/public"),
   server: {
-    hmr: {
-      overlay: false
-      // ✅ disable red overlay error modal during dev reloads
-    },
     fs: {
       strict: false
       // ✅ allow serving files outside root (important for Replit public)
     },
-    publicDir: path2.resolve(import.meta.dirname, "client/public"),
-    // ✅ ensure /RightDecisions.mp4 is served
     port: 5173
     // optional: helps when debugging locally
   }
@@ -6797,22 +7122,6 @@ async function processNotifications() {
           continue;
         }
         const deviceTokens2 = await storage.getDeviceTokensByUserIds(eligibleUserIds);
-        const userIdsWithTokens = new Set(deviceTokens2.map((dt) => dt.userId));
-        const inAppOnlyLogs = eligibleUserIds.filter((userId) => !userIdsWithTokens.has(userId)).map((userId) => ({
-          notificationId: notification.id,
-          userId,
-          deviceToken: "in-app-only",
-          status: "sent",
-          error: null
-        }));
-        const pushLogs = deviceTokens2.map((dt) => ({
-          notificationId: notification.id,
-          userId: dt.userId,
-          deviceToken: dt.token,
-          status: "pending",
-          error: null
-        }));
-        await storage.createNotificationLogs([...inAppOnlyLogs, ...pushLogs]);
         if (deviceTokens2.length === 0) {
           console.log(`No device tokens found for notification ${notification.id}, marking as sent`);
           await storage.markNotificationSent(notification.id);
@@ -6834,16 +7143,19 @@ async function processNotifications() {
           notification.body,
           dataPayload
         );
-        const logUpdates = tokens.map((token) => {
+        const logs = [];
+        for (const token of tokens) {
+          const userId = userIdByToken.get(token) || 0;
           const failed = result.failedTokens.includes(token);
-          return {
+          logs.push({
             notificationId: notification.id,
+            userId,
             deviceToken: token,
             status: failed ? "failed" : "sent",
             error: failed ? "FCM delivery failed" : null
-          };
-        });
-        await storage.updateNotificationLogsStatus(logUpdates);
+          });
+        }
+        await storage.createNotificationLogs(logs);
         for (const failedToken of result.failedTokens) {
           try {
             await storage.deleteDeviceToken(failedToken);
@@ -6877,7 +7189,37 @@ function startNotificationCron() {
 }
 
 // server/index.ts
+import cors from "cors";
 var app = express2();
+var allowedOrigins = [
+  "http://localhost:5001",
+  "http://localhost:5173",
+  // (for my current browser testing)
+  "https://app.drmeghana.com",
+  "http://localhost",
+  // Android default
+  "https://localhost",
+  // Android/iOS modern
+  "capacitor://localhost"
+  // iOS default
+];
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      if (origin.endsWith(".replit.dev") || origin.endsWith(".replit.app") || origin.endsWith(".repl.co")) {
+        return callback(null, true);
+      }
+      callback(null, true);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+  })
+);
+app.options("*", cors());
 app.get("/firebase-messaging-sw.js", (req, res) => {
   const swPath = path4.join(
     process.cwd(),

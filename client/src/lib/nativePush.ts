@@ -3,6 +3,7 @@ import { PushNotifications } from "@capacitor/push-notifications";
 import { FirebaseMessaging } from "@capacitor-firebase/messaging";
 import { apiRequest } from "@/lib/queryClient";
 import { setUnread } from "./notificationState";
+import { Preferences } from "@capacitor/preferences";
 
 // SPA navigation helper for use outside React components
 function navigate(to: string) {
@@ -80,104 +81,138 @@ export function setupNativePushListeners() {
       tokenValue.substring(0, 20) + "...",
     );
 
-    try {
-      await apiRequest("POST", "/api/v1/notifications/register-device", {
-        token: tokenValue,
-        platform,
-      });
-      console.log("✅ Native FCM token registered with backend");
+    // 💾 Always save the token for later sync
+    await Preferences.set({ key: "@app:pending_fcm_token", value: tokenValue });
+    await Preferences.set({ key: "@app:fcm_platform", value: platform });
 
-      // Dispatch custom event so ProfilePage can update its state
-      window.dispatchEvent(
-        new CustomEvent("nativePushRegistered", { detail: { success: true } }),
-      );
-    } catch (error) {
-      console.error("❌ Failed to register native token with backend:", error);
-      window.dispatchEvent(
-        new CustomEvent("nativePushRegistered", { detail: { success: false } }),
-      );
+    // 🚀 Only sync now if we are already authenticated
+    const { value: hasToken } = await Preferences.get({ key: "@app:user_token" });
+    if (hasToken) {
+      await syncTokenWithBackend();
+    } else {
+      console.log("⏳ No user token found; deferring registration until login");
     }
   });
 
-  PushNotifications.addListener("registrationError", (error) => {
-    console.error("❌ Push registration error:", error);
+  // Handle registration errors
+  PushNotifications.addListener("registrationError", (error: any) => {
+    console.error("❌ Error on registration:", error);
     window.dispatchEvent(
-      new CustomEvent("nativePushRegistered", {
-        detail: { success: false, error },
-      }),
+      new CustomEvent("nativePushRegistered", { detail: { success: false } }),
     );
   });
 
-  // Handle notification tap (deep linking)
-  PushNotifications.addListener(
-    "pushNotificationActionPerformed",
-    (notification) => {
-      console.log("📱 Notification tapped:", notification);
-      const data = notification.notification.data;
-
-      if (!data) return;
-
-      if (data.eventId) {
-        navigate(`/events/${data.eventId}`);
-        return;
-      }
-
-      if (data.type === "admin_test") {
-        navigate("/notifications");
-        return;
-      }
-
-      if (data.type === "drm_answer") {
-        navigate("/drm");
-        return;
-      }
-    },
-  );
-
-  // Handle foreground notifications
-  PushNotifications.addListener("pushNotificationReceived", (notification) => {
-    console.log("📱 Foreground notification received:", notification);
-    setUnread(true);
+  // Handle incoming push notification (fg/bg)
+  PushNotifications.addListener("pushNotificationReceived", async (notification) => {
+    console.log("Push received:", notification);
+    const { fetchUnreadCount } = await import("./notificationState");
+    await fetchUnreadCount();
   });
 
-  console.log("📱 Native push listeners set up");
+  // Handle push notification action (tap)
+  PushNotifications.addListener("pushNotificationActionPerformed", async (notification) => {
+    console.log("Push action performed:", JSON.stringify(notification));
+    const data = notification.notification.data;
+
+    // Mark as read
+    if (data?.notificationId) {
+      try {
+        await apiRequest("PATCH", `/api/v1/notifications/${data.notificationId}/read`);
+        const { fetchUnreadCount } = await import("./notificationState");
+        await fetchUnreadCount();
+      } catch (e) {
+        console.error("Failed to mark notification read", e);
+      }
+    }
+
+    // Navigate
+    if (data?.url) {
+      navigate(data.url);
+    } else {
+      navigate("/notifications");
+    }
+  });
+}
+
+/**
+ * Synchronizes the locally stored FCM token with the backend.
+ * Guaranteed to only run if a user token is present.
+ */
+export async function syncTokenWithBackend() {
+  const { value: tokenValue } = await Preferences.get({ key: "@app:pending_fcm_token" });
+  const { value: platform } = await Preferences.get({ key: "@app:fcm_platform" });
+  const { value: userToken } = await Preferences.get({ key: "@app:user_token" });
+
+  if (!tokenValue || !userToken) {
+    return;
+  }
+
+  try {
+    await apiRequest("POST", "/api/v1/notifications/register-device", {
+      token: tokenValue,
+      platform: platform || "native",
+    });
+    console.log("✅ Native FCM token synchronized with backend");
+
+    window.dispatchEvent(
+      new CustomEvent("nativePushRegistered", { detail: { success: true } }),
+    );
+  } catch (error) {
+    console.error("❌ Failed to sync native token with backend:", error);
+    window.dispatchEvent(
+      new CustomEvent("nativePushRegistered", { detail: { success: false } }),
+    );
+  }
 }
 
 /**
  * Initialize Push Notifications according to requirements:
  * 1. On FIRST launch: Request OS permissions. If granted, enable and register.
  * 2. On SUBSEQUENT launches: Use saved user preference. Do not auto-request.
+ * 
+ * CRITICAL: This function is wrapped in try/catch to prevent Firebase errors
+ * from blocking the app's UI rendering. The app should render even if push
+ * notifications fail to initialize (e.g., network issues, Firebase unavailable).
  */
 export async function initPushNotifications() {
   if (!isNativePlatform()) return;
 
-  setupNativePushListeners();
-  console.log("📱 Native push init: checking permissions...");
   try {
-    let permStatus = await PushNotifications.checkPermissions();
-    if (permStatus.receive === "prompt") {
-      permStatus = await PushNotifications.requestPermissions();
-    }
+    setupNativePushListeners();
+    console.log("📱 Native push init: checking permissions...");
 
-    if (permStatus.receive === "granted") {
-      await PushNotifications.register();
-      console.log("✅ Native push registered");
-    } else {
-      console.log("❌ Native push permission not granted");
+    try {
+      let permStatus = await PushNotifications.checkPermissions();
+      if (permStatus.receive === "prompt") {
+        permStatus = await PushNotifications.requestPermissions();
+      }
+
+      if (permStatus.receive === "granted") {
+        await PushNotifications.register();
+        console.log("✅ Native push registered");
+      } else {
+        console.log("❌ Native push permission not granted");
+      }
+    } catch (error) {
+      console.error("❌ Error during native push registration:", error);
+      // Don't rethrow - let the app continue even if push fails
     }
   } catch (error) {
-    console.error("❌ Error during native push init:", error);
+    // CRITICAL: Catch ALL errors to prevent blocking UI
+    console.error("⚠️ Push notification initialization failed (non-blocking):", error);
+    // App will continue to render normally
   }
 }
 
 /**
- * Toggle push notifications based on user choice
+ * Enable push notifications - requests permissions and registers device
+ * Note: Disabling is no longer supported; users should use system settings
  */
 export async function setPushEnabled(enabled: boolean) {
   if (!isNativePlatform()) return false;
 
   if (enabled) {
-    // If enabling, we might need to request permissions again if they haven't been granted
+    // Request permissions if not granted
     const status = await checkNativePermissionStatus();
     if (status !== "granted") {
       const permStatus = await PushNotifications.requestPermissions();
@@ -186,21 +221,13 @@ export async function setPushEnabled(enabled: boolean) {
       }
     }
     await PushNotifications.register();
-    await apiRequest("POST", "/api/v1/notifications/push-enabled", {
-      enabled: true,
-    });
-    console.log("📱 Push notifications enabled and registered");
+    console.log("📱 Push notifications enabled and device registered");
+    return true;
   } else {
-    try {
-      await apiRequest("POST", "/api/v1/notifications/push-enabled", {
-        enabled: false,
-      });
-      console.log("✅ Push preference disabled");
-    } catch (error) {
-      console.error("❌ Failed to update push preference:", error);
-    }
+    // Disabling is no longer supported via app - users should use system settings
+    console.log("ℹ️ To disable notifications, please use your device's system settings");
+    return false;
   }
-  return true;
 }
 
 // Keep for backwards compatibility if needed elsewhere

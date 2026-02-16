@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user, requiresPasswordChange } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
 
   if (isLoading) {
     return (
@@ -21,12 +21,19 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Redirect to="/login" />;
+  // Ensure we only redirect if loading is finished and user is definitely not authenticated
+  if (!isLoading && !isAuthenticated) {
+    if (location !== "/login") {
+      setLocation("/login");
+    }
+    return null;
   }
 
-  if (!user || !["USER", "COACH"].includes(user.role)) {
-    return <Redirect to="/login" />;
+  if (!isLoading && (!user || !["USER", "COACH"].includes(user.role))) {
+    if (location !== "/login") {
+      setLocation("/login");
+    }
+    return null;
   }
 
   // Redirect to account settings if password change is required

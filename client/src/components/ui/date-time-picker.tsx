@@ -141,7 +141,7 @@ export function DateTimePicker({
         <Button
           variant={"outline"}
           className={cn(
-            "w-full justify-start text-left font-normal border-input bg-background shadow-xs hover:bg-background hover:text-foreground",
+            "w-full justify-start text-left font-normal border-input bg-white shadow-xs hover:bg-white hover:text-foreground",
             error &&
               "!border-destructive focus-visible:!border-destructive focus-visible:ring-destructive",
             !date && "text-muted-foreground",
@@ -172,15 +172,15 @@ export function DateTimePicker({
             return isDisabled;
           }}
           initialFocus
-          className="border-r border-border"
+          className="border-r border-border bg-white"
         />
 
         {/* Time Selection Columns */}
         <div className="p-3 w-[260px]">
-          <Label className="text-xs font-medium text-muted-foreground mb-3 block">
+          <Label className="text-xs font-medium mb-3 block">
             Time
           </Label>
-          <div className="flex h-[260px] border border-border rounded-md overflow-hidden bg-background">
+          <div className="flex h-[260px] border border-border rounded-md overflow-hidden bg-white">
             {/* Hours (12h) */}
             <div className="flex-1 border-r border-border">
               <div className="p-2 text-xs font-medium text-center bg-muted/30 border-b border-border">

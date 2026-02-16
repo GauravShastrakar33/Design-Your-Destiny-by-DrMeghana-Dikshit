@@ -10,26 +10,15 @@ export function isNotificationsSupported(): boolean {
   return "Notification" in window;
 }
 
-// Fetch notification status from backend (DB source of truth)
+/**
+ * Check notification status (now only checks browser permission)
+ * Backend no longer tracks enabled/disabled state - all registered tokens receive notifications
+ */
 export async function getNotificationStatus(): Promise<boolean> {
-  try {
-    const token = localStorage.getItem("@app:user_token");
-    if (!token) return false;
-    
-    const response = await fetch("/api/v1/notifications/status", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    
-    if (!response.ok) return false;
-    
-    const data = await response.json();
-    return data.enabled === true;
-  } catch (error) {
-    console.error("Error fetching notification status:", error);
-    return false;
+  if ("Notification" in window) {
+    return Notification.permission === "granted";
   }
+  return false;
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {

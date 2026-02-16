@@ -5,14 +5,53 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeFirebaseAdmin } from "./lib/firebaseAdmin";
 import { startNotificationCron } from "./jobs/notificationCron";
+import cors from "cors";
 
 const app = express();
+
+// 2. Define allowed mobile and web origins
+const allowedOrigins = [
+  "http://localhost:5001",
+  "http://localhost:5173", // (for my current browser testing)
+  "https://app.drmeghana.com",
+  "http://localhost", // Android default
+  "https://localhost", // Android/iOS modern
+  "capacitor://localhost", // iOS default
+];
+
+// 3. Apply CORS middleware
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, same-origin, or curl)
+      if (!origin) return callback(null, true);
+      // Allow exact matches from the allowedOrigins list
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      // Allow Replit domains (webview and published apps)
+      if (
+        origin.endsWith(".replit.dev") ||
+        origin.endsWith(".replit.app") ||
+        origin.endsWith(".repl.co")
+      ) {
+        return callback(null, true);
+      }
+      callback(null, true);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  }),
+);
+
+// Handle preflight requests for all routes
+app.options("*", cors());
 
 // 🔥 FORCE serve Firebase service worker (bypass Vite)
 app.get("/firebase-messaging-sw.js", (req, res) => {
   const swPath = path.join(
     process.cwd(),
-    "client/public/firebase-messaging-sw.js"
+    "client/public/firebase-messaging-sw.js",
   );
 
   if (!fs.existsSync(swPath)) {
@@ -33,7 +72,7 @@ app.use(
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
-  })
+  }),
 );
 app.use(express.urlencoded({ extended: false }));
 
@@ -105,6 +144,6 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
-    }
+    },
   );
 })();

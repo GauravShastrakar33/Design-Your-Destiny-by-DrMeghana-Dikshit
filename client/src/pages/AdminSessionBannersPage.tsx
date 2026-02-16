@@ -34,12 +34,11 @@ import { cn } from "@/lib/utils";
 
 function getBannerStatus(
   banner: SessionBanner
-): "scheduled" | "active" | "expired" {
+): "active" | "expired" {
   const now = new Date();
   const startAt = new Date(banner.startAt);
   const endAt = new Date(banner.endAt);
 
-  if (now < startAt) return "scheduled";
   if (now >= startAt && now < endAt) return "active";
   return "expired";
 }
@@ -53,16 +52,9 @@ function getStatusBadge(status: string) {
           Active
         </Badge>
       );
-    case "scheduled":
-      return (
-        <Badge className="bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-50 px-2 py-0.5 rounded-full flex items-center gap-1.5 font-semibold text-[11px] uppercase tracking-wider">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-          Scheduled
-        </Badge>
-      );
     case "expired":
       return (
-        <Badge className="bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100 px-2 py-0.5 rounded-full font-semibold text-[11px] uppercase tracking-wider">
+        <Badge className="bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
           Expired
         </Badge>
       );
@@ -165,6 +157,38 @@ export default function AdminSessionBannersPage() {
     },
   });
 
+  const setDefaultMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(
+        `/api/admin/v1/session-banners/${id}/set-default`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to set default banner");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/v1/session-banners"],
+      });
+      toast({
+        title: "Success",
+        description: "Default banner updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to set default banner",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDelete = (banner: SessionBanner) => {
     setBannerToDelete(banner);
     setDeleteDialogOpen(true);
@@ -261,21 +285,25 @@ export default function AdminSessionBannersPage() {
                     {/* Info Section */}
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-3 mb-3">
-                        <div
+                        <Badge
                           className={cn(
-                            "px-2.5 py-1 rounded text-[10px] font-bold tracking-wider uppercase",
+                            "px-2 py-0.5 rounded tracking-wider uppercase rounded-full",
                             isAdvertisement
                               ? "bg-indigo-50 text-indigo-600 border border-indigo-100"
                               : "bg-brand/5 text-brand border border-brand/10"
                           )}
                         >
                           {banner.type}
-                        </div>
+                        </Badge>
                         {getStatusBadge(status)}
+                        {banner.isDefault && (
+                          <Badge className="bg-amber-50 text-amber-700 border-amber-100 rounded-full">
+                            ⭐ DEFAULT
+                          </Badge>
+                        )}
                         {banner.liveEnabled && banner.type === "session" && (
-                          <Badge className="bg-red-500 hover:bg-red-600 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 animate-in zoom-in duration-300 shadow-sm shadow-red-100">
-                            <span className="w-1 h-1 rounded-full bg-white animate-ping" />
-                            LIVE
+                          <Badge className="bg-white text-red-500 border border-red-500 px-2 py-0.5 rounded-full flex items-center gap-1 animate-in zoom-in duration-300 shadow-sm shadow-red-100">
+                            LIVE ENABLED
                           </Badge>
                         )}
                       </div>
@@ -320,6 +348,16 @@ export default function AdminSessionBannersPage() {
 
                     {/* Actions Section */}
                     <div className="flex items-center gap-2 self-end md:self-center ml-auto">
+                      {!banner.isDefault && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setDefaultMutation.mutate(banner.id)}
+                          disabled={setDefaultMutation.isPending}
+                        >
+                          Set as Default
+                        </Button>
+                      )}
                       <Button
                         size="icon"
                         variant="ghost"

@@ -1,7 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import {
-  ArrowLeft,
   Loader2,
   Check,
   Lock,
@@ -11,6 +10,7 @@ import {
   FileText,
   Headphones,
   ExternalLink,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,6 +24,7 @@ import type {
   CmsLessonFile,
 } from "@shared/schema";
 import { Header } from "@/components/Header";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface LessonFileWithUrl extends CmsLessonFile {
   signedUrl: string | null;
@@ -57,6 +58,10 @@ interface FlattenedDay {
   moduleName: string;
 }
 
+import { useAuth } from "@/contexts/AuthContext";
+
+// ... existing imports ...
+
 export default function VideoFirstChallengePage() {
   const params = useParams();
   const courseId = params.courseId;
@@ -71,15 +76,14 @@ export default function VideoFirstChallengePage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const isAuthenticated = !!localStorage.getItem("@app:user_token");
+  const { isAuthenticated } = useAuth();
 
   // Fetch course with modules
   const { data: courseData, isLoading: courseLoading } =
     useQuery<CourseResponse>({
       queryKey: ["/api/public/v1/courses", courseId],
       queryFn: async () => {
-        const response = await fetch(`/api/public/v1/courses/${courseId}`);
-        if (!response.ok) throw new Error("Failed to fetch course");
+        const response = await apiRequest("GET", `/api/public/v1/courses/${courseId}`);
         return response.json();
       },
       enabled: !!courseId,
@@ -93,8 +97,7 @@ export default function VideoFirstChallengePage() {
     queryFn: async () => {
       if (!courseData?.modules) return [];
       const modulePromises = courseData.modules.map(async (module) => {
-        const response = await fetch(`/api/public/v1/modules/${module.id}`);
-        if (!response.ok) throw new Error("Failed to fetch module");
+        const response = await apiRequest("GET", `/api/public/v1/modules/${module.id}`);
         return response.json();
       });
       return Promise.all(modulePromises);
@@ -166,10 +169,9 @@ export default function VideoFirstChallengePage() {
     useQuery<LessonResponse>({
       queryKey: ["/api/public/v1/lessons", currentDay?.lessonId],
       queryFn: async () => {
-        const response = await fetch(
+        const response = await apiRequest("GET",
           `/api/public/v1/lessons/${currentDay?.lessonId}`
         );
-        if (!response.ok) throw new Error("Failed to fetch lesson");
         return response.json();
       },
       enabled: !!currentDay?.lessonId,
@@ -195,7 +197,6 @@ export default function VideoFirstChallengePage() {
         toast({
           title: "Day complete! 🎉",
           description: "Next lesson unlocked",
-          duration: 3000,
         });
         // Auto-advance to next lesson after brief delay
         setTimeout(() => {
@@ -207,7 +208,6 @@ export default function VideoFirstChallengePage() {
         toast({
           title: "Congratulations! 🏆",
           description: "You've completed all lessons!",
-          duration: 5000,
         });
         setCurrentDayIndex(allDays.length); // Show completion screen
       }
@@ -316,11 +316,11 @@ export default function VideoFirstChallengePage() {
   // Loading state
   if (courseLoading || modulesLoading || progressLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-amber-500 mx-auto" />
-          <p className="text-muted-foreground text-sm">
-            Loading your journey...
+          <Loader2 className="w-10 h-10 animate-spin text-brand mx-auto" />
+          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">
+            Preparing Your Journey...
           </p>
         </div>
       </div>
@@ -330,18 +330,25 @@ export default function VideoFirstChallengePage() {
   // Error state
   if (!courseData || allDays.length === 0) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-md mx-auto p-4">
-          <button
-            onClick={handleBack}
-            className="hover-elevate active-elevate-2 rounded-lg p-2 mb-4"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="w-6 h-6 text-foreground" />
-          </button>
-          <div className="text-center py-12 text-muted-foreground">
-            Course not found or no lessons available
+      <div className="min-h-screen bg-[#F9FAFB] flex flex-col">
+        <Header title="Not Found" hasBackButton onBack={handleBack} />
+        <div className="flex-1 flex flex-col items-center justify-center p-2 text-center">
+          <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mb-4 text-gray-300">
+            <Sparkles className="w-10 h-10" />
           </div>
+          <h2 className="text-xl font-black text-gray-900 mb-2">
+            Wait, designer!
+          </h2>
+          <p className="text-gray-500 max-w-xs mx-auto mb-8">
+            We couldn't find the lessons for this challenge. Let's head back and
+            try again.
+          </p>
+          <Button
+            onClick={handleBack}
+            className="bg-brand text-white font-bold rounded-lg px-8"
+          >
+            Go Back
+          </Button>
         </div>
       </div>
     );
@@ -350,62 +357,61 @@ export default function VideoFirstChallengePage() {
   // Completion screen
   if (currentDayIndex !== null && currentDayIndex >= allDays.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20 dark:to-background">
-        <div className="max-w-md mx-auto">
-          <div className="sticky top-0 bg-background/80 backdrop-blur-lg border-b border-border/50 z-10">
-            <div className="px-4 py-4 flex items-center gap-3">
-              <button
-                onClick={handleBack}
-                className="hover-elevate active-elevate-2 rounded-lg p-2"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-5 h-5 text-foreground" />
-              </button>
-              <span className="text-sm font-medium text-muted-foreground">
-                Challenge Complete
-              </span>
-            </div>
-          </div>
+      <div className="min-h-screen bg-white flex flex-col">
+        <Header title="Challenge Complete" hasBackButton onBack={handleBack} />
 
-          <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
-              <Trophy className="w-12 h-12 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">
-              Congratulations!
+        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
+          <motion.div
+            initial={{ scale: 0, rotate: -20 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", damping: 15 }}
+            className="w-24 h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center mb-4 shadow-2xl shadow-amber-500/30"
+          >
+            <Trophy className="w-12 h-12 text-white" />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h1 className="text-2xl font-bold text-gray-900 mb-3 leading-tight">
+              Absolute Legend!
             </h1>
-            <p className="text-muted-foreground mb-8 max-w-xs">
-              You've completed all {allDays.length} days of the Money
-              Manifestation Challenge!
+            <p className="text-gray-500 mb-5 max-w-sm text-sm  px-4">
+              You've officially conquered all{" "}
+              <span className="text-brand font-black">
+                {allDays.length} days
+              </span>{" "}
+              of the {courseData.course.title}. Your mindset is rewired for
+              victory!
             </p>
 
-            <div className="w-full space-y-3">
+            <div className="w-full space-y-4">
               <Button
                 size="lg"
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                className="w-full bg-brand hover:bg-brand/90 text-white rounded-lg shadow-xl shadow-brand/20 transition-all active:scale-95"
                 onClick={() => setCurrentDayIndex(0)}
-                data-testid="button-rewatch"
               >
-                <Play className="w-4 h-4 mr-2" />
-                Rewatch from Day 1
+                <Play className="w-5 h-5 mr-3" />
+                Rewatch Journey
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="lg"
-                className="w-full"
+                className="w-full font-semibold text-gray-400 hover:text-gray-900 transition-colors"
                 onClick={handleBack}
-                data-testid="button-return-home"
               >
-                Return to Money Mastery
+                Return to Mastery
               </Button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </main>
       </div>
     );
   }
 
-  // Get video/audio/PDF files (PDF can be stored as "pdf" or "script" type)
+  // Get files
   const videoFile = lessonData?.files?.find(
     (f) => f.fileType === "video" && f.signedUrl
   );
@@ -416,54 +422,38 @@ export default function VideoFirstChallengePage() {
     (f) => (f.fileType === "pdf" || f.fileType === "script") && f.signedUrl
   );
 
-  // Determine primary player type
   const primaryPlayerType = videoFile
     ? "video"
     : audioFile
-    ? "audio"
-    : pdfFile
-    ? "pdf"
-    : "none";
+      ? "audio"
+      : pdfFile
+        ? "pdf"
+        : "none";
   const hasMedia = videoFile || audioFile;
-
-  // Resources to show (PDF always, audio only if video exists as primary)
   const hasResources = pdfFile || (videoFile && audioFile);
-
-  // Calculate first incomplete for locking logic
-  const firstIncompleteIndex = allDays.findIndex(
-    (d) => !completedLessonIds.has(d.lessonId)
-  );
   const isCurrentLessonCompleted = currentDay
     ? completedLessonIds.has(currentDay.lessonId)
     : false;
 
-  // Handle opening PDF in new tab
-  const handleOpenPdf = () => {
-    if (pdfFile?.signedUrl) {
-      window.open(pdfFile.signedUrl, "_blank");
-    }
-  };
-
-  // Handle switching to audio player
+  const handleOpenPdf = () =>
+    pdfFile?.signedUrl && window.open(pdfFile.signedUrl, "_blank");
   const handleSwitchToAudio = () => {
     setShowAudioPlayer(true);
-    if (videoRef.current) {
-      videoRef.current.pause();
-    }
+    videoRef.current?.pause();
   };
-
-  // Handle switching back to video
   const handleSwitchToVideo = () => {
     setShowAudioPlayer(false);
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
+    audioRef.current?.pause();
   };
 
+  // For locking logic
+  const firstIncompleteIndex = allDays.findIndex(
+    (d) => !completedLessonIds.has(d.lessonId)
+  );
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header - minimal */}
-      <div className="sticky top-0 bg-background/80 z-20">
+    <div className="min-h-screen bg-white flex flex-col">
+      <div className="sticky top-0 bg-white/80 backdrop-blur-xl z-30">
         <Header
           title={`Day ${currentDay?.dayNumber} of ${allDays.length}`}
           hasBackButton={true}
@@ -471,254 +461,235 @@ export default function VideoFirstChallengePage() {
         />
       </div>
 
-      {/* Main Content - Video First */}
-      <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
-        {/* Top Section - Adaptive Player */}
-        <div className="flex-[6] min-h-0 bg-black relative">
+      <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full pb-24 px-3">
+        {/* Adaptive Player Stage */}
+        <div className="w-full aspect-video bg-gray-900 rounded-2xl mt-4 overflow-hidden shadow-2xl shadow-black/20 relative">
           {lessonLoading ? (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-white" />
+              <Loader2 className="w-10 h-10 animate-spin text-white/20" />
             </div>
           ) : primaryPlayerType === "video" && !showAudioPlayer ? (
             <video
               ref={videoRef}
               src={videoFile!.signedUrl!}
               controls
+              controlsList="nodownload"
+              disablePictureInPicture
               className="w-full h-full object-contain"
               onTimeUpdate={handleTimeUpdate}
               onEnded={handleMediaEnded}
-              data-testid="video-player"
             />
           ) : (primaryPlayerType === "audio" || showAudioPlayer) &&
             audioFile ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-amber-900 to-amber-950 p-6">
-              <div className="w-32 h-32 bg-amber-500/20 rounded-full flex items-center justify-center mb-6">
-                <Headphones className="w-12 h-12 text-amber-400" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-brand to-brand-dark p-8 overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
+                <Zap className="w-full h-full" />
               </div>
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="w-32 h-32 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center mb-8 border border-white/20 shadow-2xl"
+              >
+                <Headphones className="w-14 h-14 text-white" />
+              </motion.div>
               <audio
                 ref={audioRef}
                 src={audioFile.signedUrl!}
                 controls
-                className="w-full max-w-xs"
+                controlsList="nodownload noplaybackrate"
+                className="w-full max-w-xs h-10 filter invert brightness-100 opacity-90"
                 onTimeUpdate={handleAudioTimeUpdate}
                 onEnded={handleMediaEnded}
-                data-testid="audio-player"
               />
               {showAudioPlayer && videoFile && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-4 text-amber-300 hover:text-amber-100"
+                  className="mt-8 text-white/70 hover:text-white font-black text-xs uppercase tracking-widest"
                   onClick={handleSwitchToVideo}
-                  data-testid="button-switch-to-video"
                 >
                   <Play className="w-4 h-4 mr-2" />
                   Switch to Video
                 </Button>
               )}
             </div>
-          ) : primaryPlayerType === "pdf" ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 p-6">
-              <div className="w-32 h-32 bg-slate-500/20 rounded-full flex items-center justify-center mb-6">
-                <FileText className="w-12 h-12 text-slate-300" />
-              </div>
-              <p className="text-white/80 text-center mb-4">
-                This lesson contains a script document
-              </p>
-              <Button
-                className="bg-amber-500 hover:bg-amber-600 text-white"
-                onClick={handleOpenPdf}
-                data-testid="button-open-pdf"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Open Script (PDF)
-              </Button>
-            </div>
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-white/60">
-              <p className="text-sm">No content for this lesson</p>
-            </div>
-          )}
-
-          {/* Progress indicator overlay */}
-          {hasMedia && !showAudioPlayer && primaryPlayerType === "video" && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
-              <div
-                className="h-full bg-amber-500 transition-all duration-300"
-                style={{ width: `${watchProgress}%` }}
-              />
-            </div>
-          )}
-          {hasMedia && (showAudioPlayer || primaryPlayerType === "audio") && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
-              <div
-                className="h-full bg-amber-500 transition-all duration-300"
-                style={{ width: `${watchProgress}%` }}
-              />
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
+              <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-4">
+                <Play className="w-10 h-10 text-white/20" />
+              </div>
+              <p className="text-white/40 text-sm font-bold uppercase tracking-widest">
+                No Content Available
+              </p>
             </div>
           )}
         </div>
 
-        {/* Lesson Info Bar */}
-        <div className="px-4 py-3 bg-card border-b border-border">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <h2
-                className="font-semibold text-foreground text-base leading-tight"
-                data-testid="text-lesson-title"
-              >
-                Day {currentDay?.dayNumber} – {currentDay?.title}
-              </h2>
-            </div>
+        {/* Lesson Info Card */}
+        <div className="px-5 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-xs font-bold text-brand tracking-wide mb-1">
+              Current Day
+            </p>
+            <h2 className="text-xl font-bold text-gray-900 leading-tight">
+              Day {currentDay?.dayNumber}: {currentDay?.title}
+            </h2>
+          </div>
+          <div className="flex items-center gap-3">
             {isCurrentLessonCompleted ? (
-              <div className="flex items-center gap-1 text-green-600 bg-green-500/10 px-2 py-1 rounded-full">
-                <Check className="w-3.5 h-3.5" />
-                <span className="text-xs font-medium">Done</span>
+              <div className="flex items-center gap-2 bg-emerald-50 content-none px-2 py-1 rounded-full border border-emerald-100">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                  <Check className="w-2 h-2 text-white" />
+                </div>
+                <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide">
+                  Complete
+                </span>
               </div>
             ) : hasReached90 ? (
               <Button
-                size="sm"
-                className="bg-amber-500 hover:bg-amber-600 text-white text-xs"
                 onClick={() =>
                   currentDay && markCompleteMutation.mutate(currentDay.lessonId)
                 }
                 disabled={markCompleteMutation.isPending}
-                data-testid="button-complete-now"
+                className=" text-white font-bold px-2 py-1 rounded-full hover:bg-brand/90 shadow-lg shadow-brand/20 transition-all"
               >
                 {markCompleteMutation.isPending ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  "Complete ✓"
+                  "Finish Day →"
                 )}
               </Button>
-            ) : null}
+            ) : (
+              <div className="flex items-center gap-2 content-none px-2 py-1 rounded-full border border-gray-200 bg-gray-50">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
+                <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">
+                  Learning...
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Resources Section - only show if resources exist */}
-        {hasResources && (
-          <div className="px-4 py-3 bg-card/50 border-b border-border">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              Resources
-            </p>
-            <div className="space-y-2">
-              {pdfFile && (
-                <button
-                  onClick={handleOpenPdf}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover-elevate active-elevate-2 transition-colors"
-                  data-testid="button-resource-pdf"
-                >
-                  <div className="w-9 h-9 rounded-full bg-slate-500/20 flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">
-                      Script (PDF)
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Open lesson transcript
-                    </p>
-                  </div>
-                  <ExternalLink className="w-4 h-4 text-muted-foreground" />
-                </button>
-              )}
-              {videoFile && audioFile && !showAudioPlayer && (
-                <button
-                  onClick={handleSwitchToAudio}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover-elevate active-elevate-2 transition-colors"
-                  data-testid="button-resource-audio"
-                >
-                  <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center">
-                    <Headphones className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">
-                      Audio Version
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Listen without video
-                    </p>
-                  </div>
-                  <Play className="w-4 h-4 text-muted-foreground" />
-                </button>
-              )}
+        {/* Resources & Journey Grid */}
+        <div className="px-5 grid grid-cols-1 md:grid-cols-12 gap-8 mt-2">
+          {/* Journey Section (Mainly for Mobile) */}
+          <div className="md:col-span-12 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+                Your Journey
+              </h3>
+              <div className="h-px flex-1 bg-gray-200 mx-4" />
             </div>
-          </div>
-        )}
 
-        {/* Bottom Section - Timeline Navigator (Lesson Journey) */}
-        <div className="flex-[4] min-h-0 overflow-y-auto bg-muted/30 px-4 py-4">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-            Your Journey
-          </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {allDays.map((day, index) => {
+                const isCompleted = completedLessonIds.has(day.lessonId);
+                const isCurrent = index === currentDayIndex;
+                const isLocked =
+                  !isCompleted &&
+                  index !== firstIncompleteIndex &&
+                  firstIncompleteIndex !== -1 &&
+                  index > firstIncompleteIndex;
 
-          <div className="space-y-2">
-            {allDays.map((day, index) => {
-              const isCompleted = completedLessonIds.has(day.lessonId);
-              const isCurrent = index === currentDayIndex;
-              const isLocked =
-                !isCompleted &&
-                index !== firstIncompleteIndex &&
-                firstIncompleteIndex !== -1 &&
-                index > firstIncompleteIndex;
-
-              return (
-                <Card
-                  key={day.lessonId}
-                  className={`p-3 transition-all cursor-pointer ${
-                    isCurrent
-                      ? "ring-2 ring-amber-500 bg-amber-50 dark:bg-amber-950/30"
-                      : isLocked
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover-elevate active-elevate-2"
-                  }`}
-                  onClick={() => !isLocked && handleDayClick(index)}
-                  data-testid={`timeline-day-${day.dayNumber}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        isCompleted
-                          ? "bg-green-500 text-white"
-                          : isCurrent
-                          ? "bg-amber-500 text-white"
-                          : isLocked
-                          ? "bg-muted text-muted-foreground"
-                          : "bg-amber-500/20 text-amber-600"
+                return (
+                  <motion.div
+                    key={day.lessonId}
+                    whileHover={!isLocked ? { y: -2 } : {}}
+                    onClick={() => !isLocked && handleDayClick(index)}
+                    className={`cursor-pointer p-2 rounded-xl border transition-all ${isCurrent
+                        ? "bg-brand/5 border-brand shadow-lg shadow-brand/5"
+                        : isLocked
+                          ? "opacity-70 pointer-events-none"
+                          : "bg-white border-gray-200 hover:border-brand/30 hover:shadow-md"
                       }`}
-                    >
-                      {isCompleted ? (
-                        <Check className="w-4 h-4" />
-                      ) : isLocked ? (
-                        <Lock className="w-3.5 h-3.5" />
-                      ) : isCurrent ? (
-                        <Play className="w-3.5 h-3.5" />
-                      ) : (
-                        day.dayNumber
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${isCompleted
+                            ? "bg-emerald-500 text-white"
+                            : isCurrent
+                              ? "bg-brand text-white"
+                              : "bg-gray-100 text-gray-400"
+                          }`}
+                      >
+                        {isCompleted ? (
+                          <Check className="w-4 h-4" />
+                        ) : (
+                          day.dayNumber
+                        )}
+                      </div>
+                      <div className="min-w-0 pr-2">
+                        <p
+                          className={`text-xs font-bold truncate ${isCurrent ? "text-brand" : "text-gray-900"
+                            }`}
+                        >
+                          Day {day.dayNumber}
+                        </p>
+                        <p className="text-xs text-gray-400 font-bold truncate">
+                          {day.title}
+                        </p>
+                      </div>
+                      {isLocked && (
+                        <Lock className="w-3.5 h-3.5 ml-auto text-gray-400" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-sm font-medium truncate ${
-                          isLocked ? "text-muted-foreground" : "text-foreground"
-                        }`}
-                      >
-                        Day {day.dayNumber}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {day.title}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Resources Section */}
+          {hasResources && (
+            <div className="md:col-span-12 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+                  Bonus Materials
+                </h3>
+                <div className="h-px flex-1 bg-gray-100 mx-4" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {pdfFile && (
+                  <Card
+                    onClick={handleOpenPdf}
+                    className="p-4 bg-white border-0 shadow-xl shadow-black/[0.03] rounded-2xl group cursor-pointer hover:shadow-emerald-500/10 transition-all flex items-center gap-4"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                      <FileText className="w-6 h-6 text-emerald-500 group-hover:text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-black text-gray-900">
+                        Training Script
+                      </h4>
+                      <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">
+                        PDF Document
                       </p>
                     </div>
-                    {isCurrent && !isCompleted && (
-                      <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded-full uppercase">
-                        Now
-                      </span>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                    <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-brand" />
+                  </Card>
+                )}
+                {videoFile && audioFile && !showAudioPlayer && (
+                  <Card
+                    onClick={handleSwitchToAudio}
+                    className="p-4 bg-white border-0 shadow-xl shadow-black/[0.03] rounded-2xl group cursor-pointer hover:shadow-brand/10 transition-all flex items-center gap-4"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-brand/5 flex items-center justify-center group-hover:bg-brand group-hover:text-white transition-colors">
+                      <Headphones className="w-6 h-6 text-brand group-hover:text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-black text-gray-900">
+                        Audio Only
+                      </h4>
+                      <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">
+                        MP3 Version
+                      </p>
+                    </div>
+                    <Play className="w-4 h-4 text-gray-300 group-hover:text-brand" />
+                  </Card>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

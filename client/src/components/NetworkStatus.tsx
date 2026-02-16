@@ -7,7 +7,9 @@ interface NetworkStatusProps {
 }
 
 export default function NetworkStatus({ children }: NetworkStatusProps) {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  // 📱 On native platforms, navigator.onLine can be unreliable for local assets.
+  // We'll initialize as true and let the listeners/health check handle it.
+  const [isOnline, setIsOnline] = useState(true);
   const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
@@ -32,13 +34,13 @@ export default function NetworkStatus({ children }: NetworkStatusProps) {
 
   const handleRetry = async () => {
     setIsRetrying(true);
-    
+
     try {
-      const response = await fetch("/api/health", { 
+      const response = await fetch("/api/health", {
         method: "HEAD",
-        cache: "no-store" 
+        cache: "no-store"
       });
-      
+
       if (response.ok) {
         setIsOnline(true);
       }
@@ -51,7 +53,7 @@ export default function NetworkStatus({ children }: NetworkStatusProps) {
 
   if (!isOnline) {
     return (
-      <div 
+      <div
         className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background"
         data-testid="offline-screen"
       >
@@ -59,7 +61,7 @@ export default function NetworkStatus({ children }: NetworkStatusProps) {
           <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
             <WifiOff className="w-12 h-12 text-muted-foreground" />
           </div>
-          
+
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-foreground" data-testid="text-offline-title">
               No Internet Connection

@@ -1,8 +1,18 @@
-import { useState, useEffect, useCallback } from "react";
-import { Search, X, Loader2, BookOpen, FileText, GraduationCap } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import {
+  Search,
+  X,
+  Loader2,
+  BookOpen,
+  FileText,
+  GraduationCap,
+  ChevronRight,
+} from "lucide-react";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
+import { Header } from "@/components/Header";
+import { apiRequest } from "@/lib/queryClient";
 
 interface SearchResult {
   type: "module" | "lesson" | "course";
@@ -25,78 +35,121 @@ interface SearchOverlayProps {
 export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
   const [, setLocation] = useLocation();
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Reset state when overlay opens/closes
   useEffect(() => {
     if (!isOpen) {
       setQuery("");
       setResults([]);
       setHasSearched(false);
+      setIsLoading(false);
     }
   }, [isOpen]);
 
+  // Search Effect with Debounce & AbortController
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  const performSearch = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
+    // 1. If query is empty, reset immediately
+    if (!query.trim()) {
       setResults([]);
       setHasSearched(false);
+      setIsLoading(false);
       return;
     }
+
+    // 2. Debounce the search call
+    const timer = setTimeout(() => {
+      performSearch(query);
+    }, 500); // 500ms debounce
+
+    // Cleanup: clear timer and abort pending request if user keeps typing
+    return () => {
+      clearTimeout(timer);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [query]);
+
+  const performSearch = async (searchQuery: string) => {
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new controller
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setIsLoading(true);
     setHasSearched(true);
 
     try {
-      const response = await fetch(`/api/public/v1/search?q=${encodeURIComponent(searchQuery)}`);
-      if (!response.ok) throw new Error("Search failed");
+      const response = await apiRequest(
+        "GET",
+        `/api/public/v1/search?q=${encodeURIComponent(searchQuery)}`,
+        undefined,
+        { signal: controller.signal }
+      );
+
       const data: SearchResponse = await response.json();
       setResults(data.results);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        // Request was aborted, do nothing
+        return;
+      }
       console.error("Search error:", error);
       setResults([]);
     } finally {
-      setIsLoading(false);
+      // Only turn off loading if this is the active request
+      if (abortControllerRef.current === controller) {
+        setIsLoading(false);
+      }
     }
-  }, []);
-
-  useEffect(() => {
-    performSearch(debouncedQuery);
-  }, [debouncedQuery, performSearch]);
+  };
 
   const handleResultClick = (result: SearchResult) => {
     onClose();
     setLocation(result.navigate_to);
   };
 
-  const modules = results.filter(r => r.type === "module");
-  const lessons = results.filter(r => r.type === "lesson");
-  const courses = results.filter(r => r.type === "course");
+  const clearSearch = () => {
+    setQuery("");
+    setResults([]);
+    setHasSearched(false); // Reverts to "What can you search?"
+  };
+
+  const modules = results.filter((r) => r.type === "module");
+  const lessons = results.filter((r) => r.type === "lesson");
+  const courses = results.filter((r) => r.type === "course");
 
   const getFeatureLabel = (feature: string) => {
     switch (feature) {
-      case "DYD": return "DYD Process";
-      case "USM": return "USM Process";
-      case "ABUNDANCE": return "Abundance Mastery";
-      default: return feature;
+      case "DYD":
+        return "DYD Process";
+      case "USM":
+        return "USM Process";
+      case "ABUNDANCE":
+        return "Abundance Mastery";
+      default:
+        return feature;
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case "module": return <BookOpen className="w-5 h-5 text-[#703DFA]" />;
-      case "lesson": return <FileText className="w-5 h-5 text-green-600" />;
-      case "course": return <GraduationCap className="w-5 h-5 text-amber-600" />;
-      default: return null;
+      case "module":
+        return <BookOpen className="w-5 h-5 text-brand" />;
+      case "lesson":
+        return <FileText className="w-5 h-5 text-purple-500" />;
+      case "course":
+        return <GraduationCap className="w-5 h-5 text-orange-500" />;
+      default:
+        return null;
     }
   };
 
@@ -104,64 +157,98 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 bg-white"
+          initial={{ opacity: 0, y: "100%" }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: "100%" }}
+          transition={{ type: "spring", damping: 30, stiffness: 300 }}
+          className="fixed inset-0 z-[60] bg-[#F8F9FB] flex flex-col h-[100dvh]"
         >
-          <div className="max-w-md mx-auto h-full flex flex-col">
-            <div className="px-4 py-3 border-b border-gray-200 flex items-center gap-3">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search content..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="pl-10 bg-gray-100 border-0"
-                  autoFocus
-                  data-testid="input-search-overlay"
-                />
+          <Header
+            title="Search"
+            hasBackButton={true}
+            onBack={onClose}
+            className="bg-white/95 backdrop-blur-md shrink-0"
+          />
+
+          <div className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-4 pb-20 overflow-y-auto custom-scrollbar">
+            {/* Search Input */}
+            <div className="relative mb-8 group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <Search className="w-5 h-5 text-brand" />
               </div>
-              <button
-                onClick={onClose}
-                className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover-elevate active-elevate-2"
-                data-testid="button-close-search"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
+              <Input
+                type="text"
+                placeholder="What are you looking for?"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full h-12 pl-12 pr-12 bg-white rounded-lg border-0 shadow-lg shadow-brand/5 ring-1 ring-black/5 focus-visible:ring-2 focus-visible:ring-brand/20 transition-all text-lg"
+                autoFocus
+                data-testid="input-search-overlay"
+              />
+              {!query && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-4">
+            {/* Content Area */}
+            <div className="space-y-6">
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#703DFA]" />
+                <div className="flex flex-col items-center justify-center py-20 text-brand">
+                  <Loader2 className="w-10 h-10 animate-spin mb-4" />
+                  <p className="text-sm font-medium animate-pulse">
+                    Searching...
+                  </p>
                 </div>
               ) : hasSearched && results.length === 0 ? (
-                <div className="text-center py-12 text-gray-500" data-testid="text-no-results">
-                  No matching content found
+                <div
+                  className="flex flex-col items-center justify-center py-20 text-center"
+                  data-testid="text-no-results"
+                >
+                  <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                    <Search className="w-8 h-8 text-slate-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-1">
+                    No results found
+                  </h3>
+                  <p className="text-slate-500">
+                    Try adjusting your search terms
+                  </p>
                 </div>
               ) : results.length > 0 ? (
-                <div className="space-y-5">
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   {modules.length > 0 && (
-                    <div>
-                      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2" data-testid="text-section-modules">
+                    <div className="overflow-hidden hidden"> 
+                      <h2
+                        className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 px-2"
+                        data-testid="text-section-modules"
+                      >
                         Modules ({modules.length})
                       </h2>
-                      <div className="space-y-2">
+                      <div className="grid gap-3">
                         {modules.map((result) => (
                           <button
                             key={`module-${result.id}`}
                             onClick={() => handleResultClick(result)}
-                            className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover-elevate active-elevate-2 text-left"
+                            className="w-full group flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-transparent shadow-sm hover:shadow-lg hover:shadow-brand/5 transition-all duration-300 text-left overflow-hidden"
                             data-testid={`result-module-${result.id}`}
                           >
-                            {getTypeIcon(result.type)}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-gray-900 font-medium truncate">{result.title}</p>
-                              <p className="text-xs text-gray-500">{getFeatureLabel(result.feature)}</p>
+                            <div className="w-10 h-10 rounded-xl bg-brand/5 flex items-center justify-center shrink-0 group-hover:bg-brand/10 transition-colors">
+                              {getTypeIcon(result.type)}
                             </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-slate-900 truncate group-hover:text-brand transition-colors text-sm sm:text-base">
+                                {result.title}
+                              </h3>
+                              <p className="text-xs font-medium text-slate-500 mt-0.5 truncate">
+                                {getFeatureLabel(result.feature)}
+                              </p>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-slate-300 shrink-0 group-hover:text-brand group-hover:translate-x-0.5 transition-all" />
                           </button>
                         ))}
                       </div>
@@ -169,23 +256,33 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                   )}
 
                   {lessons.length > 0 && (
-                    <div>
-                      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2" data-testid="text-section-lessons">
+                    <div className="overflow-hidden">
+                      <h2
+                        className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 px-2"
+                        data-testid="text-section-lessons"
+                      >
                         Lessons ({lessons.length})
                       </h2>
-                      <div className="space-y-2">
+                      <div className="grid gap-3">
                         {lessons.map((result) => (
                           <button
                             key={`lesson-${result.id}`}
                             onClick={() => handleResultClick(result)}
-                            className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover-elevate active-elevate-2 text-left"
+                            className="w-full group flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-transparent shadow-sm hover:shadow-lg hover:shadow-brand/5 transition-all duration-300 text-left overflow-hidden"
                             data-testid={`result-lesson-${result.id}`}
                           >
-                            {getTypeIcon(result.type)}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-gray-900 font-medium truncate">{result.title}</p>
-                              <p className="text-xs text-gray-500">{getFeatureLabel(result.feature)}</p>
+                            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0 group-hover:bg-purple-100 transition-colors">
+                              {getTypeIcon(result.type)}
                             </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-slate-900 truncate group-hover:text-purple-600 transition-colors text-sm sm:text-base">
+                                {result.title}
+                              </h3>
+                              <p className="text-xs font-medium text-slate-500 mt-0.5 truncate">
+                                {getFeatureLabel(result.feature)}
+                              </p>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-slate-300 shrink-0 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all" />
                           </button>
                         ))}
                       </div>
@@ -193,34 +290,71 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                   )}
 
                   {courses.length > 0 && (
-                    <div>
-                      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2" data-testid="text-section-courses">
+                    <div className="overflow-hidden">
+                      <h2
+                        className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 px-2"
+                        data-testid="text-section-courses"
+                      >
                         Courses ({courses.length})
                       </h2>
-                      <div className="space-y-2">
+                      <div className="grid gap-3">
                         {courses.map((result) => (
                           <button
                             key={`course-${result.id}`}
                             onClick={() => handleResultClick(result)}
-                            className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover-elevate active-elevate-2 text-left"
+                            className="w-full group flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-transparent shadow-sm hover:shadow-lg hover:shadow-brand/5 transition-all duration-300 text-left overflow-hidden"
                             data-testid={`result-course-${result.id}`}
                           >
-                            {getTypeIcon(result.type)}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-gray-900 font-medium truncate">{result.title}</p>
-                              <p className="text-xs text-gray-500">{getFeatureLabel(result.feature)}</p>
+                            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center shrink-0 group-hover:bg-orange-100 transition-colors">
+                              {getTypeIcon(result.type)}
                             </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-slate-900 truncate group-hover:text-orange-600 transition-colors text-sm sm:text-base">
+                                {result.title}
+                              </h3>
+                              <p className="text-xs font-medium text-slate-500 mt-0.5 truncate">
+                                {getFeatureLabel(result.feature)}
+                              </p>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-slate-300 shrink-0 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all" />
                           </button>
                         ))}
                       </div>
                     </div>
                   )}
                 </div>
-              ) : !hasSearched ? (
-                <div className="text-center py-12 text-gray-500" data-testid="text-search-prompt">
-                  Start typing to search...
+              ) : (
+                // Empty State / Suggestions
+                <div className="animate-in fade-in zoom-in-50 duration-500">
+                  <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider px-2 mb-4">
+                    What can you search?
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                        <GraduationCap className="w-5 h-5 text-orange-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900">Courses</h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Explore courses
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-brand/5 flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-purple-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900">Lessons</h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Find specific lessons & topics
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ) : null}
+              )}
             </div>
           </div>
         </motion.div>
