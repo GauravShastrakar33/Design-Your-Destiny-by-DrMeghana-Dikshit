@@ -835,6 +835,7 @@ export default function MyPracticePlaylistPage() {
               <div className="flex gap-4 mt-6 w-full">
                 <Button
                   onClick={handlePlayAll}
+                  disabled={expandedPlaylistData?.items.length === 0}
                   className="flex-1 h-11 bg-slate-900 text-white font-bold rounded-lg shadow-xl hover:scale-105 active:scale-95 transition-all"
                 >
                   <Play className="w-4 h-4 mr-2 fill-current" /> Play All
