@@ -33,6 +33,7 @@ import { useEvaluateBadgesOnMount } from "@/hooks/useBadges";
 import { BadgeToastManager } from "@/components/BadgeEarnedToast";
 import { fetchUnreadCount } from "@/lib/notificationState";
 import { useAuth } from "@/contexts/AuthContext";
+import { Header } from "@/components/Header";
 
 interface BannerData {
   banner: {
@@ -262,42 +263,38 @@ export default function HomePage() {
 
       <div className="w-full mx-auto min-h-screen flex flex-col max-w-5xl transition-all duration-300">
         {/* Header Section - Refined Glassmorphism */}
-        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 py-4 flex items-center justify-between gap-4 transition-all">
-          <div className="flex-1">
-            <h1 className="text-xl sm:text-xl font-bold text-slate-900 tracking-tight">
-              Hello, Designer{" "}
-              <span className="inline-block animate-pulse origin-bottom">
-                ✨
-              </span>
-            </h1>
-            <p className="text-sm sm:text-base font-medium text-slate-500 mt-0.5">
-              Ready to design your destiny?
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100/50 flex items-center justify-center text-slate-500 hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:text-brand transition-all active:scale-90"
-              data-testid="button-search"
-            >
-              <Search className="w-5 h-5" strokeWidth={2.5} />
-            </button>
-            <div className="relative">
+        <Header
+          title="Hello, Designer"
+          titleIcon={
+            <span className="inline-block animate-pulse origin-bottom">✨</span>
+          }
+          subtitle="Ready to design your destiny?"
+          rightContent={
+            <div className="flex items-center gap-2.5">
               <button
-                onClick={() => setLocation("/notifications")}
+                onClick={() => setIsSearchOpen(true)}
                 className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100/50 flex items-center justify-center text-slate-500 hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:text-brand transition-all active:scale-90"
-                data-testid="button-notifications"
+                data-testid="button-search"
               >
-                <Bell className="w-5 h-5" strokeWidth={2.5} />
+                <Search className="w-5 h-5" strokeWidth={2.5} />
               </button>
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-black border-2 border-white shadow-lg animate-in zoom-in">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
+              <div className="relative">
+                <button
+                  onClick={() => setLocation("/notifications")}
+                  className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100/50 flex items-center justify-center text-slate-500 hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:text-brand transition-all active:scale-90"
+                  data-testid="button-notifications"
+                >
+                  <Bell className="w-5 h-5" strokeWidth={2.5} />
+                </button>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-black border-2 border-white shadow-lg animate-in zoom-in">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        </header>
+          }
+        />
 
         {/* Main Content with Entrance Animations */}
         <motion.main

@@ -27,7 +27,7 @@ export function Header({
 
   return (
     <div
-      className={`sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 transition-all duration-300 ${
+      className={`sticky top-0 bg-[#F8F7FF]/90 backdrop-blur-2xl border-b border-brand/10 shadow-[0_8px_32px_-12px_rgba(112,61,250,0.15)] z-50 transition-all duration-500 ${
         isNative ? "pt-[calc(env(safe-area-inset-top)+1rem)]" : ""
       } ${className}`}
     >
