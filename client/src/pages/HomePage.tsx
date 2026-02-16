@@ -43,7 +43,7 @@ interface BannerData {
     posterUrl: string | null;
     ctaText: string | null;
     ctaLink: string | null;
-    liveEnabled: boolean;
+    isLive: boolean;
   } | null;
   status: "active" | "scheduled" | "expired" | "none";
 }
@@ -362,7 +362,7 @@ export default function HomePage() {
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                           {banner.type === "session" &&
-                            banner.liveEnabled &&
+                            banner.isLive &&
                             bannerStatus === "active" && (
                               <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500 px-3 py-1.5 rounded-full shadow-xl animate-pulse">
                                 <span className="h-2 w-2 bg-white rounded-full"></span>
