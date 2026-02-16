@@ -329,7 +329,7 @@ export default function AdminEventsPage() {
             <div className="flex flex-col h-full">
               <div className="flex-1">
                 <h3
-                  className="text-lg font-bold text-gray-900 leading-snug truncate"
+                  className="text-lg font-bold text-gray-900 leading-tight line-clamp-2"
                   title={event.title}
                 >
                   {event.title}
@@ -337,7 +337,7 @@ export default function AdminEventsPage() {
                 {event.coachName && (
                   <div className="flex items-center gap-1.5 mt-1 text-gray-500">
                     <Users className="w-3.5 h-3.5" />
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-medium line-clamp-1">
                       {event.coachName}
                     </span>
                   </div>
