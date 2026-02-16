@@ -542,17 +542,17 @@ export default function EventCalendarPage() {
           {selectedEvent ? (
             <div className="flex flex-col">
               <div className="p-4 sm:p-6 pb-0 space-y-2">
-                <div className="flex items-center gap-4">
-                  <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand/5 flex items-center justify-center">
+                <div className="flex items-start gap-4">
+                  <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand/5 flex items-center justify-center mt-1">
                     <Video className="w-5 h-5 sm:w-6 sm:h-6 text-brand" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight truncate">
+                  <div className="flex-1 min-w-0 pr-8">
+                    <DialogTitle className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
                       {selectedEvent?.title}
-                    </h2>
-                    <p className="text-xs sm:text-sm text-slate-500 line-clamp-1">
+                    </DialogTitle>
+                    <DialogDescription className="text-xs sm:text-sm text-slate-500 mt-1">
                       Access and watch the recorded session
-                    </p>
+                    </DialogDescription>
                   </div>
                 </div>
               </div>
