@@ -143,7 +143,11 @@ export default function AdminCourseFormPage() {
     new Set()
   );
 
-  const searchString = useSearch() || (window.location.hash.includes("?") ? window.location.hash.split("?")[1] : "");
+  const searchString =
+    useSearch() ||
+    (window.location.hash.includes("?")
+      ? window.location.hash.split("?")[1]
+      : "");
 
   useEffect(() => {
     const searchParams = new URLSearchParams(searchString);
@@ -486,8 +490,8 @@ export default function AdminCourseFormPage() {
                     isActive
                       ? "bg-white border-brand text-brand shadow-lg"
                       : isCompleted
-                        ? "bg-brand border-brand text-white"
-                        : "bg-white border-gray-100 text-gray-400"
+                      ? "bg-brand border-brand text-white"
+                      : "bg-white border-gray-100 text-gray-400"
                   )}
                 >
                   {isCompleted ? (
@@ -599,39 +603,51 @@ export default function AdminCourseFormPage() {
                           alt="Preview"
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                          <label className="cursor-pointer">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) =>
-                                e.target.files?.[0] &&
-                                handleThumbnailUpload(e.target.files[0])
-                              }
-                            />
+                        {uploading ? (
+                          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-20">
+                            <Loader2 className="w-8 h-8 text-white animate-spin" />
+                            <p className="text-white text-xs font-bold tracking-widest uppercase">
+                              Uploading...
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) =>
+                                  e.target.files?.[0] &&
+                                  handleThumbnailUpload(e.target.files[0])
+                                }
+                                disabled={uploading}
+                              />
+                              <Button
+                                asChild
+                                variant="secondary"
+                                size="sm"
+                                className="bg-white/20 backdrop-blur-md text-white border-white/30 hover:bg-white/30"
+                              >
+                                <span>Change Image</span>
+                              </Button>
+                            </label>
                             <Button
-                              variant="secondary"
+                              variant="destructive"
                               size="sm"
-                              className="bg-white/20 backdrop-blur-md text-white border-white/30 hover:bg-white/30"
+                              className="bg-red-500/80 backdrop-blur-md"
+                              disabled={uploading}
+                              onClick={() => {
+                                setPreviewUrl(null);
+                                updateCourseMutation.mutate({
+                                  thumbnailKey: null,
+                                });
+                              }}
                             >
-                              Change Image
+                              Remove
                             </Button>
-                          </label>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="bg-red-500/80 backdrop-blur-md"
-                            onClick={() => {
-                              setPreviewUrl(null);
-                              updateCourseMutation.mutate({
-                                thumbnailKey: null,
-                              });
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
+                          </div>
+                        )}
                       </>
                     ) : (
                       <div className="text-center p-10">
@@ -1097,9 +1113,9 @@ export default function AdminCourseFormPage() {
                 onClick={moduleForm.handleSubmit((data) =>
                   editingModule
                     ? updateModuleMutation.mutate({
-                      id: editingModule.id,
-                      data,
-                    })
+                        id: editingModule.id,
+                        data,
+                      })
                     : createModuleMutation.mutate(data)
                 )}
                 className="bg-brand hover:bg-brand/90 h-11 px-8 rounded-lg font-bold shadow-lg shadow-brand/20"
