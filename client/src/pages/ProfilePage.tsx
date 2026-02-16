@@ -165,20 +165,20 @@ export default function ProfilePage() {
         >
           <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
             <div className="p-4">
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
                 <div className="relative">
                   <div className="absolute inset-0 bg-brand/20 blur-md rounded-full" />
-                  <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-50 to-white shadow-inner flex items-center justify-center border border-indigo-50">
-                    <span className="text-3xl font-black text-brand tracking-tighter">
+                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-white shadow-inner flex items-center justify-center border border-indigo-50">
+                    <span className="text-2xl font-black text-brand tracking-tighter">
                       {getInitials(userName)}
                     </span>
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center border border-brand/10">
-                    <Zap className="w-5 h-5 text-brand fill-brand" />
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white shadow-md flex items-center justify-center border border-brand/10">
+                    <Zap className="w-3 h-3 text-brand fill-brand" />
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-2xl font-bold text-gray-900 truncate">
+                  <h2 className="text-xl font-bold text-gray-900 truncate">
                     {userName}
                   </h2>
                 </div>
@@ -190,7 +190,7 @@ export default function ProfilePage() {
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
-                    className="mt-5 border-gray-50"
+                    className="mt-8 border-gray-50"
                   >
                     <div className="relative pt-6 p-3 rounded-xl bg-indigo-50/50 border border-indigo-100 italic group">
                       <Quote className="absolute -top-3 left-4 w-7 h-7 text-brand/30 rotate-180" />
