@@ -222,7 +222,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
               ) : results.length > 0 ? (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   {modules.length > 0 && (
-                    <div className="overflow-hidden">
+                    <div className="overflow-hidden hidden"> 
                       <h2
                         className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 px-2"
                         data-testid="text-section-modules"
@@ -331,17 +331,6 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-brand/5 flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-brand" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-900">Modules</h4>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Browse learning modules
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3">
                       <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
                         <GraduationCap className="w-5 h-5 text-orange-500" />
                       </div>
@@ -352,8 +341,8 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                         </p>
                       </div>
                     </div>
-                    <div className="col-span-2 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-brand/5 flex items-center justify-center">
                         <FileText className="w-5 h-5 text-purple-500" />
                       </div>
                       <div>
