@@ -1193,31 +1193,35 @@ export class DbStorage implements IStorage {
           sql`${sessionBannersTable.endAt} > ${now}`
         )
       )
-      .orderBy(desc(sessionBannersTable.startAt))
+      .orderBy(desc(sessionBannersTable.updatedAt))
       .limit(1);
     return active;
   }
 
-  async getNextScheduledBanner(): Promise<SessionBanner | undefined> {
-    const now = new Date();
-    const [scheduled] = await db
+  async getDefaultBanner(): Promise<SessionBanner | undefined> {
+    const [defaultBanner] = await db
       .select()
       .from(sessionBannersTable)
-      .where(sql`${sessionBannersTable.startAt} > ${now}`)
-      .orderBy(asc(sessionBannersTable.startAt))
+      .where(eq(sessionBannersTable.isDefault, true))
       .limit(1);
-    return scheduled;
+    return defaultBanner;
   }
 
-  async getLastExpiredBanner(): Promise<SessionBanner | undefined> {
-    const now = new Date();
-    const [expired] = await db
-      .select()
-      .from(sessionBannersTable)
-      .where(sql`${sessionBannersTable.endAt} <= ${now}`)
-      .orderBy(desc(sessionBannersTable.endAt))
-      .limit(1);
-    return expired;
+  async setDefaultBanner(id: number): Promise<SessionBanner | undefined> {
+    // Unset any existing default
+    await db
+      .update(sessionBannersTable)
+      .set({ isDefault: false })
+      .where(eq(sessionBannersTable.isDefault, true));
+
+    // Set new default
+    const [updated] = await db
+      .update(sessionBannersTable)
+      .set({ isDefault: true, updatedAt: new Date() })
+      .where(eq(sessionBannersTable.id, id))
+      .returning();
+
+    return updated;
   }
 
   // ===== USER STREAKS =====

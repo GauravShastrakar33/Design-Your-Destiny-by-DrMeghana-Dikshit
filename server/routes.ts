@@ -4271,27 +4271,45 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     },
   );
 
+  // POST /api/admin/v1/session-banners/:id/set-default - Set banner as default
+  app.post(
+    "/api/admin/v1/session-banners/:id/set-default",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const bannerId = parseInt(req.params.id);
+        const updated = await storage.setDefaultBanner(bannerId);
+
+        if (!updated) {
+          return res.status(404).json({ error: "Banner not found" });
+        }
+
+        res.json(updated);
+      } catch (error) {
+        console.error("Error setting default banner:", error);
+        res.status(500).json({ error: "Failed to set default banner" });
+      }
+    }
+  );
+
   // ===== SESSION BANNER PUBLIC ROUTE =====
 
-  // GET /api/public/v1/session-banner - Get current active banner with fallback
+  // GET /api/public/v1/session-banner - Get current active banner with default fallback
   app.get("/api/public/v1/session-banner", async (req, res) => {
     try {
-      // Try to get active banner first
+      const now = new Date();
+
+      // Step 1: Try active banner (latest updated wins if overlap)
       let banner = await storage.getActiveBanner();
       let status = "active";
 
-      // If no active, try next scheduled
+      // Step 2: Fallback to default banner
       if (!banner) {
-        banner = await storage.getNextScheduledBanner();
-        status = "scheduled";
+        banner = await storage.getDefaultBanner();
+        status = "default";
       }
 
-      // If no scheduled, try last expired
-      if (!banner) {
-        banner = await storage.getLastExpiredBanner();
-        status = "expired";
-      }
-
+      // Step 3: No banner available
       if (!banner) {
         return res.json({ banner: null, status: "none" });
       }
@@ -4314,13 +4332,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         posterUrl = result.success ? result.url : null;
       }
 
-      // Check if live badge should show (session banners only)
-      // Runtime LIVE status: liveEnabled AND now is within liveStartAt/liveEndAt window
-      const now = new Date();
+      // Calculate LIVE status (backend single source of truth)
+      // LIVE is OPTIONAL - only show if explicitly enabled
       const isLive =
         banner.type === "session" &&
         banner.liveEnabled &&
-        status === "active" &&
         banner.liveStartAt &&
         banner.liveEndAt &&
         now >= new Date(banner.liveStartAt) &&
@@ -4328,13 +4344,16 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       res.json({
         banner: {
-          ...banner,
+          id: banner.id,
+          type: banner.type,
           thumbnailUrl,
           videoUrl,
           posterUrl,
+          ctaText: banner.ctaText,
+          ctaLink: banner.ctaLink,
+          isLive, // Backend-calculated, frontend must consume
         },
         status,
-        isLive,
       });
     } catch (error) {
       console.error("Error fetching public session banner:", error);

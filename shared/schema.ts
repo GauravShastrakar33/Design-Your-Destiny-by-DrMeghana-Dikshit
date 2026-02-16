@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -326,14 +326,17 @@ export const sessionBanners = pgTable("session_banners", {
   posterKey: text("poster_key"),
   ctaText: text("cta_text"),
   ctaLink: text("cta_link"),
-  startAt: timestamp("start_at", { mode: "date" }).notNull(),
-  endAt: timestamp("end_at", { mode: "date" }).notNull(),
+  startAt: timestamp("start_at", { withTimezone: true, mode: "date" }).notNull(),
+  endAt: timestamp("end_at", { withTimezone: true, mode: "date" }).notNull(),
   liveEnabled: boolean("live_enabled").notNull().default(false),
-  liveStartAt: timestamp("live_start_at", { mode: "date" }),
-  liveEndAt: timestamp("live_end_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
-});
+  liveStartAt: timestamp("live_start_at", { withTimezone: true, mode: "date" }),
+  liveEndAt: timestamp("live_end_at", { withTimezone: true, mode: "date" }),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueDefaultBanner: uniqueIndex("unique_default_banner").on(table.isDefault).where(sql`${table.isDefault} = true`),
+}));
 
 export const insertSessionBannerSchema = createInsertSchema(sessionBanners).omit({
   id: true,
