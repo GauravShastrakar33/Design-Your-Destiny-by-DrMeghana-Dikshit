@@ -5,7 +5,25 @@ import { Preferences } from "@capacitor/preferences";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    let message = text;
+
+    try {
+      const json = JSON.parse(text);
+      if (json.message) {
+        message = json.message;
+      } else if (json.error) {
+        message = json.error;
+      }
+    } catch {
+      // text is not JSON, use status text if it's just general status
+      if (!text || text === res.statusText) {
+        message = `${res.status}: ${res.statusText}`;
+      }
+    }
+
+    const error = new Error(message);
+    (error as any).status = res.status;
+    throw error;
   }
 }
 
@@ -14,14 +32,20 @@ async function getAuthHeaders(url: string): Promise<Record<string, string>> {
 
   const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
 
-  const isAdminRoute = normalizedUrl.startsWith("/admin") || normalizedUrl.startsWith("/api/admin");
+  const isAdminRoute =
+    normalizedUrl.startsWith("/admin") ||
+    normalizedUrl.startsWith("/api/admin");
 
-  console.log(`[AuthDebug] Checking headers for: ${url} | Native: ${Capacitor.isNativePlatform()} | AdminRoute: ${isAdminRoute}`);
+  console.log(
+    `[AuthDebug] Checking headers for: ${url} | Native: ${Capacitor.isNativePlatform()} | AdminRoute: ${isAdminRoute}`
+  );
 
   if (isAdminRoute) {
     if (Capacitor.isNativePlatform()) {
       // Native: Use Preferences as usual
-      const { value: adminToken } = await Preferences.get({ key: "@app:admin_token" });
+      const { value: adminToken } = await Preferences.get({
+        key: "@app:admin_token",
+      });
       console.log(`[AuthDebug] Native Admin Token found: ${!!adminToken}`);
       if (adminToken) {
         headers["Authorization"] = `Bearer ${adminToken}`;
@@ -36,7 +60,9 @@ async function getAuthHeaders(url: string): Promise<Record<string, string>> {
     }
   } else {
     // User App: Continue using Preferences (consistent across web/mobile for app users)
-    const { value: userToken } = await Preferences.get({ key: "@app:user_token" });
+    const { value: userToken } = await Preferences.get({
+      key: "@app:user_token",
+    });
     if (userToken) {
       headers["Authorization"] = `Bearer ${userToken}`;
     }
@@ -59,7 +85,7 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<Response> {
   // 1. Clean the URL by removing leading slashes only.
   // We NO LONGER append a trailing slash automatically because backend routes
@@ -107,27 +133,30 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-    async ({ queryKey }) => {
-      const url = queryKey.join("/") as string;
+  async ({ queryKey }) => {
+    const url = queryKey.join("/") as string;
 
-      // Use apiRequest for proper native platform routing
-      try {
-        const res = await apiRequest("GET", url);
+    // Use apiRequest for proper native platform routing
+    try {
+      const res = await apiRequest("GET", url);
 
-        if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-          return null;
-        }
-
-        await throwIfResNotOk(res);
-        return await res.json();
-      } catch (error) {
-        // If it's a 401 and we should return null, do so
-        if (unauthorizedBehavior === "returnNull" && error instanceof Error && error.message.includes("401")) {
-          return null;
-        }
-        throw error;
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
       }
-    };
+
+      await throwIfResNotOk(res);
+      return await res.json();
+    } catch (error) {
+      // If it's a 401 and we should return null, do so
+      if (
+        unauthorizedBehavior === "returnNull" &&
+        (error as any).status === 401
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  };
 
 export const queryClient = new QueryClient({
   defaultOptions: {

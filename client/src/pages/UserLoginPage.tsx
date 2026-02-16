@@ -69,16 +69,12 @@ export default function UserLoginPage() {
           setLocation("/home");
         }
       } else {
-        toast({
-          title: "Login failed",
-          description: result.message || "Invalid credentials",
-          variant: "destructive",
-        });
+        throw new Error("Invalid response from server");
       }
     } catch (error) {
       console.error("Login error:", error);
       toast({
-        title: "Error",
+        title: "Login failed",
         description:
           error instanceof Error
             ? error.message
