@@ -62,7 +62,7 @@ export default function VideoPlayerPage() {
           author,
           url: finalVideoUrl, // ✅ store the actual video URL
           progressInSeconds: currentTime,
-        }),
+        })
       );
     }
   };
@@ -83,7 +83,7 @@ export default function VideoPlayerPage() {
           author,
           url: finalVideoUrl, // ✅ Include video URL too!
           progressInSeconds: Math.floor(videoRef.current.currentTime),
-        }),
+        })
       );
     }
     setLocation("/workshops");

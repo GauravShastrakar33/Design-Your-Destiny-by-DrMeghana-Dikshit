@@ -20,7 +20,7 @@ export default function BottomNav() {
   const [location] = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#F8F7FF]/90 backdrop-blur-2xl border-t border-brand/10 shadow-[0_-12px_40px_-12px_rgba(112,61,250,0.2)] pb-safe transition-all duration-500">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#F8F7FF]/90 backdrop-blur-2xl border-t border-brand/10 shadow-[0_-12px_40px_-12px_rgba(112,61,250,0.2)] pb-[env(safe-area-inset-bottom)] transition-all duration-500">
       <div className="mx-auto w-full max-w-lg px-2 py-2 flex items-center justify-between">
         {navItems.map((item) => {
           const Icon = item.icon;

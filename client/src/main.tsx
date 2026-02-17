@@ -33,8 +33,12 @@ try {
     rootElement.innerHTML = `
       <div style="padding: 20px; background: red; color: white; font-family: monospace;">
         <h2>🛑 React Mount Failed</h2>
-        <p><strong>Error:</strong> ${error instanceof Error ? error.message : String(error)}</p>
-        <pre style="background: rgba(0,0,0,0.2); padding: 10px; overflow: auto;">${error instanceof Error ? error.stack : ''}</pre>
+        <p><strong>Error:</strong> ${
+          error instanceof Error ? error.message : String(error)
+        }</p>
+        <pre style="background: rgba(0,0,0,0.2); padding: 10px; overflow: auto;">${
+          error instanceof Error ? error.stack : ""
+        }</pre>
         <button onclick="location.reload()" style="padding: 10px; background: white; color: black; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">RELOAD</button>
       </div>
     `;
@@ -48,10 +52,9 @@ if (Capacitor.isNativePlatform()) {
     const { StatusBar, Style } = await import("@capacitor/status-bar");
     const { PushNotifications } = await import("@capacitor/push-notifications");
 
-
     // 📱 Status bar config
     try {
-      await StatusBar.setOverlaysWebView({ overlay: false });
+      await StatusBar.setOverlaysWebView({ overlay: true });
       await StatusBar.setStyle({ style: Style.Light });
       await StatusBar.setBackgroundColor({ color: "#703DFA" });
       console.log("✅ StatusBar configured");

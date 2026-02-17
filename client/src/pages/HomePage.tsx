@@ -301,7 +301,7 @@ export default function HomePage() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="flex-1 w-full px-4 py-6 space-y-6"
+          className="flex-1 w-full px-4 py-6 space-y-6 mt-4"
         >
           {/* Hero Banner Section */}
           <motion.section variants={itemVariants} className="w-full">
