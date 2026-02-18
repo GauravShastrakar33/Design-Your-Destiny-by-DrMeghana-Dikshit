@@ -433,7 +433,7 @@ export default function ProcessesPage() {
         onBack={() => setLocation("/")}
       />
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <main className="max-w-3xl mx-auto p-4 pt-3">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Tabs
             value={activeTab}

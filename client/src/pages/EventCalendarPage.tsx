@@ -190,7 +190,7 @@ export default function EventCalendarPage() {
     <div className="min-h-screen pb-24 bg-[#F8F9FB]">
       <Header title="Event Calendar" />
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <main className="max-w-3xl mx-auto p-4 pt-0">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Tabs
             value={activeTab}

@@ -231,16 +231,16 @@ export default function HomePage() {
       icon: Users,
       path: "/community-practices",
       testId: "card-community-practices",
-      color: "from-emerald-500/10 to-emerald-600/10",
-      iconColor: "text-emerald-600",
+      color: "from-pink-500/10 to-pink-600/10",
+      iconColor: "text-pink-600",
     },
     {
       title: "Daily Abundance",
       icon: IndianRupee,
       path: "/money-mastery",
       testId: "card-money-mastery",
-      color: "from-amber-500/10 to-amber-600/10",
-      iconColor: "text-amber-600",
+      color: "from-emerald-500/10 to-emerald-600/10",
+      iconColor: "text-emerald-600",
     },
     {
       title: "Masterclasses",
@@ -301,7 +301,7 @@ export default function HomePage() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="flex-1 w-full px-4 py-6 space-y-6 mt-4"
+          className="flex-1 w-full p-4 mt-3 space-y-6"
         >
           {/* Hero Banner Section */}
           <motion.section variants={itemVariants} className="w-full">
@@ -393,37 +393,42 @@ export default function HomePage() {
             )}
           </motion.section>
 
-          {/* Quick Actions Grid - App Style */}
-          <motion.section variants={itemVariants} className="space-y-5 pt-6">
+          {/* Quick Actions Grid - Split Layout Style */}
+          <motion.section
+            variants={itemVariants}
+            className="space-y-4 pt-4 px-1"
+          >
             <div className="flex items-center justify-between px-1">
               <h2 className="text-sm md:text-lg font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
                 <LayoutGrid className="w-4 h-4 md:w-5 md:h-5 text-brand" />
                 Quick Actions
               </h2>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {actionCards.map((card) => (
                 <button
                   key={card.path}
                   onClick={() => setLocation(card.path)}
-                  className={`group relative flex items-center bg-white p-3 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-black/[0.04] transition-all duration-300 active:scale-95 text-left overflow-hidden ${
-                    card.fullWidth ? "col-span-2" : ""
+                  className={`group relative flex items-center justify-between bg-white p-4 pr-2 rounded-2xl shadow-sm border border-slate-200 transition-colors active:bg-slate-50 text-left overflow-hidden min-h-[90px] md:min-h-[110px] ${
+                    card.fullWidth ? "col-span-2 md:col-span-4" : ""
                   }`}
                   data-testid={card.testId}
                 >
-                  <div
-                    className={`w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-500 shrink-0`}
-                  >
+                  {/* Common Theme Background Gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50/50 to-brand/[0.08]" />
+
+                  <div className="relative z-10 w-[60%] flex flex-col justify-center">
+                    <span className="block font-bold text-slate-800 text-sm md:text-base leading-[1.2] whitespace-pre-line">
+                      {card.title.split(" ").join("\n")}
+                    </span>
+                  </div>
+
+                  <div className="relative z-10 opacity-[0.50] mr-1 shrink-0">
                     <card.icon
-                      className={`w-4 h-4 md:w-5 md:h-5 ${card.iconColor}`}
+                      className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 ${card.iconColor}`}
                       strokeWidth={2}
                     />
-                  </div>
-                  <span className="flex-1 text-sm md:text-lg font-bold text-slate-800 leading-tight line-clamp-2 pr-1">
-                    {card.title}
-                  </span>
-                  <div className="text-slate-400 group-hover:text-brand transition-colors shrink-0 hidden">
-                    <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
                   </div>
                 </button>
               ))}
