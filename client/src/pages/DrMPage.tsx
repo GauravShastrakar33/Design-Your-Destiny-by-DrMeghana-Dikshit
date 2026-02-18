@@ -155,7 +155,7 @@ export default function DrMPage() {
     <div className="min-h-screen bg-[#F9FAFB] pb-24">
       <Header title="Ask Dr. M" />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 sm:pt-6 space-y-6">
+      <div className="max-w-3xl mx-auto p-4 pt-0 space-y-6">
         {/* Intro Section */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
