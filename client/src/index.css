@@ -70,17 +70,7 @@ body {
 }
 
 /* Global Status Bar Background - Fixed Opaque Layer */
-body::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top, 0px);
-  background-color: #cbb9fa;
-  z-index: 9999;
-  pointer-events: none;
-}
+
 
 #root {
   height: 100%;
