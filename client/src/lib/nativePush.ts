@@ -111,24 +111,37 @@ export function setupNativePushListeners() {
 
   // Handle push notification action (tap)
   PushNotifications.addListener("pushNotificationActionPerformed", async (notification) => {
-    console.log("Push action performed:", JSON.stringify(notification));
+    // 🔍 CRITICAL DEBUG LOGGING
+    console.log("🔔 [PUSH ACTION] Full Notification Object:", JSON.stringify(notification, null, 2));
+    
     const data = notification.notification.data;
+    const title = notification.notification.title;
+    const body = notification.notification.body;
+
+    console.log("📊 [PUSH DATA] Payload:", JSON.stringify(data, null, 2));
+    console.log("📝 [PUSH CONTENT] Title:", title, "| Body:", body);
 
     // Mark as read
     if (data?.notificationId) {
       try {
+        console.log(`🛠️ Marking notification ${data.notificationId} as read...`);
         await apiRequest("PATCH", `/api/v1/notifications/${data.notificationId}/read`);
         const { fetchUnreadCount } = await import("./notificationState");
         await fetchUnreadCount();
       } catch (e) {
-        console.error("Failed to mark notification read", e);
+        console.error("❌ Failed to mark notification read", e);
       }
     }
 
-    // Navigate
+    // Navigate logic
     if (data?.url) {
+      console.log(`🚀 [NAVIGATION] Target URL found: ${data.url}`);
       navigate(data.url);
+    } else if (data?.eventId) {
+      console.log(`🚀 [NAVIGATION] Event ID found: ${data.eventId}, navigating to event page`);
+      navigate(`/events/${data.eventId}`);
     } else {
+      console.log("🚀 [NAVIGATION] No specific target found, defaulting to notifications list");
       navigate("/notifications");
     }
   });
