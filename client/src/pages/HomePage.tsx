@@ -102,10 +102,16 @@ export default function HomePage() {
     loadUnread();
 
     // 🔔 Listen for live updates (push received)
-    window.addEventListener("unread-changed", loadUnread);
+    const handleUnreadChange = (e: any) => {
+      if (e.detail && typeof e.detail.count === 'number') {
+        setUnreadCount(e.detail.count);
+      }
+    };
+
+    window.addEventListener("unread-changed", handleUnreadChange);
 
     return () => {
-      window.removeEventListener("unread-changed", loadUnread);
+      window.removeEventListener("unread-changed", handleUnreadChange);
     };
   }, []);
 
