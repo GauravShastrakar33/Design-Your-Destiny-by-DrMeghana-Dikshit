@@ -3,30 +3,15 @@ import admin from "firebase-admin";
 let fcmInstance: admin.messaging.Messaging | null = null;
 
 export function initializeFirebaseAdmin() {
-  if (admin.apps.length === 0) {
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
-
-    if (!serviceAccountJson) {
-      console.warn(
-        "FIREBASE_SERVICE_ACCOUNT not set. Push notifications will be disabled.",
-      );
-      return null;
-    }
-
+  if (!admin.apps.length) {
     try {
-      const serviceAccount = JSON.parse(serviceAccountJson);
-
-      // 🔍 TEMP VERIFICATION LOG (ADD THIS)
-      console.log(
-        "🔥 Firebase Admin initialized for:",
-        serviceAccount.project_id,
-      );
-
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
+        credential: admin.credential.applicationDefault(),
       });
+
+      console.log("🔥 Firebase Admin initialized successfully");
+
       fcmInstance = admin.messaging();
-      console.log("Firebase Admin SDK initialized successfully");
     } catch (error) {
       console.error("Failed to initialize Firebase Admin:", error);
       return null;

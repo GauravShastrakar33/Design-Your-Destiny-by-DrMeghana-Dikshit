@@ -17,6 +17,9 @@ const UNREAD_COUNT_KEY = "unreadNotificationCount";
 const LAST_SEEN_ID_KEY = "lastSeenNotificationId";
 
 export async function setUnreadCount(count: number) {
+  const currentCount = await getUnreadCount();
+  if (currentCount === count) return;
+
   await Preferences.set({
     key: UNREAD_COUNT_KEY,
     value: JSON.stringify(count),

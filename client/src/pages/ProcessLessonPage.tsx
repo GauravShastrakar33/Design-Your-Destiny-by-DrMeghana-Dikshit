@@ -126,7 +126,7 @@ export default function ProcessLessonPage() {
           hasBackButton={true}
           onBack={handleBack}
         />
-        <main className="max-w-3xl mx-auto px-4 py-20 text-center">
+        <main className="max-w-3xl mx-auto p-4 pt-3 text-center">
           <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">
             Oops! Lesson not found

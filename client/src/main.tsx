@@ -49,18 +49,6 @@ if (Capacitor.isNativePlatform()) {
   // Dynamically load native plugins ONLY on mobile
   (async () => {
     const { App: CapacitorApp } = await import("@capacitor/app");
-    const { StatusBar, Style } = await import("@capacitor/status-bar");
-    const { PushNotifications } = await import("@capacitor/push-notifications");
-
-    // 📱 Status bar config
-    try {
-      await StatusBar.setOverlaysWebView({ overlay: true });
-      await StatusBar.setStyle({ style: Style.Light });
-      await StatusBar.setBackgroundColor({ color: "#703DFA" });
-      console.log("✅ StatusBar configured");
-    } catch (e) {
-      console.error("❌ StatusBar error", e);
-    }
 
     // 🔔 Push Notifications
     const { initPushNotifications } = await import("./lib/nativePush");

@@ -16,7 +16,7 @@ const config: CapacitorConfig = {
       enabled: true, // This patches 'fetch' to use native layer automatically
     },
     StatusBar: {
-      overlaysWebView: true,
+      overlaysWebView: false,
       style: "LIGHT", // Dark icons for the light content area or potentially purple bar
     },
     PushNotifications: {
@@ -25,13 +25,21 @@ const config: CapacitorConfig = {
     Keyboard: {
       resize: "body",
       style: "DARK",
-      resizeOnFullScreen: true,
+      resizeOnFullScreen: false,
+    },
+    SystemBars: {
+      insetsHandling: "disable",
+    },
+    EdgeToEdge: {
+      backgroundColor: "#cbb9fa",
+      statusBarColor: "#cbb9fa",
+      navigationBarColor: "#00000000",
     },
     SplashScreen: {
       launchShowDuration: 3000,
       launchAutoHide: true,
       launchFadeOutDuration: 300,
-      backgroundColor: "#703DFA",
+      backgroundColor: "#cbb9fa",
       androidScaleType: "CENTER_CROP",
       showSpinner: true,
       androidSpinnerStyle: "large",

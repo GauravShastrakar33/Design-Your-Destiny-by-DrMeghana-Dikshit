@@ -7,8 +7,16 @@ import { Preferences } from "@capacitor/preferences";
 
 // SPA navigation helper for use outside React components
 function navigate(to: string) {
-  window.history.pushState({}, "", to);
-  window.dispatchEvent(new PopStateEvent("popstate"));
+  if (isNativePlatform()) {
+    // Hash routing for native (matches App.tsx config)
+    // Ensure path starts with /
+    const path = to.startsWith("/") ? to : "/" + to;
+    window.location.hash = path;
+  } else {
+    // Path routing for web
+    window.history.pushState({}, "", to);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }
 }
 
 // Check if we're running in a native Capacitor environment

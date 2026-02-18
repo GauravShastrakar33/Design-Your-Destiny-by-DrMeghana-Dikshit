@@ -40,6 +40,7 @@ import {
   sendPushNotification,
   initializeFirebaseAdmin,
 } from "./lib/firebaseAdmin";
+import { createEventReminders } from "./jobs/notificationCron";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -4822,73 +4823,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
-  // Helper function to create event reminder notifications
-  async function createEventReminders(event: {
-    id: number;
-    title: string;
-    startDatetime: Date;
-    requiredProgramCode: string;
-    requiredProgramLevel: number;
-    status: string;
-  }) {
-    // Only create reminders for UPCOMING events
-    if (event.status !== "UPCOMING") return;
 
-    const startTime = new Date(event.startDatetime);
-    const now = new Date();
-
-    // Format time for notification body (e.g., "3:30 PM")
-    const timeStr = startTime.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    const notifications: Array<{
-      title: string;
-      body: string;
-      type: string;
-      scheduledAt: Date;
-      requiredProgramCode: string;
-      requiredProgramLevel: number;
-      relatedEventId: number;
-    }> = [];
-
-    // Reminder 1: 24 hours before (only if in the future)
-    const reminder24h = new Date(startTime.getTime() - 24 * 60 * 60 * 1000);
-    if (reminder24h > now) {
-      notifications.push({
-        title: `${event.title} Tomorrow`,
-        body: `Your ${event.title} starts tomorrow at ${timeStr}.`,
-        type: "event_reminder",
-        scheduledAt: reminder24h,
-        requiredProgramCode: event.requiredProgramCode,
-        requiredProgramLevel: event.requiredProgramLevel,
-        relatedEventId: event.id,
-      });
-    }
-
-    // Reminder 2: 15 minutes before (only if in the future)
-    const reminder15m = new Date(startTime.getTime() - 15 * 60 * 1000);
-    if (reminder15m > now) {
-      notifications.push({
-        title: `Starting Soon`,
-        body: `${event.title} starts in 15 minutes.`,
-        type: "event_reminder",
-        scheduledAt: reminder15m,
-        requiredProgramCode: event.requiredProgramCode,
-        requiredProgramLevel: event.requiredProgramLevel,
-        relatedEventId: event.id,
-      });
-    }
-
-    if (notifications.length > 0) {
-      await storage.createNotifications(notifications);
-      console.log(
-        `Created ${notifications.length} reminder(s) for event ${event.id}: ${event.title}`,
-      );
-    }
-  }
 
   // Admin API: Create event
   app.post("/api/admin/v1/events", requireAdmin, async (req, res) => {
@@ -4949,15 +4884,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(404).json({ error: "Event not found" });
       }
 
-      // Recreate reminder notifications when event is updated
+      // Regenerate notifications if start_time or status changed
       try {
-        // Delete old notifications for this event
         await storage.deleteNotificationsByEventId(id);
-        // Create new notifications if event is UPCOMING
-        await createEventReminders(event);
-      } catch (notifError) {
-        console.error("Error updating event reminders:", notifError);
-        // Don't fail the event update if notifications fail
+        if (event.status === "UPCOMING") {
+           await createEventReminders(event);
+        }
+      } catch (err) {
+        console.error("Error updating event notifications:", err);
       }
 
       res.json(event);
@@ -4966,6 +4900,34 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to update event" });
     }
   });
+
+  // Admin API: Regenerate reminders for all UPCOMING events
+  app.post(
+    "/api/admin/v1/events/regenerate-reminders",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const upcomingEvents = await storage.getAllEvents({ status: "UPCOMING" });
+        let processedCount = 0;
+
+        for (const event of upcomingEvents) {
+          // Delete existing
+          await storage.deleteNotificationsByEventId(event.id);
+          // Create new
+          await createEventReminders(event);
+          processedCount++;
+        }
+
+        res.json({
+          success: true,
+          message: `Regenerated reminders for ${processedCount} events`,
+        });
+      } catch (error) {
+        console.error("Error regenerating reminders:", error);
+        res.status(500).json({ error: "Failed to regenerate reminders" });
+      }
+    },
+  );
 
   // Admin API: Cancel event (soft delete)
   app.delete("/api/admin/v1/events/:id", requireAdmin, async (req, res) => {
@@ -6134,7 +6096,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .returning();
 
       const tokens = allTokens.map((t) => t.token);
-      const result = await sendPushNotification(tokens, title, body);
+      // Send with default deep link to notifications page
+      const result = await sendPushNotification(tokens, title, body, { 
+        url: "/notifications",
+        type: "admin_test" 
+      });
 
       // Create notification logs for each device token that received the push
       if (allTokens.length > 0 && notification) {
