@@ -89,7 +89,7 @@ __export(schema_exports, {
   users: () => users
 });
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, uniqueIndex, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 var users, insertUserSchema, communitySessions, insertCommunitySessionSchema, drmMessageSchema, categories, insertCategorySchema, articles, insertArticleSchema, programs, insertProgramSchema, userPrograms, insertUserProgramSchema, cmsCourses, insertCmsCourseSchema, cmsModules, insertCmsModuleSchema, cmsModuleFolders, insertCmsModuleFolderSchema, cmsLessons, insertCmsLessonSchema, lessonFileTypeEnum, cmsLessonFiles, insertCmsLessonFileSchema, frontendFeatures, insertFrontendFeatureSchema, featureCourseMap, insertFeatureCourseMapSchema, moneyEntries, insertMoneyEntrySchema, playlists, insertPlaylistSchema, playlistItems, insertPlaylistItemSchema, sessionBanners, insertSessionBannerSchema, userStreaks, insertUserStreakSchema, activityLogs, insertActivityLogSchema, featureTypeEnum, lessonProgress, insertLessonProgressSchema, dailyQuotes, insertDailyQuoteSchema, rewiringBeliefs, insertRewiringBeliefSchema, userWellnessProfiles, insertUserWellnessProfileSchema, eventStatusEnum, events, insertEventSchema, notificationTypeEnum, notificationLogStatusEnum, notifications, insertNotificationSchema, notificationLogs, insertNotificationLogSchema, pohCategoryEnum, pohStatusEnum, projectOfHearts, insertProjectOfHeartSchema, pohDailyRatings, insertPohDailyRatingSchema, pohActions, insertPohActionSchema, pohMilestones, insertPohMilestoneSchema, deviceTokens, insertDeviceTokenSchema, userBadges, badgeKeyEnum, insertUserBadgeSchema, drmQuestionStatusEnum, drmQuestions, insertDrmQuestionSchema;
@@ -333,14 +333,17 @@ var init_schema = __esm({
       posterKey: text("poster_key"),
       ctaText: text("cta_text"),
       ctaLink: text("cta_link"),
-      startAt: timestamp("start_at", { mode: "date" }).notNull(),
-      endAt: timestamp("end_at", { mode: "date" }).notNull(),
+      startAt: timestamp("start_at", { withTimezone: true, mode: "date" }).notNull(),
+      endAt: timestamp("end_at", { withTimezone: true, mode: "date" }).notNull(),
       liveEnabled: boolean("live_enabled").notNull().default(false),
-      liveStartAt: timestamp("live_start_at", { mode: "date" }),
-      liveEndAt: timestamp("live_end_at", { mode: "date" }),
-      createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-      updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow()
-    });
+      liveStartAt: timestamp("live_start_at", { withTimezone: true, mode: "date" }),
+      liveEndAt: timestamp("live_end_at", { withTimezone: true, mode: "date" }),
+      isDefault: boolean("is_default").notNull().default(false),
+      createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+      updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow()
+    }, (table) => ({
+      uniqueDefaultBanner: uniqueIndex("unique_default_banner").on(table.isDefault).where(sql`${table.isDefault} = true`)
+    }));
     insertSessionBannerSchema = createInsertSchema(sessionBanners).omit({
       id: true,
       createdAt: true,
@@ -503,7 +506,9 @@ var init_schema = __esm({
       isRead: boolean("is_read").notNull().default(false),
       readAt: timestamp("read_at", { mode: "date" }),
       createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
-    });
+    }, (table) => ({
+      idxUserUnread: index("idx_notification_logs_user_unread").on(table.userId, table.isRead)
+    }));
     insertNotificationLogSchema = createInsertSchema(notificationLogs).omit({
       id: true,
       createdAt: true
@@ -1103,10 +1108,10 @@ var init_storage = __esm({
       async setPlaylistItems(playlistId, lessonIds) {
         await db.delete(playlistItems).where(eq(playlistItems.playlistId, playlistId));
         if (lessonIds.length === 0) return [];
-        const items = lessonIds.map((lessonId, index) => ({
+        const items = lessonIds.map((lessonId, index2) => ({
           playlistId,
           lessonId,
-          position: index
+          position: index2
         }));
         return await db.insert(playlistItems).values(items).returning();
       }
@@ -1188,18 +1193,17 @@ var init_storage = __esm({
             sql2`${sessionBanners.startAt} <= ${now}`,
             sql2`${sessionBanners.endAt} > ${now}`
           )
-        ).orderBy(desc(sessionBanners.startAt)).limit(1);
+        ).orderBy(desc(sessionBanners.updatedAt)).limit(1);
         return active;
       }
-      async getNextScheduledBanner() {
-        const now = /* @__PURE__ */ new Date();
-        const [scheduled] = await db.select().from(sessionBanners).where(sql2`${sessionBanners.startAt} > ${now}`).orderBy(asc(sessionBanners.startAt)).limit(1);
-        return scheduled;
+      async getDefaultBanner() {
+        const [defaultBanner] = await db.select().from(sessionBanners).where(eq(sessionBanners.isDefault, true)).limit(1);
+        return defaultBanner;
       }
-      async getLastExpiredBanner() {
-        const now = /* @__PURE__ */ new Date();
-        const [expired] = await db.select().from(sessionBanners).where(sql2`${sessionBanners.endAt} <= ${now}`).orderBy(desc(sessionBanners.endAt)).limit(1);
-        return expired;
+      async setDefaultBanner(id) {
+        await db.update(sessionBanners).set({ isDefault: false }).where(eq(sessionBanners.isDefault, true));
+        const [updated] = await db.update(sessionBanners).set({ isDefault: true, updatedAt: /* @__PURE__ */ new Date() }).where(eq(sessionBanners.id, id)).returning();
+        return updated;
       }
       // ===== USER STREAKS =====
       async markUserActivityDate(userId, activityDate) {
@@ -1550,10 +1554,10 @@ var init_storage = __esm({
       async replacePOHActions(pohId, actions) {
         await db.delete(pohActions).where(eq(pohActions.pohId, pohId));
         if (actions.length > 0) {
-          await db.insert(pohActions).values(actions.map((text2, index) => ({
+          await db.insert(pohActions).values(actions.map((text2, index2) => ({
             pohId,
             text: text2,
-            orderIndex: index
+            orderIndex: index2
           })));
         }
       }
@@ -5278,17 +5282,31 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
     }
   );
+  app2.post(
+    "/api/admin/v1/session-banners/:id/set-default",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const bannerId = parseInt(req.params.id);
+        const updated = await storage.setDefaultBanner(bannerId);
+        if (!updated) {
+          return res.status(404).json({ error: "Banner not found" });
+        }
+        res.json(updated);
+      } catch (error) {
+        console.error("Error setting default banner:", error);
+        res.status(500).json({ error: "Failed to set default banner" });
+      }
+    }
+  );
   app2.get("/api/public/v1/session-banner", async (req, res) => {
     try {
+      const now = /* @__PURE__ */ new Date();
       let banner = await storage.getActiveBanner();
       let status = "active";
       if (!banner) {
-        banner = await storage.getNextScheduledBanner();
-        status = "scheduled";
-      }
-      if (!banner) {
-        banner = await storage.getLastExpiredBanner();
-        status = "expired";
+        banner = await storage.getDefaultBanner();
+        status = "default";
       }
       if (!banner) {
         return res.json({ banner: null, status: "none" });
@@ -5308,17 +5326,20 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const result = await getSignedGetUrl(banner.posterKey);
         posterUrl = result.success ? result.url : null;
       }
-      const now = /* @__PURE__ */ new Date();
-      const isLive = banner.type === "session" && banner.liveEnabled && status === "active" && banner.liveStartAt && banner.liveEndAt && now >= new Date(banner.liveStartAt) && now < new Date(banner.liveEndAt);
+      const isLive = banner.type === "session" && banner.liveEnabled && banner.liveStartAt && banner.liveEndAt && now >= new Date(banner.liveStartAt) && now < new Date(banner.liveEndAt);
       res.json({
         banner: {
-          ...banner,
+          id: banner.id,
+          type: banner.type,
           thumbnailUrl,
           videoUrl,
-          posterUrl
+          posterUrl,
+          ctaText: banner.ctaText,
+          ctaLink: banner.ctaLink,
+          isLive
+          // Backend-calculated, frontend must consume
         },
-        status,
-        isLive
+        status
       });
     } catch (error) {
       console.error("Error fetching public session banner:", error);
@@ -6368,8 +6389,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const userId = req.user.sub;
         const pohId = req.params.id;
         const indexStr = req.body.index;
-        const index = parseInt(indexStr, 10);
-        if (isNaN(index) || index < 0 || index > 2) {
+        const index2 = parseInt(indexStr, 10);
+        if (isNaN(index2) || index2 < 0 || index2 > 2) {
           return res.status(400).json({
             error: "INVALID_INDEX",
             message: "Index must be 0, 1, or 2"
@@ -6397,7 +6418,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           "image/webp": "webp"
         };
         const ext = extMap[req.file.mimetype] || "jpg";
-        const key = `poh-visions/${userId}/${pohId}/vision-${index}.${ext}`;
+        const key = `poh-visions/${userId}/${pohId}/vision-${index2}.${ext}`;
         const uploadResult = await uploadBufferToR2(
           req.file.buffer,
           key,
@@ -6412,12 +6433,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         while (newImages.length < 3) {
           newImages.push(null);
         }
-        newImages[index] = uploadResult.url;
+        newImages[index2] = uploadResult.url;
         await storage.updatePOH(pohId, { visionImages: newImages });
         res.json({
           success: true,
           vision_images: newImages,
-          uploaded_index: index
+          uploaded_index: index2
         });
       } catch (error) {
         console.error("Error uploading vision image:", error);
@@ -6442,6 +6463,32 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     } catch (error) {
       console.error("Error fetching user notifications:", error);
       res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+  app2.get("/api/v1/notifications/unread-count", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const count3 = await storage.getUnreadNotificationCount(userId);
+      res.json({ count: count3 });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+  app2.post("/api/v1/notifications/read-all", authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+      res.status(500).json({ error: "Failed to mark notifications as read" });
     }
   });
   app2.post(

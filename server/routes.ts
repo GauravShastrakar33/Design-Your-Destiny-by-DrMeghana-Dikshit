@@ -5933,6 +5933,36 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
+  // Get unread notification count
+  app.get("/api/v1/notifications/unread-count", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const count = await storage.getUnreadNotificationCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+
+  // Mark all notifications as read
+  app.post("/api/v1/notifications/read-all", authenticateJWT, async (req, res) => {
+    try {
+      const userId = (req as any).user.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+      res.status(500).json({ error: "Failed to mark notifications as read" });
+    }
+  });
+
   // Register device token for push notifications
   app.post(
     "/api/v1/notifications/register-device",

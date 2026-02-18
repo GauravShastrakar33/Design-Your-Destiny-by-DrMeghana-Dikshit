@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, uniqueIndex, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -560,7 +560,9 @@ export const notificationLogs = pgTable("notification_logs", {
   isRead: boolean("is_read").notNull().default(false),
   readAt: timestamp("read_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-});
+}, (table) => ({
+  idxUserUnread: index("idx_notification_logs_user_unread").on(table.userId, table.isRead),
+}));
 
 export const insertNotificationLogSchema = createInsertSchema(notificationLogs).omit({
   id: true,

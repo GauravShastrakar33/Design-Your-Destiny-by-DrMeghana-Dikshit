@@ -87,7 +87,7 @@ export default function UserLoginPage() {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-6 md:p-12 overflow-hidden bg-[#0F172A]">
+    <div className="min-h-screen relative flex items-center justify-center p-6 md:p-12 pt-[env(safe-area-inset-top)] overflow-hidden bg-[#0F172A]">
       {/* Premium Multi-Layered Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         {/* Deep Indigo Base Gradient */}
