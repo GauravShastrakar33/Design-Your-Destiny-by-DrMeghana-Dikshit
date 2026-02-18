@@ -1,92 +1,167 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="description" content="Design Your Destiny app" />
+    <title>Design Your Destiny by Dr. Meghana Dikshit</title>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <meta name="description" content="Design Your Destiny app" />
-  <title>Design Your Destiny by Dr. Meghana Dikshit</title>
-
-  <script>
-    // 🚨 Advanced Diagnostic 2.0: Active BEFORE any other resource
-    (function () {
-      function showError(title, message, details) {
-        if (document.getElementById('diag-error')) return;
-        var div = document.createElement('div');
-        div.id = 'diag-error';
-        div.style.position = 'fixed';
-        div.style.top = '0'; div.style.left = '0';
-        div.style.width = '100%'; div.style.height = '100%';
-        div.style.backgroundColor = '#ff0000';
-        div.style.color = '#ffffff';
-        div.style.zIndex = '99999';
-        div.style.padding = '20px';
-        div.style.overflowY = 'auto';
-        div.style.fontFamily = 'monospace';
-        div.innerHTML = '<h2>🛑 ' + title + '</h2>' +
-          '<p><strong>Message:</strong> ' + message + '</p>' +
-          (details ? '<div style="background: rgba(0,0,0,0.2); padding: 10px; margin-top: 10px;">' + details + '</div>' : '') +
-          '<button onclick="location.reload()" style="padding: 10px; margin-top: 20px; background: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">RETRY APP</button>';
-        document.body.appendChild(div);
-      }
-
-      window.onerror = function (msg, url, line, col, err) {
-        showError('Runtime Error', msg, 'Line: ' + line + ', Col: ' + col + (err ? '<br>Stack: ' + err.stack : ''));
-        return false;
-      };
-
-      window.addEventListener('error', function (event) {
-        if (event.target && (event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK')) {
-          var url = event.target.src || event.target.href;
-          var title = 'Resource Load Failure';
-          var message = 'Failed to load: ' + url;
-
-          fetch(url).then(function (r) {
-            var details = 'Status: ' + r.status + ' ' + r.statusText + '<br>URL: ' + r.url + '<br>Type: ' + r.type;
-            showError(title + ' (Fetch Status)', message, details);
-          }).catch(function (e) {
-            var details = 'Fetch blocked/failed: ' + e.message + '<br>Likely security policy restriction.';
-            showError(title + ' (Network/Security Block)', message, details);
-          });
+    <script>
+      // 🚨 Advanced Diagnostic 2.0: Active BEFORE any other resource
+      (function () {
+        function showError(title, message, details) {
+          if (document.getElementById("diag-error")) return;
+          var div = document.createElement("div");
+          div.id = "diag-error";
+          div.style.position = "fixed";
+          div.style.top = "0";
+          div.style.left = "0";
+          div.style.width = "100%";
+          div.style.height = "100%";
+          div.style.backgroundColor = "#ff0000";
+          div.style.color = "#ffffff";
+          div.style.zIndex = "99999";
+          div.style.padding = "20px";
+          div.style.overflowY = "auto";
+          div.style.fontFamily = "monospace";
+          div.innerHTML =
+            "<h2>🛑 " +
+            title +
+            "</h2>" +
+            "<p><strong>Message:</strong> " +
+            message +
+            "</p>" +
+            (details
+              ? '<div style="background: rgba(0,0,0,0.2); padding: 10px; margin-top: 10px;">' +
+                details +
+                "</div>"
+              : "") +
+            '<button onclick="location.reload()" style="padding: 10px; margin-top: 20px; background: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">RETRY APP</button>';
+          document.body.appendChild(div);
         }
-      }, true);
 
-      console.log("🛠️ Diagnostic suite 2.0 initialized");
-    })();
+        window.onerror = function (msg, url, line, col, err) {
+          showError(
+            "Runtime Error",
+            msg,
+            "Line: " +
+              line +
+              ", Col: " +
+              col +
+              (err ? "<br>Stack: " + err.stack : "")
+          );
+          return false;
+        };
 
-    // ⚡ Capacitor initialization bridge stub (Prevents triggerEvent crash)
-    if (!window.Capacitor) {
-      window.Capacitor = {
-        triggerEvent: function (name, target, data) {
-          console.warn('⚡ Capacitor bridge NOT ready, buffered event:', name, data);
-          return true;
-        },
-        getPlatform: function () { return 'web'; }, // Fallback
-        isNativePlatform: function () { return false; }
-      };
-    }
-  </script>
+        window.addEventListener(
+          "error",
+          function (event) {
+            if (
+              event.target &&
+              (event.target.tagName === "SCRIPT" ||
+                event.target.tagName === "LINK")
+            ) {
+              var url = event.target.src || event.target.href;
+              var title = "Resource Load Failure";
+              var message = "Failed to load: " + url;
 
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
-  <link rel="manifest" href="./site.webmanifest" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
-    rel="stylesheet" />
-</head>
+              fetch(url)
+                .then(function (r) {
+                  var details =
+                    "Status: " +
+                    r.status +
+                    " " +
+                    r.statusText +
+                    "<br>URL: " +
+                    r.url +
+                    "<br>Type: " +
+                    r.type;
+                  showError(title + " (Fetch Status)", message, details);
+                })
+                .catch(function (e) {
+                  var details =
+                    "Fetch blocked/failed: " +
+                    e.message +
+                    "<br>Likely security policy restriction.";
+                  showError(
+                    title + " (Network/Security Block)",
+                    message,
+                    details
+                  );
+                });
+            }
+          },
+          true
+        );
 
-<body>
-  <div id="root">
-    <div
-      style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
-      <h2 style="color: #703DFA;">Loading...</h2>
+        console.log("🛠️ Diagnostic suite 2.0 initialized");
+      })();
+
+      // ⚡ Capacitor initialization bridge stub (Prevents triggerEvent crash)
+      if (!window.Capacitor) {
+        window.Capacitor = {
+          triggerEvent: function (name, target, data) {
+            console.warn(
+              "⚡ Capacitor bridge NOT ready, buffered event:",
+              name,
+              data
+            );
+            return true;
+          },
+          getPlatform: function () {
+            return "web";
+          }, // Fallback
+          isNativePlatform: function () {
+            return false;
+          },
+        };
+      }
+    </script>
+
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="./apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="./favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="./favicon-16x16.png"
+    />
+    <link rel="manifest" href="./site.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div id="root">
+      <div
+        style="
+          font-family: sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+        "
+      >
+        <h2 style="color: #703dfa">Loading...</h2>
+      </div>
     </div>
-  </div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

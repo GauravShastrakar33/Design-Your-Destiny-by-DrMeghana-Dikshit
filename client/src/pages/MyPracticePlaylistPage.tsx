@@ -171,34 +171,24 @@ const FullScreenPlayer = ({
       />
 
       {/* Header */}
-      <div className="w-full max-w-2xl md:max-w-4xl flex items-center justify-between relative z-10 mt-2">
-        <Button
-          variant="ghost"
-          onClick={onClose}
-          className="w-12 h-12 rounded-full hover:bg-slate-100 transition-colors shrink-0 flex items-center justify-center p-0 [&_svg]:size-6"
-        >
-          <ChevronDown className="text-slate-700" strokeWidth={1.5} size={24} />
-        </Button>
-        <div className="flex flex-col items-center">
-          <span className="text-xs md:text-sm lg:text-lg font-black text-slate-700 uppercase tracking-widest mb-0.5">
-            Now Playing
-          </span>
-          <span className="text-xs font-bold text-brand hidden">
-            {track?.lesson?.title ? "Practice Mode" : ""}
-          </span>
-        </div>
-        <Button
-          variant="ghost"
-          onClick={() => setShowQueue(!showQueue)}
-          className={`w-12 h-12 rounded-full transition-colors shrink-0 flex items-center justify-center p-0 [&_svg]:size-6 ${
-            showQueue ? "bg-brand/10 text-brand" : "text-slate-600"
-          }`}
-        >
-          <ListMusic strokeWidth={1.5} size={24} />
-        </Button>
-      </div>
+      <Header
+        title="Now Playing"
+        hasBackButton={true}
+        onBack={onClose}
+        rightContent={
+          <Button
+            variant="ghost"
+            onClick={() => setShowQueue(!showQueue)}
+            className={`w-10 h-10 rounded-full transition-colors shrink-0 flex items-center justify-center p-0 [&_svg]:size-6 ${
+              showQueue ? "bg-brand/10 text-brand" : "text-slate-600"
+            }`}
+          >
+            <ListMusic strokeWidth={1.5} size={20} />
+          </Button>
+        }
+      />
 
-      <div className="flex-1 w-full max-w-2xl md:max-w-4xl flex flex-col items-center justify-start px-4 md:px-10 relative z-10">
+      <div className="flex-1 w-full max-w-2xl md:max-w-4xl flex flex-col items-center justify-start px-4 md:px-10 relative z-10 pt-[calc(env(safe-area-inset-top)+6rem)]">
         <AnimatePresence mode="wait">
           {!showQueue ? (
             <motion.div
@@ -712,7 +702,7 @@ export default function MyPracticePlaylistPage() {
       }`}
     >
       <Header
-        title={expandedPlaylistId ? "" : "My Playlist"}
+        title={expandedPlaylistId ? "Your Audio Journey" : "My Playlist"}
         hasBackButton={true}
         onBack={() =>
           expandedPlaylistId ? setExpandedPlaylistId(null) : setLocation("/")
@@ -954,15 +944,15 @@ export default function MyPracticePlaylistPage() {
           <motion.div
             initial={{ y: 200 }}
             animate={{ y: 0 }}
-            className="fixed bottom-24 left-0 right-0 z-50 px-4 pointer-events-none"
+            className="fixed bottom-[calc(4.7rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 px-4 pointer-events-none"
           >
             <div className="max-w-2xl md:max-w-3xl mx-auto pointer-events-auto">
               <div
                 onClick={() => setIsFullScreen(true)}
-                className="bg-white/90 backdrop-blur-xl bg-gradient-to-r from-brand/[0.08] to-transparent rounded-xl shadow-[0_8px_32px_rgba(110,89,255,0.12)] border border-brand/10 p-2 pr-4 flex items-center gap-3 relative overflow-hidden cursor-pointer active:scale-[0.98] transition-all"
+                className="bg-white/90 backdrop-blur-xl bg-gradient-to-r from-brand/[0.08] to-transparent rounded-lg shadow-[0_8px_32px_rgba(110,89,255,0.12)] border border-brand/50 p-2 pr-4 pb-3 flex items-center gap-3 relative overflow-hidden cursor-pointer active:scale-[0.98] transition-all"
               >
                 {/* Visual Progress Bar Layer */}
-                <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-slate-100/50 rounded-full overflow-hidden">
+                <div className="absolute bottom-0 left-2 right-2 h-[3px] bg-slate-100/50 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-brand"
                     initial={{ width: 0 }}
@@ -974,7 +964,15 @@ export default function MyPracticePlaylistPage() {
                 </div>
 
                 <div className="w-11 h-11 rounded-lg bg-brand/10 flex items-center justify-center shrink-0 border border-brand/5">
-                  <Music className="w-5 h-5 text-brand" />
+                  {isPlaying ? (
+                    <div className="flex gap-1 items-end h-5">
+                      <div className="w-1 bg-brand rounded-full animate-[bounce_1s_infinite] h-2.5" />
+                      <div className="w-1 bg-brand rounded-full animate-[bounce_0.8s_infinite] h-5" />
+                      <div className="w-1 bg-brand rounded-full animate-[bounce_1.2s_infinite] h-3.5" />
+                    </div>
+                  ) : (
+                    <Music className="w-5 h-5 text-brand" />
+                  )}
                 </div>
 
                 <div className="flex-1 min-w-0">

@@ -15,8 +15,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="relative min-h-screen">
-      <main className="pb-[calc(72px+env(safe-area-inset-bottom))]">
+    <div className="flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden pt-[calc(env(safe-area-inset-top)+4.5rem)]">
         {children}
       </main>
       <BottomNav />

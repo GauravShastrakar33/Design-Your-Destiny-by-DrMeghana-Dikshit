@@ -24,6 +24,7 @@ import type {
   CmsLessonFile,
 } from "@shared/schema";
 import { Header } from "@/components/Header";
+import { VideoPlayer, AudioPlayer } from "@/components/MediaPlayers";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface LessonFileWithUrl extends CmsLessonFile {
@@ -83,7 +84,10 @@ export default function VideoFirstChallengePage() {
     useQuery<CourseResponse>({
       queryKey: ["/api/public/v1/courses", courseId],
       queryFn: async () => {
-        const response = await apiRequest("GET", `/api/public/v1/courses/${courseId}`);
+        const response = await apiRequest(
+          "GET",
+          `/api/public/v1/courses/${courseId}`
+        );
         return response.json();
       },
       enabled: !!courseId,
@@ -97,7 +101,10 @@ export default function VideoFirstChallengePage() {
     queryFn: async () => {
       if (!courseData?.modules) return [];
       const modulePromises = courseData.modules.map(async (module) => {
-        const response = await apiRequest("GET", `/api/public/v1/modules/${module.id}`);
+        const response = await apiRequest(
+          "GET",
+          `/api/public/v1/modules/${module.id}`
+        );
         return response.json();
       });
       return Promise.all(modulePromises);
@@ -169,7 +176,8 @@ export default function VideoFirstChallengePage() {
     useQuery<LessonResponse>({
       queryKey: ["/api/public/v1/lessons", currentDay?.lessonId],
       queryFn: async () => {
-        const response = await apiRequest("GET",
+        const response = await apiRequest(
+          "GET",
           `/api/public/v1/lessons/${currentDay?.lessonId}`
         );
         return response.json();
@@ -425,10 +433,10 @@ export default function VideoFirstChallengePage() {
   const primaryPlayerType = videoFile
     ? "video"
     : audioFile
-      ? "audio"
-      : pdfFile
-        ? "pdf"
-        : "none";
+    ? "audio"
+    : pdfFile
+    ? "pdf"
+    : "none";
   const hasMedia = videoFile || audioFile;
   const hasResources = pdfFile || (videoFile && audioFile);
   const isCurrentLessonCompleted = currentDay
@@ -453,51 +461,41 @@ export default function VideoFirstChallengePage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <div className="sticky top-0 bg-white/80 backdrop-blur-xl z-30">
-        <Header
-          title={`Day ${currentDay?.dayNumber} of ${allDays.length}`}
-          hasBackButton={true}
-          onBack={handleBack}
-        />
-      </div>
+      <Header
+        title={`Day ${currentDay?.dayNumber} of ${allDays.length}`}
+        hasBackButton={true}
+        onBack={handleBack}
+      />
 
       <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full pb-24 px-3">
         {/* Adaptive Player Stage */}
-        <div className="w-full aspect-video bg-gray-900 rounded-2xl mt-4 overflow-hidden shadow-2xl shadow-black/20 relative">
+        <div
+          className={`w-full mt-4 relative ${
+            lessonLoading || primaryPlayerType === "audio" || showAudioPlayer
+              ? "aspect-video bg-gray-900 rounded-2xl overflow-hidden shadow-2xl shadow-black/20"
+              : ""
+          }`}
+        >
           {lessonLoading ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <Loader2 className="w-10 h-10 animate-spin text-white/20" />
             </div>
           ) : primaryPlayerType === "video" && !showAudioPlayer ? (
-            <video
+            <VideoPlayer
               ref={videoRef}
               src={videoFile!.signedUrl!}
-              controls
-              controlsList="nodownload"
-              disablePictureInPicture
-              className="w-full h-full object-contain"
+              onPlay={() => audioRef.current?.pause()}
               onTimeUpdate={handleTimeUpdate}
               onEnded={handleMediaEnded}
             />
           ) : (primaryPlayerType === "audio" || showAudioPlayer) &&
             audioFile ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-brand to-brand-dark p-8 overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
-                <Zap className="w-full h-full" />
-              </div>
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="w-32 h-32 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center mb-8 border border-white/20 shadow-2xl"
-              >
-                <Headphones className="w-14 h-14 text-white" />
-              </motion.div>
-              <audio
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-black p-4 sm:p-8">
+              <AudioPlayer
                 ref={audioRef}
                 src={audioFile.signedUrl!}
-                controls
-                controlsList="nodownload noplaybackrate"
-                className="w-full max-w-xs h-10 filter invert brightness-100 opacity-90"
+                title={currentDay?.title || "Audio Lesson"}
+                onPlay={() => videoRef.current?.pause()}
                 onTimeUpdate={handleAudioTimeUpdate}
                 onEnded={handleMediaEnded}
               />
@@ -596,21 +594,23 @@ export default function VideoFirstChallengePage() {
                     key={day.lessonId}
                     whileHover={!isLocked ? { y: -2 } : {}}
                     onClick={() => !isLocked && handleDayClick(index)}
-                    className={`cursor-pointer p-2 rounded-xl border transition-all ${isCurrent
+                    className={`cursor-pointer p-2 rounded-xl border transition-all ${
+                      isCurrent
                         ? "bg-brand/5 border-brand shadow-lg shadow-brand/5"
                         : isLocked
-                          ? "opacity-70 pointer-events-none"
-                          : "bg-white border-gray-200 hover:border-brand/30 hover:shadow-md"
-                      }`}
+                        ? "opacity-70 pointer-events-none"
+                        : "bg-white border-gray-200 hover:border-brand/30 hover:shadow-md"
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${isCompleted
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${
+                          isCompleted
                             ? "bg-emerald-500 text-white"
                             : isCurrent
-                              ? "bg-brand text-white"
-                              : "bg-gray-100 text-gray-400"
-                          }`}
+                            ? "bg-brand text-white"
+                            : "bg-gray-100 text-gray-400"
+                        }`}
                       >
                         {isCompleted ? (
                           <Check className="w-4 h-4" />
@@ -620,8 +620,9 @@ export default function VideoFirstChallengePage() {
                       </div>
                       <div className="min-w-0 pr-2">
                         <p
-                          className={`text-xs font-bold truncate ${isCurrent ? "text-brand" : "text-gray-900"
-                            }`}
+                          className={`text-xs font-bold truncate ${
+                            isCurrent ? "text-brand" : "text-gray-900"
+                          }`}
                         >
                           Day {day.dayNumber}
                         </p>
