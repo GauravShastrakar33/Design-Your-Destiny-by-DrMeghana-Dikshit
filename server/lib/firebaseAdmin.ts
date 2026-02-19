@@ -39,58 +39,100 @@ export async function sendPushNotification(
   successCount: number;
   failureCount: number;
   failedTokens: string[];
+  tokensToCleanup: string[];
 }> {
   const fcm = getFCM();
-
+  
   if (!fcm) {
     console.error("FCM not initialized");
     return {
       successCount: 0,
       failureCount: tokens.length,
       failedTokens: tokens,
+      tokensToCleanup: [],
     };
   }
 
   if (tokens.length === 0) {
-    return { successCount: 0, failureCount: 0, failedTokens: [] };
+    return { successCount: 0, failureCount: 0, failedTokens: [], tokensToCleanup: [] };
   }
 
-  const message: admin.messaging.MulticastMessage = {
-    tokens,
-    notification: { title, body },
-    data,
-    webpush: {
-      notification: {
-        title,
-        body,
-        icon: "/icon-192.png",
+  // 📦 FCM has a limit of 500 tokens per multicast message
+  const batchSize = 500;
+  const tokenBatches: string[][] = [];
+  for (let i = 0; i < tokens.length; i += batchSize) {
+    tokenBatches.push(tokens.slice(i, i + batchSize));
+  }
+
+  let totalSuccessCount = 0;
+  let totalFailureCount = 0;
+  const allFailedTokens: string[] = [];
+  const tokensToCleanup: string[] = [];
+
+  console.log(`🚀 Sending notification in ${tokenBatches.length} batch(es) to ${tokens.length} total tokens`);
+
+  for (const batch of tokenBatches) {
+    const message: admin.messaging.MulticastMessage = {
+      tokens: batch,
+      notification: { title, body },
+      data,
+      // 📱 Ensure high priority for mobile devices
+      android: {
+        priority: "high",
+        notification: {
+          sound: "default",
+          channelId: "default",
+        },
       },
-      data, // Include data payload for service worker access
-    },
-  };
-
-  try {
-    const response = await fcm.sendEachForMulticast(message);
-
-    const failedTokens: string[] = [];
-    response.responses.forEach((resp, idx) => {
-      if (!resp.success) {
-        failedTokens.push(tokens[idx]);
-        console.error(`Failed to send to token ${idx}:`, resp.error);
-      }
-    });
-
-    return {
-      successCount: response.successCount,
-      failureCount: response.failureCount,
-      failedTokens,
+      apns: {
+        payload: {
+          aps: {
+            sound: "default",
+            badge: 1,
+            "content-available": 1,
+          },
+        },
+      },
+      webpush: {
+        notification: {
+          title,
+          body,
+          icon: "/icon-192.png",
+        },
+        data,
+      },
     };
-  } catch (error) {
-    console.error("Error sending multicast notification:", error);
-    return {
-      successCount: 0,
-      failureCount: tokens.length,
-      failedTokens: tokens,
-    };
+
+    try {
+      const response = await fcm.sendEachForMulticast(message);
+      totalSuccessCount += response.successCount;
+      totalFailureCount += response.failureCount;
+
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          const token = batch[idx];
+          allFailedTokens.push(token);
+          
+          const errorCode = resp.error?.code;
+          // 🧹 Only cleanup if the token is explicitly invalid/not registered
+          if (errorCode === "messaging/registration-token-not-registered") {
+            tokensToCleanup.push(token);
+          } else {
+             console.error(`FCM error for token ${idx} in batch: ${errorCode}`);
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error sending multicast batch:", error);
+      totalFailureCount += batch.length;
+      allFailedTokens.push(...batch);
+    }
   }
+
+  return {
+    successCount: totalSuccessCount,
+    failureCount: totalFailureCount,
+    failedTokens: allFailedTokens,
+    tokensToCleanup,
+  };
 }

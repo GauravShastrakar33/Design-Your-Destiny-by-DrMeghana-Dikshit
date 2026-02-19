@@ -14,12 +14,18 @@ async function processNotifications(): Promise<void> {
   try {
     const pendingNotifications = await storage.getPendingNotifications();
     
+    if (pendingNotifications.length > 0) {
+      console.log(`🔔 Notification cron: Found ${pendingNotifications.length} pending notification(s)`);
+    }
+
     for (const notification of pendingNotifications) {
       try {
         const eligibleUserIds = await storage.getEligibleUserIdsForNotification(
           notification.requiredProgramCode,
           notification.requiredProgramLevel
         );
+
+        console.log(`Notification ${notification.id}: Found ${eligibleUserIds.length} eligible users`);
 
         if (eligibleUserIds.length === 0) {
           console.log(`No eligible users for notification ${notification.id}, marking as sent`);
@@ -29,6 +35,8 @@ async function processNotifications(): Promise<void> {
 
         const deviceTokens = await storage.getDeviceTokensByUserIds(eligibleUserIds);
         
+        console.log(`Notification ${notification.id}: Found ${deviceTokens.length} registered devices`);
+
         if (deviceTokens.length === 0) {
           console.log(`No device tokens found for notification ${notification.id}, marking as sent`);
           await storage.markNotificationSent(notification.id);
@@ -89,25 +97,27 @@ async function processNotifications(): Promise<void> {
             userId,
             deviceToken: token,
             status: failed ? "failed" : "sent",
-            error: failed ? "FCM delivery failed" : null,
+            error: failed ? "FCM delivery failure" : null,
           });
         }
 
+        // 📝 Always save logs so users can see reminders in-app
         await storage.createNotificationLogs(logs);
 
-        for (const failedToken of result.failedTokens) {
+        // 🧹 Only cleanup tokens that are explicitly invalid (NotRegistered)
+        for (const deadToken of result.tokensToCleanup) {
           try {
-            await storage.deleteDeviceToken(failedToken);
-            console.log(`Removed invalid token: ${failedToken.substring(0, 20)}...`);
+            await storage.deleteDeviceToken(deadToken);
+            console.log(`Removed dead token: ${deadToken.substring(0, 20)}...`);
           } catch (err) {
-            console.error("Error removing failed token:", err);
+            console.error("Error removing dead token:", err);
           }
         }
 
         await storage.markNotificationSent(notification.id);
 
         console.log(
-          `Notification ${notification.id}: ${result.successCount} sent, ${result.failureCount} failed`
+          `Notification ${notification.id}: ${result.successCount} push sent, ${result.failureCount} push failed`
         );
       } catch (notificationError) {
         console.error(`Error processing notification ${notification.id}:`, notificationError);
