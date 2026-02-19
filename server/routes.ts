@@ -6122,6 +6122,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         await db.insert(notificationLogs).values(notificationLogRecords);
       }
 
+      /* 
       // Clean up failed tokens (invalid tokens)
       if (result.failedTokens.length > 0) {
         for (const failedToken of result.failedTokens) {
@@ -6130,6 +6131,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             .where(eq(deviceTokens.token, failedToken));
         }
       }
+      */
 
       res.json({
         success: true,

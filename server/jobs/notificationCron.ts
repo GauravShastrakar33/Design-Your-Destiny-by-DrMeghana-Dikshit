@@ -104,7 +104,8 @@ async function processNotifications(): Promise<void> {
         // 📝 Always save logs so users can see reminders in-app
         await storage.createNotificationLogs(logs);
 
-        // 🧹 Only cleanup tokens that are explicitly invalid (NotRegistered)
+        // 🧹 [DISABLED] Only cleanup tokens that are explicitly invalid (NotRegistered)
+        /* 
         for (const deadToken of result.tokensToCleanup) {
           try {
             await storage.deleteDeviceToken(deadToken);
@@ -113,6 +114,7 @@ async function processNotifications(): Promise<void> {
             console.error("Error removing dead token:", err);
           }
         }
+        */
 
         await storage.markNotificationSent(notification.id);
 
