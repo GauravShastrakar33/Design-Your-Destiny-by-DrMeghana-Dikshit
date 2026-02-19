@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { VideoPlayer, AudioPlayer } from "@/components/MediaPlayers";
 import { motion } from "framer-motion";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import type { CmsLesson, CmsLessonFile } from "@shared/schema";
 
 interface LessonFileWithUrl extends CmsLessonFile {
@@ -42,7 +42,7 @@ export default function ProcessLessonPage() {
   const moduleId = searchParams.get("moduleId");
   const isMasterclass = location.startsWith("/masterclasses");
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (isMasterclass && courseId) {
       setLocation(`/masterclasses/course/${courseId}`);
     } else {
@@ -50,7 +50,7 @@ export default function ProcessLessonPage() {
       const type = params.type || "dyd";
       setLocation(`/processes/${type.toLowerCase()}`);
     }
-  };
+  }, [isMasterclass, courseId, params.type, setLocation]);
 
   const { isAuthenticated } = useAuth();
 

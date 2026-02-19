@@ -146,6 +146,20 @@ function AppContent() {
     }
 
     const listener = CapacitorApp.addListener("backButton", async (event) => {
+      // PRIORITY 0: If we're in fullscreen, don't navigate!
+      // The VideoPlayer component will handle exiting fullscreen.
+      const isFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+
+      if (isFullscreen) {
+        console.log("📺 Fullscreen detected, skipping global back navigation");
+        return;
+      }
+
       const currentPath = locationRef.current;
       console.log("🔙 Back button pressed", {
         canGoBack: event.canGoBack,
