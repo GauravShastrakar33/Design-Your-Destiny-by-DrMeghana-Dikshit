@@ -54,6 +54,7 @@ export default function AdminDrmQuestionsPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioDuration, setAudioDuration] = useState<number>(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -101,6 +102,7 @@ export default function AdminDrmQuestionsPage() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
 
       const mimeType = getSupportedMimeType();
       const options: MediaRecorderOptions = mimeType ? { mimeType } : {};
@@ -123,7 +125,12 @@ export default function AdminDrmQuestionsPage() {
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         setAudioMimeType(recordedMimeType);
-        stream.getTracks().forEach((track) => track.stop());
+
+        // Cleanup stream tracks
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach((track) => track.stop());
+          audioStreamRef.current = null;
+        }
       };
 
       mediaRecorder.start();
@@ -219,6 +226,20 @@ export default function AdminDrmQuestionsPage() {
   };
 
   const resetRecordingState = () => {
+    // 1. Stop recorder if it's active
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
+    }
+
+    // 2. Stop all stream tracks to release microphone immediately
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+    }
+
     setAudioBlob(null);
     setAudioUrl(null);
     setAudioMimeType("audio/webm");
@@ -568,9 +589,7 @@ export default function AdminDrmQuestionsPage() {
                       data-testid="button-rerecord"
                     >
                       <Mic className="w-7 h-7" />
-                      <span className="text-md font-bold">
-                        Re-record
-                      </span>
+                      <span className="text-md font-bold">Re-record</span>
                     </Button>
                   </div>
                 )}
