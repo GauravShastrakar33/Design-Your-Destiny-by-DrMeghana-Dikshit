@@ -31,21 +31,24 @@ export default function ProcessLessonPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const searchString = useSearch() || (window.location.hash.includes("?") ? window.location.hash.split("?")[1] : "");
+  const searchString =
+    useSearch() ||
+    (window.location.hash.includes("?")
+      ? window.location.hash.split("?")[1]
+      : "");
   const searchParams = new URLSearchParams(searchString);
   const fromAbundance = searchParams.get("from") === "abundance";
   const courseId = searchParams.get("courseId");
   const moduleId = searchParams.get("moduleId");
-  const featureType = searchParams.get("feature");
   const isMasterclass = location.startsWith("/masterclasses");
 
   const handleBack = () => {
     if (isMasterclass && courseId) {
       setLocation(`/masterclasses/course/${courseId}`);
     } else {
-      // Navigate back to processes with the correct tab
-      const tabParam = featureType ? `?tab=${featureType}` : "";
-      setLocation(`/processes${tabParam}`);
+      // Navigate back to processes with the correct type
+      const type = params.type || "dyd";
+      setLocation(`/processes/${type.toLowerCase()}`);
     }
   };
 
@@ -70,9 +73,12 @@ export default function ProcessLessonPage() {
   });
 
   const logActivity = (lessonId: number, lessonName: string) => {
-    // Only track activity from "All Processes" route (not from Masterclasses, Abundance, etc.)
+    // Track activity from both new (/processes/:type/lesson) and legacy (/processes/lesson) routes
     const isFromAllProcesses =
-      location.startsWith("/processes/lesson") && !fromAbundance;
+      location.includes("/processes/") &&
+      location.includes("/lesson/") &&
+      !fromAbundance &&
+      !isMasterclass;
 
     if (!hasLoggedActivity && isAuthenticated && isFromAllProcesses) {
       setHasLoggedActivity(true);
