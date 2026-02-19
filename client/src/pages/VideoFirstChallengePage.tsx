@@ -524,7 +524,7 @@ export default function VideoFirstChallengePage() {
         </div>
 
         {/* Lesson Info Card */}
-        <div className="px-5 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex-1">
             <p className="text-xs font-bold text-brand tracking-wide mb-1">
               Current Day
@@ -569,7 +569,7 @@ export default function VideoFirstChallengePage() {
         </div>
 
         {/* Resources & Journey Grid */}
-        <div className="px-5 grid grid-cols-1 md:grid-cols-12 gap-8 mt-2">
+        <div className="px-3 grid grid-cols-1 md:grid-cols-12 gap-8 mt-2">
           {/* Journey Section (Mainly for Mobile) */}
           <div className="md:col-span-12 space-y-4">
             <div className="flex items-center justify-between">

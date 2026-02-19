@@ -165,7 +165,7 @@ export default function ProcessLessonPage() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-24">
-      <Header title={lesson.title} hasBackButton={true} onBack={handleBack} />
+      <Header title="Lesson Details" hasBackButton={true} onBack={handleBack} />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
         {videoFile && videoFile.signedUrl && (
