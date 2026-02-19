@@ -1,7 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { FirebaseMessaging } from "@capacitor-firebase/messaging";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { setUnread } from "./notificationState";
 import { Preferences } from "@capacitor/preferences";
 
@@ -113,6 +113,13 @@ export function setupNativePushListeners() {
   // Handle incoming push notification (fg/bg)
   PushNotifications.addListener("pushNotificationReceived", async (notification) => {
     console.log("Push received:", notification);
+    // 🔄 Invalidate notifications query to refresh the UI in real-time
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["/api/v1/notifications"] });
+      console.log("🔄 Notifications cache invalidated on receipt");
+    } catch (e) {
+      console.error("❌ Failed to invalidate notifications cache", e);
+    }
     const { fetchUnreadCount } = await import("./notificationState");
     await fetchUnreadCount();
   });
@@ -134,6 +141,8 @@ export function setupNativePushListeners() {
       try {
         console.log(`🛠️ Marking notification ${data.notificationId} as read...`);
         await apiRequest("PATCH", `/api/v1/notifications/${data.notificationId}/read`);
+        // 🔄 Invalidate notifications query to refresh the UI immediately
+        await queryClient.invalidateQueries({ queryKey: ["/api/v1/notifications"] });
         const { fetchUnreadCount } = await import("./notificationState");
         await fetchUnreadCount();
       } catch (e) {

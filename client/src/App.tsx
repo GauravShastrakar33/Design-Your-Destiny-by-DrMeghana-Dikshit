@@ -136,6 +136,28 @@ function AppContent() {
     checkUnreadOnLaunch();
   }, []);
 
+  // 🔄 Refresh notifications when app comes to foreground
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const listener = CapacitorApp.addListener("appStateChange", async (state) => {
+      if (state.isActive) {
+        console.log("📱 App became active, refreshing notifications...");
+        try {
+          // Refresh notification list and unread count
+          await queryClient.invalidateQueries({ queryKey: ["/api/v1/notifications"] });
+          await queryClient.invalidateQueries({ queryKey: ["/api/v1/notifications/unread-count"] });
+        } catch (e) {
+          console.error("❌ Failed to refresh notifications on resume", e);
+        }
+      }
+    });
+
+    return () => {
+      listener.then(l => l.remove());
+    };
+  }, []);
+
   // Android Back Button with Double-Tap to Exit
   useEffect(() => {
     if (
