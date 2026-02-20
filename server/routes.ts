@@ -35,6 +35,7 @@ import {
   notificationLogs,
   notifications,
   communitySessions,
+  goldmineVideos,
 } from "@shared/schema";
 import {
   sendPushNotification,
@@ -6708,6 +6709,136 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(500).json({ error: "Failed to fetch life areas" });
     }
   });
+
+  // ===== GOLDMINE VIDEOS =====
+
+  // Configure multer for goldmine video + thumbnail uploads (memory storage)
+  const uploadGoldmineFiles = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB per file
+  });
+
+  // GET /api/admin/goldmine/videos — paginated list (admin only, all videos)
+  app.get("/api/admin/goldmine/videos", requireAdmin, async (req, res) => {
+    try {
+      // Parse & validate page (default 1, min 1)
+      let page = parseInt(req.query.page as string, 10);
+      if (!Number.isFinite(page) || page < 1) page = 1;
+
+      // Parse & validate limit (default 20, min 1, max 100)
+      let limit = parseInt(req.query.limit as string, 10);
+      if (!Number.isFinite(limit) || limit < 1 || limit > 100) limit = 20;
+
+      const { data, total } = await storage.listGoldmineVideos({ page, limit });
+
+      return res.json({
+        data,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit) || 1,
+        },
+      });
+    } catch (error) {
+      console.error("Error listing goldmine videos:", error);
+      return res.status(500).json({ error: "Failed to fetch goldmine videos" });
+    }
+  });
+
+  // POST /api/admin/goldmine/videos
+  app.post(
+    "/api/admin/goldmine/videos",
+    requireAdmin,
+    uploadGoldmineFiles.fields([
+      { name: "video", maxCount: 1 },
+      { name: "thumbnail", maxCount: 1 },
+    ]),
+    async (req, res) => {
+      try {
+        const { title, description, tags: tagsRaw, isPublished } = req.body;
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+
+        // Validate required text fields
+        if (!title || typeof title !== "string" || title.trim() === "") {
+          return res.status(400).json({ error: "title is required" });
+        }
+
+        if (!tagsRaw || typeof tagsRaw !== "string") {
+          return res.status(400).json({ error: "tags is required (comma-separated string)" });
+        }
+
+        // Validate required files
+        if (!files?.video?.[0]) {
+          return res.status(400).json({ error: "video file is required" });
+        }
+        if (!files?.thumbnail?.[0]) {
+          return res.status(400).json({ error: "thumbnail file is required" });
+        }
+
+        const videoFile = files.video[0];
+        const thumbnailFile = files.thumbnail[0];
+
+        // Generate UUID and derive R2 keys (ONLY inside goldmine/ folders)
+        const uuid = crypto.randomUUID();
+        const videoKey = `goldmine/videos/${uuid}.mp4`;
+        const thumbnailKey = `goldmine/thumbnails/${uuid}.webp`;
+
+        // Normalize tags: split, trim, lowercase, remove empty, deduplicate
+        const normalizedTags = Array.from(
+          new Set(
+            tagsRaw
+              .split(",")
+              .map((t: string) => t.trim().toLowerCase())
+              .filter((t: string) => t.length > 0)
+          )
+        );
+
+        // Calculate sizeMb from video file buffer
+        const sizeMb = Math.ceil(videoFile.size / (1024 * 1024));
+
+        // Upload video to R2
+        const videoUpload = await uploadBufferToR2(
+          videoFile.buffer,
+          videoKey,
+          videoFile.mimetype || "video/mp4",
+        );
+        if (!videoUpload.success) {
+          console.error("Goldmine video R2 upload failed:", videoUpload.error);
+          return res.status(500).json({ error: "Failed to upload video to R2" });
+        }
+
+        // Upload thumbnail to R2
+        const thumbnailUpload = await uploadBufferToR2(
+          thumbnailFile.buffer,
+          thumbnailKey,
+          thumbnailFile.mimetype || "image/webp",
+        );
+        if (!thumbnailUpload.success) {
+          console.error("Goldmine thumbnail R2 upload failed:", thumbnailUpload.error);
+          return res.status(500).json({ error: "Failed to upload thumbnail to R2" });
+        }
+
+        // Insert record into goldmine_videos
+        const video = await storage.createGoldmineVideo({
+          id: uuid,
+          title: title.trim(),
+          description: description?.trim() || null,
+          r2Key: videoKey,
+          thumbnailKey,
+          durationSec: null,
+          sizeMb,
+          tags: normalizedTags,
+          isPublished: isPublished === "true" || isPublished === true,
+        });
+
+        return res.status(201).json(video);
+      } catch (error) {
+        console.error("Error creating goldmine video:", error);
+        return res.status(500).json({ error: "Failed to create goldmine video" });
+      }
+    },
+  );
 
   const httpServer = createServer(app);
 

@@ -22,6 +22,7 @@ import AdminEventsPage from "@/pages/AdminEventsPage";
 import AdminEventFormPage from "@/pages/AdminEventFormPage";
 import AdminNotificationsPage from "@/pages/AdminNotificationsPage";
 import AdminDrmQuestionsPage from "@/pages/AdminDrmQuestionsPage";
+import AdminGoldminePage from "@/pages/AdminGoldminePage";
 import AdminCourseFormPage from "@/pages/AdminCourseFormPage";
 import LessonDetailPage from "@/pages/LessonDetailPage";
 import NotFound from "@/pages/not-found";
@@ -75,6 +76,7 @@ export default function AdminRoutes() {
       <Route path="/admin/events/:id/edit" component={AdminEventFormPage} />
       <Route path="/admin/notifications" component={AdminNotificationsPage} />
       <Route path="/admin/drm-questions" component={AdminDrmQuestionsPage} />
+      <Route path="/admin/goldmine" component={AdminGoldminePage} />
       <Route component={NotFound} />
     </Switch>
   );

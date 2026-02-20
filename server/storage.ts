@@ -25,6 +25,7 @@ import {
   type UserBadge, type InsertUserBadge, type BadgeKey,
   type DrmQuestion, type InsertDrmQuestion,
   type LessonProgress,
+  type GoldmineVideo, type InsertGoldmineVideo,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -45,7 +46,8 @@ import {
   deviceTokens as deviceTokensTable,
   userBadges as userBadgesTable,
   drmQuestions as drmQuestionsTable,
-  lessonProgress as lessonProgressTable
+  lessonProgress as lessonProgressTable,
+  goldmineVideos as goldmineVideosTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -133,6 +135,10 @@ export interface IStorage {
   getUnreadNotificationCount(userId: number): Promise<number>;
   markNotificationAsRead(userId: number, notificationId: number): Promise<void>;
   markAllNotificationsAsRead(userId: number): Promise<void>;
+
+  // Goldmine Videos
+  createGoldmineVideo(data: InsertGoldmineVideo & { id: string }): Promise<GoldmineVideo>;
+  listGoldmineVideos(params: { page: number; limit: number }): Promise<{ data: GoldmineVideo[]; total: number }>;
 }
 
 
@@ -457,6 +463,10 @@ export class MemStorage implements IStorage {
   async getUnreadNotificationCount(userId: number): Promise<number> { return 0; }
   async markNotificationAsRead(userId: number, notificationId: number): Promise<void> { }
   async markAllNotificationsAsRead(userId: number): Promise<void> { }
+
+  // Goldmine Videos stubs
+  async createGoldmineVideo(data: InsertGoldmineVideo & { id: string }): Promise<GoldmineVideo> { throw new Error("Not implemented in MemStorage"); }
+  async listGoldmineVideos(_params: { page: number; limit: number }): Promise<{ data: GoldmineVideo[]; total: number }> { return { data: [], total: 0 }; }
 }
 
 export class DbStorage implements IStorage {
@@ -2303,6 +2313,36 @@ export class DbStorage implements IStorage {
       .where(eq(drmQuestionsTable.id, id))
       .returning();
     return updated;
+  }
+
+  // ===== GOLDMINE VIDEOS =====
+
+  async createGoldmineVideo(data: InsertGoldmineVideo & { id: string }): Promise<GoldmineVideo> {
+    const [video] = await db
+      .insert(goldmineVideosTable)
+      .values(data)
+      .returning();
+    return video;
+  }
+
+  async listGoldmineVideos(params: { page: number; limit: number }): Promise<{ data: GoldmineVideo[]; total: number }> {
+    const { page, limit } = params;
+    const offset = (page - 1) * limit;
+
+    const [countResult, rows] = await Promise.all([
+      db.select({ count: count() }).from(goldmineVideosTable),
+      db
+        .select()
+        .from(goldmineVideosTable)
+        .orderBy(desc(goldmineVideosTable.createdAt))
+        .limit(limit)
+        .offset(offset),
+    ]);
+
+    return {
+      data: rows,
+      total: Number(countResult[0]?.count ?? 0),
+    };
   }
 }
 

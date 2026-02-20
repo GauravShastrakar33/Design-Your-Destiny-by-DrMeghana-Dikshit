@@ -17,6 +17,7 @@ import {
   Menu,
   ChevronLeft,
   Loader2,
+  Gem,
 } from "lucide-react";
 import { useAdminSidebar, MenuItem } from "@/contexts/AdminSidebarContext";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -51,6 +52,7 @@ const iconMap: Record<string, React.ElementType> = {
   quotes: Quote,
   notifications: Bell,
   "drm-questions": MessageCircle,
+  goldmine: Gem,
 };
 
 export default function AdminSidebar({

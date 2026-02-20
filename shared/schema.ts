@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, uniqueIndex, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, uniqueIndex, jsonb, index, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -759,3 +759,31 @@ export const insertDrmQuestionSchema = createInsertSchema(drmQuestions).omit({
 
 export type InsertDrmQuestion = z.infer<typeof insertDrmQuestionSchema>;
 export type DrmQuestion = typeof drmQuestions.$inferSelect;
+
+// Goldmine Videos Table
+export const goldmineVideos = pgTable("goldmine_videos", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description"),
+  r2Key: text("r2_key").notNull(),
+  thumbnailKey: text("thumbnail_key").notNull(),
+  durationSec: integer("duration_sec"),
+  sizeMb: integer("size_mb"),
+  tags: varchar("tags").array().notNull().default([]),
+  isPublished: boolean("is_published").notNull().default(false),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+}, (table) => ({
+  createdAtIdx: index("idx_goldmine_videos_created_at").on(table.createdAt),
+  isPublishedIdx: index("idx_goldmine_videos_is_published").on(table.isPublished),
+  tagsIdx: index("idx_goldmine_videos_tags").using("gin", table.tags),
+}));
+
+export const insertGoldmineVideoSchema = createInsertSchema(goldmineVideos).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertGoldmineVideo = z.infer<typeof insertGoldmineVideoSchema>;
+export type GoldmineVideo = typeof goldmineVideos.$inferSelect;
