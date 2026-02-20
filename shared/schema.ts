@@ -428,6 +428,7 @@ export const dailyQuotes = pgTable("daily_quotes", {
 
 export const insertDailyQuoteSchema = createInsertSchema(dailyQuotes).omit({
   id: true,
+  displayOrder: true,
   lastShownDate: true,
   createdAt: true,
   updatedAt: true,
