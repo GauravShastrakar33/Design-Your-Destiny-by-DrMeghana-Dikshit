@@ -46,6 +46,8 @@ interface MappingResponse {
 function FeatureTab({ code, label }: { code: string; label: string }) {
   const { toast } = useToast();
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [changeDialogOpen, setChangeDialogOpen] = useState(false);
+  const [pendingCourseId, setPendingCourseId] = useState<number | null>(null);
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<
@@ -109,6 +111,8 @@ function FeatureTab({ code, label }: { code: string; label: string }) {
         queryKey: ["/admin/v1/frontend-mapping/features", code, "courses"],
       });
       toast({ title: "Success", description: "Course mapped successfully" });
+      setChangeDialogOpen(false);
+      setPendingCourseId(null);
     },
     onError: () => {
       toast({
@@ -146,7 +150,15 @@ function FeatureTab({ code, label }: { code: string; label: string }) {
     if (!courseId) return;
     const newCourseId = parseInt(courseId);
     if (newCourseId === selectedCourseId) return;
-    mapCourseMutation.mutate(newCourseId);
+
+    setPendingCourseId(newCourseId);
+    setChangeDialogOpen(true);
+  };
+
+  const confirmCourseChange = () => {
+    if (pendingCourseId !== null) {
+      mapCourseMutation.mutate(pendingCourseId);
+    }
   };
 
   const handleClearSelection = () => {
@@ -297,12 +309,44 @@ function FeatureTab({ code, label }: { code: string; label: string }) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmClearSelection}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 font-bold"
               data-testid="button-confirm-clear"
             >
               {clearMappingMutation.isPending
                 ? "Clearing..."
                 : "Clear Selection"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Change Course Confirmation */}
+      <AlertDialog open={changeDialogOpen} onOpenChange={setChangeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Course Mapping?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to change the course mapping for {label}?
+                This will update the modules and processes visible to users in
+                the application.
+              </p>
+              <p className="text-gray-600">
+                The content preview below will update once you confirm the
+                change.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingCourseId(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmCourseChange}
+              className="bg-brand hover:bg-brand/90 font-bold"
+              data-testid="button-confirm-change"
+            >
+              {mapCourseMutation.isPending ? "Updating..." : "Confirm Change"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
