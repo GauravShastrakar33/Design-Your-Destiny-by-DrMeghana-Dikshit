@@ -222,39 +222,39 @@ export default function HomePage() {
       icon: ListMusic,
       path: "/playlist",
       testId: "card-my-playlist",
-      color: "from-blue-500/10 to-blue-600/10",
-      iconColor: "text-blue-600",
+      bgColor: "bg-blue-50 border-blue-100 text-blue-500",
+      iconColor: "text-blue-500",
     },
     {
       title: "All Processes",
       icon: Sparkles,
       path: "/processes",
       testId: "card-processes",
-      color: "from-purple-500/10 to-purple-600/10",
-      iconColor: "text-purple-600",
+      bgColor: "bg-purple-50 border-purple-100 text-purple-500",
+      iconColor: "text-purple-500",
     },
     {
       title: "Community Practices",
       icon: Users,
       path: "/community-practices",
       testId: "card-community-practices",
-      color: "from-pink-500/10 to-pink-600/10",
-      iconColor: "text-pink-600",
+      bgColor: "bg-pink-50 border-pink-100 text-pink-500",
+      iconColor: "text-pink-500",
     },
     {
       title: "Daily Abundance",
       icon: IndianRupee,
       path: "/money-mastery",
       testId: "card-money-mastery",
-      color: "from-emerald-500/10 to-emerald-600/10",
-      iconColor: "text-emerald-600",
+      bgColor: "bg-emerald-50 border-emerald-100 text-emerald-500",
+      iconColor: "text-emerald-500",
     },
     {
       title: "Masterclasses",
       icon: GraduationCap,
       path: "/masterclasses",
       testId: "card-masterclasses",
-      color: "from-brand/10 to-brand/20",
+      bgColor: "bg-brand/10 border-brand/20 text-brand",
       iconColor: "text-brand",
     },
     {
@@ -262,7 +262,7 @@ export default function HomePage() {
       icon: Gem,
       path: "/goldmine",
       testId: "card-goldmine",
-      color: "from-amber-500/10 to-amber-600/10",
+      bgColor: "bg-amber-50 border-amber-100 text-amber-500",
       iconColor: "text-amber-500",
     },
   ];
@@ -419,28 +419,25 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-5 px-1 md:px-2">
               {actionCards.map((card) => (
                 <button
                   key={card.path}
                   onClick={() => setLocation(card.path)}
-                  className="group relative flex items-center justify-between bg-white p-4 pr-2 rounded-2xl shadow-sm border border-slate-200 transition-colors active:bg-slate-50 text-left overflow-hidden min-h-[90px] md:min-h-[110px]"
+                  className="group relative flex items-center justify-start gap-2.5 min-[400px]:gap-3.5 bg-white p-2.5 min-[400px]:p-3 md:p-3.5 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-black/[0.04] active:scale-[0.97] active:opacity-70 transition-all duration-200 text-left overflow-hidden min-h-[78px] md:min-h-[92px]"
                   data-testid={card.testId}
                 >
-                  {/* Common Theme Background Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50/50 to-brand/[0.08]" />
-
-                  <div className="relative z-10 w-[60%] flex flex-col justify-center">
-                    <span className="block font-bold text-slate-800 text-sm md:text-base leading-[1.2] whitespace-pre-line">
-                      {card.title.split(" ").join("\n")}
-                    </span>
-                  </div>
-
-                  <div className="relative z-10 opacity-[0.50] mr-1 shrink-0">
+                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center border shadow-sm shrink-0 ${card.bgColor}`}>
                     <card.icon
-                      className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 ${card.iconColor}`}
+                      className="w-5 h-5 md:w-6 md:h-6"
                       strokeWidth={2}
                     />
+                  </div>
+
+                  <div className="relative z-10 flex-1 flex flex-col justify-center min-w-0">
+                    <span className="block font-medium text-slate-800 text-[11.5px] min-[375px]:text-[12.5px] min-[400px]:text-[13px] sm:text-[14px] md:text-[15px] leading-[1.2] tracking-tight whitespace-pre-line break-words">
+                      {["My Playlist", "All Processes"].includes(card.title) ? card.title : card.title.split(" ").join("\n")}
+                    </span>
                   </div>
                 </button>
               ))}
@@ -458,35 +455,33 @@ export default function HomePage() {
               {/* Streak Card */}
               {isAuthenticated && (
                 <div
-                  className="bg-gradient-to-br from-orange-50 to-white rounded-2xl p-6 shadow-sm border border-slate-200 relative overflow-hidden"
+                  className="bg-white rounded-2xl p-[18px] md:p-[22px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-black/[0.04] relative overflow-hidden"
                   data-testid="card-streak"
                 >
-                  <div className="absolute top-0 right-0 p-8 -mr-4 -mt-4 bg-orange-500/5 rounded-full blur-3xl w-32 h-32 pointer-events-none" />
-
-                  <div className="flex items-center justify-between mb-6 relative">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-orange-50 rounded-xl">
-                        <Flame className="w-6 h-6 md:w-8 md:h-8 text-orange-500 fill-orange-500/20" />
+                  <div className="flex items-center justify-between mb-[18px] md:mb-[22px] relative z-10">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center border border-orange-100 shadow-sm shrink-0">
+                        <Flame className="w-5 h-5 md:w-6 md:h-6" strokeWidth={2} />
                       </div>
-                      <div>
-                        <span className="block text-sm md:text-lg font-bold text-slate-900">
+                      <div className="flex flex-col justify-center">
+                        <span className="block text-[14px] md:text-[16px] font-bold text-slate-800 tracking-[0.01em] leading-none mb-1">
                           7 Day Streak
                         </span>
-                        <span className="text-xs md:text-sm font-medium text-slate-500">
+                        <span className="block text-[12px] md:text-[13px] font-medium text-slate-500 tracking-[-0.01em] leading-none">
                           Keep the momentum going!
                         </span>
                       </div>
                     </div>
-                    <div className="px-3 py-1.5 bg-white rounded-lg border border-slate-100">
-                      <span className="text-xs md:text-sm font-bold text-slate-700">
+                    <div className="px-3 py-1.5 bg-white border border-slate-200 shadow-sm rounded-xl flex items-center justify-center min-w-[50px]">
+                      <span className="text-[11px] md:text-[12px] font-bold text-slate-900 tracking-tight">
                         {streakData
-                          ? `${streakData.filter((d) => d.active).length}/7`
-                          : "0/7"}
+                          ? `${streakData.filter((d) => d.active).length} / 7`
+                          : "0 / 7"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-end gap-2 relative">
+                  <div className="flex justify-between items-center gap-1.5 md:gap-2 relative z-10">
                     {(
                       streakData || Array(7).fill({ date: "", active: false })
                     ).map((day, index) => {
@@ -504,23 +499,23 @@ export default function HomePage() {
                       return (
                         <div
                           key={day.date || index}
-                          className="flex flex-col items-center gap-2 flex-1"
+                          className="flex flex-col items-center gap-2.5 flex-1"
                           data-testid={`streak-day-${index}`}
                         >
                           <div
-                            className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
+                            className={`w-[34px] h-[34px] md:w-[42px] md:h-[42px] rounded-full flex items-center justify-center transition-all duration-300 ${
                               day.active
                                 ? "bg-gradient-to-b from-orange-400 to-orange-500 shadow-lg shadow-orange-500/30 scale-100"
-                                : "bg-slate-50 border border-slate-400 scale-90"
+                                : "bg-slate-50 border border-slate-400 scale-[0.9]"
                             } ${
                               isToday
-                                ? "ring-2 ring-orange-400 ring-offset-2"
+                                ? "ring-2 ring-orange-400 ring-offset-2 scale-110"
                                 : ""
                             }`}
                           >
                             {day.active ? (
                               <Flame
-                                className="w-4 h-4 md:w-5 md:h-5 text-white"
+                                className="w-4 h-4 md:w-5 md:h-5 text-white drop-shadow-sm"
                                 strokeWidth={2.5}
                               />
                             ) : (
@@ -528,8 +523,8 @@ export default function HomePage() {
                             )}
                           </div>
                           <span
-                            className={`text-xs md:text-sm font-bold tracking-wide ${
-                              day.active ? "text-orange-600" : "text-slate-500"
+                            className={`text-[12px] md:text-[13px] font-semibold tracking-tight ${
+                              day.active ? "text-orange-600" : "text-slate-400"
                             }`}
                           >
                             {dayName}
