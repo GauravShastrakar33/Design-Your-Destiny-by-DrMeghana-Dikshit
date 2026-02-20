@@ -46,13 +46,22 @@ try {
 }
 
 if (Capacitor.isNativePlatform()) {
-  // Dynamically load native plugins ONLY on mobile
   (async () => {
+    const { StatusBar, Style } = await import("@capacitor/status-bar");
     const { App: CapacitorApp } = await import("@capacitor/app");
+
+    // ✅ iOS Status Bar Fix
+    if (Capacitor.getPlatform() === "ios") {
+      await StatusBar.setStyle({ style: Style.Light });
+
+      // Only needed if overlaysWebView = false
+      await StatusBar.setBackgroundColor({ color: "#cbb9fa" });
+    }
 
     // 🔔 Push Notifications
     const { initPushNotifications } = await import("./lib/nativePush");
     const { enableBackgroundAudio } = await import("./lib/backgroundAudio");
+
     initPushNotifications();
     enableBackgroundAudio();
   })();
