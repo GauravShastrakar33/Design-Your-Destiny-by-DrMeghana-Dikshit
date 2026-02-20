@@ -15,7 +15,7 @@ import AdminLoginPage from "@/pages/AdminLoginPage";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
-import { SplashScreen } from '@capacitor/splash-screen';
+import { SplashScreen } from "@capacitor/splash-screen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // --- PAGES ---
@@ -101,7 +101,10 @@ const useHashLocation = () => {
     }
   }, []);
 
-  return [loc, navigate] as [string, (to: string, options?: { replace?: boolean }) => void];
+  return [loc, navigate] as [
+    string,
+    (to: string, options?: { replace?: boolean }) => void
+  ];
 };
 
 function AppContent() {
@@ -133,27 +136,69 @@ function AppContent() {
     checkUnreadOnLaunch();
   }, []);
 
+  // 🔄 Refresh notifications when app comes to foreground
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const listener = CapacitorApp.addListener("appStateChange", async (state) => {
+      if (state.isActive) {
+        console.log("📱 App became active, refreshing notifications...");
+        try {
+          // Refresh notification list and unread count
+          await queryClient.invalidateQueries({ queryKey: ["/api/v1/notifications"] });
+          await queryClient.invalidateQueries({ queryKey: ["/api/v1/notifications/unread-count"] });
+        } catch (e) {
+          console.error("❌ Failed to refresh notifications on resume", e);
+        }
+      }
+    });
+
+    return () => {
+      listener.then(l => l.remove());
+    };
+  }, []);
+
   // Android Back Button with Double-Tap to Exit
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") {
+    if (
+      !Capacitor.isNativePlatform() ||
+      Capacitor.getPlatform() !== "android"
+    ) {
       return;
     }
 
     const listener = CapacitorApp.addListener("backButton", async (event) => {
+      // PRIORITY 0: If we're in fullscreen, don't navigate!
+      // The VideoPlayer component will handle exiting fullscreen.
+      const isFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+
+      if (isFullscreen) {
+        console.log("📺 Fullscreen detected, skipping global back navigation");
+        return;
+      }
+
       const currentPath = locationRef.current;
-      console.log("🔙 Back button pressed", { 
-        canGoBack: event.canGoBack, 
-        currentPath 
+      console.log("🔙 Back button pressed", {
+        canGoBack: event.canGoBack,
+        currentPath,
       });
-      
+
       // PRIORITY 1: Check if we're on a root page (home/login)
       // These pages should use double-tap to exit logic
       if (currentPath === "/home" || currentPath === "/login") {
         const currentTime = Date.now();
         const timeSinceLastPress = currentTime - lastBackPressTime.current;
-        
-        console.log("⏱️ On root page. Time since last press:", timeSinceLastPress);
-        
+
+        console.log(
+          "⏱️ On root page. Time since last press:",
+          timeSinceLastPress
+        );
+
         if (timeSinceLastPress < 2000) {
           // Second press within 2 seconds - exit app
           console.log("✅ Exiting app");
@@ -162,24 +207,26 @@ function AppContent() {
           // First press - update time and show toast
           lastBackPressTime.current = currentTime;
           console.log("⚠️ Showing toast - press again to exit");
-          
+
           // Dynamically import Toast to avoid loading it on web
-          import("@capacitor/toast").then(({ Toast }) => {
-            Toast.show({
-              text: "Press back again to exit",
-              duration: "short",
-              position: "bottom",
-            }).catch((err) => {
-              console.error("Toast error:", err);
-              console.log("📢 Press back again to exit");
+          import("@capacitor/toast")
+            .then(({ Toast }) => {
+              Toast.show({
+                text: "Press back again to exit",
+                duration: "short",
+                position: "bottom",
+              }).catch((err) => {
+                console.error("Toast error:", err);
+                console.log("📢 Press back again to exit");
+              });
+            })
+            .catch((err) => {
+              console.error("Failed to import Toast:", err);
             });
-          }).catch((err) => {
-            console.error("Failed to import Toast:", err);
-          });
         }
         return; // Important: Don't proceed to history.back()
       }
-      
+
       // PRIORITY 2: We're on a sub-page, navigate back or to home
       if (event.canGoBack) {
         console.log("📜 Going back in history");
@@ -211,198 +258,456 @@ function AppContent() {
                 </Route>
 
                 <Route path="/admin/login">
-                  <AdminLayout><AdminLoginPage /></AdminLayout>
+                  <AdminLayout>
+                    <AdminLoginPage />
+                  </AdminLayout>
                 </Route>
 
                 <Route path="/login">
-                  <AppLayout><UserLoginPage /></AppLayout>
+                  <AppLayout>
+                    <UserLoginPage />
+                  </AppLayout>
                 </Route>
 
                 {/* --- ADMIN PROTECTED ROUTES --- */}
                 <Route path="/admin">
-                  <AdminRoute><AdminLayout><AdminDashboardPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminDashboardPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/interventions">
-                  <AdminRoute><AdminLayout><AdminInterventionsPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminInterventionsPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/sessions">
-                  <AdminRoute><AdminLayout><AdminSessionsPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminSessionsPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/articles">
-                  <AdminRoute><AdminLayout><AdminArticlesPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminArticlesPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/music-journaling">
-                  <AdminRoute><AdminLayout><AdminMusicJournalingPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminMusicJournalingPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/project-heart">
-                  <AdminRoute><AdminLayout><AdminProjectHeartPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminProjectHeartPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/users/students">
-                  <AdminRoute><AdminLayout><AdminStudentsPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminStudentsPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/students/:userId">
-                  <AdminRoute><AdminLayout><UserDetailsPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <UserDetailsPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/users/admins">
-                  <AdminRoute><AdminLayout><AdminsPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminsPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/courses">
-                  <AdminRoute><AdminLayout><AdminCoursesPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminCoursesPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/programs">
-                  <AdminRoute><AdminLayout><AdminProgramsPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminProgramsPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/courses/create">
-                  <AdminRoute><AdminLayout><AdminCourseFormPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminCourseFormPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/courses/:id/edit">
-                  <AdminRoute><AdminLayout><AdminCourseFormPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminCourseFormPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/courses/:courseId/lessons/:lessonId">
-                  <AdminRoute><AdminLayout><LessonDetailPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <LessonDetailPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/processes">
-                  <AdminRoute><AdminLayout><AdminProcessesPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminProcessesPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/abundance-mastery">
-                  <AdminRoute><AdminLayout><AdminAbundanceMasteryPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminAbundanceMasteryPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/masterclasses">
-                  <AdminRoute><AdminLayout><AdminMasterclassesPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminMasterclassesPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/my-processes">
-                  <AdminRoute><AdminLayout><AdminPlaylistMappingPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminPlaylistMappingPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/session-banner/banners">
-                  <AdminRoute><AdminLayout><AdminSessionBannersPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminSessionBannersPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/session-banner/banners/new">
-                  <AdminRoute><AdminLayout><AdminSessionBannerFormPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminSessionBannerFormPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/session-banner/banners/:id/edit">
-                  <AdminRoute><AdminLayout><AdminSessionBannerFormPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminSessionBannerFormPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/quotes">
-                  <AdminRoute><AdminLayout><AdminQuotesPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminQuotesPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/events">
-                  <AdminRoute><AdminLayout><AdminEventsPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminEventsPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/events/new">
-                  <AdminRoute><AdminLayout><AdminEventFormPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminEventFormPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/events/:id/edit">
-                  <AdminRoute><AdminLayout><AdminEventFormPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminEventFormPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/notifications">
-                  <AdminRoute><AdminLayout><AdminNotificationsPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminNotificationsPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
                 <Route path="/admin/drm-questions">
-                  <AdminRoute><AdminLayout><AdminDrmQuestionsPage /></AdminLayout></AdminRoute>
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminDrmQuestionsPage />
+                    </AdminLayout>
+                  </AdminRoute>
                 </Route>
 
                 {/* --- APP PROTECTED ROUTES --- */}
                 <Route path="/home">
-                  <ProtectedRoute><AppLayout><HomePage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <HomePage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/processes">
-                  <ProtectedRoute><AppLayout><ProcessesPage /></AppLayout></ProtectedRoute>
+                  <Redirect to="/processes/dyd" />
+                </Route>
+                <Route path="/processes/:type">
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProcessesPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/design-practice">
-                  <ProtectedRoute><AppLayout><DesignYourPracticePage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <DesignYourPracticePage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/community-practices">
-                  <ProtectedRoute><AppLayout><CommunityPracticesPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <CommunityPracticesPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/spiritual-breaths">
-                  <ProtectedRoute><AppLayout><SpiritualBreathsPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <SpiritualBreathsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/workshops">
-                  <ProtectedRoute><AppLayout><EventCalendarPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <EventCalendarPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/events">
-                  <ProtectedRoute><AppLayout><EventCalendarPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <EventCalendarPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/events/:id">
-                  <ProtectedRoute><AppLayout><EventCalendarPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <EventCalendarPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/playlist">
-                  <ProtectedRoute><AppLayout><MyPracticePlaylistPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <MyPracticePlaylistPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/heart">
-                  <ProtectedRoute><AppLayout><ProjectOfHeartPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProjectOfHeartPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/project-of-heart">
-                  <ProtectedRoute><AppLayout><ProjectOfHeartPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProjectOfHeartPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/project-of-heart/history">
-                  <ProtectedRoute><AppLayout><ProjectOfHeartHistoryPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProjectOfHeartHistoryPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/profile">
-                  <ProtectedRoute><AppLayout><ProfilePage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProfilePage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/drm">
-                  <ProtectedRoute><AppLayout><DrMPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <DrMPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/dr-m/questions/:id">
-                  <ProtectedRoute><AppLayout><DrMPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <DrMPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/money-mastery">
-                  <ProtectedRoute><AppLayout><MoneyMasteryPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <MoneyMasteryPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/process-checklist">
-                  <ProtectedRoute><AppLayout><ProcessChecklistPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProcessChecklistPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/more-quotes">
-                  <ProtectedRoute><AppLayout><MoreQuotesPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <MoreQuotesPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/notifications">
-                  <ProtectedRoute><AppLayout><NotificationsPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <NotificationsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/progress-insights">
-                  <ProtectedRoute><AppLayout><ProgressInsightsPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProgressInsightsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/workshops/course/:courseId">
-                  <ProtectedRoute><AppLayout><CourseOverviewPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <CourseOverviewPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/video-player">
-                  <ProtectedRoute><AppLayout><VideoPlayerPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <VideoPlayerPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/rewiring-belief">
-                  <ProtectedRoute><AppLayout><RewiringScreen /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <RewiringScreen />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/search">
-                  <ProtectedRoute><AppLayout><SearchPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <SearchPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                </Route>
+                <Route path="/processes/:type/lesson/:lessonId">
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProcessLessonPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/processes/lesson/:lessonId">
-                  <ProtectedRoute><AppLayout><ProcessLessonPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProcessLessonPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/spiritual-breaths/lesson/:lessonId">
-                  <ProtectedRoute><AppLayout><SpiritualBreathLessonPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <SpiritualBreathLessonPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/abundance-mastery/course/:courseId">
-                  <ProtectedRoute><AppLayout><AbundanceCoursePage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <AbundanceCoursePage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/challenge/:courseId">
-                  <ProtectedRoute><AppLayout><VideoFirstChallengePage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <VideoFirstChallengePage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/course/:courseId/module/:moduleId">
-                  <ProtectedRoute><AppLayout><ModuleLessonsPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ModuleLessonsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/masterclasses">
-                  <ProtectedRoute><AppLayout><MasterclassesPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <MasterclassesPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/masterclasses/course/:courseId">
-                  <ProtectedRoute><AppLayout><MasterclassCourseOverviewPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <MasterclassCourseOverviewPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/masterclasses/lesson/:lessonId">
-                  <ProtectedRoute><AppLayout><ProcessLessonPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProcessLessonPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/badges">
-                  <ProtectedRoute><AppLayout><BadgesPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <BadgesPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
                 <Route path="/account-settings">
-                  <ProtectedRoute><AppLayout><AccountSettingsPage /></AppLayout></ProtectedRoute>
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <AccountSettingsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
                 </Route>
 
                 <Route component={NotFound} />

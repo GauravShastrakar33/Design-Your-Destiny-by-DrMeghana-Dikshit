@@ -5937,10 +5937,15 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return res.status(401).json({ error: "Unauthorized" });
         }
 
-        const { token } = req.body;
+        const { token, platform } = req.body;
+        const platformValue = (platform && typeof platform === "string") ? platform : "web";
 
         if (!token || typeof token !== "string") {
           return res.status(400).json({ error: "Token is required" });
+        }
+
+        if (platformValue.length > 10) {
+          return res.status(400).json({ error: "Platform name too long" });
         }
 
         // Check if this exact token already exists
@@ -5951,16 +5956,20 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           .limit(1);
 
         if (existingToken.length > 0) {
-          // Token already exists - update user_id if different
-          if (existingToken[0].userId !== userId) {
+          // Token already exists - update user_id or platform if different
+          const updates: any = {};
+          if (existingToken[0].userId !== userId) updates.userId = userId;
+          if (existingToken[0].platform !== platformValue) updates.platform = platformValue;
+
+          if (Object.keys(updates).length > 0) {
             await db
               .update(deviceTokens)
-              .set({ userId })
+              .set(updates)
               .where(eq(deviceTokens.token, token));
           }
           return res.json({
             success: true,
-            message: "Token already registered",
+            message: "Token registration updated",
           });
         }
 
@@ -5972,7 +5981,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         await db.insert(deviceTokens).values({
           userId,
           token,
-          platform: "web",
+          platform: platformValue,
         });
 
         res.json({ success: true, message: "Device registered successfully" });
@@ -6113,6 +6122,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         await db.insert(notificationLogs).values(notificationLogRecords);
       }
 
+      /* 
       // Clean up failed tokens (invalid tokens)
       if (result.failedTokens.length > 0) {
         for (const failedToken of result.failedTokens) {
@@ -6121,6 +6131,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             .where(eq(deviceTokens.token, failedToken));
         }
       }
+      */
 
       res.json({
         success: true,

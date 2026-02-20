@@ -9,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Settings2 } from "lucide-react";
+import { App } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
 
 interface MediaPlayerProps {
   src: string;
@@ -38,6 +40,92 @@ export const VideoPlayer = React.forwardRef<HTMLVideoElement, MediaPlayerProps>(
         ref.current = videoRef.current;
       }
     }, [ref]);
+
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    // Track fullscreen status
+    useEffect(() => {
+      const handleFsChange = () => {
+        const isFs = !!(
+          document.fullscreenElement ||
+          (document as any).webkitFullscreenElement ||
+          (document as any).mozFullScreenElement ||
+          (document as any).msFullscreenElement
+        );
+        setIsFullscreen(isFs);
+      };
+
+      document.addEventListener("fullscreenchange", handleFsChange);
+      document.addEventListener("webkitfullscreenchange", handleFsChange);
+      document.addEventListener("mozfullscreenchange", handleFsChange);
+      document.addEventListener("MSFullscreenChange", handleFsChange);
+
+      // Also listen for iOS specific fullscreen events on the video element
+      const video = videoRef.current;
+      if (video) {
+        (video as any).addEventListener(
+          "webkitbeginfullscreen",
+          handleFsChange
+        );
+        (video as any).addEventListener("webkitendfullscreen", handleFsChange);
+      }
+
+      return () => {
+        document.removeEventListener("fullscreenchange", handleFsChange);
+        document.removeEventListener("webkitfullscreenchange", handleFsChange);
+        document.removeEventListener("mozfullscreenchange", handleFsChange);
+        document.removeEventListener("MSFullscreenChange", handleFsChange);
+        if (video) {
+          (video as any).removeEventListener(
+            "webkitbeginfullscreen",
+            handleFsChange
+          );
+          (video as any).removeEventListener(
+            "webkitendfullscreen",
+            handleFsChange
+          );
+        }
+      };
+    }, []);
+
+    // Handle back button to exit fullscreen on mobile
+    useEffect(() => {
+      if (!Capacitor.isNativePlatform() || !isFullscreen) return;
+
+      let backListener: any;
+
+      const initBackListener = async () => {
+        backListener = await App.addListener("backButton", async () => {
+          // If we're here, isFullscreen is true, so we just exit fullscreen
+          try {
+            if (document.exitFullscreen) {
+              await document.exitFullscreen();
+            } else if ((document as any).webkitExitFullscreen) {
+              await (document as any).webkitExitFullscreen();
+            } else if ((document as any).mozCancelFullScreen) {
+              await (document as any).mozCancelFullScreen();
+            } else if ((document as any).msExitFullscreen) {
+              await (document as any).msExitFullscreen();
+            } else if (
+              videoRef.current &&
+              (videoRef.current as any).webkitExitFullscreen
+            ) {
+              await (videoRef.current as any).webkitExitFullscreen();
+            }
+          } catch (err) {
+            console.error("Error exiting fullscreen:", err);
+          }
+        });
+      };
+
+      initBackListener();
+
+      return () => {
+        if (backListener) {
+          backListener.remove();
+        }
+      };
+    }, [isFullscreen]);
 
     const togglePlay = async () => {
       if (videoRef.current && !isLoading) {

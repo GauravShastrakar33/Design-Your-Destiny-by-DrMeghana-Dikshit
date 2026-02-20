@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation, useSearch } from "wouter";
+import { useLocation, useSearch, useParams } from "wouter";
 import { Header } from "@/components/Header";
 import {
   ArrowLeft,
@@ -167,6 +167,8 @@ function ModuleAccordion({
   onToggle: () => void;
   featureType: string;
 }) {
+  const params = useParams();
+  const processType = params.type || "dyd";
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth(); // Imported from AuthContext
 
@@ -191,7 +193,7 @@ function ModuleAccordion({
 
   const handleLessonClick = (lessonId: number, moduleId: number) => {
     setLocation(
-      `/processes/lesson/${lessonId}?moduleId=${moduleId}&feature=${featureType}`
+      `/processes/${processType}/lesson/${lessonId}?moduleId=${moduleId}`
     );
   };
 
@@ -383,21 +385,29 @@ function ModulesList({
 }
 
 export default function ProcessesPage() {
+  const params = useParams();
   const [, setLocation] = useLocation();
-  const searchString = useSearch();
-  const searchParams = new URLSearchParams(searchString);
-  const tabFromUrl = searchParams.get("tab");
+  const processTypeFromParam = params.type?.toUpperCase() || "DYD";
+
   const [activeTab, setActiveTab] = useState(
-    tabFromUrl === "USM" ? "USM" : "DYD"
+    processTypeFromParam === "USM" ? "USM" : "DYD"
   );
   const { isAuthenticated } = useAuth();
 
-  // Update active tab when URL changes
+  // Update active tab when URL param changes
   useEffect(() => {
-    if (tabFromUrl === "USM" || tabFromUrl === "DYD") {
-      setActiveTab(tabFromUrl);
+    if (params.type) {
+      const type = params.type.toUpperCase();
+      if (type === "DYD" || type === "USM") {
+        setActiveTab(type);
+      }
     }
-  }, [tabFromUrl]);
+  }, [params.type]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setLocation(`/processes/${value.toLowerCase()}`);
+  };
 
   const {
     data: dydData,
@@ -437,7 +447,7 @@ export default function ProcessesPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Tabs
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={handleTabChange}
             className="w-full"
           >
             <TabsList

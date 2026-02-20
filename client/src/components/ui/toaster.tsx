@@ -13,7 +13,7 @@ export function Toaster() {
   const { toasts } = useToast();
 
   return (
-    <ToastProvider>
+    <ToastProvider duration={3000}>
       {toasts.map(function ({
         id,
         title,
@@ -29,7 +29,7 @@ export function Toaster() {
         }[variant as string] || <Info className="h-5 w-5 text-white/80" />;
 
         return (
-          <Toast key={id} variant={variant} {...props}>
+          <Toast key={id} variant={variant} duration={3000} {...props}>
             <div className="flex w-full items-start gap-4">
               <div className="mt-1 flex-shrink-0">{Icon}</div>
               <div className="grid gap-1.5 overflow-hidden pr-2">

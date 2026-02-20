@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { VideoPlayer, AudioPlayer } from "@/components/MediaPlayers";
 import { motion } from "framer-motion";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import type { CmsLesson, CmsLessonFile } from "@shared/schema";
 
 interface LessonFileWithUrl extends CmsLessonFile {
@@ -31,23 +31,26 @@ export default function ProcessLessonPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const searchString = useSearch() || (window.location.hash.includes("?") ? window.location.hash.split("?")[1] : "");
+  const searchString =
+    useSearch() ||
+    (window.location.hash.includes("?")
+      ? window.location.hash.split("?")[1]
+      : "");
   const searchParams = new URLSearchParams(searchString);
   const fromAbundance = searchParams.get("from") === "abundance";
   const courseId = searchParams.get("courseId");
   const moduleId = searchParams.get("moduleId");
-  const featureType = searchParams.get("feature");
   const isMasterclass = location.startsWith("/masterclasses");
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (isMasterclass && courseId) {
       setLocation(`/masterclasses/course/${courseId}`);
     } else {
-      // Navigate back to processes with the correct tab
-      const tabParam = featureType ? `?tab=${featureType}` : "";
-      setLocation(`/processes${tabParam}`);
+      // Navigate back to processes with the correct type
+      const type = params.type || "dyd";
+      setLocation(`/processes/${type.toLowerCase()}`);
     }
-  };
+  }, [isMasterclass, courseId, params.type, setLocation]);
 
   const { isAuthenticated } = useAuth();
 
@@ -70,9 +73,12 @@ export default function ProcessLessonPage() {
   });
 
   const logActivity = (lessonId: number, lessonName: string) => {
-    // Only track activity from "All Processes" route (not from Masterclasses, Abundance, etc.)
+    // Track activity from both new (/processes/:type/lesson) and legacy (/processes/lesson) routes
     const isFromAllProcesses =
-      location.startsWith("/processes/lesson") && !fromAbundance;
+      location.includes("/processes/") &&
+      location.includes("/lesson/") &&
+      !fromAbundance &&
+      !isMasterclass;
 
     if (!hasLoggedActivity && isAuthenticated && isFromAllProcesses) {
       setHasLoggedActivity(true);
@@ -165,7 +171,7 @@ export default function ProcessLessonPage() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-24">
-      <Header title={lesson.title} hasBackButton={true} onBack={handleBack} />
+      <Header title="Lesson Details" hasBackButton={true} onBack={handleBack} />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
         {videoFile && videoFile.signedUrl && (
