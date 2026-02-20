@@ -10,6 +10,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
@@ -35,6 +45,7 @@ interface MappingResponse {
 
 function FeatureTab({ code, label }: { code: string; label: string }) {
   const { toast } = useToast();
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<
@@ -120,6 +131,7 @@ function FeatureTab({ code, label }: { code: string; label: string }) {
         queryKey: ["/admin/v1/frontend-mapping/features", code, "courses"],
       });
       toast({ title: "Success", description: "Mapping cleared" });
+      setClearDialogOpen(false);
     },
     onError: () => {
       toast({
@@ -138,6 +150,10 @@ function FeatureTab({ code, label }: { code: string; label: string }) {
   };
 
   const handleClearSelection = () => {
+    setClearDialogOpen(true);
+  };
+
+  const confirmClearSelection = () => {
     if (selectedCourse) {
       clearMappingMutation.mutate(selectedCourse.courseId);
     }
@@ -260,6 +276,37 @@ function FeatureTab({ code, label }: { code: string; label: string }) {
           </div>
         </Card>
       )}
+
+      {/* Clear Selection Confirmation */}
+      <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Selection?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to clear the selection for {label}? This
+                will remove the current course mapping, and users will no longer
+                be able to see these processes in their application.
+              </p>
+              <strong className="text-red-600 mt-1">
+                Please make sure to map the correct course and processes again.
+              </strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmClearSelection}
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="button-confirm-clear"
+            >
+              {clearMappingMutation.isPending
+                ? "Clearing..."
+                : "Clear Selection"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

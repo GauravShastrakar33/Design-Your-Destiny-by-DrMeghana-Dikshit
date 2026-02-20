@@ -9,6 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
@@ -47,6 +57,9 @@ export default function AdminAbundanceMasteryPage() {
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [localOrder, setLocalOrder] = useState<MappingWithCourse[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [courseIdToRemove, setCourseIdToRemove] = useState<number | null>(null);
+  const [courseTitleToRemove, setCourseTitleToRemove] = useState<string>("");
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<
     CmsCourse[]
@@ -121,6 +134,9 @@ export default function AdminAbundanceMasteryPage() {
         queryKey: ["/admin/v1/frontend-mapping/features", code, "courses"],
       });
       toast({ title: "Success", description: "Course removed" });
+      setDeleteDialogOpen(false);
+      setCourseIdToRemove(null);
+      setCourseTitleToRemove("");
     },
     onError: () => {
       toast({
@@ -163,8 +179,16 @@ export default function AdminAbundanceMasteryPage() {
     }
   };
 
-  const handleRemoveCourse = (courseId: number) => {
-    removeCourseMutation.mutate(courseId);
+  const handleRemoveCourse = (courseId: number, title: string) => {
+    setCourseIdToRemove(courseId);
+    setCourseTitleToRemove(title);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmRemoveCourse = () => {
+    if (courseIdToRemove !== null) {
+      removeCourseMutation.mutate(courseIdToRemove);
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -371,7 +395,12 @@ export default function AdminAbundanceMasteryPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveCourse(mapping.courseId)}
+                        onClick={() =>
+                          handleRemoveCourse(
+                            mapping.courseId,
+                            mapping.course.title
+                          )
+                        }
                         disabled={removeCourseMutation.isPending}
                         className="h-9 w-9 text-gray-300 hover:text-red-500 bg-gray-50/50 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
                         data-testid={`button-remove-course-${mapping.courseId}`}
@@ -386,6 +415,37 @@ export default function AdminAbundanceMasteryPage() {
           )}
         </div>
       </div>
+
+      {/* Remove Course Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Course from Journey?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to remove{" "}
+                <span className="font-bold text-gray-900">
+                  {courseTitleToRemove}
+                </span>{" "}
+                from the Abundance Mastery journey? Users will no longer be able
+                to see this course in their journey.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCourseIdToRemove(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemoveCourse}
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="button-confirm-remove"
+            >
+              {removeCourseMutation.isPending ? "Removing..." : "Remove Course"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
