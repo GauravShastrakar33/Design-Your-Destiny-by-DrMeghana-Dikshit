@@ -23,6 +23,7 @@ import {
   Quote,
   Feather,
   LayoutGrid,
+  Gem,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -253,9 +254,16 @@ export default function HomePage() {
       icon: GraduationCap,
       path: "/masterclasses",
       testId: "card-masterclasses",
-      fullWidth: true,
       color: "from-brand/10 to-brand/20",
       iconColor: "text-brand",
+    },
+    {
+      title: "GoldMine",
+      icon: Gem,
+      path: "/goldmine",
+      testId: "card-goldmine",
+      color: "from-amber-500/10 to-amber-600/10",
+      iconColor: "text-amber-500",
     },
   ];
 
@@ -411,14 +419,12 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {actionCards.map((card) => (
                 <button
                   key={card.path}
                   onClick={() => setLocation(card.path)}
-                  className={`group relative flex items-center justify-between bg-white p-4 pr-2 rounded-2xl shadow-sm border border-slate-200 transition-colors active:bg-slate-50 text-left overflow-hidden min-h-[90px] md:min-h-[110px] ${
-                    card.fullWidth ? "col-span-2 md:col-span-4" : ""
-                  }`}
+                  className="group relative flex items-center justify-between bg-white p-4 pr-2 rounded-2xl shadow-sm border border-slate-200 transition-colors active:bg-slate-50 text-left overflow-hidden min-h-[90px] md:min-h-[110px]"
                   data-testid={card.testId}
                 >
                   {/* Common Theme Background Gradient */}

@@ -35,6 +35,8 @@ import ProcessChecklistPage from "@/pages/ProcessChecklistPage";
 import MoreQuotesPage from "@/pages/MoreQuotesPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import ProgressInsightsPage from "@/pages/ProgressInsightsPage";
+import GoldMinePage from "@/pages/GoldMinePage";
+import GoldMinePlayerPage from "@/pages/GoldMinePlayerPage";
 import CourseOverviewPage from "@/pages/CourseOverviewPage";
 import RewiringScreen from "@/pages/RewiringScreen";
 import VideoPlayerPage from "@/pages/VideoPlayerPage";
@@ -73,6 +75,7 @@ import AdminEventsPage from "@/pages/AdminEventsPage";
 import AdminEventFormPage from "@/pages/AdminEventFormPage";
 import AdminNotificationsPage from "@/pages/AdminNotificationsPage";
 import AdminDrmQuestionsPage from "@/pages/AdminDrmQuestionsPage";
+import AdminGoldminePage from "@/pages/AdminGoldMinePage";
 import AdminCourseFormPage from "@/pages/AdminCourseFormPage";
 import LessonDetailPage from "@/pages/LessonDetailPage";
 
@@ -459,6 +462,13 @@ function AppContent() {
                     </AdminLayout>
                   </AdminRoute>
                 </Route>
+                <Route path="/admin/goldmine">
+                  <AdminRoute>
+                    <AdminLayout>
+                      <AdminGoldminePage />
+                    </AdminLayout>
+                  </AdminRoute>
+                </Route>
 
                 {/* --- APP PROTECTED ROUTES --- */}
                 <Route path="/home">
@@ -601,6 +611,20 @@ function AppContent() {
                   <ProtectedRoute>
                     <AppLayout>
                       <ProgressInsightsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                </Route>
+                <Route path="/goldmine">
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <GoldMinePage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                </Route>
+                <Route path="/goldmine/:id">
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <GoldMinePlayerPage />
                     </AppLayout>
                   </ProtectedRoute>
                 </Route>

@@ -2344,6 +2344,22 @@ export class DbStorage implements IStorage {
       total: Number(countResult[0]?.count ?? 0),
     };
   }
+
+  async listPublishedGoldmineVideos(): Promise<GoldmineVideo[]> {
+    return db
+      .select()
+      .from(goldmineVideosTable)
+      .where(eq(goldmineVideosTable.isPublished, true))
+      .orderBy(desc(goldmineVideosTable.createdAt));
+  }
+
+  async getGoldmineVideo(id: string): Promise<GoldmineVideo | undefined> {
+    const [video] = await db
+      .select()
+      .from(goldmineVideosTable)
+      .where(eq(goldmineVideosTable.id, id));
+    return video;
+  }
 }
 
 export const storage = new DbStorage();

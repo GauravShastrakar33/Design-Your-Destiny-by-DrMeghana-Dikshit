@@ -6731,8 +6731,22 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       const { data, total } = await storage.listGoldmineVideos({ page, limit });
 
+      // Generate signed URLs for thumbnails
+      const dataWithSignedUrls = await Promise.all(
+        data.map(async (v) => {
+          let thumbnailSignedUrl: string | null = null;
+          if (v.thumbnailKey) {
+            const result = await getSignedGetUrl(v.thumbnailKey);
+            if (result.success && result.url) {
+              thumbnailSignedUrl = result.url;
+            }
+          }
+          return { ...v, thumbnailSignedUrl };
+        })
+      );
+
       return res.json({
-        data,
+        data: dataWithSignedUrls,
         pagination: {
           page,
           limit,
@@ -6839,6 +6853,71 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
     },
   );
+
+  // GET /api/goldmine/videosList (authenticated user, only published)
+  app.get("/api/goldmine/videosList", authenticateJWT, async (req, res) => {
+    try {
+      const videos = await storage.listPublishedGoldmineVideos();
+
+      // Transform and generate signed URLs
+      const transformedVideos = await Promise.all(
+        videos.map(async (v) => {
+          let thumbnailUrl = "";
+          if (v.thumbnailKey) {
+            const result = await getSignedGetUrl(v.thumbnailKey);
+            if (result.success && result.url) {
+              thumbnailUrl = result.url;
+            }
+          }
+
+          return {
+            id: v.id,
+            title: v.title,
+            description: v.description,
+            thumbnailUrl,
+            durationSec: v.durationSec,
+            createdAt: v.createdAt,
+          };
+        })
+      );
+
+      return res.json(transformedVideos);
+    } catch (error) {
+      console.error("Error listing public goldmine videos:", error);
+      return res.status(500).json({ error: "Failed to fetch videos" });
+    }
+  });
+
+  // GET /api/goldmine/videos/:id/play (authenticated user, only published)
+  app.get("/api/goldmine/videos/:id/play", authenticateJWT, async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const video = await storage.getGoldmineVideo(id);
+
+      // Validate existence and publication status
+      if (!video || !video.isPublished) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+
+      // Generate signed URL for the video file
+      if (!video.r2Key) {
+        return res.status(500).json({ error: "Video file key missing" });
+      }
+
+      const result = await getSignedGetUrl(video.r2Key);
+      if (!result.success || !result.url) {
+        return res.status(500).json({ error: "Failed to generate video playback URL" });
+      }
+
+      return res.json({
+        videoUrl: result.url,
+      });
+    } catch (error) {
+      console.error("Error getting goldmine video playback URL:", error);
+      return res.status(500).json({ error: "Failed to fetch playback URL" });
+    }
+  });
 
   const httpServer = createServer(app);
 
