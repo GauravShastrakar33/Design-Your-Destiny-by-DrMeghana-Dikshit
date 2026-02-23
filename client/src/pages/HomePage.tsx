@@ -104,7 +104,7 @@ export default function HomePage() {
 
     // 🔔 Listen for live updates (push received)
     const handleUnreadChange = (e: any) => {
-      if (e.detail && typeof e.detail.count === 'number') {
+      if (e.detail && typeof e.detail.count === "number") {
         setUnreadCount(e.detail.count);
       }
     };
@@ -258,7 +258,7 @@ export default function HomePage() {
       iconColor: "text-brand",
     },
     {
-      title: "GoldMine",
+      title: "Gold Mine",
       icon: Gem,
       path: "/goldmine",
       testId: "card-goldmine",
@@ -424,10 +424,12 @@ export default function HomePage() {
                 <button
                   key={card.path}
                   onClick={() => setLocation(card.path)}
-                  className="group relative flex items-center justify-start gap-2.5 min-[400px]:gap-3.5 bg-white p-2.5 min-[400px]:p-3 md:p-3.5 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-black/[0.04] active:scale-[0.97] active:opacity-70 transition-all duration-200 text-left overflow-hidden min-h-[78px] md:min-h-[92px]"
+                  className="group relative flex items-center justify-start gap-2.5 min-[400px]:gap-3.5 bg-white p-2.5 min-[400px]:p-3 md:p-3.5 rounded-2xl shadow-md border border-slate-300 active:scale-[0.97] active:opacity-70 transition-all duration-200 text-left overflow-hidden min-h-[78px] md:min-h-[92px]"
                   data-testid={card.testId}
                 >
-                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center border shadow-sm shrink-0 ${card.bgColor}`}>
+                  <div
+                    className={`w-9 h-9 md:w-12 md:h-12 rounded-xl flex items-center justify-center border shadow-sm shrink-0 ${card.bgColor}`}
+                  >
                     <card.icon
                       className="w-5 h-5 md:w-6 md:h-6"
                       strokeWidth={2}
@@ -435,8 +437,8 @@ export default function HomePage() {
                   </div>
 
                   <div className="relative z-10 flex-1 flex flex-col justify-center min-w-0">
-                    <span className="block font-medium text-slate-800 text-[11.5px] min-[375px]:text-[12.5px] min-[400px]:text-[13px] sm:text-[14px] md:text-[15px] leading-[1.2] tracking-tight whitespace-pre-line break-words">
-                      {["My Playlist", "All Processes"].includes(card.title) ? card.title : card.title.split(" ").join("\n")}
+                    <span className="block font-bold text-slate-800 text-[11.5px] min-[375px]:text-[12.5px] min-[400px]:text-[13px] sm:text-[14px] md:text-[15px] leading-[1.2] tracking-tight whitespace-pre-line break-words">
+                      {card.title}
                     </span>
                   </div>
                 </button>
@@ -455,13 +457,16 @@ export default function HomePage() {
               {/* Streak Card */}
               {isAuthenticated && (
                 <div
-                  className="bg-white rounded-2xl p-[18px] md:p-[22px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-black/[0.04] relative overflow-hidden"
+                  className="bg-white rounded-2xl p-[18px] md:p-[22px] shadow-md border border-slate-300 relative overflow-hidden"
                   data-testid="card-streak"
                 >
                   <div className="flex items-center justify-between mb-[18px] md:mb-[22px] relative z-10">
                     <div className="flex items-center gap-3.5">
                       <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center border border-orange-100 shadow-sm shrink-0">
-                        <Flame className="w-5 h-5 md:w-6 md:h-6" strokeWidth={2} />
+                        <Flame
+                          className="w-5 h-5 md:w-6 md:h-6"
+                          strokeWidth={2}
+                        />
                       </div>
                       <div className="flex flex-col justify-center">
                         <span className="block text-[14px] md:text-[16px] font-bold text-slate-800 tracking-[0.01em] leading-none mb-1">
@@ -540,7 +545,7 @@ export default function HomePage() {
               {isAuthenticated && (
                 <button
                   onClick={() => setLocation("/progress-insights")}
-                  className="w-full group relative overflow-hidden bg-brand rounded-2xl p-6 shadow-xl shadow-brand/20 hover:shadow-brand/30 transition-all duration-500 active:scale-95 border border-white/10"
+                  className="w-full group relative overflow-hidden bg-brand rounded-2xl p-6 shadow-md border border-slate-300 hover:shadow-brand/30 transition-all duration-500 active:scale-95 border-white/10"
                 >
                   <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16" />
                   <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -ml-10 -mb-10" />
@@ -574,7 +579,7 @@ export default function HomePage() {
           {/* Daily Quote Section - Minimalist Premium */}
           {quoteData?.quote && (
             <div
-              className="group relative bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-slate-200 overflow-hidden text-center"
+              className="group relative bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-md border border-slate-300 overflow-hidden text-center"
               data-testid="card-quote"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-[#fafafa] via-[#fafafa] to-brand/[0.2]" />

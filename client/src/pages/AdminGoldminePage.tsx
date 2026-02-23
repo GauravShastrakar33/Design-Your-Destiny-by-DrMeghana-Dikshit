@@ -8,8 +8,6 @@ import {
   Film,
   Trash2,
   Pencil,
-  ToggleLeft,
-  ToggleRight,
   Search,
   PlusCircle,
   Video,
@@ -71,7 +69,9 @@ const LIMIT = 20;
 export default function AdminGoldminePage() {
   const [page, setPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [videoToDelete, setVideoToDelete] = useState<GoldmineVideo | null>(null);
+  const [videoToDelete, setVideoToDelete] = useState<GoldmineVideo | null>(
+    null
+  );
   const [videoToEdit, setVideoToEdit] = useState<GoldmineVideo | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -83,29 +83,28 @@ export default function AdminGoldminePage() {
     }, 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
-  const { data, isLoading, isError } = useQuery<GoldmineListResponse>(
-    {
-      queryKey: ["/api/admin/goldmine/videos", page, debouncedSearch],
-      queryFn: async () => {
-        const url = `/api/admin/goldmine/videos?page=${page}&limit=${LIMIT}${debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ""}`;
-        const res = await fetch(
-          url,
-          { headers: { Authorization: `Bearer ${adminToken}` } }
-        );
-        // Only throw (→ error state) when HTTP status is not 2xx
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        return res.json() as Promise<GoldmineListResponse>;
-      },
-      staleTime: 30_000,
-    }
-  );
+  const { data, isLoading, isError } = useQuery<GoldmineListResponse>({
+    queryKey: ["/api/admin/goldmine/videos", page, debouncedSearch],
+    queryFn: async () => {
+      const url = `/api/admin/goldmine/videos?page=${page}&limit=${LIMIT}${
+        debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ""
+      }`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      // Only throw (→ error state) when HTTP status is not 2xx
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return res.json() as Promise<GoldmineListResponse>;
+    },
+    staleTime: 30_000,
+  });
 
   const videos = data?.data ?? [];
   const pagination = data?.pagination;
@@ -133,7 +132,9 @@ export default function AdminGoldminePage() {
         className: "bg-green-50 border-green-200",
       });
       setIsAddModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/goldmine/videos"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/goldmine/videos"],
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -163,7 +164,9 @@ export default function AdminGoldminePage() {
         className: "bg-green-50 border-green-200",
       });
       setVideoToDelete(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/goldmine/videos"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/goldmine/videos"],
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -175,7 +178,13 @@ export default function AdminGoldminePage() {
   });
 
   const updateVideoMutation = useMutation({
-    mutationFn: async ({ id, formData }: { id: string; formData: FormData }) => {
+    mutationFn: async ({
+      id,
+      formData,
+    }: {
+      id: string;
+      formData: FormData;
+    }) => {
       const res = await fetch(`/api/admin/goldmine/videos/${id}`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${adminToken}` },
@@ -194,7 +203,9 @@ export default function AdminGoldminePage() {
         className: "bg-green-50 border-green-200",
       });
       setVideoToEdit(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/goldmine/videos"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/goldmine/videos"],
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -231,317 +242,338 @@ export default function AdminGoldminePage() {
   // ── Main ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] p-8">
-      {/* ── Header bar ── */}
-      <header className="mb-6 flex items-center justify-between gap-4">
-        {/* Title */}
-        <div className="flex items-center gap-2.5">
-          <Gem className="w-5 h-5 text-brand shrink-0" />
-          <h1
-            className="text-xl font-bold text-gray-900 leading-none"
-            data-testid="text-goldmine-title"
-          >
-            Gold Mine
-          </h1>
-        </div>
+    <div
+      className="min-h-screen bg-[#f8f9fa] p-8"
+      data-testid="admin-goldmine-page"
+    >
+      <div className="max-w-7xl mx-auto">
+        {/* ── Header bar ── */}
+        <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <Gem className="w-5 h-5 text-brand shrink-0" />
+              <h1
+                className="text-xl font-bold text-gray-900 leading-none"
+                data-testid="text-goldmine-title"
+              >
+                Gold Mine
+              </h1>
+            </div>
+            <p className="text-sm font-semibold text-gray-600 mt-1">
+              Manage GoldMine video content, tags, and thumbnails.
+            </p>
+          </div>
 
-        {/* Right controls */}
-        <div className="flex items-center gap-3">
-          {/* Search (placeholder — no logic yet per spec) */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="search title..."
+          <Button
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-brand hover:bg-brand/90 text-white font-bold h-11 px-6 rounded-lg shadow-sm gap-2 transition-all active:scale-[0.98]"
+            data-testid="btn-add-video"
+          >
+            <PlusCircle className="w-5 h-5" />
+            Add Video
+          </Button>
+        </header>
+
+        {/* ── Search bar ── */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search videos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg w-44 placeholder:text-gray-400 focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/40 transition-all"
+              className="pl-10 h-11 border-gray-200 focus:border-brand focus:ring-brand/20 rounded-lg shadow-sm bg-white transition-all"
               data-testid="input-goldmine-search"
             />
           </div>
-
-          {/* Add Video (placeholder — no logic yet per spec) */}
-          <Button
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-brand hover:bg-brand/90 text-white text-sm font-semibold px-4 gap-2 shadow-sm transition-all active:scale-[0.98]"
-            data-testid="btn-add-video"
-          >
-            <PlusCircle className="w-4 h-4" />
-            Add Video
-          </Button>
         </div>
-      </header>
 
-      {/* ── Add Video Modal ── */}
-      <AddVideoModal
-        isOpen={isAddModalOpen}
-        onOpenChange={setIsAddModalOpen}
-        onSubmit={(fd) => createVideoMutation.mutate(fd)}
-        isPending={createVideoMutation.isPending}
-      />
+        {/* ── Add Video Modal ── */}
+        <AddVideoModal
+          isOpen={isAddModalOpen}
+          onOpenChange={setIsAddModalOpen}
+          onSubmit={(fd) => createVideoMutation.mutate(fd)}
+          isPending={createVideoMutation.isPending}
+        />
 
-      {/* ── Edit Video Modal ── */}
-      <EditVideoModal
-        video={videoToEdit}
-        onOpenChange={(open) => !open && setVideoToEdit(null)}
-        onSubmit={(fd) => videoToEdit && updateVideoMutation.mutate({ id: videoToEdit.id, formData: fd })}
-        isPending={updateVideoMutation.isPending}
-      />
+        {/* ── Edit Video Modal ── */}
+        <EditVideoModal
+          video={videoToEdit}
+          onOpenChange={(open) => !open && setVideoToEdit(null)}
+          onSubmit={(fd) =>
+            videoToEdit &&
+            updateVideoMutation.mutate({ id: videoToEdit.id, formData: fd })
+          }
+          isPending={updateVideoMutation.isPending}
+        />
 
-      {/* ── Delete Confirmation Modal ── */}
-      <Dialog open={!!videoToDelete} onOpenChange={(open) => !open && setVideoToDelete(null)}>
-        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
-          <DialogHeader className="px-6 py-6 bg-red-50/50 border-b border-red-100 flex flex-col items-center text-center">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
-              <Trash2 className="w-6 h-6 text-red-600" />
-            </div>
-            <DialogTitle className="text-lg font-bold text-gray-900">
-              Delete Video?
-            </DialogTitle>
-            <p className="text-sm text-gray-500 mt-1">
-              Are you sure you want to delete <strong className="text-gray-900">"{videoToDelete?.title}"</strong>? This action cannot be undone.
-            </p>
-          </DialogHeader>
-          <DialogFooter className="p-6 bg-white flex flex-col sm:flex-row gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setVideoToDelete(null)}
-              className="flex-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-              disabled={deleteVideoMutation.isPending}
+        {/* ── Delete Confirmation Modal ── */}
+        <Dialog
+          open={!!videoToDelete}
+          onOpenChange={(open) => !open && setVideoToDelete(null)}
+        >
+          <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
+            <DialogHeader className="px-6 py-6 bg-red-50/50 border-b border-red-100 flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <DialogTitle className="text-lg font-bold text-gray-900">
+                Delete Video?
+              </DialogTitle>
+              <p className="text-sm text-gray-500 mt-1 px-4">
+                Are you sure you want to delete{" "}
+                <strong className="text-gray-900">
+                  "{videoToDelete?.title}"
+                </strong>
+                ? This action cannot be undone.
+              </p>
+            </DialogHeader>
+            <DialogFooter className="p-6 bg-white flex flex-col sm:flex-row gap-3">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setVideoToDelete(null)}
+                className="flex-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 font-bold"
+                disabled={deleteVideoMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={() =>
+                  videoToDelete && deleteVideoMutation.mutate(videoToDelete.id)
+                }
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-200 font-bold"
+                disabled={deleteVideoMutation.isPending}
+              >
+                {deleteVideoMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Video"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ── Table card ── */}
+        <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-xl overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
+          <div className="overflow-x-auto">
+            <table
+              className="w-full text-left border-collapse"
+              data-testid="table-goldmine-videos"
             >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={() => videoToDelete && deleteVideoMutation.mutate(videoToDelete.id)}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-200"
-              disabled={deleteVideoMutation.isPending}
-            >
-              {deleteVideoMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete Video"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <hr className="border-gray-200 mb-6" />
-
-      {/* ── Table card ── */}
-      <Card className="p-0 border border-gray-200 shadow-sm bg-white rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table
-            className="w-full text-left border-collapse"
-            data-testid="table-goldmine-videos"
-          >
-            <thead>
-              <tr className="border-b border-gray-100 bg-white">
-                <th className="py-3.5 px-5 text-sm font-semibold text-gray-600 w-16">
-                  Sr no.
-                </th>
-                <th className="py-3.5 px-5 text-sm font-semibold text-gray-600">
-                  Title
-                </th>
-                <th className="py-3.5 px-5 text-sm font-semibold text-gray-600 w-32">
-                  Thumbnail
-                </th>
-                <th className="py-3.5 px-5 text-sm font-semibold text-gray-600">
-                  Tags
-                </th>
-                <th className="py-3.5 px-5 text-sm font-semibold text-gray-600 w-36">
-                  Upload Date
-                </th>
-                <th className="py-3.5 px-5 text-sm font-semibold text-gray-600 w-32 text-center">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-100">
-              {videos.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-20 text-center">
-                    <div className="flex flex-col items-center gap-4 opacity-60">
-                      {debouncedSearch ? (
-                        <Search className="w-10 h-10 text-gray-400" />
-                      ) : (
-                        <Film className="w-10 h-10 text-gray-400" />
-                      )}
-                      <div className="space-y-1">
-                        <p className="text-sm font-bold text-gray-500">
-                          {debouncedSearch 
-                            ? `No results found for "${debouncedSearch}"` 
-                            : "No videos added yet."}
-                        </p>
-                        <p className="text-xs text-gray-400 italic">
-                          {debouncedSearch 
-                            ? "Try adjusting your search query." 
-                            : "Upload your first GoldMine video to get started."}
-                        </p>
-                      </div>
-                      {debouncedSearch ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSearchQuery("")}
-                          className="mt-1"
-                        >
-                          Clear search
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => setIsAddModalOpen(true)}
-                          className="mt-1 bg-brand hover:bg-brand/90 text-white text-sm font-semibold px-4 gap-2"
-                        >
-                          <PlusCircle className="w-4 h-4" />
-                          Add Video
-                        </Button>
-                      )}
-                    </div>
-                  </td>
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-gray-600 w-16 text-center">
+                    Sr no.
+                  </th>
+                  <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-gray-600">
+                    Title
+                  </th>
+                  <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-gray-600 w-32">
+                    Thumbnail
+                  </th>
+                  <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-gray-600">
+                    Tags
+                  </th>
+                  <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-gray-600 w-36">
+                    Upload Date
+                  </th>
+                  <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-gray-600 w-24 text-center">
+                    Status
+                  </th>
+                  <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-gray-600 w-32 text-center">
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                videos.map((video, idx) => {
-                  const rowNumber = (page - 1) * LIMIT + idx + 1;
-                  return (
-                    <tr
-                      key={video.id}
-                      className="group transition-colors hover:bg-gray-50/70"
-                      data-testid={`row-goldmine-video-${video.id}`}
-                    >
-                      {/* Sr no */}
-                      <td className="py-4 px-5 text-sm font-medium text-gray-500 text-center">
-                        {rowNumber}
-                      </td>
+              </thead>
 
-                      {/* Title */}
-                      <td className="py-4 px-5 min-w-[150px]">
-                        <p className="text-sm font-semibold text-gray-900 break-words">
-                          {video.title}
-                        </p>
-                      </td>
-
-                      {/* Thumbnail */}
-                      <td className="py-4 px-5">
-                        <ThumbnailCell 
-                          thumbnailKey={video.thumbnailKey} 
-                          thumbnailSignedUrl={video.thumbnailSignedUrl}
-                        />
-                      </td>
-
-                      {/* Tags */}
-                      <td className="py-4 px-5">
-                        <TagsCell tags={video.tags} />
-                      </td>
-
-                      {/* Upload Date */}
-                      <td className="py-4 px-5">
-                        <span className="text-sm text-gray-600">
-                          {format(new Date(video.createdAt), "dd-MM-yyyy")}
-                        </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-4 px-5">
-                        <div className="flex items-center justify-center gap-3">
-                          {/* Delete */}
-                          <button
-                            onClick={() => setVideoToDelete(video)}
-                            title="Delete"
-                            className="text-gray-400 hover:text-red-500 transition-colors"
-                            data-testid={`btn-delete-${video.id}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-
-                          {/* Edit */}
-                          <button
-                            onClick={() => setVideoToEdit(video)}
-                            title="Edit"
-                            className="text-gray-400 hover:text-brand transition-colors"
-                            data-testid={`btn-edit-${video.id}`}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-
-                          {/* Publish toggle */}
-                          <button
-                            disabled
-                            title={
-                              video.isPublished
-                                ? "Published (toggle coming soon)"
-                                : "Draft (toggle coming soon)"
-                            }
-                            className="transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            data-testid={`btn-toggle-${video.id}`}
-                          >
-                            {video.isPublished ? (
-                              <ToggleRight className="w-5 h-5 text-green-500" />
-                            ) : (
-                              <ToggleLeft className="w-5 h-5 text-gray-400" />
-                            )}
-                          </button>
+              <tbody className="divide-y divide-gray-50">
+                {videos.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-24 text-center">
+                      <div className="flex flex-col items-center gap-4 opacity-40">
+                        {debouncedSearch ? (
+                          <Search className="w-12 h-12 text-gray-400" />
+                        ) : (
+                          <Film className="w-12 h-12 text-gray-400" />
+                        )}
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-gray-600">
+                            {debouncedSearch
+                              ? `No results found for "${debouncedSearch}"`
+                              : "No videos added yet."}
+                          </p>
+                          <p className="text-xs text-gray-500 italic">
+                            {debouncedSearch
+                              ? "Try adjusting your search query."
+                              : "Upload your first GoldMine video to get started."}
+                          </p>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                        {debouncedSearch ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSearchQuery("")}
+                            className="mt-1 font-bold border-gray-200"
+                          >
+                            Clear search
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="mt-1 bg-brand hover:bg-brand/90 text-white text-sm font-bold px-4 gap-2 shadow-sm"
+                          >
+                            <PlusCircle className="w-4 h-4" />
+                            Add Video
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  videos.map((video, idx) => {
+                    const rowNumber = (page - 1) * LIMIT + idx + 1;
+                    return (
+                      <tr
+                        key={video.id}
+                        className="group transition-colors hover:bg-gray-50/50"
+                        data-testid={`row-goldmine-video-${video.id}`}
+                      >
+                        {/* Sr no */}
+                        <td className="py-4 px-6 text-sm font-medium text-gray-500 text-center">
+                          {rowNumber}
+                        </td>
 
-        {/* ── Pagination footer ── */}
-        {pagination && totalPages >= 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/40">
-            <p className="text-xs font-semibold text-gray-400">
-              Page {pagination.page} of {totalPages} &mdash;{" "}
-              {pagination.total} video{pagination.total !== 1 ? "s" : ""}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-xs font-bold gap-1"
-                disabled={page <= 1}
-                onClick={() => setPage((p: number) => Math.max(1, p - 1))}
-                data-testid="btn-prev-page"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-xs font-bold gap-1"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p: number) => Math.min(totalPages, p + 1))}
-                data-testid="btn-next-page"
-              >
-                Next
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Button>
-            </div>
+                        {/* Title */}
+                        <td className="py-4 px-6">
+                          <p className="text-sm font-bold text-gray-900 group-hover:text-brand transition-colors">
+                            {video.title}
+                          </p>
+                        </td>
+
+                        {/* Thumbnail */}
+                        <td className="py-4 px-6">
+                          <ThumbnailCell
+                            thumbnailKey={video.thumbnailKey}
+                            thumbnailSignedUrl={video.thumbnailSignedUrl}
+                          />
+                        </td>
+
+                        {/* Tags */}
+                        <td className="py-4 px-6">
+                          <TagsCell tags={video.tags} />
+                        </td>
+
+                        {/* Upload Date */}
+                        <td className="py-4 px-6">
+                          <span className="text-sm text-gray-500 font-medium">
+                            {format(new Date(video.createdAt), "dd MMM yy")}
+                          </span>
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-4 px-6 text-center">
+                          {video.isPublished ? (
+                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                              Published
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                              Draft
+                            </Badge>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-4 px-6">
+                          <div className="flex items-center justify-center gap-1">
+                            {/* Edit */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setVideoToEdit(video)}
+                              title="Edit"
+                              className="h-8 w-8 p-0 text-gray-400 hover:text-brand hover:bg-brand/5"
+                              data-testid={`btn-edit-${video.id}`}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+
+                            {/* Delete */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setVideoToDelete(video)}
+                              title="Delete"
+                              className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                              data-testid={`btn-delete-${video.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </Card>
+
+          {/* ── Pagination footer ── */}
+          {pagination && totalPages >= 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-50 bg-gray-50/30">
+              <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">
+                Page {pagination.page} of {totalPages} &mdash;{" "}
+                {pagination.total} video{pagination.total !== 1 ? "s" : ""}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-4 text-xs font-bold gap-1 border-gray-200 hover:bg-gray-100 transition-all"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p: number) => Math.max(1, p - 1))}
+                  data-testid="btn-prev-page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-4 text-xs font-bold gap-1 border-gray-200 hover:bg-gray-100 transition-all"
+                  disabled={page >= totalPages}
+                  onClick={() =>
+                    setPage((p: number) => Math.min(totalPages, p + 1))
+                  }
+                  data-testid="btn-next-page"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }
 
 // ── ThumbnailCell ─────────────────────────────────────────────────────────────
 
-function ThumbnailCell({ 
-  thumbnailKey, 
-  thumbnailSignedUrl 
-}: { 
-  thumbnailKey: string; 
+function ThumbnailCell({
+  thumbnailKey,
+  thumbnailSignedUrl,
+}: {
+  thumbnailKey: string;
   thumbnailSignedUrl?: string | null;
 }) {
   const [errored, setErrored] = useState(false);
@@ -551,19 +583,21 @@ function ThumbnailCell({
 
   if (!src || errored) {
     return (
-      <div className="w-20 h-12 rounded-md bg-gray-100 border border-gray-200 flex items-center justify-center">
-        <Film className="w-5 h-5 text-gray-300" />
+      <div className="w-16 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-300">
+        <Film className="w-4 h-4" />
       </div>
     );
   }
 
   return (
-    <img
-      src={src}
-      alt="thumbnail"
-      className="w-20 h-12 object-cover rounded-md bg-gray-100 border border-gray-200"
-      onError={() => setErrored(true)}
-    />
+    <div className="w-16 h-10 rounded-lg overflow-hidden shadow-sm border border-gray-100 relative group/thumb">
+      <img
+        src={src}
+        alt="thumbnail"
+        className="w-full h-full object-cover"
+        onError={() => setErrored(true)}
+      />
+    </div>
   );
 }
 
@@ -580,12 +614,12 @@ function TagsCell({ tags }: { tags: string[] }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5 min-w-[250px] max-w-[320px]">
+    <div className="flex flex-wrap gap-1.5 min-w-[200px] max-w-[300px]">
       {displayedTags.map((tag) => (
         <Badge
           key={tag}
           variant="secondary"
-          className="bg-brand/5 text-brand border-brand/10 text-[10px] px-2 py-0 uppercase tracking-wider"
+          className="bg-brand/5 text-brand border-brand/10 text-[10px] px-1.5 py-0 uppercase"
         >
           {tag}
         </Badge>
@@ -593,9 +627,9 @@ function TagsCell({ tags }: { tags: string[] }) {
       {hasMore && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-[10px] font-bold text-brand hover:text-brand/80 transition-colors mt-0.5 ml-0.5"
+          className="text-[10px] font-bold text-brand hover:text-brand/80 transition-colors mt-0.5 ml-0.5 underline decoration-brand/30"
         >
-          {isExpanded ? "View Less" : `View ${tags.length - limit} more...`}
+          {isExpanded ? "View Less" : `+${tags.length - limit} more`}
         </button>
       )}
     </div>
@@ -610,7 +644,11 @@ interface TagInputProps {
   placeholder?: string;
 }
 
-function TagInput({ tags, onChange, placeholder = "Type and press Enter..." }: TagInputProps) {
+function TagInput({
+  tags,
+  onChange,
+  placeholder = "Type and press Enter...",
+}: TagInputProps) {
   const [input, setInput] = useState("");
 
   const addTag = (tag: string) => {
@@ -725,18 +763,34 @@ function AddVideoModal({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] p-0 flex flex-col overflow-hidden rounded-2xl border-none shadow-2xl">
-        <DialogHeader className="px-6 py-4 bg-gray-50/80 border-b border-gray-100">
-          <DialogTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <PlusCircle className="w-5 h-5 text-brand" />
-            Upload GoldMine Video
-          </DialogTitle>
+        <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
+        <DialogHeader className="px-8 py-6 bg-white border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+              <PlusCircle className="w-5 h-5 text-brand" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-bold text-gray-900 leading-none">
+                Upload GoldMine Video
+              </DialogTitle>
+              <p className="text-sm font-semibold text-gray-500 mt-1">
+                Fill in the details to add a new video to the gallery.
+              </p>
+            </div>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleFormSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <form
+          onSubmit={handleFormSubmit}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto p-6 pt-0 space-y-5">
             {/* Title */}
             <div className="space-y-1.5">
-              <Label htmlFor="title" className="text-sm font-semibold text-gray-700">
+              <Label
+                htmlFor="title"
+                className="text-sm font-semibold text-gray-700"
+              >
                 Title <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -751,7 +805,10 @@ function AddVideoModal({
 
             {/* Description */}
             <div className="space-y-1.5">
-              <Label htmlFor="desc" className="text-sm font-semibold text-gray-700">
+              <Label
+                htmlFor="desc"
+                className="text-sm font-semibold text-gray-700"
+              >
                 Description
               </Label>
               <Textarea
@@ -765,7 +822,10 @@ function AddVideoModal({
 
             {/* Tags */}
             <div className="space-y-1.5">
-              <Label htmlFor="tags" className="text-sm font-semibold text-gray-700">
+              <Label
+                htmlFor="tags"
+                className="text-sm font-semibold text-gray-700"
+              >
                 Tags
               </Label>
               <TagInput tags={tags} onChange={setTags} />
@@ -814,7 +874,9 @@ function AddVideoModal({
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setThumbnailFile(e.target.files?.[0] || null)
+                    }
                     className="hidden"
                     id="thumb-upload"
                     required
@@ -859,29 +921,32 @@ function AddVideoModal({
           </div>
 
           {/* Actions */}
-          <DialogFooter className="p-6 pt-4 border-t border-gray-100 bg-gray-50/50">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!canSubmit}
-              className="bg-brand hover:bg-brand/90 text-white min-w-[120px] shadow-md shadow-brand/20 transition-all active:scale-[0.98]"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                "Upload Video"
-              )}
-            </Button>
+          <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100">
+            <div className="flex items-center justify-end gap-3 w-full">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="font-bold text-gray-500 hover:text-gray-700"
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-brand hover:bg-brand/90 text-white font-bold h-11 px-8 rounded-lg shadow-md shadow-brand/10"
+                disabled={!canSubmit}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload Video"
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -939,18 +1004,34 @@ function EditVideoModal({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] p-0 flex flex-col overflow-hidden rounded-2xl border-none shadow-2xl">
-        <DialogHeader className="px-6 py-4 bg-gray-50/80 border-b border-gray-100">
-          <DialogTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <Pencil className="w-5 h-5 text-brand" />
-            Edit GoldMine Video
-          </DialogTitle>
+        <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
+        <DialogHeader className="px-8 py-6 bg-white border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+              <Pencil className="w-5 h-5 text-brand" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-bold text-gray-900 leading-none">
+                Edit Gold Mine Video
+              </DialogTitle>
+              <p className="text-sm font-semibold text-gray-500 mt-1">
+                Modify video details, tags, and thumbnails.
+              </p>
+            </div>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleFormSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <form
+          onSubmit={handleFormSubmit}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
           <div className="flex-1 overflow-y-auto p-6 space-y-5">
             {/* Title */}
             <div className="space-y-1.5">
-              <Label htmlFor="edit-title" className="text-sm font-semibold text-gray-700">
+              <Label
+                htmlFor="edit-title"
+                className="text-sm font-semibold text-gray-700"
+              >
                 Title <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -965,7 +1046,10 @@ function EditVideoModal({
 
             {/* Description */}
             <div className="space-y-1.5">
-              <Label htmlFor="edit-desc" className="text-sm font-semibold text-gray-700">
+              <Label
+                htmlFor="edit-desc"
+                className="text-sm font-semibold text-gray-700"
+              >
                 Description
               </Label>
               <Textarea
@@ -979,7 +1063,10 @@ function EditVideoModal({
 
             {/* Tags */}
             <div className="space-y-1.5">
-              <Label htmlFor="edit-tags" className="text-sm font-semibold text-gray-700">
+              <Label
+                htmlFor="edit-tags"
+                className="text-sm font-semibold text-gray-700"
+              >
                 Tags
               </Label>
               <TagInput tags={tags} onChange={setTags} />
@@ -988,15 +1075,20 @@ function EditVideoModal({
             {/* Thumbnail replacement */}
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold text-gray-700">
-                Thumbnail <span className="text-xs font-normal text-gray-400 ml-1">(Optional replacement)</span>
+                Thumbnail{" "}
+                <span className="text-xs font-normal text-gray-400 ml-1">
+                  (Optional replacement)
+                </span>
               </Label>
               <div className="flex items-start gap-4">
                 {/* Current Preview */}
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">Current</span>
-                  <ThumbnailCell 
-                    thumbnailKey={video?.thumbnailKey || ""} 
-                    thumbnailSignedUrl={video?.thumbnailSignedUrl} 
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                    Current
+                  </span>
+                  <ThumbnailCell
+                    thumbnailKey={video?.thumbnailKey || ""}
+                    thumbnailSignedUrl={video?.thumbnailSignedUrl}
                   />
                 </div>
 
@@ -1004,7 +1096,9 @@ function EditVideoModal({
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setThumbnailFile(e.target.files?.[0] || null)
+                    }
                     className="hidden"
                     id="edit-thumb-upload"
                   />
@@ -1047,33 +1141,34 @@ function EditVideoModal({
             </div>
           </div>
 
-          {/* Actions */}
-          <DialogFooter className="p-6 pt-4 border-t border-gray-100 bg-gray-50/50">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!canSubmit}
-              className="bg-brand hover:bg-brand/90 text-white min-w-[120px] shadow-md shadow-brand/20 transition-all active:scale-[0.98]"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Update Video"
-              )}
-            </Button>
+          <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100">
+            <div className="flex items-center justify-end gap-3 w-full">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="font-bold text-gray-500 hover:text-gray-700"
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!canSubmit}
+                className="bg-brand hover:bg-brand/90 text-white font-bold h-11 px-8 rounded-lg shadow-md shadow-brand/10 transition-all active:scale-[0.98]"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Video"
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
-
       </DialogContent>
     </Dialog>
   );
