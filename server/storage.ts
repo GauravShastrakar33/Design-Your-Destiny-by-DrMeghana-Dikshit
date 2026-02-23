@@ -2341,7 +2341,14 @@ export class DbStorage implements IStorage {
     if (search) {
       const normalizedSearch = search.trim();
       if (normalizedSearch) {
-        whereClause = ilike(goldmineVideosTable.title, `%${normalizedSearch}%`);
+        whereClause = or(
+          ilike(goldmineVideosTable.title, `%${normalizedSearch}%`),
+          sql`EXISTS (
+            SELECT 1 
+            FROM unnest(${goldmineVideosTable.tags}) tag 
+            WHERE tag ILIKE ${`%${normalizedSearch}%`}
+          )`
+        );
       }
     }
 
