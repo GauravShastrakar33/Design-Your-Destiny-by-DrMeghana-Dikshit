@@ -486,8 +486,8 @@ export const events = pgTable("events", {
   description: text("description"),
   coachName: varchar("coach_name", { length: 150 }),
   thumbnailUrl: text("thumbnail_url"),
-  startDatetime: timestamp("start_datetime", { mode: "date" }).notNull(),
-  endDatetime: timestamp("end_datetime", { mode: "date" }).notNull(),
+  startDatetime: timestamp("start_datetime", { withTimezone: true, mode: "date" }).notNull(),
+  endDatetime: timestamp("end_datetime", { withTimezone: true, mode: "date" }).notNull(),
   joinUrl: text("join_url"),
   recordingUrl: text("recording_url"),
   recordingPasscode: varchar("recording_passcode", { length: 50 }),
@@ -497,8 +497,8 @@ export const events = pgTable("events", {
   requiredProgramCode: varchar("required_program_code", { length: 10 }).notNull().default("USB"),
   requiredProgramLevel: integer("required_program_level").notNull().default(1),
   status: varchar("status", { length: 20 }).notNull().default("DRAFT"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertEventSchema = createInsertSchema(events).omit({
