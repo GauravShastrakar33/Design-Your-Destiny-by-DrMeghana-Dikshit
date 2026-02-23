@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, uniqueIndex, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, serial, timestamp, date, numeric, unique, uniqueIndex, jsonb, index, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -486,8 +486,8 @@ export const events = pgTable("events", {
   description: text("description"),
   coachName: varchar("coach_name", { length: 150 }),
   thumbnailUrl: text("thumbnail_url"),
-  startDatetime: timestamp("start_datetime", { mode: "date" }).notNull(),
-  endDatetime: timestamp("end_datetime", { mode: "date" }).notNull(),
+  startDatetime: timestamp("start_datetime", { withTimezone: true, mode: "date" }).notNull(),
+  endDatetime: timestamp("end_datetime", { withTimezone: true, mode: "date" }).notNull(),
   joinUrl: text("join_url"),
   recordingUrl: text("recording_url"),
   recordingPasscode: varchar("recording_passcode", { length: 50 }),
@@ -497,8 +497,8 @@ export const events = pgTable("events", {
   requiredProgramCode: varchar("required_program_code", { length: 10 }).notNull().default("USB"),
   requiredProgramLevel: integer("required_program_level").notNull().default(1),
   status: varchar("status", { length: 20 }).notNull().default("DRAFT"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertEventSchema = createInsertSchema(events).omit({
@@ -759,3 +759,31 @@ export const insertDrmQuestionSchema = createInsertSchema(drmQuestions).omit({
 
 export type InsertDrmQuestion = z.infer<typeof insertDrmQuestionSchema>;
 export type DrmQuestion = typeof drmQuestions.$inferSelect;
+
+// Goldmine Videos Table
+export const goldmineVideos = pgTable("goldmine_videos", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description"),
+  r2Key: text("r2_key").notNull(),
+  thumbnailKey: text("thumbnail_key").notNull(),
+  durationSec: integer("duration_sec"),
+  sizeMb: integer("size_mb"),
+  tags: varchar("tags").array().notNull().default([]),
+  isPublished: boolean("is_published").notNull().default(false),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+}, (table) => ({
+  createdAtIdx: index("idx_goldmine_videos_created_at").on(table.createdAt),
+  isPublishedIdx: index("idx_goldmine_videos_is_published").on(table.isPublished),
+  tagsIdx: index("idx_goldmine_videos_tags").using("gin", table.tags),
+}));
+
+export const insertGoldmineVideoSchema = createInsertSchema(goldmineVideos).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertGoldmineVideo = z.infer<typeof insertGoldmineVideoSchema>;
+export type GoldmineVideo = typeof goldmineVideos.$inferSelect;
