@@ -63,8 +63,10 @@ export default function GoldMinePage() {
   const { data, isLoading, isError, refetch } = useQuery<GoldMineVideo[]>({
     queryKey: ["/api/goldmine/videosList", debouncedSearch],
     queryFn: async () => {
-      const url = debouncedSearch 
-        ? `/api/goldmine/videosList?search=${encodeURIComponent(debouncedSearch)}` 
+      const url = debouncedSearch
+        ? `/api/goldmine/videosList?search=${encodeURIComponent(
+            debouncedSearch
+          )}`
         : "/api/goldmine/videosList";
       const res = await apiRequest("GET", url);
       return res.json();
@@ -90,17 +92,35 @@ export default function GoldMinePage() {
         onBack={() => setLocation("/")}
       />
 
-      <main className="max-w-3xl mx-auto p-4 pt-28">
+      <main className="max-w-3xl mx-auto p-4 pt-2">
+        {/* Info Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center space-y-3 mb-6"
+        >
+          <div className="inline-flex p-3 rounded-2xl bg-indigo-50 text-brand border border-indigo-100 shadow-sm">
+            <Gem className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 px-4">
+            Gold Mine is your curated vault of powerful teachings.
+          </h1>
+          <p className="text-gray-500 text-sm leading-relaxed max-w-sm mx-auto px-4">
+            Search by topic, emotion, or concept to quickly find what you need
+          </p>
+        </motion.div>
+
         {/* Always Visible Search Bar */}
         <div className="mb-8">
           <div className="relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand transition-colors" />
             <input
               type="text"
-              placeholder="Search by title or tags..."
+              // give search examples in placeholder
+              placeholder="Self sabotage, Motivation, Anxiety, etc..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border-2 border-brand/20 h-14 pl-12 pr-4 rounded-2xl text-sm font-medium shadow-sm focus:outline-none focus:border-brand/40 focus:ring-4 focus:ring-brand/5 transition-all placeholder:text-slate-400"
+              className="w-full bg-white border-2 border-brand/20 h-10 pl-12 pr-4 rounded-lg text-sm font-medium shadow-sm focus:outline-none focus:border-brand/40 focus:ring-4 focus:ring-brand/5 transition-all placeholder:text-slate-400"
             />
           </div>
         </div>
@@ -160,7 +180,7 @@ export default function GoldMinePage() {
                   {debouncedSearch ? "No results found" : "Vault is Empty"}
                 </h3>
                 <p className="text-slate-500 text-sm font-medium mt-1">
-                  {debouncedSearch 
+                  {debouncedSearch
                     ? `We couldn't find anything matching "${debouncedSearch}"`
                     : "No videos available yet."}
                 </p>
