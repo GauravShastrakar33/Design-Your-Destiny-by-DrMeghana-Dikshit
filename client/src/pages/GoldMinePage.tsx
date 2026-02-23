@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -50,11 +50,23 @@ const itemVariants = {
 export default function GoldMinePage() {
   const [, setLocation] = useLocation();
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const { data, isLoading, isError, refetch } = useQuery<GoldMineVideo[]>({
-    queryKey: ["/api/goldmine/videosList"],
+    queryKey: ["/api/goldmine/videosList", debouncedSearch],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/goldmine/videosList");
+      const url = debouncedSearch 
+        ? `/api/goldmine/videosList?search=${encodeURIComponent(debouncedSearch)}` 
+        : "/api/goldmine/videosList";
+      const res = await apiRequest("GET", url);
       return res.json();
     },
   });
@@ -74,17 +86,24 @@ export default function GoldMinePage() {
     <div className="min-h-screen pb-24 bg-[#F8F9FB]">
       <Header
         title="Gold Mine"
-        subtitle="Your vault of valuable videos"
         hasBackButton={true}
         onBack={() => setLocation("/")}
-        rightContent={
-          <button className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-brand transition-all active:scale-95">
-            <Search className="w-5 h-5" />
-          </button>
-        }
       />
 
       <main className="max-w-3xl mx-auto p-4 pt-28">
+        {/* Always Visible Search Bar */}
+        <div className="mb-8">
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand transition-colors" />
+            <input
+              type="text"
+              placeholder="Search by title or tags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white border-2 border-brand/20 h-14 pl-12 pr-4 rounded-2xl text-sm font-medium shadow-sm focus:outline-none focus:border-brand/40 focus:ring-4 focus:ring-brand/5 transition-all placeholder:text-slate-400"
+            />
+          </div>
+        </div>
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
@@ -130,16 +149,30 @@ export default function GoldMinePage() {
               className="flex flex-col items-center justify-center py-20 text-center gap-6"
             >
               <div className="w-24 h-24 bg-brand/5 rounded-[2.5rem] flex items-center justify-center rotate-6">
-                <Gem className="w-12 h-12 text-brand/30" />
+                {debouncedSearch ? (
+                  <Search className="w-12 h-12 text-brand/30" />
+                ) : (
+                  <Gem className="w-12 h-12 text-brand/30" />
+                )}
               </div>
               <div>
                 <h3 className="text-xl font-bold text-slate-900">
-                  Vault is Empty
+                  {debouncedSearch ? "No results found" : "Vault is Empty"}
                 </h3>
                 <p className="text-slate-500 text-sm font-medium mt-1">
-                  No videos available yet.
+                  {debouncedSearch 
+                    ? `We couldn't find anything matching "${debouncedSearch}"`
+                    : "No videos available yet."}
                 </p>
               </div>
+              {debouncedSearch && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-full text-sm font-bold active:scale-95 transition-all"
+                >
+                  Clear search
+                </button>
+              )}
             </motion.div>
           ) : (
             <motion.div

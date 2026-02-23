@@ -6729,7 +6729,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       let limit = parseInt(req.query.limit as string, 10);
       if (!Number.isFinite(limit) || limit < 1 || limit > 100) limit = 20;
 
-      const { data, total } = await storage.listGoldmineVideos({ page, limit });
+      const search = req.query.search as string | undefined;
+
+      const { data, total } = await storage.listGoldmineVideos({ page, limit, search });
 
       // Generate signed URLs for thumbnails
       const dataWithSignedUrls = await Promise.all(
@@ -6778,8 +6780,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return res.status(400).json({ error: "title is required" });
         }
 
-        if (!tagsRaw || typeof tagsRaw !== "string") {
-          return res.status(400).json({ error: "tags is required (comma-separated string)" });
+        if (!tagsRaw) {
+          return res.status(400).json({ error: "tags is required" });
         }
 
         // Validate required files
@@ -6798,12 +6800,16 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const videoKey = `goldmine/videos/${uuid}.mp4`;
         const thumbnailKey = `goldmine/thumbnails/${uuid}.webp`;
 
-        // Normalize tags: split, trim, lowercase, remove empty, deduplicate
+        // Normalize tags: handle string or array, split, trim, lowercase, remove empty, deduplicate
+        const tagsToProcess = typeof tagsRaw === "string" ? tagsRaw.split(",") : Array.isArray(tagsRaw) ? tagsRaw : [];
+        if (tagsToProcess.length === 0 && !Array.isArray(tagsRaw)) {
+          return res.status(400).json({ error: "tags must be a comma-separated string or an array" });
+        }
+
         const normalizedTags = Array.from(
           new Set(
-            tagsRaw
-              .split(",")
-              .map((t: string) => t.trim().toLowerCase())
+            tagsToProcess
+              .map((t: any) => String(t).trim().toLowerCase())
               .filter((t: string) => t.length > 0)
           )
         );
@@ -6854,10 +6860,144 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     },
   );
 
+  // DELETE /api/admin/goldmine/videos/:id (admin only)
+  app.delete("/api/admin/goldmine/videos/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const video = await storage.getGoldmineVideo(id);
+      if (!video) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+
+      // Delete R2 objects
+      if (video.r2Key) {
+        const videoDeletion = await deleteR2Object(video.r2Key);
+        if (!videoDeletion.success) {
+          console.error("Goldmine video R2 deletion failed:", videoDeletion.error);
+          return res.status(500).json({ error: "Failed to delete video from storage" });
+        }
+      }
+
+      if (video.thumbnailKey) {
+        const thumbnailDeletion = await deleteR2Object(video.thumbnailKey);
+        if (!thumbnailDeletion.success) {
+          console.error("Goldmine thumbnail R2 deletion failed:", thumbnailDeletion.error);
+          return res.status(500).json({ error: "Failed to delete thumbnail from storage" });
+        }
+      }
+
+      // Delete database record
+      const result = await storage.deleteGoldmineVideo(id);
+      if (!result) {
+        return res.status(500).json({ error: "Failed to delete video record" });
+      }
+
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting goldmine video:", error);
+      return res.status(500).json({ error: "Failed to delete goldmine video" });
+    }
+  });
+
+  // PATCH /api/admin/goldmine/videos/:id (admin only)
+  app.patch(
+    "/api/admin/goldmine/videos/:id",
+    requireAdmin,
+    uploadGoldmineFiles.single("thumbnail"),
+    async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { title, description, tags, isPublished } = req.body;
+        const thumbnailFile = req.file;
+
+        const video = await storage.getGoldmineVideo(id);
+        if (!video) {
+          return res.status(404).json({ error: "Video not found" });
+        }
+
+        const updateData: any = {};
+
+        // Metadata update logic
+        if (title !== undefined) {
+          if (typeof title !== "string" || title.trim() === "") {
+            return res.status(400).json({ error: "title must not be empty" });
+          }
+          updateData.title = title.trim();
+        }
+
+        if (description !== undefined) {
+          updateData.description = description?.trim() || null;
+        }
+
+        if (tags !== undefined) {
+          const tagsToProcess = typeof tags === "string" ? tags.split(",") : Array.isArray(tags) ? tags : null;
+          if (tagsToProcess === null) {
+            return res.status(400).json({ error: "tags must be a string or an array" });
+          }
+
+          updateData.tags = Array.from(
+            new Set(
+              tagsToProcess
+                .map((t: any) => String(t).trim().toLowerCase())
+                .filter((t: string) => t.length > 0)
+            )
+          );
+        }
+
+        if (isPublished !== undefined) {
+          updateData.isPublished = isPublished === "true" || isPublished === true;
+        }
+
+        // Thumbnail replacement logic
+        if (thumbnailFile) {
+          const thumbnailKey = `goldmine/thumbnails/${id}.webp`;
+          
+          // Upload new thumbnail
+          const uploadResult = await uploadBufferToR2(
+            thumbnailFile.buffer,
+            thumbnailKey,
+            thumbnailFile.mimetype || "image/webp"
+          );
+
+          if (!uploadResult.success) {
+            console.error("Goldmine thumbnail replacement R2 upload failed:", uploadResult.error);
+            return res.status(500).json({ error: "Failed to upload new thumbnail" });
+          }
+
+          // Delete old thumbnail AFTER successful upload (if key is different, but here it's likely the same)
+          // If the key is exactly the same, R2 overwrites it, but we follow the deletion requirement if keys were different
+          // Since our key pattern is goldmine/thumbnails/{id}.webp, it will be the same key.
+          // However, if the old key was different for some reason, we'd delete it.
+          if (video.thumbnailKey && video.thumbnailKey !== thumbnailKey) {
+            const deleteResult = await deleteR2Object(video.thumbnailKey);
+            if (!deleteResult.success) {
+              console.error("Goldmine old thumbnail R2 deletion failed:", deleteResult.error);
+              return res.status(500).json({ error: "Failed to delete old thumbnail" });
+            }
+          }
+          
+          updateData.thumbnailKey = thumbnailKey;
+        }
+
+        const updatedVideo = await storage.updateGoldmineVideo(id, updateData);
+        if (!updatedVideo) {
+          return res.status(404).json({ error: "Video not found during update" });
+        }
+
+        return res.json(updatedVideo);
+      } catch (error) {
+        console.error("Error updating goldmine video:", error);
+        return res.status(500).json({ error: "Failed to update goldmine video" });
+      }
+    }
+  );
+
   // GET /api/goldmine/videosList (authenticated user, only published)
   app.get("/api/goldmine/videosList", authenticateJWT, async (req, res) => {
     try {
-      const videos = await storage.listPublishedGoldmineVideos();
+      const search = req.query.search as string | undefined;
+      const videos = await storage.listPublishedGoldmineVideos(search);
 
       // Transform and generate signed URLs
       const transformedVideos = await Promise.all(

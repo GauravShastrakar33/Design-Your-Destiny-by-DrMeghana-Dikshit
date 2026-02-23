@@ -138,7 +138,11 @@ export interface IStorage {
 
   // Goldmine Videos
   createGoldmineVideo(data: InsertGoldmineVideo & { id: string }): Promise<GoldmineVideo>;
-  listGoldmineVideos(params: { page: number; limit: number }): Promise<{ data: GoldmineVideo[]; total: number }>;
+  listGoldmineVideos(params: { page: number; limit: number; search?: string }): Promise<{ data: GoldmineVideo[]; total: number }>;
+  listPublishedGoldmineVideos(search?: string): Promise<GoldmineVideo[]>;
+  getGoldmineVideo(id: string): Promise<GoldmineVideo | undefined>;
+  deleteGoldmineVideo(id: string): Promise<boolean>;
+  updateGoldmineVideo(id: string, data: Partial<GoldmineVideo>): Promise<GoldmineVideo | undefined>;
 }
 
 
@@ -466,7 +470,11 @@ export class MemStorage implements IStorage {
 
   // Goldmine Videos stubs
   async createGoldmineVideo(data: InsertGoldmineVideo & { id: string }): Promise<GoldmineVideo> { throw new Error("Not implemented in MemStorage"); }
-  async listGoldmineVideos(_params: { page: number; limit: number }): Promise<{ data: GoldmineVideo[]; total: number }> { return { data: [], total: 0 }; }
+  async listGoldmineVideos(_params: { page: number; limit: number; search?: string }): Promise<{ data: GoldmineVideo[]; total: number }> { return { data: [], total: 0 }; }
+  async listPublishedGoldmineVideos(_search?: string): Promise<GoldmineVideo[]> { return []; }
+  async getGoldmineVideo(_id: string): Promise<GoldmineVideo | undefined> { return undefined; }
+  async deleteGoldmineVideo(_id: string): Promise<boolean> { return false; }
+  async updateGoldmineVideo(_id: string, _data: Partial<GoldmineVideo>): Promise<GoldmineVideo | undefined> { return undefined; }
 }
 
 export class DbStorage implements IStorage {
@@ -1739,7 +1747,7 @@ export class DbStorage implements IStorage {
     return newPOH;
   }
 
-  async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string; visionImages: (string | null)[] }>): Promise<ProjectOfHeart> {
+  async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string; visionImages: string[] }>): Promise<ProjectOfHeart> {
     const [updated] = await db
       .update(projectOfHeartsTable)
       .set({ ...updates, updatedAt: new Date() })
@@ -2325,15 +2333,24 @@ export class DbStorage implements IStorage {
     return video;
   }
 
-  async listGoldmineVideos(params: { page: number; limit: number }): Promise<{ data: GoldmineVideo[]; total: number }> {
-    const { page, limit } = params;
+  async listGoldmineVideos(params: { page: number; limit: number; search?: string }): Promise<{ data: GoldmineVideo[]; total: number }> {
+    const { page, limit, search } = params;
     const offset = (page - 1) * limit;
 
+    let whereClause = undefined;
+    if (search) {
+      const normalizedSearch = search.trim();
+      if (normalizedSearch) {
+        whereClause = ilike(goldmineVideosTable.title, `%${normalizedSearch}%`);
+      }
+    }
+
     const [countResult, rows] = await Promise.all([
-      db.select({ count: count() }).from(goldmineVideosTable),
+      db.select({ count: count() }).from(goldmineVideosTable).where(whereClause),
       db
         .select()
         .from(goldmineVideosTable)
+        .where(whereClause)
         .orderBy(desc(goldmineVideosTable.createdAt))
         .limit(limit)
         .offset(offset),
@@ -2345,12 +2362,41 @@ export class DbStorage implements IStorage {
     };
   }
 
-  async listPublishedGoldmineVideos(): Promise<GoldmineVideo[]> {
-    return db
-      .select()
-      .from(goldmineVideosTable)
-      .where(eq(goldmineVideosTable.isPublished, true))
-      .orderBy(desc(goldmineVideosTable.createdAt));
+  async listPublishedGoldmineVideos(search?: string): Promise<GoldmineVideo[]> {
+    try {
+      let query = db
+        .select()
+        .from(goldmineVideosTable)
+        .where(eq(goldmineVideosTable.isPublished, true));
+
+      if (search) {
+        const normalizedSearch = search.trim().toLowerCase();
+        if (normalizedSearch) {
+          const searchPattern = `%${normalizedSearch}%`;
+          query = db
+            .select()
+            .from(goldmineVideosTable)
+            .where(
+              and(
+                eq(goldmineVideosTable.isPublished, true),
+                or(
+                  ilike(goldmineVideosTable.title, searchPattern),
+                  sql`EXISTS (
+                    SELECT 1 
+                    FROM unnest(${goldmineVideosTable.tags}) tag 
+                    WHERE tag ILIKE ${searchPattern}
+                  )`
+                )
+              )
+            );
+        }
+      }
+
+      return await query.orderBy(desc(goldmineVideosTable.createdAt));
+    } catch (error) {
+      console.error("Storage Error (listPublishedGoldmineVideos):", error);
+      throw error;
+    }
   }
 
   async getGoldmineVideo(id: string): Promise<GoldmineVideo | undefined> {
@@ -2359,6 +2405,26 @@ export class DbStorage implements IStorage {
       .from(goldmineVideosTable)
       .where(eq(goldmineVideosTable.id, id));
     return video;
+  }
+
+  async deleteGoldmineVideo(id: string): Promise<boolean> {
+    const result = await db
+      .delete(goldmineVideosTable)
+      .where(eq(goldmineVideosTable.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async updateGoldmineVideo(id: string, data: Partial<GoldmineVideo>): Promise<GoldmineVideo | undefined> {
+    const [updated] = await db
+      .update(goldmineVideosTable)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(goldmineVideosTable.id, id))
+      .returning();
+    return updated;
   }
 }
 
