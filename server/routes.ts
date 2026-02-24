@@ -7070,8 +7070,15 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   // GET /api/goldmine/videosList (authenticated user, only published)
   app.get("/api/goldmine/videosList", authenticateJWT, async (req, res) => {
     try {
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.max(1, parseInt(req.query.limit as string) || 20);
       const search = req.query.search as string | undefined;
-      const videos = await storage.listPublishedGoldmineVideos(search);
+
+      const { data: videos, total } = await storage.listPublishedGoldmineVideos({
+        page,
+        limit,
+        search,
+      });
 
       // Transform and generate signed URLs
       const transformedVideos = await Promise.all(
@@ -7095,10 +7102,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         })
       );
 
-      return res.json(transformedVideos);
+      return res.json({
+        data: transformedVideos,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      });
     } catch (error) {
       console.error("Error listing public goldmine videos:", error);
-      return res.status(500).json({ error: "Failed to fetch videos" });
+      return res.status(500).json({ error: "Failed to list videos" });
     }
   });
 
