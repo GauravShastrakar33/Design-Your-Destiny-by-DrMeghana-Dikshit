@@ -6762,6 +6762,80 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
+  // GET /api/admin/goldmine/get-upload-urls
+  app.get("/api/admin/goldmine/get-upload-urls", requireAdmin, async (req, res) => {
+    try {
+      const videoContentType = req.query.videoContentType as string || "video/mp4";
+      const thumbnailContentType = req.query.thumbnailContentType as string || "image/webp";
+
+      const uuid = crypto.randomUUID();
+      const videoKey = `goldmine/videos/${uuid}.mp4`;
+      const thumbnailKey = `goldmine/thumbnails/${uuid}.webp`;
+
+      const [videoResult, thumbnailResult] = await Promise.all([
+        getSignedPutUrl(videoKey, videoContentType),
+        getSignedPutUrl(thumbnailKey, thumbnailContentType),
+      ]);
+
+      if (!videoResult.success || !thumbnailResult.success) {
+        return res.status(500).json({ error: "Failed to generate upload URLs" });
+      }
+
+      return res.json({
+        uuid,
+        video: {
+          uploadUrl: videoResult.uploadUrl,
+          key: videoKey,
+        },
+        thumbnail: {
+          uploadUrl: thumbnailResult.uploadUrl,
+          key: thumbnailKey,
+        }
+      });
+    } catch (error) {
+      console.error("Error generating goldmine upload URLs:", error);
+      return res.status(500).json({ error: "Failed to generate upload URLs" });
+    }
+  });
+
+  // POST /api/admin/goldmine/videos/confirm
+  app.post("/api/admin/goldmine/videos/confirm", requireAdmin, async (req, res) => {
+    try {
+      const { id, title, description, videoKey, thumbnailKey, sizeMb, tags, isPublished } = req.body;
+
+      if (!id || !title || !videoKey || !thumbnailKey) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Normalize tags
+      const tagsToProcess = typeof tags === "string" ? tags.split(",") : Array.isArray(tags) ? tags : [];
+      const normalizedTags = Array.from(
+        new Set(
+          tagsToProcess
+            .map((t: any) => String(t).trim().toLowerCase())
+            .filter((t: string) => t.length > 0)
+        )
+      );
+
+      const video = await storage.createGoldmineVideo({
+        id,
+        title: title.trim(),
+        description: description?.trim() || null,
+        r2Key: videoKey,
+        thumbnailKey,
+        durationSec: null,
+        sizeMb: parseInt(sizeMb) || 0,
+        tags: normalizedTags,
+        isPublished: isPublished === true || isPublished === "true",
+      });
+
+      return res.status(201).json(video);
+    } catch (error) {
+      console.error("Error confirming goldmine video:", error);
+      return res.status(500).json({ error: "Failed to confirm goldmine video" });
+    }
+  });
+
   // POST /api/admin/goldmine/videos
   app.post(
     "/api/admin/goldmine/videos",
@@ -6996,8 +7070,15 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   // GET /api/goldmine/videosList (authenticated user, only published)
   app.get("/api/goldmine/videosList", authenticateJWT, async (req, res) => {
     try {
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.max(1, parseInt(req.query.limit as string) || 20);
       const search = req.query.search as string | undefined;
-      const videos = await storage.listPublishedGoldmineVideos(search);
+
+      const { data: videos, total } = await storage.listPublishedGoldmineVideos({
+        page,
+        limit,
+        search,
+      });
 
       // Transform and generate signed URLs
       const transformedVideos = await Promise.all(
@@ -7021,10 +7102,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         })
       );
 
-      return res.json(transformedVideos);
+      return res.json({
+        data: transformedVideos,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      });
     } catch (error) {
       console.error("Error listing public goldmine videos:", error);
-      return res.status(500).json({ error: "Failed to fetch videos" });
+      return res.status(500).json({ error: "Failed to list videos" });
     }
   });
 

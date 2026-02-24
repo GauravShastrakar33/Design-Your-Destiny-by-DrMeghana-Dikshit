@@ -139,7 +139,7 @@ export interface IStorage {
   // Goldmine Videos
   createGoldmineVideo(data: InsertGoldmineVideo & { id: string }): Promise<GoldmineVideo>;
   listGoldmineVideos(params: { page: number; limit: number; search?: string }): Promise<{ data: GoldmineVideo[]; total: number }>;
-  listPublishedGoldmineVideos(search?: string): Promise<GoldmineVideo[]>;
+  listPublishedGoldmineVideos(params: { page: number; limit: number; search?: string }): Promise<{ data: GoldmineVideo[]; total: number }>;
   getGoldmineVideo(id: string): Promise<GoldmineVideo | undefined>;
   deleteGoldmineVideo(id: string): Promise<boolean>;
   updateGoldmineVideo(id: string, data: Partial<GoldmineVideo>): Promise<GoldmineVideo | undefined>;
@@ -471,7 +471,7 @@ export class MemStorage implements IStorage {
   // Goldmine Videos stubs
   async createGoldmineVideo(data: InsertGoldmineVideo & { id: string }): Promise<GoldmineVideo> { throw new Error("Not implemented in MemStorage"); }
   async listGoldmineVideos(_params: { page: number; limit: number; search?: string }): Promise<{ data: GoldmineVideo[]; total: number }> { return { data: [], total: 0 }; }
-  async listPublishedGoldmineVideos(_search?: string): Promise<GoldmineVideo[]> { return []; }
+  async listPublishedGoldmineVideos(_params: { page: number; limit: number; search?: string }): Promise<{ data: GoldmineVideo[]; total: number }> { return { data: [], total: 0 }; }
   async getGoldmineVideo(_id: string): Promise<GoldmineVideo | undefined> { return undefined; }
   async deleteGoldmineVideo(_id: string): Promise<boolean> { return false; }
   async updateGoldmineVideo(_id: string, _data: Partial<GoldmineVideo>): Promise<GoldmineVideo | undefined> { return undefined; }
@@ -2369,37 +2369,41 @@ export class DbStorage implements IStorage {
     };
   }
 
-  async listPublishedGoldmineVideos(search?: string): Promise<GoldmineVideo[]> {
+  async listPublishedGoldmineVideos(params: { page: number; limit: number; search?: string }): Promise<{ data: GoldmineVideo[]; total: number }> {
     try {
-      let query = db
-        .select()
-        .from(goldmineVideosTable)
-        .where(eq(goldmineVideosTable.isPublished, true));
+      const { page, limit, search } = params;
+      const offset = (page - 1) * limit;
+      const searchPattern = search ? `%${search.trim().toLowerCase()}%` : null;
 
-      if (search) {
-        const normalizedSearch = search.trim().toLowerCase();
-        if (normalizedSearch) {
-          const searchPattern = `%${normalizedSearch}%`;
-          query = db
-            .select()
-            .from(goldmineVideosTable)
-            .where(
-              and(
-                eq(goldmineVideosTable.isPublished, true),
-                or(
-                  ilike(goldmineVideosTable.title, searchPattern),
-                  sql`EXISTS (
-                    SELECT 1 
-                    FROM unnest(${goldmineVideosTable.tags}) tag 
-                    WHERE tag ILIKE ${searchPattern}
-                  )`
-                )
-              )
-            );
-        }
-      }
+      const whereClause = and(
+        eq(goldmineVideosTable.isPublished, true),
+        searchPattern
+          ? or(
+              ilike(goldmineVideosTable.title, searchPattern),
+              sql`EXISTS (
+                SELECT 1 
+                FROM unnest(${goldmineVideosTable.tags}) tag 
+                WHERE tag ILIKE ${searchPattern}
+              )`
+            )
+          : undefined
+      );
 
-      return await query.orderBy(desc(goldmineVideosTable.createdAt));
+      const [countResult, rows] = await Promise.all([
+        db.select({ count: count() }).from(goldmineVideosTable).where(whereClause),
+        db
+          .select()
+          .from(goldmineVideosTable)
+          .where(whereClause)
+          .orderBy(desc(goldmineVideosTable.createdAt))
+          .limit(limit)
+          .offset(offset),
+      ]);
+
+      return {
+        data: rows,
+        total: Number(countResult[0]?.count ?? 0),
+      };
     } catch (error) {
       console.error("Storage Error (listPublishedGoldmineVideos):", error);
       throw error;

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import InfiniteScroll from "react-infinite-scroll-component";
+
 import {
   Gem,
   Search,
@@ -22,6 +24,16 @@ interface GoldMineVideo {
   thumbnailUrl: string;
   durationSec: number | null;
   createdAt: string;
+}
+
+interface GoldmineListResponse {
+  data: GoldMineVideo[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 const containerVariants = {
@@ -60,18 +72,52 @@ export default function GoldMinePage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data, isLoading, isError, refetch } = useQuery<GoldMineVideo[]>({
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<GoldmineListResponse>({
     queryKey: ["/api/goldmine/videosList", debouncedSearch],
-    queryFn: async () => {
-      const url = debouncedSearch
-        ? `/api/goldmine/videosList?search=${encodeURIComponent(
-            debouncedSearch
-          )}`
-        : "/api/goldmine/videosList";
+    queryFn: async ({ pageParam = 1 }) => {
+      const url = `/api/goldmine/videosList?page=${pageParam}&limit=20${
+        debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ""
+      }`; 
       const res = await apiRequest("GET", url);
       return res.json();
     },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
   });
+
+  const allVideos = data?.pages.flatMap((page) => page.data) ?? [];
+
+  // Auto-fill: If the content doesn't fill the screen, fetch more immediately
+  useEffect(() => {
+    if (
+      hasNextPage &&
+      !isFetchingNextPage &&
+      !isLoading &&
+      allVideos.length > 0
+    ) {
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      // If the scroll height is close to or less than client height, we might not have a scrollbar
+      if (scrollHeight <= clientHeight + 100) {
+        console.log("Content doesn't fill screen, auto-fetching...");
+        fetchNextPage();
+      }
+    }
+  }, [allVideos.length, hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
+
 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return "";
@@ -116,7 +162,6 @@ export default function GoldMinePage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand transition-colors" />
             <input
               type="text"
-              // give search examples in placeholder
               placeholder="Self sabotage, Motivation, Anxiety, etc..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -124,6 +169,7 @@ export default function GoldMinePage() {
             />
           </div>
         </div>
+
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
@@ -161,7 +207,7 @@ export default function GoldMinePage() {
                 Retry
               </button>
             </motion.div>
-          ) : data?.length === 0 ? (
+          ) : allVideos.length === 0 ? (
             <motion.div
               key="empty"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -195,70 +241,90 @@ export default function GoldMinePage() {
               )}
             </motion.div>
           ) : (
-            <motion.div
-              key="list"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="space-y-4"
+            <InfiniteScroll
+              dataLength={allVideos.length}
+              next={fetchNextPage}
+              hasMore={!!hasNextPage}
+              loader={
+                <div className="py-12 flex justify-center">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="text-sm font-medium">Loading more...</span>
+                  </div>
+                </div>
+              }
+              endMessage={
+                <div className="py-12 text-center text-slate-400 text-sm font-medium">
+                  {allVideos.length > 0 && "You've reached the end of the vault"}
+                </div>
+              }
+              scrollThreshold={0.6} // Trigger earlier for better experience
             >
-              {data?.map((video) => (
-                <motion.button
-                  key={video.id}
-                  variants={itemVariants}
-                  onClick={() => handleVideoClick(video)}
-                  className="w-full bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex gap-4 text-left active:scale-[0.98] transition-all hover:border-brand/30 group"
-                  data-testid={`video-card-${video.id}`}
-                >
-                  {/* Left: Thumbnail */}
-                  <div className="relative w-32 h-20 flex-shrink-0 bg-slate-100 rounded-xl overflow-hidden ring-1 ring-slate-100">
-                    {video.thumbnailUrl ? (
-                      <img
-                        src={video.thumbnailUrl}
-                        alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Film className="w-6 h-6 text-slate-300" />
-                      </div>
-                    )}
-                    {/* Play Icon Overlay or Loader */}
-                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-100 transition-opacity group-hover:bg-black/30">
-                      {playingVideoId === video.id ? (
-                        <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center border border-white/40">
-                          <Loader2 className="w-4 h-4 text-white animate-spin" />
-                        </div>
+              <motion.div
+                key="list"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="space-y-4"
+              >
+                {allVideos.map((video) => (
+                  <motion.button
+                    key={video.id}
+                    variants={itemVariants}
+                    onClick={() => handleVideoClick(video)}
+                    className="w-full bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex gap-4 text-left active:scale-[0.98] transition-all hover:border-brand/30 group"
+                    data-testid={`video-card-${video.id}`}
+                  >
+                    {/* Left: Thumbnail */}
+                    <div className="relative w-32 h-20 flex-shrink-0 bg-slate-100 rounded-xl overflow-hidden ring-1 ring-slate-100">
+                      {video.thumbnailUrl ? (
+                        <img
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center border border-white/40 ring-4 ring-black/5">
-                          <Play className="w-4 h-4 text-white fill-white" />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Film className="w-6 h-6 text-slate-300" />
                         </div>
                       )}
+                      {/* Play Icon Overlay or Loader */}
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-100 transition-opacity group-hover:bg-black/30">
+                        {playingVideoId === video.id ? (
+                          <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center border border-white/40">
+                            <Loader2 className="w-4 h-4 text-white animate-spin" />
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center border border-white/40 ring-4 ring-black/5">
+                            <Play className="w-4 h-4 text-white fill-white" />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Right: Info */}
-                  <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
-                    <h3 className="font-bold text-slate-900 text-sm mb-1.5 line-clamp-2 leading-tight group-hover:text-brand transition-colors">
-                      {video.title}
-                    </h3>
-                    <div className="flex items-center gap-3">
-                      {video.durationSec && (
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span className="text-[11px] font-black tracking-wider uppercase">
-                            {formatDuration(video.durationSec)}
-                          </span>
-                        </div>
-                      )}
-                      <span className="text-[11px] font-bold text-slate-300 tabular-nums">
-                        {format(new Date(video.createdAt), "MMM d, yyyy")}
-                      </span>
+                    {/* Right: Info */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
+                      <h3 className="font-bold text-slate-900 text-sm mb-1.5 line-clamp-2 leading-tight group-hover:text-brand transition-colors">
+                        {video.title}
+                      </h3>
+                      <div className="flex items-center gap-3">
+                        {video.durationSec && (
+                          <div className="flex items-center gap-1.5 text-slate-400">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span className="text-[11px] font-black tracking-wider uppercase">
+                              {formatDuration(video.durationSec)}
+                            </span>
+                          </div>
+                        )}
+                        <span className="text-[11px] font-bold text-slate-300 tabular-nums">
+                          {format(new Date(video.createdAt), "MMM d, yyyy")}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </motion.button>
-              ))}
-            </motion.div>
+                  </motion.button>
+                ))}
+              </motion.div>
+            </InfiniteScroll>
           )}
         </AnimatePresence>
       </main>
