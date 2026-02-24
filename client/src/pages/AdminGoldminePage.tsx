@@ -79,19 +79,28 @@ export default function AdminGoldminePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
+  // Search Effect with Debounce (matches SearchOverlay pattern)
   useEffect(() => {
+    if (!searchQuery.trim()) {
+      setDebouncedSearch("");
+      setPage(1);
+      return;
+    }
+
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
       setPage(1); // Reset to first page on search
-    }, 400);
+    }, 500); // 500ms debounce from SearchOverlay
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
-  const { data, isLoading, isError } = useQuery<GoldmineListResponse>({
+  const { data, isLoading, isError, isFetching } = useQuery<GoldmineListResponse>({
+
     queryKey: ["/api/admin/goldmine/videos", page, debouncedSearch],
     queryFn: async () => {
       const url = `/api/admin/goldmine/videos?page=${page}&limit=${LIMIT}${
@@ -273,15 +282,31 @@ export default function AdminGoldminePage() {
         {/* ── Search bar ── */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              {isFetching ? (
+                <Loader2 className="w-4 h-4 text-brand animate-spin" />
+              ) : (
+                <Search className="text-gray-400 w-4 h-4" />
+              )}
+            </div>
             <Input
               placeholder="Search videos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-11 border-gray-200 focus:border-brand focus:ring-brand/20 rounded-lg shadow-sm bg-white transition-all"
+              className="pl-10 pr-10 h-11 border-gray-200 focus:border-brand focus:ring-brand/20 rounded-lg shadow-sm bg-white transition-all font-medium"
               data-testid="input-goldmine-search"
+              autoFocus
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
+
         </div>
 
         {/* ── Add Video Modal ── */}
@@ -732,6 +757,29 @@ function AddVideoModal({
 
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [thumbPreview, setThumbPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (videoFile) {
+      const url = URL.createObjectURL(videoFile);
+      setVideoPreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setVideoPreview(null);
+    }
+  }, [videoFile]);
+
+  useEffect(() => {
+    if (thumbnailFile) {
+      const url = URL.createObjectURL(thumbnailFile);
+      setThumbPreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setThumbPreview(null);
+    }
+  }, [thumbnailFile]);
+
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -821,7 +869,8 @@ function AddVideoModal({
     }
   }, [isOpen]);
 
-  const canSubmit = title && videoFile && thumbnailFile && !isPending;
+  const canSubmit = title && videoFile && thumbnailFile && tags.length > 0 && !isPending;
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -889,7 +938,8 @@ function AddVideoModal({
                 htmlFor="tags"
                 className="text-sm font-semibold text-gray-700"
               >
-                Tags
+                Tags <span className="text-red-500">*</span>
+
               </Label>
               <TagInput tags={tags} onChange={setTags} />
             </div>
@@ -909,25 +959,42 @@ function AddVideoModal({
                     id="video-upload"
                     required
                   />
-                  <label
-                    htmlFor="video-upload"
-                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-3 cursor-pointer transition-colors h-24 ${
-                      videoFile
-                        ? "border-brand bg-brand/5"
-                        : "border-gray-200 hover:border-brand/40 hover:bg-gray-50"
-                    }`}
-                  >
-                    <Video
-                      className={`w-5 h-5 mb-1 ${
-                        videoFile ? "text-brand" : "text-gray-400"
-                      }`}
-                    />
-                    <span className="text-[11px] font-medium text-gray-500 text-center line-clamp-1 px-2">
-                      {videoFile ? videoFile.name : "Select Video"}
-                    </span>
-                  </label>
+                  {videoPreview ? (
+                    <div className="relative h-40 rounded-xl overflow-hidden border-2 border-brand bg-black group">
+                      <video
+                        src={videoPreview}
+                        className="w-full h-full object-contain"
+                        controls
+                          disablePictureInPicture
+            controlsList="nodownload noplaybackrate" 
+                      />
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <label
+                          htmlFor="video-upload"
+                          className="bg-white/90 hover:bg-white text-brand text-[10px] font-bold px-2 py-1 rounded shadow-sm backdrop-blur-sm cursor-pointer transition-all"
+                        >
+                          Change Video
+                        </label>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-2 backdrop-blur-sm">
+                        <p className="text-[10px] font-bold text-white truncate px-1">
+                          {videoFile?.name}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="video-upload"
+                      className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-6 cursor-pointer hover:border-brand/40 hover:bg-gray-50 transition-all h-36 group"
+                    >
+                      <Video className="w-8 h-8 mb-2 text-gray-400 group-hover:text-brand transition-colors" />
+                      <span className="text-xs font-bold text-gray-500">Select Video</span>
+                    </label>
+                  )}
                 </div>
               </div>
+
+
 
               <div className="space-y-1.5">
                 <Label className="text-sm font-semibold text-gray-700">
@@ -944,25 +1011,40 @@ function AddVideoModal({
                     id="thumb-upload"
                     required
                   />
-                  <label
-                    htmlFor="thumb-upload"
-                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-3 cursor-pointer transition-colors h-24 ${
-                      thumbnailFile
-                        ? "border-brand bg-brand/5"
-                        : "border-gray-200 hover:border-brand/40 hover:bg-gray-50"
-                    }`}
-                  >
-                    <ImageIcon
-                      className={`w-5 h-5 mb-1 ${
-                        thumbnailFile ? "text-brand" : "text-gray-400"
-                      }`}
-                    />
-                    <span className="text-[11px] font-medium text-gray-500 text-center line-clamp-1 px-2">
-                      {thumbnailFile ? thumbnailFile.name : "Select Image"}
-                    </span>
-                  </label>
+                  {thumbPreview ? (
+                    <div className="relative h-40 rounded-xl overflow-hidden border-2 border-brand bg-gray-50 group">
+                      <img
+                        src={thumbPreview}
+                        alt="preview"
+                        className="w-full h-full object-contain"
+                      />
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <label
+                          htmlFor="thumb-upload"
+                          className="bg-white/90 hover:bg-white text-brand text-[10px] font-bold px-2 py-1 rounded shadow-sm backdrop-blur-sm cursor-pointer transition-all"
+                        >
+                          Change Image
+                        </label>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-white/80 p-2 backdrop-blur-sm border-t border-brand/10">
+                        <p className="text-[10px] font-bold text-gray-800 truncate px-1">
+                          {thumbnailFile?.name}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="thumb-upload"
+                      className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-6 cursor-pointer hover:border-brand/40 hover:bg-gray-50 transition-all h-36 group"
+                    >
+                      <ImageIcon className="w-8 h-8 mb-2 text-gray-400 group-hover:text-brand transition-colors" />
+                      <span className="text-xs font-bold text-gray-500">Select Thumbnail</span>
+                    </label>
+                  )}
                 </div>
               </div>
+
+
             </div>
 
             {/* Toggle */}
@@ -1049,6 +1131,18 @@ function EditVideoModal({
   const [tags, setTags] = useState<string[]>([]);
   const [isPublished, setIsPublished] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbPreview, setThumbPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (thumbnailFile) {
+      const url = URL.createObjectURL(thumbnailFile);
+      setThumbPreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setThumbPreview(null);
+    }
+  }, [thumbnailFile]);
+
 
   useEffect(() => {
     if (video) {
@@ -1076,7 +1170,8 @@ function EditVideoModal({
   };
 
   const isOpen = !!video;
-  const canSubmit = title && !isPending;
+  const canSubmit = title && tags.length > 0 && !isPending;
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -1144,7 +1239,7 @@ function EditVideoModal({
                 htmlFor="edit-tags"
                 className="text-sm font-semibold text-gray-700"
               >
-                Tags
+                Tags <span className="text-red-500">*</span>
               </Label>
               <TagInput tags={tags} onChange={setTags} />
             </div>
@@ -1179,26 +1274,35 @@ function EditVideoModal({
                     className="hidden"
                     id="edit-thumb-upload"
                   />
-                  <label
-                    htmlFor="edit-thumb-upload"
-                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-3 cursor-pointer transition-colors h-20 ${
-                      thumbnailFile
-                        ? "border-brand bg-brand/5"
-                        : "border-gray-200 hover:border-brand/40 hover:bg-gray-50"
-                    }`}
-                  >
-                    <ImageIcon
-                      className={`w-5 h-5 mb-1 ${
-                        thumbnailFile ? "text-brand" : "text-gray-400"
-                      }`}
-                    />
-                    <span className="text-[11px] font-medium text-gray-500 text-center line-clamp-1 px-1">
-                      {thumbnailFile ? thumbnailFile.name : "Select to Replace"}
-                    </span>
-                  </label>
+                  {thumbPreview ? (
+                    <div className="relative h-24 rounded-xl overflow-hidden border-2 border-brand bg-gray-50 group">
+                      <img
+                        src={thumbPreview}
+                        alt="preview"
+                        className="w-full h-full object-contain"
+                      />
+                      <div className="absolute top-1 right-1">
+                        <label
+                          htmlFor="edit-thumb-upload"
+                          className="bg-white/90 hover:bg-white text-brand text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm backdrop-blur-sm cursor-pointer transition-all"
+                        >
+                          Change
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="edit-thumb-upload"
+                      className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-2 cursor-pointer hover:border-brand/40 hover:bg-gray-50 transition-all h-24 group"
+                    >
+                      <ImageIcon className="w-5 h-5 mb-1 text-gray-400 group-hover:text-brand transition-colors" />
+                      <span className="text-[10px] font-bold text-gray-500 uppercase">Replace</span>
+                    </label>
+                  )}
                 </div>
               </div>
             </div>
+
 
             {/* Toggle */}
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
