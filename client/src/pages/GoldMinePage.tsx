@@ -85,7 +85,7 @@ export default function GoldMinePage() {
     queryFn: async ({ pageParam = 1 }) => {
       const url = `/api/goldmine/videosList?page=${pageParam}&limit=20${
         debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ""
-      }`;
+      }`; 
       const res = await apiRequest("GET", url);
       return res.json();
     },
