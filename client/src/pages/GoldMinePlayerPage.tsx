@@ -27,12 +27,11 @@ export default function GoldMinePlayerPage() {
     queryKey: ["/api/goldmine/videosList"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/goldmine/videosList");
-      return res.json();
+      const json = await res.json();
+      return json.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
-
-  const videoMetadata = videos?.find((v) => v.id === id);
 
   // 2. Fetch playback URL
   const {
@@ -62,6 +61,8 @@ export default function GoldMinePlayerPage() {
       </div>
     );
   }
+
+  const videoMetadata = videos?.find((v) => v.id === id);
 
   if (isPlaybackError || (!isListLoading && !videoMetadata)) {
     return (
