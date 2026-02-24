@@ -14,11 +14,14 @@ import {
   Image as ImageIcon,
   X,
 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
+
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -113,22 +116,14 @@ export default function AdminGoldminePage() {
   // ── Mutation ──────────────────────────────────────────────────────────────
 
   const createVideoMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const res = await fetch("/api/admin/goldmine/videos", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${adminToken}` },
-        body: formData,
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Upload failed (HTTP ${res.status})`);
-      }
+    mutationFn: async (payload: any) => {
+      const res = await apiRequest("POST", "/api/admin/goldmine/videos/confirm", payload);
       return res.json();
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Video uploaded successfully",
+        description: "Video uploaded and processed successfully",
         className: "bg-green-50 border-green-200",
       });
       setIsAddModalOpen(false);
@@ -138,12 +133,13 @@ export default function AdminGoldminePage() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Upload Failed",
+        title: "Registration Failed",
         description: error.message,
         variant: "destructive",
       });
     },
   });
+
 
   const deleteVideoMutation = useMutation({
     mutationFn: async (videoId: string) => {
@@ -292,8 +288,9 @@ export default function AdminGoldminePage() {
         <AddVideoModal
           isOpen={isAddModalOpen}
           onOpenChange={setIsAddModalOpen}
-          onSubmit={(fd) => createVideoMutation.mutate(fd)}
+          onSubmit={(payload) => createVideoMutation.mutateAsync(payload)}
           isPending={createVideoMutation.isPending}
+
         />
 
         {/* ── Edit Video Modal ── */}
@@ -713,9 +710,10 @@ function TagInput({
 interface AddVideoModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (formData: FormData) => void;
+  onSubmit: (payload: any) => Promise<any>;
   isPending: boolean;
 }
+
 
 function AddVideoModal({
   isOpen,
@@ -723,28 +721,93 @@ function AddVideoModal({
   onSubmit,
   isPending,
 }: AddVideoModalProps) {
+  const { toast } = useToast();
   const [title, setTitle] = useState("");
+
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isPublished, setIsPublished] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!videoFile || !thumbnailFile) return;
+    if (!videoFile || !thumbnailFile || isUploading) return;
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("isPublished", String(isPublished));
-    formData.append("tags", tags.join(",")); // Still sending as comma string for backend compatibility, or we alternate
+    try {
+      setIsUploading(true);
+      setUploadProgress(10);
 
-    formData.append("video", videoFile);
-    formData.append("thumbnail", thumbnailFile);
+      // 1. Get signed URLs
+      const urlsRes = await apiRequest(
+        "GET",
+        `/api/admin/goldmine/get-upload-urls?videoContentType=${encodeURIComponent(videoFile.type)}&thumbnailContentType=${encodeURIComponent(thumbnailFile.type)}`
+      );
+      const { uuid, video, thumbnail } = await urlsRes.json();
+      
+      setUploadProgress(20);
 
-    onSubmit(formData);
+      // 2. Upload Video directly to R2
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable) {
+            // Video is 70% of total progress (from 20 to 90)
+            const videoProgress = Math.round((event.loaded / event.total) * 70);
+            setUploadProgress(20 + videoProgress);
+          }
+        });
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Video upload failed: ${xhr.statusText}`));
+        });
+        xhr.addEventListener("error", () => reject(new Error("Video upload failed")));
+        xhr.open("PUT", video.uploadUrl);
+        xhr.setRequestHeader("Content-Type", videoFile.type);
+        xhr.send(videoFile);
+      });
+
+      setUploadProgress(92);
+
+      // 3. Upload Thumbnail directly to R2
+      const thumbRes = await fetch(thumbnail.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": thumbnailFile.type },
+        body: thumbnailFile,
+      });
+      if (!thumbRes.ok) throw new Error("Thumbnail upload failed");
+
+      setUploadProgress(98);
+
+      // 4. Confirm to backend
+      await onSubmit({
+        id: uuid,
+        title,
+        description,
+        videoKey: video.key,
+        thumbnailKey: thumbnail.key,
+        sizeMb: Math.ceil(videoFile.size / (1024 * 1024)),
+        tags: tags.join(","),
+        isPublished,
+      });
+
+      setUploadProgress(100);
+    } catch (error: any) {
+      console.error("Upload process failed:", error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "An error occurred during upload",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
+
 
   // Reset form when opening
   useEffect(() => {
@@ -920,6 +983,19 @@ function AddVideoModal({
             </div>
           </div>
 
+          {/* Progress Bar (Visible only when uploading) */}
+          {isUploading && (
+            <div className="px-8 py-4 bg-blue-50/50 border-t border-blue-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                  {uploadProgress < 90 ? "Uploading Video..." : uploadProgress < 100 ? "Processing..." : "Finalizing..."}
+                </span>
+                <span className="text-xs font-bold text-blue-600">{uploadProgress}%</span>
+              </div>
+              <Progress value={uploadProgress} className="h-2 bg-blue-100" />
+            </div>
+          )}
+
           {/* Actions */}
           <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100">
             <div className="flex items-center justify-end gap-3 w-full">
@@ -928,19 +1004,19 @@ function AddVideoModal({
                 variant="ghost"
                 onClick={() => onOpenChange(false)}
                 className="font-bold text-gray-500 hover:text-gray-700"
-                disabled={isPending}
+                disabled={isUploading || isPending}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 className="bg-brand hover:bg-brand/90 text-white font-bold h-11 px-8 rounded-lg shadow-md shadow-brand/10"
-                disabled={!canSubmit}
+                disabled={!canSubmit || isUploading || isPending}
               >
-                {isPending ? (
+                {isUploading || isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
+                    {uploadProgress < 98 ? "Uploading..." : "Processing..."}
                   </>
                 ) : (
                   "Upload Video"
@@ -948,6 +1024,7 @@ function AddVideoModal({
               </Button>
             </div>
           </DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>
