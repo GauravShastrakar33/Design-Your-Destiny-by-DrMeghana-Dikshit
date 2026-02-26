@@ -70,16 +70,16 @@ async function getAuthHeaders(url: string): Promise<Record<string, string>> {
 
   return headers;
 }
-// const LOCAL_API = "http://localhost:5001";
-// const PROD_API = "https://app.drmeghana.com";
-
-// export const API_BASE_URL = Capacitor.isNativePlatform()
-//   ? LOCAL_API // 🔥 change to LOCAL when testing
-//   : "";
+const LOCAL_API = "http://localhost:5001";
+const PROD_API = "https://app.drmeghana.com";
 
 export const API_BASE_URL = Capacitor.isNativePlatform()
-  ? "https://app.drmeghana.com"
+  ? LOCAL_API // 🔥 change to LOCAL when testing
   : "";
+
+// export const API_BASE_URL = Capacitor.isNativePlatform()
+//   ? "https://app.drmeghana.com"
+//   : "";
 
 export function getMediaUrl(path: string | null | undefined) {
   if (!path) return "";

@@ -12,10 +12,10 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 20 }).notNull().default("USER"),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   forcePasswordChange: boolean("force_password_change").notNull().default(false),
-  lastLogin: timestamp("last_login", { mode: "date" }),
-  lastActivity: timestamp("last_activity", { mode: "date" }),
+  lastLogin: timestamp("last_login", { withTimezone: true, mode: "date" }),
+  lastActivity: timestamp("last_activity", { withTimezone: true, mode: "date" }),
   timezone: varchar("timezone", { length: 50 }).notNull().default("UTC"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -93,9 +93,9 @@ export const programs = pgTable("programs", {
   name: varchar("name", { length: 150 }).notNull(),
   level: integer("level").notNull(),
   isActive: boolean("is_active").notNull().default(true),
-  deletedAt: timestamp("deleted_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "date" }),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertProgramSchema = createInsertSchema(programs).omit({
@@ -133,8 +133,8 @@ export const cmsCourses = pgTable("cms_courses", {
   isPublished: boolean("is_published").notNull().default(false),
   createdByAdminId: integer("created_by_admin_id").references(() => users.id),
   position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertCmsCourseSchema = createInsertSchema(cmsCourses).omit({
@@ -151,8 +151,8 @@ export const cmsModules = pgTable("cms_modules", {
   courseId: integer("course_id").notNull().references(() => cmsCourses.id, { onDelete: 'cascade' }),
   title: text("title").notNull(),
   position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertCmsModuleSchema = createInsertSchema(cmsModules).omit({
@@ -169,8 +169,8 @@ export const cmsModuleFolders = pgTable("cms_module_folders", {
   moduleId: integer("module_id").notNull().references(() => cmsModules.id, { onDelete: 'cascade' }),
   title: text("title").notNull(),
   position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertCmsModuleFolderSchema = createInsertSchema(cmsModuleFolders).omit({
@@ -189,8 +189,8 @@ export const cmsLessons = pgTable("cms_lessons", {
   title: text("title").notNull(),
   description: text("description"),
   position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertCmsLessonSchema = createInsertSchema(cmsLessons).omit({
@@ -216,7 +216,7 @@ export const cmsLessonFiles = pgTable("cms_lesson_files", {
   extractedText: text("extracted_text"), // For PDF/script files - stores extracted text content
   scriptHtml: text("script_html"), // For PDF/script files - stores formatted HTML content
   position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertCmsLessonFileSchema = createInsertSchema(cmsLessonFiles).omit({
@@ -233,7 +233,7 @@ export const frontendFeatures = pgTable("frontend_features", {
   code: text("code").notNull().unique(),
   displayName: text("display_name").notNull(),
   displayMode: text("display_mode").notNull(), // 'modules' | 'lessons' | 'courses'
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertFrontendFeatureSchema = createInsertSchema(frontendFeatures).omit({
@@ -249,7 +249,7 @@ export const featureCourseMap = pgTable("feature_course_map", {
   featureId: integer("feature_id").notNull().references(() => frontendFeatures.id, { onDelete: 'cascade' }),
   courseId: integer("course_id").notNull().references(() => cmsCourses.id, { onDelete: 'cascade' }),
   position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertFeatureCourseMapSchema = createInsertSchema(featureCourseMap).omit({
@@ -266,8 +266,8 @@ export const moneyEntries = pgTable("money_entries", {
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   entryDate: date("entry_date", { mode: "string" }).notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull().default("0"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
   uniqueUserDate: unique("unique_user_date").on(table.userId, table.entryDate),
 }));
@@ -286,8 +286,8 @@ export const playlists = pgTable("playlists", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   title: text("title").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertPlaylistSchema = createInsertSchema(playlists).omit({
@@ -304,7 +304,7 @@ export const playlistItems = pgTable("playlist_items", {
   playlistId: integer("playlist_id").notNull().references(() => playlists.id, { onDelete: 'cascade' }),
   lessonId: integer("lesson_id").notNull().references(() => cmsLessons.id, { onDelete: 'cascade' }),
   position: integer("position").notNull().default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
   uniquePlaylistLesson: unique("unique_playlist_lesson").on(table.playlistId, table.lessonId),
 }));
@@ -352,7 +352,7 @@ export const userStreaks = pgTable("user_streaks", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   activityDate: varchar("activity_date", { length: 10 }).notNull(), // YYYY-MM-DD format
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
   uniqueUserActivityDate: unique("unique_user_activity_date").on(table.userId, table.activityDate),
 }));
@@ -373,7 +373,7 @@ export const activityLogs = pgTable("activity_logs", {
   lessonName: varchar("lesson_name", { length: 255 }).notNull(),
   featureType: varchar("feature_type", { length: 50 }).notNull(), // 'PROCESS' | 'BREATH' | 'CHECKLIST'
   activityDate: varchar("activity_date", { length: 10 }).notNull(), // YYYY-MM-DD format
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
   uniqueUserLessonFeatureDate: unique("unique_user_lesson_feature_date").on(
     table.userId,
@@ -399,7 +399,7 @@ export const lessonProgress = pgTable("lesson_progress", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   lessonId: integer("lesson_id").notNull().references(() => cmsLessons.id, { onDelete: 'cascade' }),
-  completedAt: timestamp("completed_at", { mode: "date" }).notNull().defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
   uniqueUserLesson: unique("unique_user_lesson_progress").on(table.userId, table.lessonId),
 }));
@@ -420,8 +420,8 @@ export const dailyQuotes = pgTable("daily_quotes", {
   isActive: boolean("is_active").notNull().default(true),
   displayOrder: integer("display_order").notNull(),
   lastShownDate: varchar("last_shown_date", { length: 10 }), // YYYY-MM-DD format
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
   uniqueDisplayOrder: unique("unique_display_order").on(table.displayOrder),
 }));
@@ -443,8 +443,8 @@ export const rewiringBeliefs = pgTable("rewiring_beliefs", {
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   limitingBelief: text("limiting_belief").notNull(),
   upliftingBelief: text("uplifting_belief").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertRewiringBeliefSchema = createInsertSchema(rewiringBeliefs).omit({
@@ -462,8 +462,8 @@ export const userWellnessProfiles = pgTable("user_wellness_profiles", {
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
   karmicAffirmation: text("karmic_affirmation"),
   prescription: jsonb("prescription"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertUserWellnessProfileSchema = createInsertSchema(userWellnessProfiles).omit({
@@ -529,13 +529,13 @@ export const notifications = pgTable("notifications", {
   title: text("title").notNull(),
   body: text("body").notNull(),
   type: varchar("type", { length: 20 }).notNull().default("system"),
-  scheduledAt: timestamp("scheduled_at", { mode: "date" }).notNull(),
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true, mode: "date" }).notNull(),
   requiredProgramCode: varchar("required_program_code", { length: 10 }).notNull(),
   requiredProgramLevel: integer("required_program_level").notNull(),
   relatedEventId: integer("related_event_id").references(() => events.id, { onDelete: 'cascade' }),
   sent: boolean("sent").notNull().default(false),
-  sentAt: timestamp("sent_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  sentAt: timestamp("sent_at", { withTimezone: true, mode: "date" }),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
@@ -559,8 +559,8 @@ export const notificationLogs = pgTable("notification_logs", {
   status: varchar("status", { length: 20 }).notNull(),
   error: text("error"),
   isRead: boolean("is_read").notNull().default(false),
-  readAt: timestamp("read_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  readAt: timestamp("read_at", { withTimezone: true, mode: "date" }),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
   idxUserUnread: index("idx_notification_logs_user_unread").on(table.userId, table.isRead),
 }));
@@ -591,8 +591,8 @@ export const projectOfHearts = pgTable("project_of_hearts", {
   endedAt: date("ended_at", { mode: "string" }),
   closingReflection: text("closing_reflection"),
   visionImages: text("vision_images").array().default([]),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertProjectOfHeartSchema = createInsertSchema(projectOfHearts).omit({
@@ -615,7 +615,7 @@ export const pohDailyRatings = pgTable("poh_daily_ratings", {
   pohId: varchar("poh_id", { length: 36 }).notNull().references(() => projectOfHearts.id, { onDelete: 'cascade' }),
   localDate: date("local_date", { mode: "string" }).notNull(),
   rating: integer("rating").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 }, (table) => [
   unique("one_rating_per_day").on(table.userId, table.localDate),
 ]);
@@ -635,8 +635,8 @@ export const pohActions = pgTable("poh_actions", {
   pohId: varchar("poh_id", { length: 36 }).notNull().references(() => projectOfHearts.id, { onDelete: 'cascade' }),
   text: text("text").notNull(),
   orderIndex: integer("order_index").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertPohActionSchema = createInsertSchema(pohActions).omit({
@@ -655,7 +655,7 @@ export const pohMilestones = pgTable("poh_milestones", {
   achieved: boolean("achieved").notNull().default(false),
   achievedAt: date("achieved_at", { mode: "string" }),
   orderIndex: integer("order_index").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertPohMilestoneSchema = createInsertSchema(pohMilestones).omit({
@@ -676,7 +676,7 @@ export const deviceTokens = pgTable("device_tokens", {
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   token: text("token").notNull().unique(),
   platform: varchar("platform", { length: 10 }).notNull().default("web"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 
 export const insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
@@ -692,7 +692,7 @@ export const userBadges = pgTable("user_badges", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   badgeKey: varchar("badge_key", { length: 50 }).notNull(),
-  earnedAt: timestamp("earned_at", { mode: "date" }).notNull().defaultNow(),
+  earnedAt: timestamp("earned_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   metadata: jsonb("metadata"),
   notified: boolean("notified").notNull().default(false),
 }, (table) => ({
@@ -738,11 +738,11 @@ export const drmQuestions = pgTable("drm_questions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   questionText: varchar("question_text", { length: 240 }).notNull(),
-  askedAt: timestamp("asked_at", { mode: "date" }).notNull().defaultNow(),
+  askedAt: timestamp("asked_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   monthYear: varchar("month_year", { length: 7 }).notNull(),
   status: varchar("status", { length: 20 }).notNull().default("PENDING"),
   audioR2Key: text("audio_r2_key"),
-  answeredAt: timestamp("answered_at", { mode: "date" }),
+  answeredAt: timestamp("answered_at", { withTimezone: true, mode: "date" }),
 }, (table) => ({
   uniqueUserMonth: unique("unique_user_month_question").on(table.userId, table.monthYear),
 }));
@@ -771,8 +771,8 @@ export const goldmineVideos = pgTable("goldmine_videos", {
   sizeMb: integer("size_mb"),
   tags: varchar("tags").array().notNull().default([]),
   isPublished: boolean("is_published").notNull().default(false),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
   createdAtIdx: index("idx_goldmine_videos_created_at").on(table.createdAt),
   isPublishedIdx: index("idx_goldmine_videos_is_published").on(table.isPublished),
