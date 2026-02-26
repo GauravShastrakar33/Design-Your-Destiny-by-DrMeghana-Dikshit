@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import InfiniteScroll from "react-infinite-scroll-component";
 
 import {
   Gem,
@@ -65,6 +64,10 @@ export default function GoldMinePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
+  // Persist observer instance for cleanup
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -83,9 +86,9 @@ export default function GoldMinePage() {
   } = useInfiniteQuery<GoldmineListResponse>({
     queryKey: ["/api/goldmine/videosList", debouncedSearch],
     queryFn: async ({ pageParam = 1 }) => {
-      const url = `/api/goldmine/videosList?page=${pageParam}&limit=20${
+      const url = `/api/goldmine/videosList?page=${pageParam}&limit=5${
         debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ""
-      }`; 
+      }`;
       const res = await apiRequest("GET", url);
       return res.json();
     },
@@ -100,24 +103,36 @@ export default function GoldMinePage() {
 
   const allVideos = data?.pages.flatMap((page) => page.data) ?? [];
 
-  // Auto-fill: If the content doesn't fill the screen, fetch more immediately
-  useEffect(() => {
-    if (
-      hasNextPage &&
-      !isFetchingNextPage &&
-      !isLoading &&
-      allVideos.length > 0
-    ) {
-      const scrollHeight = document.documentElement.scrollHeight;
-      const clientHeight = document.documentElement.clientHeight;
-      // If the scroll height is close to or less than client height, we might not have a scrollbar
-      if (scrollHeight <= clientHeight + 100) {
-        console.log("Content doesn't fill screen, auto-fetching...");
-        fetchNextPage();
+  // Callback ref for the sentinel element at the bottom of the list.
+  // Using a callback ref instead of useRef + useEffect because the sentinel
+  // is conditionally rendered inside AnimatePresence — useEffect would run
+  // before the DOM node exists. The callback ref fires the instant the node
+  // is mounted by React, guaranteeing the observer is attached correctly.
+  const sentinelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      // Tear down previous observer
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
       }
-    }
-  }, [allVideos.length, hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
 
+      // Nothing to observe
+      if (!node) return;
+
+      // Create a fresh observer with current closure values
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+          }
+        },
+        { rootMargin: "200px" }
+      );
+
+      observerRef.current.observe(node);
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage]
+  );
 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return "";
@@ -241,90 +256,86 @@ export default function GoldMinePage() {
               )}
             </motion.div>
           ) : (
-            <InfiniteScroll
-              dataLength={allVideos.length}
-              next={fetchNextPage}
-              hasMore={!!hasNextPage}
-              loader={
-                <div className="py-12 flex justify-center">
+            <motion.div
+              key="list"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="space-y-4"
+            >
+              {allVideos.map((video) => (
+                <motion.button
+                  key={video.id}
+                  variants={itemVariants}
+                  onClick={() => handleVideoClick(video)}
+                  className="w-full bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex gap-4 text-left active:scale-[0.98] transition-all hover:border-brand/30 group"
+                  data-testid={`video-card-${video.id}`}
+                >
+                  {/* Left: Thumbnail */}
+                  <div className="relative w-32 h-20 flex-shrink-0 bg-slate-100 rounded-xl overflow-hidden ring-1 ring-slate-100">
+                    {video.thumbnailUrl ? (
+                      <img
+                        src={video.thumbnailUrl}
+                        alt={video.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Film className="w-6 h-6 text-slate-300" />
+                      </div>
+                    )}
+                    {/* Play Icon Overlay or Loader */}
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-100 transition-opacity group-hover:bg-black/30">
+                      {playingVideoId === video.id ? (
+                        <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center border border-white/40">
+                          <Loader2 className="w-4 h-4 text-white animate-spin" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center border border-white/40 ring-4 ring-black/5">
+                          <Play className="w-4 h-4 text-white fill-white" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right: Info */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
+                    <h3 className="font-bold text-slate-900 text-sm mb-1.5 line-clamp-2 leading-tight group-hover:text-brand transition-colors">
+                      {video.title}
+                    </h3>
+                    <div className="flex items-center gap-3">
+                      {video.durationSec && (
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span className="text-[11px] font-black tracking-wider uppercase">
+                            {formatDuration(video.durationSec)}
+                          </span>
+                        </div>
+                      )}
+                      <span className="text-[11px] font-bold text-slate-300 tabular-nums">
+                        {format(new Date(video.createdAt), "MMM d, yyyy")}
+                      </span>
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+
+              {/* Sentinel element observed by IntersectionObserver */}
+              <div ref={sentinelRef} className="py-8 flex justify-center">
+                {isFetchingNextPage ? (
                   <div className="flex items-center gap-2 text-slate-400">
                     <Loader2 className="w-5 h-5 animate-spin" />
                     <span className="text-sm font-medium">Loading more...</span>
                   </div>
-                </div>
-              }
-              endMessage={
-                <div className="py-12 text-center text-slate-400 text-sm font-medium">
-                  {allVideos.length > 0 && "You've reached the end of the vault"}
-                </div>
-              }
-              scrollThreshold={0.6} // Trigger earlier for better experience
-            >
-              <motion.div
-                key="list"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="space-y-4"
-              >
-                {allVideos.map((video) => (
-                  <motion.button
-                    key={video.id}
-                    variants={itemVariants}
-                    onClick={() => handleVideoClick(video)}
-                    className="w-full bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex gap-4 text-left active:scale-[0.98] transition-all hover:border-brand/30 group"
-                    data-testid={`video-card-${video.id}`}
-                  >
-                    {/* Left: Thumbnail */}
-                    <div className="relative w-32 h-20 flex-shrink-0 bg-slate-100 rounded-xl overflow-hidden ring-1 ring-slate-100">
-                      {video.thumbnailUrl ? (
-                        <img
-                          src={video.thumbnailUrl}
-                          alt={video.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Film className="w-6 h-6 text-slate-300" />
-                        </div>
-                      )}
-                      {/* Play Icon Overlay or Loader */}
-                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-100 transition-opacity group-hover:bg-black/30">
-                        {playingVideoId === video.id ? (
-                          <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center border border-white/40">
-                            <Loader2 className="w-4 h-4 text-white animate-spin" />
-                          </div>
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center border border-white/40 ring-4 ring-black/5">
-                            <Play className="w-4 h-4 text-white fill-white" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: Info */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
-                      <h3 className="font-bold text-slate-900 text-sm mb-1.5 line-clamp-2 leading-tight group-hover:text-brand transition-colors">
-                        {video.title}
-                      </h3>
-                      <div className="flex items-center gap-3">
-                        {video.durationSec && (
-                          <div className="flex items-center gap-1.5 text-slate-400">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span className="text-[11px] font-black tracking-wider uppercase">
-                              {formatDuration(video.durationSec)}
-                            </span>
-                          </div>
-                        )}
-                        <span className="text-[11px] font-bold text-slate-300 tabular-nums">
-                          {format(new Date(video.createdAt), "MMM d, yyyy")}
-                        </span>
-                      </div>
-                    </div>
-                  </motion.button>
-                ))}
-              </motion.div>
-            </InfiniteScroll>
+                ) : hasNextPage ? (
+                  <div className="h-1" />
+                ) : (
+                  <div className="text-slate-400 text-sm font-medium">
+                    You've reached the end of the vault
+                  </div>
+                )}
+              </div>
+            </motion.div>
           )}
         </AnimatePresence>
       </main>
