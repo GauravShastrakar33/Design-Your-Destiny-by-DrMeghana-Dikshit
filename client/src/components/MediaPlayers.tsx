@@ -267,16 +267,24 @@ export const VideoPlayer = React.forwardRef<HTMLVideoElement, MediaPlayerProps>(
             isLoading ? "opacity-50 pointer-events-none" : "opacity-100"
           }`}
         >
-          {/* Progress Slider - Thinner style */}
-          <div className="relative mb-1">
-            <Slider
-              value={[currentTime]}
-              max={duration || 100}
-              step={0.1}
-              onValueChange={handleSliderChange}
-              disabled={isLoading}
-              className="cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 sm:[&_[role=slider]]:h-4 sm:[&_[role=slider]]:w-4 [&_.relative]:h-1 sm:[&_.relative]:h-1.5 [&_.bg-secondary]:bg-brand/20"
-            />
+          {/* Progress Slider with time at ends */}
+          <div className="flex items-center gap-2 sm:gap-4 mb-2">
+            <span className="text-[10px] sm:text-xs font-bold text-slate-700 tabular-nums min-w-[32px] sm:min-w-[40px] text-left">
+              {formatTime(currentTime)}
+            </span>
+            <div className="flex-1 relative">
+              <Slider
+                value={[currentTime]}
+                max={duration || 100}
+                step={0.1}
+                onValueChange={handleSliderChange}
+                disabled={isLoading}
+                className="cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 sm:[&_[role=slider]]:h-4 sm:[&_[role=slider]]:w-4 [&_.relative]:h-1 sm:[&_.relative]:h-1.5 [&_.bg-secondary]:bg-brand/20"
+              />
+            </div>
+            <span className="text-[10px] sm:text-xs font-bold text-slate-500 tabular-nums min-w-[32px] sm:min-w-[40px] text-right">
+              {formatTime(duration)}
+            </span>
           </div>
 
           <div className="flex items-center justify-between gap-2">
@@ -319,46 +327,18 @@ export const VideoPlayer = React.forwardRef<HTMLVideoElement, MediaPlayerProps>(
                 </button>
               </div>
 
-              <div className="flex items-center gap-1.5 sm:gap-3 text-slate-500 text-xs sm:text-md font-bold uppercase tracking-wider flex-shrink-0">
-                <span className="text-slate-700">
-                  {formatTime(currentTime)}
-                </span>
-                <span className="opacity-50">/</span>
-                <span>{formatTime(duration)}</span>
-              </div>
-
-              <div className="flex items-center ml-1 sm:ml-2 group/volume relative">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      disabled={isLoading}
-                      className="w-8 h-8 sm:w-11 sm:h-11 rounded-full text-slate-500 hover:text-brand hover:bg-brand/5 flex items-center justify-center transition-all outline-none"
-                    >
-                      <Volume2 className="w-3.5 h-3.5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    side="top"
-                    align="center"
-                    sideOffset={12}
-                    className="w-12 min-w-0 p-3 rounded-2xl shadow-2xl border-brand/10 bg-white/95 backdrop-blur-md flex flex-col items-center gap-3 animate-in fade-in zoom-in duration-200"
-                  >
-                    <div className="h-28 flex flex-col items-center">
-                      <Slider
-                        value={[volume]}
-                        max={100}
-                        step={1}
-                        orientation="vertical"
-                        onValueChange={handleVolumeChange}
-                        disabled={isLoading}
-                        className="cursor-pointer h-full [&_[role=slider]]:h-3.5 [&_[role=slider]]:w-3.5 sm:[&_[role=slider]]:h-4 sm:[&_[role=slider]]:w-4 [&_.relative]:w-1.5 sm:[&_.relative]:w-1.5"
-                      />
-                    </div>
-                    <span className="text-[10px] font-black text-brand tabular-nums">
-                      {volume}%
-                    </span>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <div className="flex items-center gap-1.5 sm:gap-4 ml-1 sm:ml-2">
+                <Volume2 className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-slate-500 flex-shrink-0" />
+                <div className="w-12 sm:w-28">
+                  <Slider
+                    value={[volume]}
+                    max={100}
+                    step={1}
+                    onValueChange={handleVolumeChange}
+                    disabled={isLoading}
+                    className="cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 sm:[&_[role=slider]]:h-4 sm:[&_[role=slider]]:w-4 [&_.relative]:h-1 sm:[&_.relative]:h-1.5"
+                  />
+                </div>
               </div>
             </div>
 
