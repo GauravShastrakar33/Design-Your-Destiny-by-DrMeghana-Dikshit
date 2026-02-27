@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
 import { useForm } from "react-hook-form";
@@ -138,8 +139,8 @@ export default function AdminEventFormPage() {
         description: event.description || "",
         coachName: event.coachName || "",
         thumbnailUrl: event.thumbnailUrl || "",
-        startDatetime: startDt.toISOString().slice(0, 16),
-        endDatetime: endDt.toISOString().slice(0, 16),
+        startDatetime: format(startDt, "yyyy-MM-dd'T'HH:mm"),
+        endDatetime: format(endDt, "yyyy-MM-dd'T'HH:mm"),
         joinUrl: event.joinUrl || "",
         requiredProgramCode: event.requiredProgramCode || "USB",
         requiredProgramLevel: event.requiredProgramLevel || 1,

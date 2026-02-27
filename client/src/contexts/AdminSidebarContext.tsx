@@ -99,6 +99,11 @@ const menuItems: MenuItem[] = [
     path: "/admin/drm-questions",
     label: "Dr.M Questions",
   },
+  {
+    id: "goldmine",
+    path: "/admin/goldmine",
+    label: "GoldMine",
+  },
 ];
 
 const AdminSidebarContext = createContext<AdminSidebarContextType | undefined>(

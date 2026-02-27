@@ -52,10 +52,10 @@ if (Capacitor.isNativePlatform()) {
 
     // ✅ iOS Status Bar Fix
     if (Capacitor.getPlatform() === "ios") {
-      await StatusBar.setStyle({ style: Style.Light });
+      await StatusBar.setStyle({ style: Style.Dark});
 
       // Only needed if overlaysWebView = false
-      await StatusBar.setBackgroundColor({ color: "#cbb9fa" });
+      await StatusBar.setBackgroundColor({ color: "#703DFA" });
     }
 
     // 🔔 Push Notifications
