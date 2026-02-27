@@ -1,14 +1,19 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { useParams, useLocation, useSearch } from "wouter";
-import { Loader2, FileText } from "lucide-react";
+import { Loader2, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VideoPlayer, AudioPlayer } from "@/components/MediaPlayers";
 import { motion } from "framer-motion";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useRef, useEffect, useCallback } from "react";
-import type { CmsLesson, CmsLessonFile } from "@shared/schema";
+import type {
+  CmsLesson,
+  CmsLessonFile,
+  CmsModule,
+  CmsModuleFolder,
+} from "@shared/schema";
 
 interface LessonFileWithUrl extends CmsLessonFile {
   signedUrl: string | null;
@@ -17,6 +22,12 @@ interface LessonFileWithUrl extends CmsLessonFile {
 interface LessonResponse {
   lesson: CmsLesson;
   files: LessonFileWithUrl[];
+}
+
+interface ModuleLessonsResponse {
+  module: CmsModule;
+  folders: CmsModuleFolder[];
+  lessons: CmsLesson[];
 }
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -112,6 +123,49 @@ export default function ProcessLessonPage() {
     },
     enabled: !!lessonId,
   });
+
+  const effectiveModuleId = moduleId || data?.lesson?.moduleId;
+
+  const { data: moduleData } = useQuery<ModuleLessonsResponse>({
+    queryKey: ["/api/public/v1/modules", effectiveModuleId],
+    queryFn: async () => {
+      const response = await apiRequest(
+        "GET",
+        `/api/public/v1/modules/${effectiveModuleId}`
+      );
+      return response.json();
+    },
+    enabled: !!effectiveModuleId,
+  });
+
+  // Reset activity tracking when lesson changes
+  useEffect(() => {
+    setHasLoggedActivity(false);
+  }, [lessonId]);
+
+  const currentFolderId = data?.lesson?.folderId;
+  const sameFolderLessons = moduleData?.lessons
+    ? moduleData.lessons
+        .filter((l) => l.folderId === currentFolderId)
+        .sort((a, b) => a.position - b.position)
+    : [];
+
+  const currentIndex = sameFolderLessons.findIndex(
+    (l) => l.id === Number(lessonId)
+  );
+  const prevLesson =
+    currentIndex > 0 ? sameFolderLessons[currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex !== -1 && currentIndex < sameFolderLessons.length - 1
+      ? sameFolderLessons[currentIndex + 1]
+      : null;
+
+  const navigateToLesson = (id: number) => {
+    const type = params.type || "dyd";
+    setLocation(
+      `/processes/${type.toLowerCase()}/lesson/${id}?moduleId=${effectiveModuleId}`
+    );
+  };
 
   if (isLoading) {
     return (
@@ -288,6 +342,58 @@ export default function ProcessLessonPage() {
               No content available for this lesson yet
             </p>
           </div>
+        )}
+
+        {(prevLesson || nextLesson) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200 mt-4"
+          >
+            {prevLesson ? (
+              <Button
+                variant="outline"
+                onClick={() => navigateToLesson(prevLesson.id)}
+                className="w-full sm:flex-1 rounded-2xl h-14 flex items-center justify-start gap-4 px-5 border-brand/10 bg-white hover:bg-brand/5 hover:border-brand/30 transition-all group/prev"
+              >
+                <div className="w-8 h-8 rounded-full bg-brand/5 flex items-center justify-center text-brand group-hover/prev:scale-110 transition-transform">
+                  <ChevronLeft className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col items-start min-w-0 text-left">
+                  <span className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400 mb-0.5">
+                    Previous
+                  </span>
+                  <span className="text-sm font-bold text-slate-700 truncate w-full group-hover/prev:text-brand transition-colors">
+                    {prevLesson.title}
+                  </span>
+                </div>
+              </Button>
+            ) : (
+              <div className="hidden sm:block flex-1" />
+            )}
+
+            {nextLesson ? (
+              <Button
+                onClick={() => navigateToLesson(nextLesson.id)}
+                className="w-full sm:flex-1 rounded-2xl h-14 flex items-center justify-end gap-4 px-5 bg-brand hover:bg-brand/90 shadow-lg shadow-brand/20 transition-all hover:scale-[1.02] group/next"
+              >
+                <div className="flex flex-col items-end min-w-0 text-right">
+                  <span className="text-[10px] uppercase tracking-[0.2em] font-black text-white/50 mb-0.5">
+                    Next
+                  </span>
+                  <span className="text-sm font-bold text-white truncate w-full">
+                    {nextLesson.title}
+                  </span>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white group-hover/next:scale-110 transition-transform">
+                  <ChevronRight className="w-5 h-5" />
+                </div>
+              </Button>
+            ) : (
+              <div className="hidden sm:block flex-1" />
+            )}
+          </motion.div>
         )}
       </main>
     </div>
