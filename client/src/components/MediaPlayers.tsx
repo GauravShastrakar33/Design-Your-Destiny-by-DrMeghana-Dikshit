@@ -1,5 +1,13 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Play, Pause, Music, Volume2, Maximize } from "lucide-react";
+import {
+  Play,
+  Pause,
+  Music,
+  Volume2,
+  Maximize,
+  RotateCcw,
+  RotateCw,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -180,6 +188,14 @@ export const VideoPlayer = React.forwardRef<HTMLVideoElement, MediaPlayerProps>(
       }
     };
 
+    const handleSeek = (seconds: number) => {
+      if (videoRef.current) {
+        const newTime = videoRef.current.currentTime + seconds;
+        videoRef.current.currentTime = Math.max(0, Math.min(newTime, duration));
+        setCurrentTime(videoRef.current.currentTime);
+      }
+    };
+
     const toggleFullscreen = () => {
       if (!videoRef.current) return;
 
@@ -251,38 +267,64 @@ export const VideoPlayer = React.forwardRef<HTMLVideoElement, MediaPlayerProps>(
             isLoading ? "opacity-50 pointer-events-none" : "opacity-100"
           }`}
         >
-          {/* Progress Slider - Thinner style */}
-          <div className="relative mb-1">
-            <Slider
-              value={[currentTime]}
-              max={duration || 100}
-              step={0.1}
-              onValueChange={handleSliderChange}
-              disabled={isLoading}
-              className="cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 sm:[&_[role=slider]]:h-4 sm:[&_[role=slider]]:w-4 [&_.relative]:h-1 sm:[&_.relative]:h-1.5 [&_.bg-secondary]:bg-brand/20"
-            />
+          {/* Progress Slider with time at ends */}
+          <div className="flex items-center gap-2 sm:gap-4 mb-2">
+            <span className="text-[10px] sm:text-xs font-bold text-slate-700 tabular-nums min-w-[32px] sm:min-w-[40px] text-left">
+              {formatTime(currentTime)}
+            </span>
+            <div className="flex-1 relative">
+              <Slider
+                value={[currentTime]}
+                max={duration || 100}
+                step={0.1}
+                onValueChange={handleSliderChange}
+                disabled={isLoading}
+                className="cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 sm:[&_[role=slider]]:h-4 sm:[&_[role=slider]]:w-4 [&_.relative]:h-1 sm:[&_.relative]:h-1.5 [&_.bg-secondary]:bg-brand/20"
+              />
+            </div>
+            <span className="text-[10px] sm:text-xs font-bold text-slate-500 tabular-nums min-w-[32px] sm:min-w-[40px] text-right">
+              {formatTime(duration)}
+            </span>
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-6 min-w-0">
-              <button
-                onClick={togglePlay}
-                disabled={isLoading}
-                className="w-7 h-7 sm:w-11 sm:h-11 rounded-full bg-brand/10 text-brand flex items-center justify-center hover:bg-brand hover:text-white transition-all active:scale-95 shadow-sm flex-shrink-0 disabled:opacity-50"
-              >
-                {isPlaying ? (
-                  <Pause className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-current" />
-                ) : (
-                  <Play className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-current ml-0.5" />
-                )}
-              </button>
+            <div className="flex items-center gap-1 sm:gap-3 min-w-0">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <button
+                  onClick={() => handleSeek(-10)}
+                  disabled={isLoading}
+                  className="w-7 h-7 sm:w-10 sm:h-10 rounded-full text-slate-500 flex items-center justify-center hover:bg-brand/5 hover:text-brand transition-all flex-shrink-0 disabled:opacity-50 relative"
+                  title="Rewind 10s"
+                >
+                  <RotateCcw className="w-5 h-5 sm:w-5 sm:h-5" />
+                  <span className="absolute inset-0 flex items-center justify-center text-[6px] sm:text-[8px] font-black mt-[1px] sm:mt-[2px]">
+                    10
+                  </span>
+                </button>
 
-              <div className="flex items-center gap-1.5 sm:gap-3 text-slate-500 text-xs sm:text-md font-bold uppercase tracking-wider flex-shrink-0">
-                <span className="text-slate-700">
-                  {formatTime(currentTime)}
-                </span>
-                <span className="opacity-50">/</span>
-                <span>{formatTime(duration)}</span>
+                <button
+                  onClick={togglePlay}
+                  disabled={isLoading}
+                  className="w-7 h-7 sm:w-11 sm:h-11 rounded-full bg-brand/10 text-brand flex items-center justify-center hover:bg-brand hover:text-white transition-all active:scale-95 shadow-sm flex-shrink-0 disabled:opacity-50"
+                >
+                  {isPlaying ? (
+                    <Pause className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-current" />
+                  ) : (
+                    <Play className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-current ml-0.5" />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleSeek(10)}
+                  disabled={isLoading}
+                  className="w-7 h-7 sm:w-10 sm:h-10 rounded-full text-slate-500 flex items-center justify-center hover:bg-brand/5 hover:text-brand transition-all flex-shrink-0 disabled:opacity-50 relative"
+                  title="Forward 10s"
+                >
+                  <RotateCw className="w-5 h-5 sm:w-5 sm:h-5" />
+                  <span className="absolute inset-0 flex items-center justify-center text-[6px] sm:text-[8px] font-black mt-[1px] sm:mt-[2px]">
+                    10
+                  </span>
+                </button>
               </div>
 
               <div className="flex items-center gap-1.5 sm:gap-4 ml-1 sm:ml-2">
@@ -420,6 +462,14 @@ export const AudioPlayer = React.forwardRef<HTMLAudioElement, MediaPlayerProps>(
       }
     };
 
+    const handleSeek = (seconds: number) => {
+      if (audioRef.current) {
+        const newTime = audioRef.current.currentTime + seconds;
+        audioRef.current.currentTime = Math.max(0, Math.min(newTime, duration));
+        setCurrentTime(audioRef.current.currentTime);
+      }
+    };
+
     const formatTime = (time: number) => {
       const minutes = Math.floor(time / 60);
       const seconds = Math.floor(time % 60);
@@ -492,19 +542,45 @@ export const AudioPlayer = React.forwardRef<HTMLAudioElement, MediaPlayerProps>(
               </div>
             </div>
 
-            <motion.button
-              whileHover={{ scale: isLoading ? 1 : 1.05 }}
-              whileTap={{ scale: isLoading ? 1 : 0.95 }}
-              onClick={togglePlay}
-              disabled={isLoading}
-              className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white text-slate-900 hover:bg-brand hover:text-white transition-all shadow-sm border border-slate-200 flex-shrink-0 flex items-center justify-center disabled:opacity-50"
-            >
-              {isPlaying ? (
-                <Pause className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-current" />
-              ) : (
-                <Play className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-current ml-0.5" />
-              )}
-            </motion.button>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button
+                onClick={() => handleSeek(-10)}
+                disabled={isLoading}
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full text-slate-400 flex items-center justify-center hover:bg-brand/5 hover:text-brand transition-all flex-shrink-0 disabled:opacity-50 relative"
+                title="Rewind 10s"
+              >
+                <RotateCcw className="w-5 h-5 sm:w-5 sm:h-5" />
+                <span className="absolute inset-0 flex items-center justify-center text-[7px] sm:text-[9px] font-black mt-[1px] sm:mt-[2px]">
+                  10
+                </span>
+              </button>
+
+              <motion.button
+                whileHover={{ scale: isLoading ? 1 : 1.05 }}
+                whileTap={{ scale: isLoading ? 1 : 0.95 }}
+                onClick={togglePlay}
+                disabled={isLoading}
+                className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white text-slate-900 hover:bg-brand hover:text-white transition-all shadow-sm border border-slate-200 flex-shrink-0 flex items-center justify-center disabled:opacity-50"
+              >
+                {isPlaying ? (
+                  <Pause className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-current" />
+                ) : (
+                  <Play className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-current ml-0.5" />
+                )}
+              </motion.button>
+
+              <button
+                onClick={() => handleSeek(10)}
+                disabled={isLoading}
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full text-slate-400 flex items-center justify-center hover:bg-brand/5 hover:text-brand transition-all flex-shrink-0 disabled:opacity-50 relative"
+                title="Forward 10s"
+              >
+                <RotateCw className="w-5 h-5 sm:w-5 sm:h-5" />
+                <span className="absolute inset-0 flex items-center justify-center text-[7px] sm:text-[9px] font-black mt-[1px] sm:mt-[2px]">
+                  10
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3 sm:space-y-4">

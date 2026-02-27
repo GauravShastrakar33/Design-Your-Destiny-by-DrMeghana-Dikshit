@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,16 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Loader2, List, X, Music, Settings2, Sparkles } from "lucide-react";
 import type {
   CmsCourse,
@@ -31,6 +42,9 @@ interface ModuleWithLessons extends CmsModule {
 
 export default function AdminPlaylistMappingPage() {
   const { toast } = useToast();
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [changeDialogOpen, setChangeDialogOpen] = useState(false);
+  const [pendingCourseId, setPendingCourseId] = useState<number | null>(null);
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<
@@ -144,6 +158,8 @@ export default function AdminPlaylistMappingPage() {
         ],
       });
       toast({ title: "Success", description: "Course mapped successfully" });
+      setChangeDialogOpen(false);
+      setPendingCourseId(null);
     },
     onError: () => {
       toast({
@@ -170,6 +186,7 @@ export default function AdminPlaylistMappingPage() {
         ],
       });
       toast({ title: "Success", description: "Mapping cleared" });
+      setClearDialogOpen(false);
     },
     onError: () => {
       toast({
@@ -184,10 +201,22 @@ export default function AdminPlaylistMappingPage() {
     if (!courseId) return;
     const newCourseId = parseInt(courseId);
     if (newCourseId === selectedCourseId) return;
-    mapCourseMutation.mutate(newCourseId);
+
+    setPendingCourseId(newCourseId);
+    setChangeDialogOpen(true);
+  };
+
+  const confirmCourseChange = () => {
+    if (pendingCourseId !== null) {
+      mapCourseMutation.mutate(pendingCourseId);
+    }
   };
 
   const handleClearSelection = () => {
+    setClearDialogOpen(true);
+  };
+
+  const confirmClearSelection = () => {
     if (selectedCourse) {
       clearMappingMutation.mutate(selectedCourse.courseId);
     }
@@ -337,6 +366,69 @@ export default function AdminPlaylistMappingPage() {
           </div>
         )}
       </div>
+
+      {/* Clear Selection Confirmation */}
+      <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Selection?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to clear the playlist mapping? This will
+                remove the playlist mapping, and users will no longer be able to
+                build playlists using these tracks.
+              </p>
+              <strong className="text-red-600 mt-1">
+                Please make sure to map the correct course again.
+              </strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmClearSelection}
+              className="bg-red-600 hover:bg-red-700 font-bold"
+              data-testid="button-confirm-clear"
+            >
+              {clearMappingMutation.isPending
+                ? "Clearing..."
+                : "Clear Selection"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Change Course Confirmation */}
+      <AlertDialog open={changeDialogOpen} onOpenChange={setChangeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Course Mapping?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to change the playlist source course? This
+                will update the modules and tracks available to users in the
+                playlist builder.
+              </p>
+              <p className="text-gray-600">
+                The content preview below will update once you confirm the
+                change.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingCourseId(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmCourseChange}
+              className="bg-brand hover:bg-brand/90 font-bold"
+              data-testid="button-confirm-change"
+            >
+              {mapCourseMutation.isPending ? "Updating..." : "Confirm Change"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

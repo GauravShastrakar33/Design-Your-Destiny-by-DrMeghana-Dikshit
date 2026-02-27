@@ -281,7 +281,7 @@ export default function AccountSettingsPage() {
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
                           className="rounded-lg border-gray-100 h-12 pl-4 pr-12 focus:ring-brand"
-                          placeholder="••••••••"
+                          placeholder="Enter current password"
                         />
                         <button
                           type="button"

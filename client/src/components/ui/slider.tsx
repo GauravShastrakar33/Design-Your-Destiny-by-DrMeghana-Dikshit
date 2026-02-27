@@ -9,28 +9,43 @@ const Slider = React.forwardRef<
     rangeClassName?: string;
     trackClassName?: string;
     thumbClassName?: string;
+    orientation?: "horizontal" | "vertical";
   }
 >(
   (
-    { className, rangeClassName, trackClassName, thumbClassName, ...props },
+    {
+      className,
+      rangeClassName,
+      trackClassName,
+      thumbClassName,
+      orientation = "horizontal",
+      ...props
+    },
     ref
   ) => (
     <SliderPrimitive.Root
       ref={ref}
+      orientation={orientation}
       className={cn(
-        "relative flex w-full touch-none select-none items-center",
+        "relative flex touch-none select-none items-center",
+        orientation === "horizontal" ? "w-full h-5" : "flex-col h-full w-5",
         className
       )}
       {...props}
     >
       <SliderPrimitive.Track
         className={cn(
-          "relative h-2 w-full grow overflow-hidden rounded-full bg-gray-200",
+          "relative overflow-hidden rounded-full bg-gray-200",
+          orientation === "horizontal" ? "h-2 w-full grow" : "w-2 h-full grow",
           trackClassName
         )}
       >
         <SliderPrimitive.Range
-          className={cn("absolute h-full bg-primary", rangeClassName)}
+          className={cn(
+            "absolute bg-primary",
+            orientation === "horizontal" ? "h-full" : "w-full",
+            rangeClassName
+          )}
         />
       </SliderPrimitive.Track>
       <SliderPrimitive.Thumb

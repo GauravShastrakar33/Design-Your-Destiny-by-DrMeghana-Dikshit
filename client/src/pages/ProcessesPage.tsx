@@ -406,7 +406,7 @@ export default function ProcessesPage() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setLocation(`/processes/${value.toLowerCase()}`);
+    setLocation(`/processes/${value.toLowerCase()}`, { replace: true });
   };
 
   const {
@@ -440,7 +440,7 @@ export default function ProcessesPage() {
       <Header
         title="Processes"
         hasBackButton={true}
-        onBack={() => setLocation("/")}
+        onBack={() => setLocation("/home")}
       />
 
       <main className="max-w-3xl mx-auto p-4 pt-3">
