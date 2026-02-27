@@ -75,7 +75,7 @@ import AdminEventsPage from "@/pages/AdminEventsPage";
 import AdminEventFormPage from "@/pages/AdminEventFormPage";
 import AdminNotificationsPage from "@/pages/AdminNotificationsPage";
 import AdminDrmQuestionsPage from "@/pages/AdminDrmQuestionsPage";
-import AdminGoldminePage from "@/pages/AdminGoldMinePage";
+import AdminGoldminePage from "@/pages/AdminGoldminePage";
 import AdminCourseFormPage from "@/pages/AdminCourseFormPage";
 import LessonDetailPage from "@/pages/LessonDetailPage";
 
@@ -143,21 +143,28 @@ function AppContent() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    const listener = CapacitorApp.addListener("appStateChange", async (state) => {
-      if (state.isActive) {
-        console.log("📱 App became active, refreshing notifications...");
-        try {
-          // Refresh notification list and unread count
-          await queryClient.invalidateQueries({ queryKey: ["/api/v1/notifications"] });
-          await queryClient.invalidateQueries({ queryKey: ["/api/v1/notifications/unread-count"] });
-        } catch (e) {
-          console.error("❌ Failed to refresh notifications on resume", e);
+    const listener = CapacitorApp.addListener(
+      "appStateChange",
+      async (state) => {
+        if (state.isActive) {
+          console.log("📱 App became active, refreshing notifications...");
+          try {
+            // Refresh notification list and unread count
+            await queryClient.invalidateQueries({
+              queryKey: ["/api/v1/notifications"],
+            });
+            await queryClient.invalidateQueries({
+              queryKey: ["/api/v1/notifications/unread-count"],
+            });
+          } catch (e) {
+            console.error("❌ Failed to refresh notifications on resume", e);
+          }
         }
       }
-    });
+    );
 
     return () => {
-      listener.then(l => l.remove());
+      listener.then((l) => l.remove());
     };
   }, []);
 
@@ -182,6 +189,25 @@ function AppContent() {
 
       if (isFullscreen) {
         console.log("📺 Fullscreen detected, skipping global back navigation");
+        return;
+      }
+
+      // PRIORITY 0.5: Check for open modals/dialogs
+      // If a modal is open, we close it instead of navigating
+      const openModal = document.querySelector(
+        '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]'
+      );
+      if (openModal) {
+        console.log("🛡️ Modal detected, closing via Escape event");
+        const event = new KeyboardEvent("keydown", {
+          key: "Escape",
+          code: "Escape",
+          keyCode: 27,
+          which: 27,
+          bubbles: true,
+          cancelable: true,
+        });
+        document.dispatchEvent(event);
         return;
       }
 
@@ -254,10 +280,10 @@ function AppContent() {
               <Switch>
                 {/* --- ROOT & AUTH --- */}
                 <Route path="/">
-                  <Redirect to="/home" />
+                  <Redirect to="/home" replace />
                 </Route>
                 <Route path="/index.html">
-                  <Redirect to="/home" />
+                  <Redirect to="/home" replace />
                 </Route>
 
                 <Route path="/admin/login">
@@ -479,7 +505,7 @@ function AppContent() {
                   </ProtectedRoute>
                 </Route>
                 <Route path="/processes">
-                  <Redirect to="/processes/dyd" />
+                  <Redirect to="/processes/dyd" replace />
                 </Route>
                 <Route path="/processes/:type">
                   <ProtectedRoute>
