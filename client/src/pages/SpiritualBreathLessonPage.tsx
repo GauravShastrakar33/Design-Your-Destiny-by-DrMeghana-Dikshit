@@ -5,6 +5,12 @@ import { ArrowLeft, Loader2, Video, Music, FileText, Wind } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useRef } from "react";
 import type { CmsLesson, CmsLessonFile } from "@shared/schema";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface LessonFileWithUrl extends CmsLessonFile {
   signedUrl: string | null;
@@ -122,28 +128,42 @@ export default function SpiritualBreathLessonPage() {
 
           {scriptFile &&
             (scriptFile.scriptHtml || scriptFile.extractedText) && (
-              <Card className="p-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <FileText className="w-5 h-5 text-amber-600" />
-                  <span className="font-medium text-foreground">
-                    Instructions
-                  </span>
-                </div>
-                {scriptFile.scriptHtml ? (
-                  <div
-                    className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground"
-                    data-testid="text-script-content"
-                    dangerouslySetInnerHTML={{ __html: scriptFile.scriptHtml }}
-                  />
-                ) : (
-                  <div
-                    className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap"
-                    data-testid="text-script-content"
-                  >
-                    {scriptFile.extractedText}
-                  </div>
-                )}
-              </Card>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="instructions" className="border-0">
+                  <Card className="border-0 shadow-sm rounded-xl bg-white overflow-hidden">
+                    <AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-gray-50/50 transition-colors group">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center group-data-[state=open]:bg-amber-100 transition-colors">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <span className="font-bold text-gray-900">
+                          Instructions
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-6 pt-2">
+                      <div className="prose prose-sm max-w-none border-t border-gray-50 pt-4">
+                        {scriptFile.scriptHtml ? (
+                          <div
+                            className="prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground"
+                            data-testid="text-script-content"
+                            dangerouslySetInnerHTML={{
+                              __html: scriptFile.scriptHtml,
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className="text-foreground whitespace-pre-wrap"
+                            data-testid="text-script-content"
+                          >
+                            {scriptFile.extractedText}
+                          </div>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </Card>
+                </AccordionItem>
+              </Accordion>
             )}
 
           {files.length === 0 && (
