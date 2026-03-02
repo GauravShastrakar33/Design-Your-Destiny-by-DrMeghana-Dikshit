@@ -2947,6 +2947,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         let extractedText: string | null = null;
         let scriptHtml: string | null = null;
 
+        // PDF parsing skipped as per new requirements - directly serving PDF to frontend
+        /*
         // Convert PDF to HTML with formatting preserved using pdf2json
         if (parsed.data.fileType === "script" && parsed.data.r2Key) {
           try {
@@ -2978,6 +2980,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             // Continue without HTML - file will still be saved
           }
         }
+        */
 
         const [file] = await db
           .insert(cmsLessonFiles)

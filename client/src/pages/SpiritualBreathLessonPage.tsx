@@ -1,10 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Loader2, Video, Music, FileText, Wind } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Video,
+  Music,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Search,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { useRef, useState } from "react";
+import { motion } from "framer-motion";
 import type { CmsLesson, CmsLessonFile } from "@shared/schema";
+import { AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 
 interface LessonFileWithUrl extends CmsLessonFile {
   signedUrl: string | null;
@@ -21,6 +35,7 @@ export default function SpiritualBreathLessonPage() {
   const [, setLocation] = useLocation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery<LessonResponse>({
     queryKey: ["/api/public/v1/lessons", lessonId],
@@ -120,31 +135,40 @@ export default function SpiritualBreathLessonPage() {
             </Card>
           )}
 
-          {scriptFile &&
-            (scriptFile.scriptHtml || scriptFile.extractedText) && (
-              <Card className="p-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <FileText className="w-5 h-5 text-amber-600" />
-                  <span className="font-medium text-foreground">
-                    Instructions
-                  </span>
-                </div>
-                {scriptFile.scriptHtml ? (
-                  <div
-                    className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground"
-                    data-testid="text-script-content"
-                    dangerouslySetInnerHTML={{ __html: scriptFile.scriptHtml }}
-                  />
-                ) : (
-                  <div
-                    className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap"
-                    data-testid="text-script-content"
-                  >
-                    {scriptFile.extractedText}
+          {scriptFile && scriptFile.signedUrl && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5" />
                   </div>
-                )}
-              </Card>
-            )}
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm sm:text-base text-gray-900 truncate">
+                      Practice Instructions
+                    </h3>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setIsPdfModalOpen(true)}
+                  className="w-full sm:w-auto rounded-xl px-6 h-10 bg-white text-brand font-bold flex items-center justify-center gap-2.5 transition-all active:scale-95 border border-brand group"
+                >
+                  <Sparkles className="w-4 h-4 text-brand/80 transition-colors" />
+                  <span>View Notes</span>
+                </Button>
+              </div>
+
+              <PdfViewerModal
+                isOpen={isPdfModalOpen}
+                onClose={() => setIsPdfModalOpen(false)}
+                url={scriptFile.signedUrl}
+                title={`${lesson.title} - Instructions`}
+              />
+            </motion.div>
+          )}
 
           {files.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
