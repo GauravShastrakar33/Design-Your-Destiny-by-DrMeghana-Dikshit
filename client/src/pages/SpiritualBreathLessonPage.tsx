@@ -120,31 +120,47 @@ export default function SpiritualBreathLessonPage() {
             </Card>
           )}
 
-          {scriptFile &&
-            (scriptFile.scriptHtml || scriptFile.extractedText) && (
-              <Card className="p-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <FileText className="w-5 h-5 text-amber-600" />
-                  <span className="font-medium text-foreground">
-                    Instructions
-                  </span>
+          {scriptFile && (
+            <Card className="p-4">
+              <div className="flex items-center gap-3 mb-4">
+                <FileText className="w-5 h-5 text-amber-600" />
+                <span className="font-medium text-foreground">
+                  Instructions
+                </span>
+              </div>
+              {scriptFile.scriptHtml ? (
+                <div
+                  className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground"
+                  data-testid="text-script-content"
+                  dangerouslySetInnerHTML={{ __html: scriptFile.scriptHtml }}
+                />
+              ) : scriptFile.extractedText ? (
+                <div
+                  className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap"
+                  data-testid="text-script-content"
+                >
+                  {scriptFile.extractedText}
                 </div>
-                {scriptFile.scriptHtml ? (
-                  <div
-                    className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground"
-                    data-testid="text-script-content"
-                    dangerouslySetInnerHTML={{ __html: scriptFile.scriptHtml }}
-                  />
-                ) : (
-                  <div
-                    className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap"
-                    data-testid="text-script-content"
-                  >
-                    {scriptFile.extractedText}
-                  </div>
-                )}
-              </Card>
-            )}
+              ) : (
+                <div className="text-center py-6 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    PDF Instructions available
+                  </p>
+                  {scriptFile.signedUrl && (
+                    <a
+                      href={scriptFile.signedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand/90 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 transition-colors"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      View PDF
+                    </a>
+                  )}
+                </div>
+              )}
+            </Card>
+          )}
 
           {files.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">

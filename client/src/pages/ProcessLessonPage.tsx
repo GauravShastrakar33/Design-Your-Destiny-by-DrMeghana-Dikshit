@@ -301,7 +301,7 @@ export default function ProcessLessonPage() {
           </motion.div>
         )}
 
-        {scriptFile && (scriptFile.scriptHtml || scriptFile.extractedText) && (
+        {scriptFile && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -313,7 +313,9 @@ export default function ProcessLessonPage() {
                   <FileText className="w-5 h-5" />
                 </div>
                 <h3 className="font-bold text-gray-900">
-                  Transcription & Notes
+                  {scriptFile.scriptHtml || scriptFile.extractedText 
+                    ? "Transcription & Notes" 
+                    : "Lesson Handout"}
                 </h3>
               </div>
 
@@ -323,12 +325,29 @@ export default function ProcessLessonPage() {
                     data-testid="text-script-content"
                     dangerouslySetInnerHTML={{ __html: scriptFile.scriptHtml }}
                   />
-                ) : (
+                ) : scriptFile.extractedText ? (
                   <div
                     className="whitespace-pre-wrap"
                     data-testid="text-script-content"
                   >
                     {scriptFile.extractedText}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <p className="text-sm font-medium text-gray-500 mb-4">
+                      This lesson includes a PDF handout.
+                    </p>
+                    {scriptFile.signedUrl ? (
+                      <Button
+                        onClick={() => window.open(scriptFile.signedUrl!, "_blank")}
+                        className="rounded-xl font-bold px-8 bg-brand hover:bg-brand/90"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        View PDF Handout
+                      </Button>
+                    ) : (
+                      <p className="text-xs text-gray-400">PDF not available</p>
+                    )}
                   </div>
                 )}
               </div>
