@@ -8,6 +8,7 @@ import {
   ChevronRight,
   X,
   Play as PlayIcon,
+  Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 
 interface LessonFileWithUrl extends CmsLessonFile {
   signedUrl: string | null;
@@ -57,6 +59,7 @@ export default function ProcessLessonPage() {
   const [showAutoPlayModal, setShowAutoPlayModal] = useState(false);
   const [autoPlayCountdown, setAutoPlayCountdown] = useState(5);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
   const searchString =
     useSearch() ||
@@ -360,47 +363,37 @@ export default function ProcessLessonPage() {
           </motion.div>
         )}
 
-        {scriptFile && (scriptFile.scriptHtml || scriptFile.extractedText) && (
+        {scriptFile && scriptFile.signedUrl && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="transcription" className="border-0">
-                <Card className="border-0 shadow-lg shadow-black/[0.03] rounded-2xl bg-white overflow-hidden">
-                  <AccordionTrigger className="px-6 sm:px-8 py-5 hover:no-underline hover:bg-gray-50/50 transition-colors group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-data-[state=open]:bg-amber-100 transition-colors">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                      <h3 className="font-bold text-gray-900">
-                        Transcription & Notes
-                      </h3>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 sm:px-8 pb-8 pt-2">
-                    <div className="prose prose-slate max-w-none prose-p:text-gray-600 prose-headings:text-gray-900 prose-p:leading-relaxed prose-sm border-t border-gray-50 pt-6">
-                      {scriptFile.scriptHtml ? (
-                        <div
-                          data-testid="text-script-content"
-                          dangerouslySetInnerHTML={{
-                            __html: scriptFile.scriptHtml,
-                          }}
-                        />
-                      ) : (
-                        <div
-                          className="whitespace-pre-wrap"
-                          data-testid="text-script-content"
-                        >
-                          {scriptFile.extractedText}
-                        </div>
-                      )}
-                    </div>
-                  </AccordionContent>
-                </Card>
-              </AccordionItem>
-            </Accordion>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 truncate">
+                    Lesson Notes
+                  </h3>
+                </div>
+              </div>
+              <Button
+                onClick={() => setIsPdfModalOpen(true)}
+                className="w-full sm:w-auto rounded-xl px-6 h-10 bg-white text-brand font-bold flex items-center justify-center gap-2.5 transition-all active:scale-95 border border-white/10 group border-brand"
+              >
+                <Sparkles className="w-4 h-4 text-brand/80 transition-colors" />
+                <span>View Notes</span>
+              </Button>
+            </div>
+
+            <PdfViewerModal
+              isOpen={isPdfModalOpen}
+              onClose={() => setIsPdfModalOpen(false)}
+              url={scriptFile.signedUrl}
+            />
           </motion.div>
         )}
 
@@ -510,7 +503,7 @@ export default function ProcessLessonPage() {
                 <div className="flex flex-col w-full gap-3">
                   <Button
                     onClick={playNextNow}
-                    className="w-full rounded-lg h-10 bg-brand hover:bg-brand/90 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand/20 transition-all active:scale-95 hidden"
+                    className="w-full rounded-lg h-10 bg-brand hover:bg-brand/90 text-white font-bold shadow-lg shadow-brand/20 transition-all active:scale-95 hidden"
                   >
                     <PlayIcon className="w-5 h-5 fill-current" />
                     Play Now
