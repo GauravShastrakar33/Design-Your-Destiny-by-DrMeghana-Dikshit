@@ -662,8 +662,13 @@ export default function VideoFirstChallengePage() {
                             }
                           }}
                           className={`h-8 rounded-lg font-bold flex items-center gap-1.5 ml-auto shrink-0 bg-brand/80 text-white hover:bg-brand `}
+                          disabled={isCurrent && lessonLoading && autoOpenPdf}
                         >
-                          <FileText className="w-3.5 h-3.5" />
+                          {isCurrent && lessonLoading && autoOpenPdf ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <FileText className="w-3.5 h-3.5" />
+                          )}
                           Notes
                         </Button>
                       )}
