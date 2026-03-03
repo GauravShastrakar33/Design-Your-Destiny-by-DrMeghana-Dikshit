@@ -130,6 +130,7 @@ import {
   lt,
   avg,
   isNull,
+  inArray,
 } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -185,7 +186,7 @@ export function convertTextToFormattedHtml(text: string): string {
 
     if (
       /\b(say|the|your|my|and|or|is|are|was|were|on|in|at|to|for|with|from)\b/i.test(
-        t,
+        t
       )
     ) {
       return false;
@@ -200,7 +201,7 @@ export function convertTextToFormattedHtml(text: string): string {
 
     if (
       headerKeywords.find(
-        (k) => lower.startsWith(k) && /^\w+\s*\([^)]+\)$/.test(t),
+        (k) => lower.startsWith(k) && /^\w+\s*\([^)]+\)$/.test(t)
       )
     )
       return true;
@@ -214,7 +215,9 @@ export function convertTextToFormattedHtml(text: string): string {
     if (listItems.length > 0 && currentListType) {
       const tag = currentListType;
       html.push(
-        `<${tag} class="${tag === "ul" ? "list-disc" : "list-decimal"} list-inside space-y-1 my-4">`,
+        `<${tag} class="${
+          tag === "ul" ? "list-disc" : "list-decimal"
+        } list-inside space-y-1 my-4">`
       );
       listItems.forEach((item) => html.push(`<li class="ml-4">${item}</li>`));
       html.push(`</${tag}>`);
@@ -252,7 +255,7 @@ export function convertTextToFormattedHtml(text: string): string {
       flushParagraph();
       const headerText = line.replace(/[,:]$/, "").trim();
       html.push(
-        `<h3 class="mt-6 mb-3 text-lg font-semibold text-primary">${headerText}</h3>`,
+        `<h3 class="mt-6 mb-3 text-lg font-semibold text-primary">${headerText}</h3>`
       );
       continue;
     }
@@ -311,7 +314,7 @@ const uploadArticleImage = multer({
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(
-      path.extname(file.originalname).toLowerCase(),
+      path.extname(file.originalname).toLowerCase()
     );
     const mimetype = allowedTypes.test(file.mimetype);
     if (extname && mimetype) {
@@ -437,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = jwt.sign(
         { sub: user.id, email: user.email, role: user.role },
         JWT_SECRET,
-        { expiresIn: "30d" },
+        { expiresIn: "30d" }
       );
 
       res.json({
@@ -492,7 +495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = jwt.sign(
         { sub: user.id, email: user.email, role: user.role },
         JWT_SECRET,
-        { expiresIn: "30d" },
+        { expiresIn: "30d" }
       );
 
       res.json({
@@ -670,7 +673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rangeData = await storage.getConsistencyRange(req.user.sub);
       const currentStreak = await storage.getCurrentStreak(
         req.user.sub,
-        todayDate,
+        todayDate
       );
 
       res.json({
@@ -728,7 +731,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Log user activity (practice/breath/checklist)
   app.post("/api/v1/activity/log", authenticateJWT, async (req, res) => {
     try {
-      console.log("🔥 LOCAL BACKEND HIT - Activity Log", new Date().toISOString());
+      console.log(
+        "🔥 LOCAL BACKEND HIT - Activity Log",
+        new Date().toISOString()
+      );
       if (!req.user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
@@ -764,7 +770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lessonId,
         lessonName,
         featureType,
-        activityDate,
+        activityDate
       );
 
       res.json({ success: true, logged: result.logged });
@@ -788,13 +794,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           (req.query.month as string) || new Date().toISOString().slice(0, 7);
 
         console.log(
-          `[monthly-stats] Fetching stats for userId=${req.user.sub}, month=${month}`,
+          `[monthly-stats] Fetching stats for userId=${req.user.sub}, month=${month}`
         );
 
         const stats = await storage.getMonthlyStats(req.user.sub, month);
 
         console.log(
-          `[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, PLAYLIST=${stats.PLAYLIST.length}`,
+          `[monthly-stats] Results: PROCESS=${stats.PROCESS.length}, PLAYLIST=${stats.PLAYLIST.length}`
         );
 
         res.set("Cache-Control", "no-store");
@@ -803,7 +809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error fetching monthly stats:", error);
         res.status(500).json({ error: "Failed to fetch monthly stats" });
       }
-    },
+    }
   );
 
   // ===== REWIRING BELIEFS ROUTES =====
@@ -900,7 +906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updated = await storage.updateRewiringBelief(
         id,
         req.user.sub,
-        updates,
+        updates
       );
 
       if (!updated) {
@@ -944,7 +950,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error deleting rewiring belief:", error);
         res.status(500).json({ error: "Failed to delete belief" });
       }
-    },
+    }
   );
 
   // Lesson Progress APIs (for Daily Abundance courses)
@@ -957,7 +963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const completedLessonIds = await storage.getCompletedLessonIds(
-        req.user.sub,
+        req.user.sub
       );
       res.json({ completedLessonIds });
     } catch (error) {
@@ -987,7 +993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error marking lesson complete:", error);
         res.status(500).json({ error: "Failed to mark lesson complete" });
       }
-    },
+    }
   );
 
   // Admin routes: Get all sessions (including inactive)
@@ -1110,9 +1116,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               gte(activityLogs.createdAt, twentyFourHoursAgo), // Use created_at, not activityDate
               or(
                 eq(activityLogs.featureType, "PROCESS"),
-                eq(activityLogs.featureType, "PLAYLIST"),
-              ),
-            ),
+                eq(activityLogs.featureType, "PLAYLIST")
+              )
+            )
           ),
         // Badges earned in last 24 hours (keep consistent)
         db
@@ -1130,8 +1136,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(
             and(
               gte(eventsTable.startDatetime, today),
-              lt(eventsTable.startDatetime, tomorrow),
-            ),
+              lt(eventsTable.startDatetime, tomorrow)
+            )
           )
           .orderBy(asc(eventsTable.startDatetime)),
         // Events in next 7 days (excluding today)
@@ -1141,8 +1147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(
             and(
               gte(eventsTable.startDatetime, tomorrow),
-              lt(eventsTable.startDatetime, sevenDaysLater),
-            ),
+              lt(eventsTable.startDatetime, sevenDaysLater)
+            )
           )
           .orderBy(asc(eventsTable.startDatetime)),
       ]);
@@ -1157,8 +1163,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(
               and(
                 eq(notificationLogs.status, "failed"),
-                gte(notificationLogs.createdAt, twentyFourHoursAgo),
-              ),
+                gte(notificationLogs.createdAt, twentyFourHoursAgo)
+              )
             ),
           // Count of unique users with device tokens
           db
@@ -1250,9 +1256,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           publishedCourses: publishedCoursesResult[0]?.count ?? 0,
           lastUpdatedCourse: lastUpdatedCourseResult[0]
             ? {
-              title: lastUpdatedCourseResult[0].title,
-              updatedAt: lastUpdatedCourseResult[0].updatedAt,
-            }
+                title: lastUpdatedCourseResult[0].title,
+                updatedAt: lastUpdatedCourseResult[0].updatedAt,
+              }
             : null,
         },
       });
@@ -1328,7 +1334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           role: "USER",
           status: "active",
         },
-        programCode,
+        programCode
       );
 
       res.status(201).json({ message: "Student added", userId: student.id });
@@ -1347,7 +1353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const student = await storage.updateStudent(
         id,
         { name, email, phone, status },
-        programCode,
+        programCode
       );
 
       if (!student) {
@@ -1432,7 +1438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error resetting password:", error);
         res.status(500).json({ error: "Failed to reset password" });
       }
-    },
+    }
   );
 
   // Admin routes: Get student badges
@@ -1492,7 +1498,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     res.setHeader("Content-Type", "text/csv");
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=student_upload_sample.csv",
+      "attachment; filename=student_upload_sample.csv"
     );
     res.send(sampleCSV);
   });
@@ -1611,7 +1617,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                 role: "USER",
                 status: "active",
               },
-              program.code, // Always use program from modal, not CSV
+              program.code // Always use program from modal, not CSV
             );
             created++;
           } catch (createError: any) {
@@ -1632,7 +1638,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error in bulk upload:", error);
         res.status(500).json({ error: "Failed to process bulk upload" });
       }
-    },
+    }
   );
 
   // Admin routes: Get all programs
@@ -1782,7 +1788,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error updating admin status:", error);
         res.status(500).json({ error: "Failed to update status" });
       }
-    },
+    }
   );
 
   // Delete admin (SUPER_ADMIN only)
@@ -1961,7 +1967,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error uploading image:", error);
         res.status(500).json({ error: "Failed to upload image" });
       }
-    },
+    }
   );
 
   // ============================================
@@ -2096,7 +2102,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .select()
         .from(cmsCourses)
         .orderBy(
-          sortOrder === "desc" ? sql`position DESC` : asc(cmsCourses.position),
+          sortOrder === "desc" ? sql`position DESC` : asc(cmsCourses.position)
         );
 
       let filteredCourses = courses;
@@ -2104,7 +2110,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (search) {
         const searchLower = String(search).toLowerCase();
         filteredCourses = filteredCourses.filter((c) =>
-          c.title.toLowerCase().includes(searchLower),
+          c.title.toLowerCase().includes(searchLower)
         );
       }
 
@@ -2124,7 +2130,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             }
           }
           return { ...course, thumbnailSignedUrl };
-        }),
+        })
       );
 
       res.json(coursesWithSignedUrls);
@@ -2197,11 +2203,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                 .where(eq(cmsLessonFiles.lessonId, lesson.id))
                 .orderBy(asc(cmsLessonFiles.position));
               return { ...lesson, files };
-            }),
+            })
           );
 
           return { ...module, folders, lessons: lessonsWithFiles };
-        }),
+        })
       );
 
       res.json({
@@ -2293,7 +2299,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error deleting course:", error);
         res.status(500).json({ error: "Failed to delete course" });
       }
-    },
+    }
   );
 
   // Toggle course publish status
@@ -2326,7 +2332,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error toggling course publish:", error);
         res.status(500).json({ error: "Failed to toggle course publish" });
       }
-    },
+    }
   );
 
   // Reorder courses
@@ -2349,8 +2355,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             db
               .update(cmsCourses)
               .set({ position: item.position, updatedAt: new Date() })
-              .where(eq(cmsCourses.id, item.id)),
-          ),
+              .where(eq(cmsCourses.id, item.id))
+          )
         );
 
         res.json({ success: true });
@@ -2358,7 +2364,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error reordering courses:", error);
         res.status(500).json({ error: "Failed to reorder courses" });
       }
-    },
+    }
   );
 
   // --- CMS MODULES ---
@@ -2410,7 +2416,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error fetching modules for course:", error);
         res.status(500).json({ error: "Failed to fetch modules" });
       }
-    },
+    }
   );
 
   // Create module
@@ -2485,7 +2491,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error deleting module:", error);
         res.status(500).json({ error: "Failed to delete module" });
       }
-    },
+    }
   );
 
   // Reorder modules
@@ -2503,8 +2509,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             db
               .update(cmsModules)
               .set({ position: item.position, updatedAt: new Date() })
-              .where(eq(cmsModules.id, item.id)),
-          ),
+              .where(eq(cmsModules.id, item.id))
+          )
         );
 
         res.json({ success: true });
@@ -2512,7 +2518,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error reordering modules:", error);
         res.status(500).json({ error: "Failed to reorder modules" });
       }
-    },
+    }
   );
 
   // --- CMS MODULE FOLDERS ---
@@ -2613,7 +2619,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error deleting folder:", error);
         res.status(500).json({ error: "Failed to delete folder" });
       }
-    },
+    }
   );
 
   // Reorder folders
@@ -2631,8 +2637,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             db
               .update(cmsModuleFolders)
               .set({ position: item.position, updatedAt: new Date() })
-              .where(eq(cmsModuleFolders.id, item.id)),
-          ),
+              .where(eq(cmsModuleFolders.id, item.id))
+          )
         );
 
         res.json({ success: true });
@@ -2640,7 +2646,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error reordering folders:", error);
         res.status(500).json({ error: "Failed to reorder folders" });
       }
-    },
+    }
   );
 
   // --- CMS LESSONS ---
@@ -2785,7 +2791,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error deleting lesson:", error);
         res.status(500).json({ error: "Failed to delete lesson" });
       }
-    },
+    }
   );
 
   // Reorder lessons
@@ -2803,8 +2809,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             db
               .update(cmsLessons)
               .set({ position: item.position, updatedAt: new Date() })
-              .where(eq(cmsLessons.id, item.id)),
-          ),
+              .where(eq(cmsLessons.id, item.id))
+          )
         );
 
         res.json({ success: true });
@@ -2812,7 +2818,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error reordering lessons:", error);
         res.status(500).json({ error: "Failed to reorder lessons" });
       }
-    },
+    }
   );
 
   // --- CMS FILES ---
@@ -2890,7 +2896,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             courseId,
             moduleId,
             lessonId,
-            fileType,
+            fileType
           );
         } else {
           res.status(400).json({
@@ -2920,7 +2926,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error getting upload URL:", error);
         res.status(500).json({ error: "Failed to get upload URL" });
       }
-    },
+    }
   );
 
   // Confirm file upload and save metadata
@@ -2997,7 +3003,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error confirming file upload:", error);
         res.status(500).json({ error: "Failed to confirm file upload" });
       }
-    },
+    }
   );
 
   // Delete file
@@ -3053,7 +3059,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error getting signed URL:", error);
         res.status(500).json({ error: "Failed to get signed URL" });
       }
-    },
+    }
   );
 
   // ===== FRONTEND FEATURE MAPPING ROUTES =====
@@ -3070,7 +3076,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error fetching frontend features:", error);
         res.status(500).json({ error: "Failed to fetch features" });
       }
-    },
+    }
   );
 
   // Get mapped courses for a feature
@@ -3092,7 +3098,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error fetching feature course mappings:", error);
         res.status(500).json({ error: "Failed to fetch mappings" });
       }
-    },
+    }
   );
 
   // Map a course to a feature
@@ -3121,7 +3127,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         // Check if course already mapped for ABUNDANCE
         if (code === "ABUNDANCE") {
           const existingMappings = await storage.getFeatureCourseMappings(
-            feature.id,
+            feature.id
           );
           if (existingMappings.some((m) => m.courseId === courseId)) {
             return res.status(400).json({ error: "Course already mapped" });
@@ -3132,7 +3138,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         let position = 0;
         if (code === "ABUNDANCE") {
           const existingMappings = await storage.getFeatureCourseMappings(
-            feature.id,
+            feature.id
           );
           position =
             existingMappings.length > 0
@@ -3151,7 +3157,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error creating feature course mapping:", error);
         res.status(500).json({ error: "Failed to create mapping" });
       }
-    },
+    }
   );
 
   // Delete a course mapping
@@ -3169,7 +3175,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
         const success = await storage.deleteFeatureCourseMapping(
           feature.id,
-          parseInt(courseId),
+          parseInt(courseId)
         );
 
         if (!success) {
@@ -3181,7 +3187,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error deleting feature course mapping:", error);
         res.status(500).json({ error: "Failed to delete mapping" });
       }
-    },
+    }
   );
 
   // Reorder courses for ABUNDANCE and MASTERCLASS features
@@ -3216,7 +3222,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error reordering feature course mappings:", error);
         res.status(500).json({ error: "Failed to reorder" });
       }
-    },
+    }
   );
 
   // ===== PUBLIC FEATURE API =====
@@ -3271,17 +3277,17 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const builtIns =
           code === "ABUNDANCE"
             ? [
-              {
-                id: "builtin-money-calendar",
-                title: "Money Calendar",
-                isBuiltIn: true,
-              },
-              {
-                id: "builtin-rewiring-belief",
-                title: "Rewiring Belief",
-                isBuiltIn: true,
-              },
-            ]
+                {
+                  id: "builtin-money-calendar",
+                  title: "Money Calendar",
+                  isBuiltIn: true,
+                },
+                {
+                  id: "builtin-rewiring-belief",
+                  title: "Rewiring Belief",
+                  isBuiltIn: true,
+                },
+              ]
             : [];
 
         const mappedCourses = await Promise.all(
@@ -3312,7 +3318,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
               position: m.position,
               isBuiltIn: false,
             };
-          }),
+          })
         );
 
         return res.json({ feature, builtIns, courses: mappedCourses });
@@ -3354,7 +3360,28 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .where(eq(cmsLessons.moduleId, moduleId))
         .orderBy(asc(cmsLessons.position));
 
-      res.json({ module, folders, lessons });
+      // Fetch file presence info for all lessons in this module to show icons on journey
+      const lessonIds = lessons.map((l) => l.id);
+      const scripts =
+        lessonIds.length > 0
+          ? await db
+              .select({ lessonId: cmsLessonFiles.lessonId })
+              .from(cmsLessonFiles)
+              .where(
+                and(
+                  inArray(cmsLessonFiles.lessonId, lessonIds),
+                  eq(cmsLessonFiles.fileType, "script")
+                )
+              )
+          : [];
+
+      const scriptLessonIds = new Set(scripts.map((s) => s.lessonId));
+      const lessonsWithMeta = lessons.map((l) => ({
+        ...l,
+        hasScript: scriptLessonIds.has(l.id),
+      }));
+
+      res.json({ module, folders, lessons: lessonsWithMeta });
     } catch (error) {
       console.error("Error fetching module:", error);
       res.status(500).json({ error: "Failed to fetch module" });
@@ -3403,7 +3430,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             }
           }
           return { ...file, signedUrl };
-        }),
+        })
       );
 
       res.json({ lesson, files: filesWithUrls });
@@ -3471,7 +3498,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             .where(eq(cmsLessons.moduleId, module.id))
             .orderBy(asc(cmsLessons.position));
           return { ...module, lessons };
-        }),
+        })
       );
 
       res.json({ course, modules: modulesWithLessons });
@@ -3642,7 +3669,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const entry = await storage.upsertMoneyEntry(
           req.user.sub,
           date,
-          amount.toString(),
+          amount.toString()
         );
 
         res.json({
@@ -3656,7 +3683,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error saving money entry:", error);
         res.status(500).json({ error: "Failed to save money entry" });
       }
-    },
+    }
   );
 
   // GET /api/v1/money-calendar?month=YYYY-MM - Get monthly data with summary
@@ -3693,7 +3720,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const data = await storage.getMoneyEntriesForMonth(
         req.user.sub,
         year,
-        monthNum,
+        monthNum
       );
 
       res.json(data);
@@ -3752,11 +3779,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                       }
                     }
                     return { ...file, signedUrl };
-                  }),
+                  })
                 ),
-              })),
+              }))
             ),
-          })),
+          }))
         );
 
         res.json({ course: data.course, modules: modulesWithSignedUrls });
@@ -3764,7 +3791,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error fetching playlist source:", error);
         res.status(500).json({ error: "Failed to fetch playlist source" });
       }
-    },
+    }
   );
 
   // GET /api/public/v1/playlists - List user's playlists
@@ -3836,8 +3863,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             .where(
               and(
                 eq(cmsLessonFiles.lessonId, item.lessonId),
-                eq(cmsLessonFiles.fileType, "audio"),
-              ),
+                eq(cmsLessonFiles.fileType, "audio")
+              )
             )
             .orderBy(asc(cmsLessonFiles.position));
 
@@ -3855,11 +3882,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
                 }
               }
               return { ...file, signedUrl };
-            }),
+            })
           );
 
           return { ...item, audioFiles: audioFilesWithUrls };
-        }),
+        })
       );
 
       res.json({ playlist, items: itemsWithAudio });
@@ -3902,7 +3929,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error updating playlist:", error);
         res.status(500).json({ error: "Failed to update playlist" });
       }
-    },
+    }
   );
 
   // DELETE /api/public/v1/playlists/:id - Delete playlist
@@ -3932,7 +3959,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error deleting playlist:", error);
         res.status(500).json({ error: "Failed to delete playlist" });
       }
-    },
+    }
   );
 
   // POST /api/public/v1/playlists/:id/items - Set playlist items (replace all)
@@ -3966,7 +3993,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         for (const lessonId of lessonIds) {
           const inMappedCourse = await storage.isLessonInMappedCourse(
             lessonId,
-            "PLAYLIST",
+            "PLAYLIST"
           );
           if (!inMappedCourse) {
             return res.status(400).json({
@@ -3988,7 +4015,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error setting playlist items:", error);
         res.status(500).json({ error: "Failed to set playlist items" });
       }
-    },
+    }
   );
 
   // PATCH /api/public/v1/playlists/:id/items/reorder - Reorder playlist items
@@ -4026,7 +4053,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error reordering playlist items:", error);
         res.status(500).json({ error: "Failed to reorder playlist items" });
       }
-    },
+    }
   );
 
   // DELETE /api/public/v1/playlists/:id/items/:itemId - Remove one item
@@ -4063,7 +4090,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error deleting playlist item:", error);
         res.status(500).json({ error: "Failed to delete playlist item" });
       }
-    },
+    }
   );
 
   // ===== SESSION BANNER ADMIN ROUTES =====
@@ -4111,7 +4138,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error generating upload URL:", error);
         res.status(500).json({ error: "Failed to generate upload URL" });
       }
-    },
+    }
   );
 
   // GET /api/admin/v1/session-banners/:id - Get single banner
@@ -4130,7 +4157,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error fetching session banner:", error);
         res.status(500).json({ error: "Failed to fetch session banner" });
       }
-    },
+    }
   );
 
   // POST /api/admin/v1/session-banners - Create banner
@@ -4221,7 +4248,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error updating session banner:", error);
         res.status(500).json({ error: "Failed to update session banner" });
       }
-    },
+    }
   );
 
   // DELETE /api/admin/v1/session-banners/:id - Delete banner
@@ -4240,7 +4267,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error deleting session banner:", error);
         res.status(500).json({ error: "Failed to delete session banner" });
       }
-    },
+    }
   );
 
   // POST /api/admin/v1/session-banners/:id/duplicate - Duplicate banner
@@ -4273,7 +4300,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error duplicating session banner:", error);
         res.status(500).json({ error: "Failed to duplicate session banner" });
       }
-    },
+    }
   );
 
   // POST /api/admin/v1/session-banners/:id/set-default - Set banner as default
@@ -4381,8 +4408,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .where(
           and(
             eq(dailyQuotes.isActive, true),
-            eq(dailyQuotes.lastShownDate, today),
-          ),
+            eq(dailyQuotes.lastShownDate, today)
+          )
         );
 
       if (todayQuote) {
@@ -4401,7 +4428,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .orderBy(
           sql`CASE WHEN ${dailyQuotes.lastShownDate} IS NULL THEN 0 ELSE 1 END`,
           sql`${dailyQuotes.lastShownDate} NULLS FIRST`,
-          asc(dailyQuotes.displayOrder),
+          asc(dailyQuotes.displayOrder)
         );
 
       if (activeQuotes.length === 0) {
@@ -4446,7 +4473,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       // Remove displayOrder from request body - we auto-assign it
       const { displayOrder, ...bodyWithoutOrder } = req.body;
-      
+
       const parsed = insertDailyQuoteSchema.safeParse(bodyWithoutOrder);
       if (!parsed.success) {
         return res
@@ -4456,9 +4483,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Auto-assign displayOrder as MAX + 1
       const maxOrderResult = await db
-        .select({ maxOrder: sql<number>`COALESCE(MAX(${dailyQuotes.displayOrder}), 0)` })
+        .select({
+          maxOrder: sql<number>`COALESCE(MAX(${dailyQuotes.displayOrder}), 0)`,
+        })
         .from(dailyQuotes);
-      
+
       const nextOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
 
       const [newQuote] = await db
@@ -4472,14 +4501,17 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.status(201).json(newQuote);
     } catch (error: any) {
       console.error("Error creating quote:", error);
-      
+
       // Catch PostgreSQL unique violation error (code 23505)
-      if (error.code === "23505" && error.constraint === "unique_display_order") {
-        return res.status(400).json({ 
-          error: "Display order conflict detected. Please try again." 
+      if (
+        error.code === "23505" &&
+        error.constraint === "unique_display_order"
+      ) {
+        return res.status(400).json({
+          error: "Display order conflict detected. Please try again.",
         });
       }
-      
+
       res.status(500).json({ error: "Failed to create quote" });
     }
   });
@@ -4549,13 +4581,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
         const profile = await storage.getWellnessProfileByUserId(userId);
         res.json(
-          profile || { userId, karmicAffirmation: null, prescription: null },
+          profile || { userId, karmicAffirmation: null, prescription: null }
         );
       } catch (error) {
         console.error("Error fetching wellness profile:", error);
         res.status(500).json({ error: "Failed to fetch wellness profile" });
       }
-    },
+    }
   );
 
   // Admin API: Create or update wellness profile for a user
@@ -4587,7 +4619,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error saving wellness profile:", error);
         res.status(500).json({ error: "Failed to save wellness profile" });
       }
-    },
+    }
   );
 
   // User API: Get own wellness profile (read-only)
@@ -4635,7 +4667,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const bcrypt = await import("bcryptjs");
       const isValidPassword = await bcrypt.compare(
         currentPassword,
-        user.passwordHash,
+        user.passwordHash
       );
       if (!isValidPassword) {
         return res.status(400).json({ error: "Current password is incorrect" });
@@ -4705,7 +4737,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             }
           }
           return { ...event, thumbnailSignedUrl };
-        }),
+        })
       );
 
       res.json(eventsWithSignedUrls);
@@ -4730,7 +4762,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             }
           }
           return { ...event, thumbnailSignedUrl };
-        }),
+        })
       );
 
       res.json(eventsWithSignedUrls);
@@ -4748,7 +4780,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Filter: show_recording = true OR recording_url IS NULL (needs decision)
       const latestEvents = allCompleted.filter(
-        (event) => event.showRecording === true || event.recordingUrl === null,
+        (event) => event.showRecording === true || event.recordingUrl === null
       );
 
       const eventsWithSignedUrls = await Promise.all(
@@ -4761,7 +4793,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             }
           }
           return { ...event, thumbnailSignedUrl };
-        }),
+        })
       );
 
       res.json(eventsWithSignedUrls);
@@ -4827,8 +4859,6 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   });
 
-
-
   // Admin API: Create event
   app.post("/api/admin/v1/events", requireAdmin, async (req, res) => {
     try {
@@ -4892,7 +4922,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       try {
         await storage.deleteNotificationsByEventId(id);
         if (event.status === "UPCOMING") {
-           await createEventReminders(event);
+          await createEventReminders(event);
         }
       } catch (err) {
         console.error("Error updating event notifications:", err);
@@ -4911,7 +4941,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     requireAdmin,
     async (req, res) => {
       try {
-        const upcomingEvents = await storage.getAllEvents({ status: "UPCOMING" });
+        const upcomingEvents = await storage.getAllEvents({
+          status: "UPCOMING",
+        });
         let processedCount = 0;
 
         for (const event of upcomingEvents) {
@@ -4930,7 +4962,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error regenerating reminders:", error);
         res.status(500).json({ error: "Failed to regenerate reminders" });
       }
-    },
+    }
   );
 
   // Admin API: Cancel event (soft delete)
@@ -4981,7 +5013,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error skipping recording:", error);
         res.status(500).json({ error: "Failed to skip recording" });
       }
-    },
+    }
   );
 
   // Admin API: Add recording to an event
@@ -5018,7 +5050,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error adding recording:", error);
         res.status(500).json({ error: "Failed to add recording" });
       }
-    },
+    }
   );
 
   // ===== PUBLIC EVENT APIs (User App) =====
@@ -5043,7 +5075,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           const isLive = event.startDatetime <= now && now <= event.endDatetime;
 
           return { ...event, thumbnailSignedUrl, isLive };
-        }),
+        })
       );
 
       res.json(eventsWithSignedUrls);
@@ -5068,7 +5100,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             }
           }
           return { ...event, thumbnailSignedUrl };
-        }),
+        })
       );
 
       res.json(eventsWithSignedUrls);
@@ -5162,12 +5194,12 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
               }
               const signedResult = await getSignedGetUrl(key, 3600); // 1 hour TTL
               signedVisionImages.push(
-                signedResult.success ? signedResult.url! : null,
+                signedResult.success ? signedResult.url! : null
               );
             } catch (err) {
               console.error(
                 "Error generating signed URL for vision image:",
-                err,
+                err
               );
               signedVisionImages.push(null);
             }
@@ -5448,7 +5480,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const today = new Date().toISOString().split("T")[0];
         const updatedMilestone = await storage.achievePOHMilestone(
           milestoneId,
-          today,
+          today
         );
 
         res.json(updatedMilestone);
@@ -5456,7 +5488,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error achieving milestone:", error);
         res.status(500).json({ error: "Failed to achieve milestone" });
       }
-    },
+    }
   );
 
   // 6. PUT /api/poh/milestone/:id - Update milestone
@@ -5608,7 +5640,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       // Check if rating exists for this date
       const existingRating = await storage.getPOHRatingByDate(
         userId,
-        local_date,
+        local_date
       );
 
       let result;
@@ -5756,7 +5788,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             closing_reflection: poh.closingReflection,
             milestones: achievedMilestones,
           };
-        }),
+        })
       );
 
       res.json(historyWithMilestones);
@@ -5840,7 +5872,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const uploadResult = await uploadBufferToR2(
           req.file.buffer,
           key,
-          req.file.mimetype,
+          req.file.mimetype
         );
         if (!uploadResult.success) {
           console.error("R2 upload failed:", uploadResult.error);
@@ -5876,7 +5908,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         }
         res.status(500).json({ error: "Failed to upload vision image" });
       }
-    },
+    }
   );
 
   // ===== PUSH NOTIFICATIONS =====
@@ -5900,34 +5932,42 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // Get unread notification count
-  app.get("/api/v1/notifications/unread-count", authenticateJWT, async (req, res) => {
-    try {
-      const userId = (req as any).user.sub;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+  app.get(
+    "/api/v1/notifications/unread-count",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        const userId = (req as any).user.sub;
+        if (!userId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+        const count = await storage.getUnreadNotificationCount(userId);
+        res.json({ count });
+      } catch (error) {
+        console.error("Error fetching unread count:", error);
+        res.status(500).json({ error: "Failed to fetch unread count" });
       }
-      const count = await storage.getUnreadNotificationCount(userId);
-      res.json({ count });
-    } catch (error) {
-      console.error("Error fetching unread count:", error);
-      res.status(500).json({ error: "Failed to fetch unread count" });
     }
-  });
+  );
 
   // Mark all notifications as read
-  app.post("/api/v1/notifications/read-all", authenticateJWT, async (req, res) => {
-    try {
-      const userId = (req as any).user.sub;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+  app.post(
+    "/api/v1/notifications/read-all",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        const userId = (req as any).user.sub;
+        if (!userId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+        await storage.markAllNotificationsAsRead(userId);
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error marking all as read:", error);
+        res.status(500).json({ error: "Failed to mark notifications as read" });
       }
-      await storage.markAllNotificationsAsRead(userId);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error marking all as read:", error);
-      res.status(500).json({ error: "Failed to mark notifications as read" });
     }
-  });
+  );
 
   // Register device token for push notifications
   app.post(
@@ -5942,7 +5982,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         }
 
         const { token, platform } = req.body;
-        const platformValue = (platform && typeof platform === "string") ? platform : "web";
+        const platformValue =
+          platform && typeof platform === "string" ? platform : "web";
 
         if (!token || typeof token !== "string") {
           return res.status(400).json({ error: "Token is required" });
@@ -5963,7 +6004,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           // Token already exists - update user_id or platform if different
           const updates: any = {};
           if (existingToken[0].userId !== userId) updates.userId = userId;
-          if (existingToken[0].platform !== platformValue) updates.platform = platformValue;
+          if (existingToken[0].platform !== platformValue)
+            updates.platform = platformValue;
 
           if (Object.keys(updates).length > 0) {
             await db
@@ -5993,7 +6035,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error registering device token:", error);
         res.status(500).json({ error: "Failed to register device" });
       }
-    },
+    }
   );
 
   // Unregister device token (called on logout or manual opt-out)
@@ -6017,8 +6059,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             .where(
               and(
                 eq(deviceTokens.userId, userId),
-                eq(deviceTokens.token, token),
-              ),
+                eq(deviceTokens.token, token)
+              )
             );
         } else {
           // Remove all tokens for this user (used on logout)
@@ -6030,7 +6072,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error unregistering device token:", error);
         res.status(500).json({ error: "Failed to unregister device" });
       }
-    },
+    }
   );
 
   // Get notification status for current user (DB source of truth)
@@ -6110,9 +6152,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       const tokens = allTokens.map((t) => t.token);
       // Send with default deep link to notifications page
-      const result = await sendPushNotification(tokens, title, body, { 
+      const result = await sendPushNotification(tokens, title, body, {
         url: "/notifications",
-        type: "admin_test" 
+        type: "admin_test",
       });
 
       // Create notification logs for each device token that received the push
@@ -6160,11 +6202,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Get current month in YYYY-MM format
       const now = new Date();
-      const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const currentMonthYear = `${now.getFullYear()}-${String(
+        now.getMonth() + 1
+      ).padStart(2, "0")}`;
 
       // Check if user has submitted a question this month
       const hasSubmittedThisMonth = questions.some(
-        (q) => q.monthYear === currentMonthYear,
+        (q) => q.monthYear === currentMonthYear
       );
 
       res.json({
@@ -6204,7 +6248,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           "DrM signed URL result:",
           result.success,
           result.url ? "URL generated" : "No URL",
-          result.error || "",
+          result.error || ""
         );
         if (result.success && result.url) {
           audioUrl = result.url;
@@ -6244,12 +6288,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Get current month in YYYY-MM format
       const now = new Date();
-      const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const monthYear = `${now.getFullYear()}-${String(
+        now.getMonth() + 1
+      ).padStart(2, "0")}`;
 
       // Check if user already submitted this month
       const existingQuestion = await storage.getDrmQuestionByUserMonth(
         userId,
-        monthYear,
+        monthYear
       );
       if (existingQuestion) {
         return res
@@ -6360,7 +6406,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error generating audio upload URL:", error);
         res.status(500).json({ error: "Failed to generate upload URL" });
       }
-    },
+    }
   );
 
   // Admin: Confirm audio answer uploaded and trigger notification
@@ -6384,7 +6430,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         // Update question status
         const updatedQuestion = await storage.updateDrmQuestionAnswer(
           questionId,
-          audioKey,
+          audioKey
         );
 
         if (!updatedQuestion) {
@@ -6419,7 +6465,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             {
               questionId: questionId.toString(),
               deepLink: `/dr-m/questions/${questionId}`,
-            },
+            }
           );
 
           // Create notification logs
@@ -6441,7 +6487,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         }
 
         console.log(
-          `DrM answer submitted for question ${questionId}, notification sent to user ${question.userId}`,
+          `DrM answer submitted for question ${questionId}, notification sent to user ${question.userId}`
         );
 
         // Generate signed URL for admin verification
@@ -6457,7 +6503,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         console.error("Error confirming DrM answer:", error);
         res.status(500).json({ error: "Failed to confirm answer" });
       }
-    },
+    }
   );
 
   // ===== ADMIN PROJECT OF HEART ROUTES =====
@@ -6553,7 +6599,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Fill in missing dates with 0
       const dateMap = new Map(
-        last30DaysResult.map((r) => [r.date, Number(r.count)]),
+        last30DaysResult.map((r) => [r.date, Number(r.count)])
       );
       const last30Days = [];
       for (let i = 29; i >= 0; i--) {
@@ -6603,8 +6649,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .where(
           and(
             eq(pohMilestones.achieved, true),
-            gte(pohMilestones.achievedAt, thirtyDaysAgoStr),
-          ),
+            gte(pohMilestones.achievedAt, thirtyDaysAgoStr)
+          )
         );
       const milestonesAchieved30 = Number(achieved30Result[0]?.count) || 0;
 
@@ -6622,7 +6668,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         ) sub
       `);
       const avgDaysToFirst = Math.round(
-        (firstMilestonesResult.rows[0] as any)?.avg_days || 0,
+        (firstMilestonesResult.rows[0] as any)?.avg_days || 0
       );
 
       res.json({
@@ -6654,7 +6700,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         WHERE p.status = 'active' AND m.id IS NULL
       `);
       const activeNoMilestones = parseInt(
-        (activeNoMilestonesResult.rows[0] as any)?.count || "0",
+        (activeNoMilestonesResult.rows[0] as any)?.count || "0"
       );
 
       // Average active duration (for closed_early and completed)
@@ -6665,7 +6711,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           AND status IN ('completed', 'closed_early')
       `);
       const avgDuration = Math.round(
-        (avgDurationResult.rows[0] as any)?.avg_days || 0,
+        (avgDurationResult.rows[0] as any)?.avg_days || 0
       );
 
       res.json({
@@ -6734,7 +6780,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       const search = req.query.search as string | undefined;
 
-      const { data, total } = await storage.listGoldmineVideos({ page, limit, search });
+      const { data, total } = await storage.listGoldmineVideos({
+        page,
+        limit,
+        search,
+      });
 
       // Generate signed URLs for thumbnails
       const dataWithSignedUrls = await Promise.all(
@@ -6766,78 +6816,108 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // GET /api/admin/goldmine/get-upload-urls
-  app.get("/api/admin/goldmine/get-upload-urls", requireAdmin, async (req, res) => {
-    try {
-      const videoContentType = req.query.videoContentType as string || "video/mp4";
-      const thumbnailContentType = req.query.thumbnailContentType as string || "image/webp";
+  app.get(
+    "/api/admin/goldmine/get-upload-urls",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const videoContentType =
+          (req.query.videoContentType as string) || "video/mp4";
+        const thumbnailContentType =
+          (req.query.thumbnailContentType as string) || "image/webp";
 
-      const uuid = crypto.randomUUID();
-      const videoKey = `goldmine/videos/${uuid}.mp4`;
-      const thumbnailKey = `goldmine/thumbnails/${uuid}.webp`;
+        const uuid = crypto.randomUUID();
+        const videoKey = `goldmine/videos/${uuid}.mp4`;
+        const thumbnailKey = `goldmine/thumbnails/${uuid}.webp`;
 
-      const [videoResult, thumbnailResult] = await Promise.all([
-        getSignedPutUrl(videoKey, videoContentType),
-        getSignedPutUrl(thumbnailKey, thumbnailContentType),
-      ]);
+        const [videoResult, thumbnailResult] = await Promise.all([
+          getSignedPutUrl(videoKey, videoContentType),
+          getSignedPutUrl(thumbnailKey, thumbnailContentType),
+        ]);
 
-      if (!videoResult.success || !thumbnailResult.success) {
-        return res.status(500).json({ error: "Failed to generate upload URLs" });
-      }
-
-      return res.json({
-        uuid,
-        video: {
-          uploadUrl: videoResult.uploadUrl,
-          key: videoKey,
-        },
-        thumbnail: {
-          uploadUrl: thumbnailResult.uploadUrl,
-          key: thumbnailKey,
+        if (!videoResult.success || !thumbnailResult.success) {
+          return res
+            .status(500)
+            .json({ error: "Failed to generate upload URLs" });
         }
-      });
-    } catch (error) {
-      console.error("Error generating goldmine upload URLs:", error);
-      return res.status(500).json({ error: "Failed to generate upload URLs" });
+
+        return res.json({
+          uuid,
+          video: {
+            uploadUrl: videoResult.uploadUrl,
+            key: videoKey,
+          },
+          thumbnail: {
+            uploadUrl: thumbnailResult.uploadUrl,
+            key: thumbnailKey,
+          },
+        });
+      } catch (error) {
+        console.error("Error generating goldmine upload URLs:", error);
+        return res
+          .status(500)
+          .json({ error: "Failed to generate upload URLs" });
+      }
     }
-  });
+  );
 
   // POST /api/admin/goldmine/videos/confirm
-  app.post("/api/admin/goldmine/videos/confirm", requireAdmin, async (req, res) => {
-    try {
-      const { id, title, description, videoKey, thumbnailKey, sizeMb, tags, isPublished } = req.body;
+  app.post(
+    "/api/admin/goldmine/videos/confirm",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const {
+          id,
+          title,
+          description,
+          videoKey,
+          thumbnailKey,
+          sizeMb,
+          tags,
+          isPublished,
+        } = req.body;
 
-      if (!id || !title || !videoKey || !thumbnailKey) {
-        return res.status(400).json({ error: "Missing required fields" });
+        if (!id || !title || !videoKey || !thumbnailKey) {
+          return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // Normalize tags
+        const tagsToProcess =
+          typeof tags === "string"
+            ? tags.split(",")
+            : Array.isArray(tags)
+            ? tags
+            : [];
+        const normalizedTags = Array.from(
+          new Set(
+            tagsToProcess
+              .map((t: any) => String(t).trim().toLowerCase())
+              .filter((t: string) => t.length > 0)
+          )
+        );
+
+        const video = await storage.createGoldmineVideo({
+          id,
+          title: title.trim(),
+          description: description?.trim() || null,
+          r2Key: videoKey,
+          thumbnailKey,
+          durationSec: null,
+          sizeMb: parseInt(sizeMb) || 0,
+          tags: normalizedTags,
+          isPublished: isPublished === true || isPublished === "true",
+        });
+
+        return res.status(201).json(video);
+      } catch (error) {
+        console.error("Error confirming goldmine video:", error);
+        return res
+          .status(500)
+          .json({ error: "Failed to confirm goldmine video" });
       }
-
-      // Normalize tags
-      const tagsToProcess = typeof tags === "string" ? tags.split(",") : Array.isArray(tags) ? tags : [];
-      const normalizedTags = Array.from(
-        new Set(
-          tagsToProcess
-            .map((t: any) => String(t).trim().toLowerCase())
-            .filter((t: string) => t.length > 0)
-        )
-      );
-
-      const video = await storage.createGoldmineVideo({
-        id,
-        title: title.trim(),
-        description: description?.trim() || null,
-        r2Key: videoKey,
-        thumbnailKey,
-        durationSec: null,
-        sizeMb: parseInt(sizeMb) || 0,
-        tags: normalizedTags,
-        isPublished: isPublished === true || isPublished === "true",
-      });
-
-      return res.status(201).json(video);
-    } catch (error) {
-      console.error("Error confirming goldmine video:", error);
-      return res.status(500).json({ error: "Failed to confirm goldmine video" });
     }
-  });
+  );
 
   // POST /api/admin/goldmine/videos
   app.post(
@@ -6850,7 +6930,9 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     async (req, res) => {
       try {
         const { title, description, tags: tagsRaw, isPublished } = req.body;
-        const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+        const files = req.files as
+          | { [fieldname: string]: Express.Multer.File[] }
+          | undefined;
 
         // Validate required text fields
         if (!title || typeof title !== "string" || title.trim() === "") {
@@ -6878,9 +6960,16 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const thumbnailKey = `goldmine/thumbnails/${uuid}.webp`;
 
         // Normalize tags: handle string or array, split, trim, lowercase, remove empty, deduplicate
-        const tagsToProcess = typeof tagsRaw === "string" ? tagsRaw.split(",") : Array.isArray(tagsRaw) ? tagsRaw : [];
+        const tagsToProcess =
+          typeof tagsRaw === "string"
+            ? tagsRaw.split(",")
+            : Array.isArray(tagsRaw)
+            ? tagsRaw
+            : [];
         if (tagsToProcess.length === 0 && !Array.isArray(tagsRaw)) {
-          return res.status(400).json({ error: "tags must be a comma-separated string or an array" });
+          return res.status(400).json({
+            error: "tags must be a comma-separated string or an array",
+          });
         }
 
         const normalizedTags = Array.from(
@@ -6898,22 +6987,29 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const videoUpload = await uploadBufferToR2(
           videoFile.buffer,
           videoKey,
-          videoFile.mimetype || "video/mp4",
+          videoFile.mimetype || "video/mp4"
         );
         if (!videoUpload.success) {
           console.error("Goldmine video R2 upload failed:", videoUpload.error);
-          return res.status(500).json({ error: "Failed to upload video to R2" });
+          return res
+            .status(500)
+            .json({ error: "Failed to upload video to R2" });
         }
 
         // Upload thumbnail to R2
         const thumbnailUpload = await uploadBufferToR2(
           thumbnailFile.buffer,
           thumbnailKey,
-          thumbnailFile.mimetype || "image/webp",
+          thumbnailFile.mimetype || "image/webp"
         );
         if (!thumbnailUpload.success) {
-          console.error("Goldmine thumbnail R2 upload failed:", thumbnailUpload.error);
-          return res.status(500).json({ error: "Failed to upload thumbnail to R2" });
+          console.error(
+            "Goldmine thumbnail R2 upload failed:",
+            thumbnailUpload.error
+          );
+          return res
+            .status(500)
+            .json({ error: "Failed to upload thumbnail to R2" });
         }
 
         // Insert record into goldmine_videos
@@ -6932,50 +7028,70 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         return res.status(201).json(video);
       } catch (error) {
         console.error("Error creating goldmine video:", error);
-        return res.status(500).json({ error: "Failed to create goldmine video" });
+        return res
+          .status(500)
+          .json({ error: "Failed to create goldmine video" });
       }
-    },
+    }
   );
 
   // DELETE /api/admin/goldmine/videos/:id (admin only)
-  app.delete("/api/admin/goldmine/videos/:id", requireAdmin, async (req, res) => {
-    try {
-      const { id } = req.params;
+  app.delete(
+    "/api/admin/goldmine/videos/:id",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { id } = req.params;
 
-      const video = await storage.getGoldmineVideo(id);
-      if (!video) {
-        return res.status(404).json({ error: "Video not found" });
-      }
-
-      // Delete R2 objects
-      if (video.r2Key) {
-        const videoDeletion = await deleteR2Object(video.r2Key);
-        if (!videoDeletion.success) {
-          console.error("Goldmine video R2 deletion failed:", videoDeletion.error);
-          return res.status(500).json({ error: "Failed to delete video from storage" });
+        const video = await storage.getGoldmineVideo(id);
+        if (!video) {
+          return res.status(404).json({ error: "Video not found" });
         }
-      }
 
-      if (video.thumbnailKey) {
-        const thumbnailDeletion = await deleteR2Object(video.thumbnailKey);
-        if (!thumbnailDeletion.success) {
-          console.error("Goldmine thumbnail R2 deletion failed:", thumbnailDeletion.error);
-          return res.status(500).json({ error: "Failed to delete thumbnail from storage" });
+        // Delete R2 objects
+        if (video.r2Key) {
+          const videoDeletion = await deleteR2Object(video.r2Key);
+          if (!videoDeletion.success) {
+            console.error(
+              "Goldmine video R2 deletion failed:",
+              videoDeletion.error
+            );
+            return res
+              .status(500)
+              .json({ error: "Failed to delete video from storage" });
+          }
         }
-      }
 
-      // Delete database record
-      const result = await storage.deleteGoldmineVideo(id);
-      if (!result) {
-        return res.status(500).json({ error: "Failed to delete video record" });
-      }
+        if (video.thumbnailKey) {
+          const thumbnailDeletion = await deleteR2Object(video.thumbnailKey);
+          if (!thumbnailDeletion.success) {
+            console.error(
+              "Goldmine thumbnail R2 deletion failed:",
+              thumbnailDeletion.error
+            );
+            return res
+              .status(500)
+              .json({ error: "Failed to delete thumbnail from storage" });
+          }
+        }
 
-      return res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting goldmine video:", error);
-      return res.status(500).json({ error: "Failed to delete goldmine video" });
+        // Delete database record
+        const result = await storage.deleteGoldmineVideo(id);
+        if (!result) {
+          return res
+            .status(500)
+            .json({ error: "Failed to delete video record" });
+        }
+
+        return res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting goldmine video:", error);
+        return res
+          .status(500)
+          .json({ error: "Failed to delete goldmine video" });
+      }
     }
-  });
+  );
 
   // PATCH /api/admin/goldmine/videos/:id (admin only)
   app.patch(
@@ -7008,9 +7124,16 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         }
 
         if (tags !== undefined) {
-          const tagsToProcess = typeof tags === "string" ? tags.split(",") : Array.isArray(tags) ? tags : null;
+          const tagsToProcess =
+            typeof tags === "string"
+              ? tags.split(",")
+              : Array.isArray(tags)
+              ? tags
+              : null;
           if (tagsToProcess === null) {
-            return res.status(400).json({ error: "tags must be a string or an array" });
+            return res
+              .status(400)
+              .json({ error: "tags must be a string or an array" });
           }
 
           updateData.tags = Array.from(
@@ -7023,13 +7146,14 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         }
 
         if (isPublished !== undefined) {
-          updateData.isPublished = isPublished === "true" || isPublished === true;
+          updateData.isPublished =
+            isPublished === "true" || isPublished === true;
         }
 
         // Thumbnail replacement logic
         if (thumbnailFile) {
           const thumbnailKey = `goldmine/thumbnails/${id}.webp`;
-          
+
           // Upload new thumbnail
           const uploadResult = await uploadBufferToR2(
             thumbnailFile.buffer,
@@ -7038,8 +7162,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           );
 
           if (!uploadResult.success) {
-            console.error("Goldmine thumbnail replacement R2 upload failed:", uploadResult.error);
-            return res.status(500).json({ error: "Failed to upload new thumbnail" });
+            console.error(
+              "Goldmine thumbnail replacement R2 upload failed:",
+              uploadResult.error
+            );
+            return res
+              .status(500)
+              .json({ error: "Failed to upload new thumbnail" });
           }
 
           // Delete old thumbnail AFTER successful upload (if key is different, but here it's likely the same)
@@ -7049,23 +7178,32 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           if (video.thumbnailKey && video.thumbnailKey !== thumbnailKey) {
             const deleteResult = await deleteR2Object(video.thumbnailKey);
             if (!deleteResult.success) {
-              console.error("Goldmine old thumbnail R2 deletion failed:", deleteResult.error);
-              return res.status(500).json({ error: "Failed to delete old thumbnail" });
+              console.error(
+                "Goldmine old thumbnail R2 deletion failed:",
+                deleteResult.error
+              );
+              return res
+                .status(500)
+                .json({ error: "Failed to delete old thumbnail" });
             }
           }
-          
+
           updateData.thumbnailKey = thumbnailKey;
         }
 
         const updatedVideo = await storage.updateGoldmineVideo(id, updateData);
         if (!updatedVideo) {
-          return res.status(404).json({ error: "Video not found during update" });
+          return res
+            .status(404)
+            .json({ error: "Video not found during update" });
         }
 
         return res.json(updatedVideo);
       } catch (error) {
         console.error("Error updating goldmine video:", error);
-        return res.status(500).json({ error: "Failed to update goldmine video" });
+        return res
+          .status(500)
+          .json({ error: "Failed to update goldmine video" });
       }
     }
   );
@@ -7077,11 +7215,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const limit = Math.max(1, parseInt(req.query.limit as string) || 20);
       const search = req.query.search as string | undefined;
 
-      const { data: videos, total } = await storage.listPublishedGoldmineVideos({
-        page,
-        limit,
-        search,
-      });
+      const { data: videos, total } = await storage.listPublishedGoldmineVideos(
+        {
+          page,
+          limit,
+          search,
+        }
+      );
 
       // Transform and generate signed URLs
       const transformedVideos = await Promise.all(
@@ -7121,35 +7261,41 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
   });
 
   // GET /api/goldmine/videos/:id/play (authenticated user, only published)
-  app.get("/api/goldmine/videos/:id/play", authenticateJWT, async (req, res) => {
-    try {
-      const { id } = req.params;
+  app.get(
+    "/api/goldmine/videos/:id/play",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        const { id } = req.params;
 
-      const video = await storage.getGoldmineVideo(id);
+        const video = await storage.getGoldmineVideo(id);
 
-      // Validate existence and publication status
-      if (!video || !video.isPublished) {
-        return res.status(404).json({ error: "Video not found" });
+        // Validate existence and publication status
+        if (!video || !video.isPublished) {
+          return res.status(404).json({ error: "Video not found" });
+        }
+
+        // Generate signed URL for the video file
+        if (!video.r2Key) {
+          return res.status(500).json({ error: "Video file key missing" });
+        }
+
+        const result = await getSignedGetUrl(video.r2Key);
+        if (!result.success || !result.url) {
+          return res
+            .status(500)
+            .json({ error: "Failed to generate video playback URL" });
+        }
+
+        return res.json({
+          videoUrl: result.url,
+        });
+      } catch (error) {
+        console.error("Error getting goldmine video playback URL:", error);
+        return res.status(500).json({ error: "Failed to fetch playback URL" });
       }
-
-      // Generate signed URL for the video file
-      if (!video.r2Key) {
-        return res.status(500).json({ error: "Video file key missing" });
-      }
-
-      const result = await getSignedGetUrl(video.r2Key);
-      if (!result.success || !result.url) {
-        return res.status(500).json({ error: "Failed to generate video playback URL" });
-      }
-
-      return res.json({
-        videoUrl: result.url,
-      });
-    } catch (error) {
-      console.error("Error getting goldmine video playback URL:", error);
-      return res.status(500).json({ error: "Failed to fetch playback URL" });
     }
-  });
+  );
 
   const httpServer = createServer(app);
 

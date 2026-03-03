@@ -26,6 +26,7 @@ import type {
 import { Header } from "@/components/Header";
 import { VideoPlayer, AudioPlayer } from "@/components/MediaPlayers";
 import { motion, AnimatePresence } from "framer-motion";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 
 interface LessonFileWithUrl extends CmsLessonFile {
   signedUrl: string | null;
@@ -57,6 +58,7 @@ interface FlattenedDay {
   title: string;
   moduleId: number;
   moduleName: string;
+  hasScript?: boolean;
 }
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,6 +78,8 @@ export default function VideoFirstChallengePage() {
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [autoOpenPdf, setAutoOpenPdf] = useState(false);
 
   const { isAuthenticated } = useAuth();
 
@@ -140,6 +144,7 @@ export default function VideoFirstChallengePage() {
             title: lesson.title,
             moduleId: moduleData.module.id,
             moduleName: moduleData.module.title,
+            hasScript: (lesson as any).hasScript,
           });
           dayNumber++;
         });
@@ -184,6 +189,21 @@ export default function VideoFirstChallengePage() {
       },
       enabled: !!currentDay?.lessonId,
     });
+
+  // Auto-open PDF if requested after day switch
+  useEffect(() => {
+    if (autoOpenPdf && lessonData && !lessonLoading) {
+      const script = lessonData.files.find(
+        (f) => (f.fileType === "pdf" || f.fileType === "script") && f.signedUrl
+      );
+      if (script) {
+        setIsPdfModalOpen(true);
+      }
+      setAutoOpenPdf(false);
+    }
+  }, [lessonData, lessonLoading, autoOpenPdf]);
+
+  const handleOpenPdf = () => setIsPdfModalOpen(true);
 
   // Mark complete mutation
   const markCompleteMutation = useMutation({
@@ -438,13 +458,11 @@ export default function VideoFirstChallengePage() {
     ? "pdf"
     : "none";
   const hasMedia = videoFile || audioFile;
-  const hasResources = pdfFile || (videoFile && audioFile);
+  const hasResources = videoFile && audioFile;
   const isCurrentLessonCompleted = currentDay
     ? completedLessonIds.has(currentDay.lessonId)
     : false;
 
-  const handleOpenPdf = () =>
-    pdfFile?.signedUrl && window.open(pdfFile.signedUrl, "_blank");
   const handleSwitchToAudio = () => {
     setShowAudioPlayer(true);
     videoRef.current?.pause();
@@ -533,7 +551,7 @@ export default function VideoFirstChallengePage() {
               Day {currentDay?.dayNumber}: {currentDay?.title}
             </h2>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="w-full flex justify-between items-center gap-3">
             {isCurrentLessonCompleted ? (
               <div className="flex items-center gap-2 bg-emerald-50 content-none px-2 py-1 rounded-full border border-emerald-100">
                 <div className="w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
@@ -630,6 +648,25 @@ export default function VideoFirstChallengePage() {
                           {day.title}
                         </p>
                       </div>
+                      {day.hasScript && (
+                        <Button
+                          variant={isCurrent ? "default" : "ghost"}
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isCurrent) {
+                              handleOpenPdf();
+                            } else {
+                              setAutoOpenPdf(true);
+                              handleDayClick(index);
+                            }
+                          }}
+                          className={`h-8 rounded-lg font-bold flex items-center gap-1.5 ml-auto shrink-0 bg-brand/80 text-white hover:bg-brand `}
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          Notes
+                        </Button>
+                      )}
                       {isLocked && (
                         <Lock className="w-3.5 h-3.5 ml-auto text-gray-400" />
                       )}
@@ -650,25 +687,6 @@ export default function VideoFirstChallengePage() {
                 <div className="h-px flex-1 bg-gray-100 mx-4" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {pdfFile && (
-                  <Card
-                    onClick={handleOpenPdf}
-                    className="p-4 bg-white border-0 shadow-xl shadow-black/[0.03] rounded-2xl group cursor-pointer hover:shadow-emerald-500/10 transition-all flex items-center gap-4"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                      <FileText className="w-6 h-6 text-emerald-500 group-hover:text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-sm font-black text-gray-900">
-                        Training Script
-                      </h4>
-                      <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">
-                        PDF Document
-                      </p>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-brand" />
-                  </Card>
-                )}
                 {videoFile && audioFile && !showAudioPlayer && (
                   <Card
                     onClick={handleSwitchToAudio}
@@ -693,6 +711,14 @@ export default function VideoFirstChallengePage() {
           )}
         </div>
       </div>
+      {pdfFile?.signedUrl && (
+        <PdfViewerModal
+          isOpen={isPdfModalOpen}
+          onClose={() => setIsPdfModalOpen(false)}
+          url={pdfFile.signedUrl}
+          title={currentDay?.title ? `${currentDay.title} - Notes` : "Notes"}
+        />
+      )}
     </div>
   );
 }
