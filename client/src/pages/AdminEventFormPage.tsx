@@ -55,8 +55,8 @@ const eventFormSchema = z.object({
   description: z.string().optional(),
   coachName: z.string().optional(),
   thumbnailUrl: z.string().optional(),
-  startDatetime: z.string().min(1, "Start date/time is required"),
-  endDatetime: z.string().min(1, "End date/time is required"),
+  startDatetime: z.string().optional(),
+  endDatetime: z.string().optional(),
   joinUrl: z
     .string()
     .url("Must be a valid URL")
@@ -184,8 +184,8 @@ export default function AdminEventFormPage() {
         },
         body: JSON.stringify({
           ...data,
-          startDatetime: new Date(data.startDatetime).toISOString(),
-          endDatetime: new Date(data.endDatetime).toISOString(),
+          startDatetime: data.startDatetime ? new Date(data.startDatetime).toISOString() : new Date().toISOString(),
+          endDatetime: data.endDatetime ? new Date(data.endDatetime).toISOString() : new Date().toISOString(),
           joinUrl: eventType === "upcoming" ? (data.joinUrl || null) : null,
           requiredProgramCode: data.requiredProgramCode,
           requiredProgramLevel: data.requiredProgramLevel,
@@ -219,8 +219,8 @@ export default function AdminEventFormPage() {
         },
         body: JSON.stringify({
           ...data,
-          startDatetime: new Date(data.startDatetime).toISOString(),
-          endDatetime: new Date(data.endDatetime).toISOString(),
+          startDatetime: data.startDatetime ? new Date(data.startDatetime).toISOString() : new Date().toISOString(),
+          endDatetime: data.endDatetime ? new Date(data.endDatetime).toISOString() : new Date().toISOString(),
           joinUrl: eventType === "upcoming" ? (data.joinUrl || null) : null,
           requiredProgramCode: data.requiredProgramCode,
           requiredProgramLevel: data.requiredProgramLevel,
@@ -499,80 +499,84 @@ export default function AdminEventFormPage() {
                   </div>
                 </div>
               </div>
-
+ 
               {/* Middle Section: Schedule & Access */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10 border-t border-gray-100">
-                {/* Left: Schedule */}
-                <div className="lg:col-span-4 space-y-6">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="w-4 h-4 text-brand" />
-                    <span className="text-sm font-semibold text-gray-500">
-                      Schedule
-                    </span>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold text-gray-500 tracking-wider">
-                        Start Date & Time
-                      </Label>
-                      <Controller
-                        name="startDatetime"
-                        control={form.control}
-                        render={({ field }) => (
-                          <DateTimePicker
-                            date={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            setDate={(date) =>
-                              field.onChange(date?.toISOString() || "")
-                            }
-                            placeholder="Select start date"
-                            error={!!form.formState.errors.startDatetime}
+                {/* Left side: Schedule (Upcoming only) or Spacer (Past) */}
+                <div className="lg:col-span-4">
+                  {eventType === "upcoming" && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Calendar className="w-4 h-4 text-brand" />
+                        <span className="text-sm font-semibold text-gray-500">
+                          Schedule
+                        </span>
+                      </div>
+  
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold text-gray-500 tracking-wider">
+                            Start Date & Time
+                          </Label>
+                          <Controller
+                            name="startDatetime"
+                            control={form.control}
+                            render={({ field }) => (
+                              <DateTimePicker
+                                date={
+                                  field.value ? new Date(field.value) : undefined
+                                }
+                                setDate={(date) =>
+                                  field.onChange(date?.toISOString() || "")
+                                }
+                                placeholder="Select start date"
+                                error={!!form.formState.errors.startDatetime}
+                              />
+                            )}
                           />
-                        )}
-                      />
-                      {form.formState.errors.startDatetime && (
-                        <p className="text-xs font-bold text-red-500 mt-1">
-                          {form.formState.errors.startDatetime.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold text-gray-500 tracking-wider">
-                        End Date & Time
-                      </Label>
-                      <Controller
-                        name="endDatetime"
-                        control={form.control}
-                        render={({ field }) => (
-                          <DateTimePicker
-                            date={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            setDate={(date) =>
-                              field.onChange(date?.toISOString() || "")
-                            }
-                            minDate={
-                              form.watch("startDatetime")
-                                ? new Date(form.watch("startDatetime"))
-                                : undefined
-                            }
-                            placeholder="Select end date"
-                            error={!!form.formState.errors.endDatetime}
+                          {form.formState.errors.startDatetime && (
+                            <p className="text-xs font-bold text-red-500 mt-1">
+                              {form.formState.errors.startDatetime.message}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold text-gray-500 tracking-wider">
+                            End Date & Time
+                          </Label>
+                          <Controller
+                            name="endDatetime"
+                            control={form.control}
+                            render={({ field }) => (
+                              <DateTimePicker
+                                date={
+                                  field.value ? new Date(field.value) : undefined
+                                }
+                                setDate={(date) =>
+                                  field.onChange(date?.toISOString() || "")
+                                }
+                                minDate={
+                                  form.watch("startDatetime")
+                                    ? new Date(form.watch("startDatetime"))
+                                    : undefined
+                                }
+                                placeholder="Select end date"
+                                error={!!form.formState.errors.endDatetime}
+                              />
+                            )}
                           />
-                        )}
-                      />
-                      {form.formState.errors.endDatetime && (
-                        <p className="text-xs font-bold text-red-500 mt-1">
-                          {form.formState.errors.endDatetime.message}
-                        </p>
-                      )}
+                          {form.formState.errors.endDatetime && (
+                            <p className="text-xs font-bold text-red-500 mt-1">
+                              {form.formState.errors.endDatetime.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-
-                {/* Right: Access & Links */}
+ 
+                {/* Right side: Access & Links */}
                 <div className="lg:col-span-8 space-y-6">
                   <div className="flex items-center gap-2 mb-1">
                     <AlertCircle className="w-4 h-4 text-brand" />
@@ -581,54 +585,51 @@ export default function AdminEventFormPage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-700">
-                        Required Program{" "}
-                        <span className="text-destructive ml-1">*</span>
-                      </Label>
-                      <Input
-                        value="DYD — Design Your Destiny"
-                        readOnly
-                        className="bg-gray-100 cursor-not-allowed"
-                      />
-                      <input type="hidden" {...form.register("requiredProgramCode")} />
-                      <input type="hidden" {...form.register("requiredProgramLevel")} />
-                      {form.formState.errors.requiredProgramCode && (
-                        <p className="text-xs font-medium text-destructive">
-                          {form.formState.errors.requiredProgramCode.message}
-                        </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2 max-w-md">
+                        <Label className="text-sm font-semibold text-gray-700">
+                          Required Program{" "}
+                          <span className="text-destructive ml-1">*</span>
+                        </Label>
+                        <Input
+                          value="DYD — Design Your Destiny"
+                          readOnly
+                          className="bg-gray-100 cursor-not-allowed h-10"
+                        />
+                        <input type="hidden" {...form.register("requiredProgramCode")} />
+                        <input type="hidden" {...form.register("requiredProgramLevel")} />
+                        {form.formState.errors.requiredProgramCode && (
+                          <p className="text-xs font-medium text-destructive">
+                            {form.formState.errors.requiredProgramCode.message}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {eventType === "upcoming" && (
+                        <div className="space-y-2 max-w-md animate-in fade-in slide-in-from-right-4 duration-500">
+                          <Label className="text-sm font-semibold text-gray-700">
+                            Registration Link
+                            <span className="text-[10px] text-slate-400 font-bold ml-2 uppercase tracking-wider">
+                              Optional
+                            </span>
+                          </Label>
+                          <Input
+                            {...form.register("joinUrl")}
+                            placeholder="Registration link (leave empty if not open)"
+                            className={cn(
+                              "h-10",
+                              form.formState.errors.joinUrl && "!border-destructive"
+                            )}
+                            data-testid="input-join-url"
+                          />
+                          {form.formState.errors.joinUrl && (
+                            <p className="text-xs font-medium text-red-500">
+                              {form.formState.errors.joinUrl.message}
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-700">
-                        Registration Link
-                        {eventType === "upcoming" && (
-                          <span className="text-[10px] text-slate-400 font-bold ml-2 uppercase tracking-wider">
-                            Optional
-                          </span>
-                        )}
-                      </Label>
-                      <Input
-                        {...form.register("joinUrl")}
-                        disabled={eventType === "past"}
-                        placeholder={
-                          eventType === "past"
-                            ? "Not applicable for past events"
-                            : "Registration link (leave empty if not open)"
-                        }
-                        className={cn(
-                          form.formState.errors.joinUrl && "!border-destructive"
-                        )}
-                        data-testid="input-join-url"
-                      />
-                      {form.formState.errors.joinUrl && (
-                        <p className="text-xs font-medium text-red-500">
-                          {form.formState.errors.joinUrl.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
                   <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                     <p className="text-xs text-gray-500 leading-relaxed italic">
                       {eventType === "upcoming"
