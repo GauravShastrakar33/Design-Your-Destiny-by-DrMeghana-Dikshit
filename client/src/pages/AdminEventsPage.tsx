@@ -114,6 +114,8 @@ export default function AdminEventsPage() {
   const [recordingExpiryDate, setRecordingExpiryDate] = useState("");
   const [skipConfirmEvent, setSkipConfirmEvent] =
     useState<EventWithSignedUrl | null>(null);
+  const [removeConfirmEvent, setRemoveConfirmEvent] =
+    useState<EventWithSignedUrl | null>(null);
   const [completedSubTab, setCompletedSubTab] = useState("decision");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDeleteId, setEventToDeleteId] = useState<number | null>(null);
@@ -264,6 +266,7 @@ export default function AdminEventsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/events"] });
       queryClient.invalidateQueries({ queryKey: ["/api/events/latest"] });
       toast({ title: "Recording removed successfully" });
+      setRemoveConfirmEvent(null);
     },
     onError: (error: Error) => {
       toast({ 
@@ -476,15 +479,7 @@ export default function AdminEventsPage() {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => {
-                            if (
-                              confirm(
-                                "Are you sure you want to remove the recording? This will hide it from users."
-                              )
-                            ) {
-                              removeRecordingMutation.mutate(event.id);
-                            }
-                          }}
+                          onClick={() => setRemoveConfirmEvent(event)}
                           disabled={removeRecordingMutation.isPending}
                           className="font-bold flex items-center gap-1.5"
                           data-testid={`button-remove-recording-${event.id}`}
@@ -850,6 +845,50 @@ export default function AdminEventsPage() {
               {skipRecordingMutation.isPending
                 ? "Skipping..."
                 : "Skip Recording"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Recording Confirmation Modal */}
+      <Dialog
+        open={!!removeConfirmEvent}
+        onOpenChange={() => setRemoveConfirmEvent(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Remove Published Recording?
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              The current recording will be removed from the user Event Calender page.
+              <br />
+              <br />
+              This event will move back to <strong>Needs Decision</strong>, where you can publish a new recording once it becomes available or skip publishing it.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="default"
+              onClick={() => setRemoveConfirmEvent(null)}
+              data-testid="button-remove-go-back"
+            >
+              Go Back
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (removeConfirmEvent) {
+                  removeRecordingMutation.mutate(removeConfirmEvent.id);
+                }
+              }}
+              disabled={removeRecordingMutation.isPending}
+              data-testid="button-remove-confirm"
+            >
+              {removeRecordingMutation.isPending
+                ? "Removing..."
+                : "Remove Recording"}
             </Button>
           </DialogFooter>
         </DialogContent>
