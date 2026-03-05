@@ -508,6 +508,8 @@ export const insertEventSchema = createInsertSchema(events).omit({
 }).extend({
   startDatetime: z.coerce.date(),
   endDatetime: z.coerce.date(),
+  // recordingPasscode is now optional and ignored
+  recordingPasscode: z.string().nullable().optional(),
   // recordingExpiryDate is mode: "string" in DB, so keep as string (YYYY-MM-DD format)
   recordingExpiryDate: z.string().nullable().optional(),
 });

@@ -153,15 +153,7 @@ export default function EventCalendarPage() {
     window.open(joinUrl, "_blank");
   };
 
-  const handleCopyPasscode = (passcode: string) => {
-    // Only copy the passcode part if it contains "Passcode: "
-    const cleanPasscode = passcode.includes("Passcode: ")
-      ? passcode.split("Passcode: ")[1].trim()
-      : passcode.trim();
 
-    navigator.clipboard.writeText(cleanPasscode);
-    toast({ title: "Passcode copied to clipboard" });
-  };
 
   const handleOpenRecording = (event: EventWithSignedUrl) => {
     setSelectedEvent(event);
@@ -558,39 +550,6 @@ export default function EventCalendarPage() {
               </div>
 
               <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-[10px] sm:text-xs font-bold text-brand uppercase tracking-widest truncate">
-                        Access Passcode
-                      </h3>
-                    </div>
-
-                    {selectedEvent.recordingPasscode && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          handleCopyPasscode(selectedEvent.recordingPasscode!)
-                        }
-                        className="h-8 px-3 text-[10px] sm:text-xs font-bold text-brand uppercase tracking-wider hover:bg-brand/5 rounded-full transition-all shrink-0"
-                      >
-                        <Copy className="w-3.5 h-3.5 text-brand" />
-                        Copy Code
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-6 flex flex-col items-center justify-center gap-1 group-hover:border-brand/20 transition-all">
-                    <span className="text-xl sm:text-2xl font-bold text-slate-900 tracking-[0.1em] font-mono break-all text-center">
-                      {selectedEvent?.recordingPasscode?.includes("Passcode: ")
-                        ? selectedEvent.recordingPasscode
-                            .split("Passcode: ")[1]
-                            .trim()
-                        : selectedEvent?.recordingPasscode || "N/A"}
-                    </span>
-                  </div>
-                </div>
 
                 {selectedEvent.recordingExpiryDate && (
                   <div className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-amber-50/50 rounded-full w-fit mx-auto border border-amber-500/30">

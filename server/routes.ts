@@ -4994,16 +4994,16 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         const { recordingUrl, recordingPasscode, recordingExpiryDate } =
           req.body;
 
-        if (!recordingUrl || !recordingPasscode || !recordingExpiryDate) {
+        if (!recordingUrl || !recordingExpiryDate) {
           return res.status(400).json({
             error:
-              "recordingUrl, recordingPasscode, and recordingExpiryDate are required",
+              "recordingUrl and recordingExpiryDate are required",
           });
         }
 
         const event = await storage.updateEvent(id, {
           recordingUrl,
-          recordingPasscode,
+          recordingPasscode: null, // Explicitly ignored and set to null
           recordingExpiryDate,
           showRecording: true,
           recordingSkipped: false,
@@ -5017,6 +5017,48 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       } catch (error) {
         console.error("Error adding recording:", error);
         res.status(500).json({ error: "Failed to add recording" });
+      }
+    },
+  );
+
+  // Admin API: Remove recording for an event
+  app.post(
+    "/api/admin/v1/events/:id/remove-recording",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id || "");
+        console.log(`[Admin] Processing remove recording for event ID: ${id}`);
+        
+        if (isNaN(id)) {
+          return res.status(400).json({ error: "Invalid event ID" });
+        }
+
+        const event = await storage.getEventById(id);
+        if (!event) {
+          return res.status(404).json({ error: "Event not found" });
+        }
+
+        const updatedEvent = await storage.updateEvent(id, {
+          showRecording: false,
+          recordingSkipped: false,
+          recordingUrl: null,
+          recordingPasscode: null,
+          recordingExpiryDate: null,
+        });
+
+        if (!updatedEvent) {
+          throw new Error("Update failed in storage");
+        }
+
+        console.log(`[Admin] Successfully removed recording for event ${id}`);
+        res.json({ success: true, message: "Recording removed" });
+      } catch (error: any) {
+        console.error("Error removing recording:", error);
+        res.status(500).json({ 
+          error: "Failed to remove recording", 
+          details: error.message 
+        });
       }
     },
   );

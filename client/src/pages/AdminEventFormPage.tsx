@@ -37,6 +37,8 @@ import {
   AlertCircle,
   Trash2,
   X,
+  Video,
+  Lock,
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import type { Event, Program } from "@shared/schema";
@@ -46,6 +48,7 @@ import { FormSelect } from "@/components/ui/form-select";
 import { FormTextarea } from "@/components/ui/form-textarea";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 const eventFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -61,6 +64,9 @@ const eventFormSchema = z.object({
   requiredProgramCode: z.string().min(1, "Program is required"),
   requiredProgramLevel: z.number().min(1),
   status: z.enum(["DRAFT", "UPCOMING", "COMPLETED", "CANCELLED"]),
+  recordingUrl: z.string().optional(),
+  recordingExpiryDate: z.string().optional(),
+  showRecording: z.boolean().optional(),
 });
 
 type EventFormData = z.infer<typeof eventFormSchema>;
@@ -97,6 +103,9 @@ export default function AdminEventFormPage() {
       requiredProgramCode: "USB",
       requiredProgramLevel: 1,
       status: "DRAFT",
+      recordingUrl: "",
+      recordingExpiryDate: "",
+      showRecording: false,
     },
   });
 
@@ -145,6 +154,9 @@ export default function AdminEventFormPage() {
         requiredProgramCode: event.requiredProgramCode || "USB",
         requiredProgramLevel: event.requiredProgramLevel || 1,
         status: event.status as any,
+        recordingUrl: event.recordingUrl || "",
+        recordingExpiryDate: event.recordingExpiryDate || "",
+        showRecording: event.showRecording || false,
       });
 
       if (event.thumbnailSignedUrl) {
@@ -168,6 +180,9 @@ export default function AdminEventFormPage() {
           joinUrl: data.joinUrl || null,
           requiredProgramCode: data.requiredProgramCode,
           requiredProgramLevel: data.requiredProgramLevel,
+          recordingUrl: data.recordingUrl || null,
+          recordingExpiryDate: data.recordingExpiryDate || null,
+          showRecording: data.showRecording ?? false,
         }),
       });
       if (!response.ok) throw new Error("Failed to create event");
@@ -200,6 +215,9 @@ export default function AdminEventFormPage() {
           joinUrl: data.joinUrl || null,
           requiredProgramCode: data.requiredProgramCode,
           requiredProgramLevel: data.requiredProgramLevel,
+          recordingUrl: data.recordingUrl || null,
+          recordingExpiryDate: data.recordingExpiryDate || null,
+          showRecording: data.showRecording ?? false,
         }),
       });
       if (!response.ok) throw new Error("Failed to update event");
@@ -431,11 +449,9 @@ export default function AdminEventFormPage() {
                       options={[
                         { label: "Draft", value: "DRAFT" },
                         { label: "Upcoming (Published)", value: "UPCOMING" },
+                        { label: "Completed", value: "COMPLETED" },
                         ...(isEditing
-                          ? [
-                              { label: "Completed", value: "COMPLETED" },
-                              { label: "Cancelled", value: "CANCELLED" },
-                            ]
+                          ? [{ label: "Cancelled", value: "CANCELLED" }]
                           : []),
                       ]}
                       data-testid="select-status"
@@ -608,6 +624,70 @@ export default function AdminEventFormPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Recording Details Section - Only show when status is COMPLETED */}
+              {form.watch("status") === "COMPLETED" && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10 border-t border-gray-100 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className="lg:col-span-4 space-y-6">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Video className="w-4 h-4 text-brand" />
+                      <span className="text-sm font-semibold text-gray-500">
+                        Recording Details
+                      </span>
+                    </div>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="showRecording"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-gray-50/50 border-gray-100 shadow-sm">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-sm font-bold text-gray-900">
+                                Show Recording
+                              </FormLabel>
+                              <FormDescription className="text-xs font-medium text-gray-500">
+                                Make visible to users
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                data-testid="switch-show-recording"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-8 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="md:col-span-2">
+                        <FormInput
+                          name="recordingUrl"
+                          label="Recording URL"
+                          placeholder="e.g. https://zoom.us/rec/..."
+                          data-testid="input-recording-url"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold text-gray-700">
+                          Recording Expiry Date
+                        </Label>
+                        <Input
+                          type="date"
+                          {...form.register("recordingExpiryDate")}
+                          className="bg-white border-gray-200"
+                          data-testid="input-recording-expiry"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Form Footer / Actions */}
