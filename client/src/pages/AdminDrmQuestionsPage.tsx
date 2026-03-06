@@ -484,15 +484,16 @@ function RecordGuidanceDialog({
                   </div>
                   <CustomAudioPlayer src={audioUrl} />
 
-                  <div className="flex justify-end">
-                    <button
+                  <div className="flex justify-start my-14">
+                    <Button
+                      variant="outline"
                       onClick={() => setRerecordConfirmOpen(true)}
                       data-testid="button-rerecord"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-400 hover:border-amber-200 hover:text-amber-600 hover:bg-amber-50 transition-all text-xs font-bold"
+                      className="px-6 font-bold shadow-sm border-2 border-amber-300 text-amber-600 hover:text-amber-700 hover:bg-amber-50 hover:border-amber-300 gap-2 transition-all rounded-lg"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" />
+                      <RotateCcw className="w-4 h-4" />
                       Re-record
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
