@@ -59,6 +59,7 @@ import {
   FileType,
   Layout,
   X,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
@@ -79,7 +80,10 @@ type CourseWithModules = CmsCourse & {
   })[];
 };
 
-type CourseWithSignedUrl = CmsCourse & { thumbnailSignedUrl?: string | null };
+type CourseWithSignedUrl = CmsCourse & {
+  thumbnailSignedUrl?: string | null;
+  isMapped?: boolean;
+};
 
 export default function AdminCoursesPage() {
   const [, setLocation] = useLocation();
@@ -142,8 +146,12 @@ export default function AdminCoursesPage() {
       setDeleteDialogOpen(false);
       setCourseToDelete(null);
     },
-    onError: () => {
-      toast({ title: "Failed to delete course", variant: "destructive" });
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete course",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
     },
   });
 
@@ -420,15 +428,26 @@ export default function AdminCoursesPage() {
                             )}
                           </td>
                           <td className="py-4 px-6">
-                            <button
-                              onClick={() => {
-                                setSelectedCourseId(course.id);
-                                setDetailsDialogOpen(true);
-                              }}
-                              className="font-semibold text-brand transition-colors text-left"
-                            >
-                              {course.title}
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedCourseId(course.id);
+                                  setDetailsDialogOpen(true);
+                                }}
+                                className="font-semibold text-brand transition-colors text-left"
+                              >
+                                {course.title}
+                              </button>
+                              {course.isMapped && (
+                                <Badge
+                                  variant="secondary"
+                                  className="h-5 px-1.5 py-0 flex items-center gap-1 bg-amber-50 text-amber-600 border-amber-100 font-bold text-[10px] uppercase tracking-wider"
+                                >
+                                  <Lock className="w-2.5 h-2.5" />
+                                  Mapped
+                                </Badge>
+                              )}
+                            </div>
                           </td>
                           <td className="py-4 px-6">
                             <span className="text-sm font-medium text-gray-900">
@@ -508,8 +527,19 @@ export default function AdminCoursesPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                disabled={course.isMapped}
                                 onClick={() => handleDelete(course)}
-                                className="h-8 w-8 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                className={cn(
+                                  "h-8 w-8 p-0",
+                                  course.isMapped
+                                    ? "text-gray-300 cursor-not-allowed"
+                                    : "text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                )}
+                                title={
+                                  course.isMapped
+                                    ? "Remove feature mapping before deleting this course"
+                                    : "Delete Course"
+                                }
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>

@@ -2099,10 +2099,25 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const { search, programId, sortOrder = "asc" } = req.query;
 
       const courses = await db
-        .select()
+        .select({
+          id: cmsCourses.id,
+          title: cmsCourses.title,
+          programId: cmsCourses.programId,
+          description: cmsCourses.description,
+          thumbnailKey: cmsCourses.thumbnailKey,
+          isPublished: cmsCourses.isPublished,
+          createdByAdminId: cmsCourses.createdByAdminId,
+          position: cmsCourses.position,
+          createdAt: cmsCourses.createdAt,
+          updatedAt: cmsCourses.updatedAt,
+          isMapped: sql<boolean>`EXISTS (
+            SELECT 1 FROM ${featureCourseMap} 
+            WHERE ${featureCourseMap.courseId} = ${cmsCourses.id}
+          )`
+        })
         .from(cmsCourses)
         .orderBy(
-          sortOrder === "desc" ? sql`position DESC` : asc(cmsCourses.position)
+          sortOrder === "desc" ? sql`${cmsCourses.position} DESC` : asc(cmsCourses.position)
         );
 
       let filteredCourses = courses;
@@ -2291,6 +2306,24 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     async (req, res) => {
       try {
         const courseId = parseInt(req.params.id);
+
+        // Check if course is mapped to any frontend features
+        const mappings = await db
+          .select({
+            featureCode: frontendFeatures.code
+          })
+          .from(featureCourseMap)
+          .innerJoin(frontendFeatures, eq(featureCourseMap.featureId, frontendFeatures.id))
+          .where(eq(featureCourseMap.courseId, courseId));
+
+        if (mappings.length > 0) {
+          const featureCodes = mappings.map(m => m.featureCode).join(", ");
+          res.status(400).json({
+            error: "Cannot delete course",
+            message: `This course is mapped to features: ${featureCodes}. Remove mapping first.`
+          });
+          return;
+        }
 
         await db.delete(cmsCourses).where(eq(cmsCourses.id, courseId));
 
