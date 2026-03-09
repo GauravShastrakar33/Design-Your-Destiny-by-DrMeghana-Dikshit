@@ -60,6 +60,8 @@ export default function AdminAbundanceMasteryPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [courseIdToRemove, setCourseIdToRemove] = useState<number | null>(null);
   const [courseTitleToRemove, setCourseTitleToRemove] = useState<string>("");
+  const [mappingLocked, setMappingLocked] = useState(false);
+  const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<
     CmsCourse[]
@@ -94,6 +96,13 @@ export default function AdminAbundanceMasteryPage() {
       setLocalOrder(mappingData.mappings);
     }
   }, [mappingData?.mappings]);
+
+  // Update lock state when mapping data loads
+  useEffect(() => {
+    if (mappingData?.feature?.mappingLocked !== undefined) {
+      setMappingLocked(mappingData.feature.mappingLocked);
+    }
+  }, [mappingData?.feature?.mappingLocked]);
 
   const mappedCourseIds = new Set(localOrder.map((m) => m.courseId));
   const availableCourses = courses.filter((c) => !mappedCourseIds.has(c.id));
@@ -172,6 +181,47 @@ export default function AdminAbundanceMasteryPage() {
       }
     },
   });
+
+  const toggleLockMutation = useMutation({
+    mutationFn: async (locked: boolean) => {
+      await apiRequest(
+        "PATCH",
+        `/admin/v1/frontend-mapping/features/${code}/lock`,
+        { locked }
+      );
+    },
+    onSuccess: (_, locked) => {
+      queryClient.invalidateQueries({
+        queryKey: ["/admin/v1/frontend-mapping/features", code, "courses"],
+      });
+      setMappingLocked(locked);
+      setUnlockDialogOpen(false);
+      toast({
+        title: "Success",
+        description: `Mapping ${locked ? "locked" : "unlocked"} successfully`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update lock status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleToggleLock = async (newLockedState: boolean) => {
+    // Only show confirmation when UNLOCKING
+    if (mappingLocked && newLockedState === false) {
+      setUnlockDialogOpen(true);
+      return;
+    }
+    toggleLockMutation.mutate(newLockedState);
+  };
+
+  const confirmUnlock = () => {
+    toggleLockMutation.mutate(false);
+  };
 
   const handleAddCourse = () => {
     if (selectedCourseId) {
@@ -314,6 +364,7 @@ export default function AdminAbundanceMasteryPage() {
                   <Select
                     value={selectedCourseId}
                     onValueChange={setSelectedCourseId}
+                    disabled={mappingLocked}
                   >
                     <SelectTrigger
                       className="bg-gray-50 border-gray-100 focus:bg-white h-10 rounded-lg text-sm"
@@ -336,7 +387,7 @@ export default function AdminAbundanceMasteryPage() {
 
                 <Button
                   onClick={handleAddCourse}
-                  disabled={!selectedCourseId || addCourseMutation.isPending}
+                  disabled={!selectedCourseId || addCourseMutation.isPending || mappingLocked}
                   className="bg-brand hover:bg-brand/90 font-bold text-xs h-10 px-6 rounded-lg shadow-sm gap-2"
                   data-testid="button-add-abundance-course"
                 >
@@ -346,6 +397,41 @@ export default function AdminAbundanceMasteryPage() {
                     <Plus className="w-4 h-4" />
                   )}
                   Add to Journey
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Lock Status Card */}
+          <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">
+                    {mappingLocked ? "🔒" : "🔓"}
+                  </span>
+                  <div>
+                    <h3 className="text-md font-bold text-gray-900">
+                      {mappingLocked ? "Locked" : "Unlocked"}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {mappingLocked
+                        ? "Mapping is protected from accidental changes"
+                        : "Mapping can be modified"}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => handleToggleLock(!mappingLocked)}
+                  disabled={toggleLockMutation.isPending}
+                  className={mappingLocked ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}
+                >
+                  {toggleLockMutation.isPending
+                    ? "Updating..."
+                    : mappingLocked
+                    ? "Unlock Mapping"
+                    : "Lock Mapping"}
                 </Button>
               </div>
             </div>
@@ -373,12 +459,13 @@ export default function AdminAbundanceMasteryPage() {
                   {localOrder.map((mapping, index) => (
                     <div
                       key={mapping.id}
-                      draggable
+                      draggable={!mappingLocked}
                       onDragStart={(e) => handleDragStart(e, index)}
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDragEnd={handleDragEnd}
                       className={cn(
                         "flex items-center gap-3 p-4 bg-gray-50 border border-gray-100 rounded-lg cursor-move transition-all group",
+                        mappingLocked ? "cursor-not-allowed opacity-75" : "",
                         draggedIndex === index
                           ? "ring-2 ring-brand border-transparent opacity-50"
                           : "hover:bg-white hover:shadow-md hover:border-brand/10"
@@ -401,7 +488,7 @@ export default function AdminAbundanceMasteryPage() {
                             mapping.course.title
                           )
                         }
-                        disabled={removeCourseMutation.isPending}
+                        disabled={removeCourseMutation.isPending || mappingLocked}
                         className="h-9 w-9 text-gray-300 hover:text-red-500 bg-gray-50/50 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
                         data-testid={`button-remove-course-${mapping.courseId}`}
                       >
@@ -442,6 +529,35 @@ export default function AdminAbundanceMasteryPage() {
               data-testid="button-confirm-remove"
             >
               {removeCourseMutation.isPending ? "Removing..." : "Remove Course"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unlock Confirmation Dialog */}
+      <AlertDialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unlock Mapping?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Unlocking this will allow modification of the course mapping for
+                this feature.
+              </p>
+              <p className="text-gray-600">
+                Make sure to lock the mapping again after making changes to
+                protect it from accidental modifications.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmUnlock}
+              className="bg-amber-600 hover:bg-amber-700 font-bold"
+              disabled={toggleLockMutation.isPending}
+            >
+              {toggleLockMutation.isPending ? "Unlocking..." : "Unlock"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

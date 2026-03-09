@@ -2110,15 +2110,21 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           position: cmsCourses.position,
           createdAt: cmsCourses.createdAt,
           updatedAt: cmsCourses.updatedAt,
-          isMapped: sql<boolean>`EXISTS (
-            SELECT 1 FROM ${featureCourseMap} 
-            WHERE ${featureCourseMap.courseId} = ${cmsCourses.id}
-          )`
         })
         .from(cmsCourses)
         .orderBy(
           sortOrder === "desc" ? sql`${cmsCourses.position} DESC` : asc(cmsCourses.position)
         );
+
+      // Fetch all mapped course IDs for efficient lookup
+      const allMappedCourses = await db
+        .select({ courseId: featureCourseMap.courseId })
+        .from(featureCourseMap);
+      
+      const mappedCourseIds = new Set(allMappedCourses.map(m => m.courseId));
+      
+      console.log(`[Server] Found ${allMappedCourses.length} mapped course entries`);
+      console.log(`[Server] Mapped Course IDs:`, Array.from(mappedCourseIds));
 
       let filteredCourses = courses;
 
@@ -2144,7 +2150,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
               thumbnailSignedUrl = signedResult.url;
             }
           }
-          return { ...course, thumbnailSignedUrl };
+          return { 
+            ...course, 
+            thumbnailSignedUrl,
+            isMapped: mappedCourseIds.has(course.id)
+          };
         })
       );
 
@@ -3152,6 +3162,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return res.status(404).json({ error: "Feature not found" });
         }
 
+        // Check if mapping is locked
+        if (feature.mappingLocked) {
+          return res.status(403).json({
+            error: "Mapping is locked. Unlock mapping before making changes."
+          });
+        }
+
         // For DYD, USM, BREATH, PLAYLIST - only 1 course allowed, replace existing
         if (["DYD", "USM", "BREATH", "PLAYLIST"].includes(code)) {
           await storage.clearFeatureCourseMappings(feature.id);
@@ -3206,6 +3223,13 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return res.status(404).json({ error: "Feature not found" });
         }
 
+        // Check if mapping is locked
+        if (feature.mappingLocked) {
+          return res.status(403).json({
+            error: "Mapping is locked. Unlock mapping before making changes."
+          });
+        }
+
         const success = await storage.deleteFeatureCourseMapping(
           feature.id,
           parseInt(courseId)
@@ -3249,11 +3273,57 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return res.status(404).json({ error: "Feature not found" });
         }
 
+        // Check if mapping is locked
+        if (feature.mappingLocked) {
+          return res.status(403).json({
+            error: "Mapping is locked. Unlock mapping before making changes."
+          });
+        }
+
         await storage.reorderFeatureCourseMappings(feature.id, courseIds);
         res.json({ success: true });
       } catch (error) {
         console.error("Error reordering feature course mappings:", error);
         res.status(500).json({ error: "Failed to reorder" });
+      }
+    }
+  );
+
+  // Toggle lock status for feature mapping
+  app.patch(
+    "/admin/v1/frontend-mapping/features/:code/lock",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { code } = req.params;
+        const { locked } = req.body;
+
+        // Validation
+        if (typeof locked !== "boolean") {
+          return res.status(400).json({
+            error: "Request body must contain 'locked' boolean field"
+          });
+        }
+
+        const feature = await storage.getFrontendFeatureByCode(code);
+        if (!feature) {
+          return res.status(404).json({ error: "Feature not found" });
+        }
+
+        const success = await storage.toggleFeatureLock(feature.id, locked);
+
+        if (!success) {
+          return res.status(500).json({ error: "Failed to update lock status" });
+        }
+
+        res.json({
+          success: true,
+          code: feature.code,
+          mappingLocked: locked
+        });
+      } catch (error) {
+        console.error("Error toggling feature mapping lock:", error);
+        res.status(500).json({ error: "Failed to toggle lock status" });
       }
     }
   );

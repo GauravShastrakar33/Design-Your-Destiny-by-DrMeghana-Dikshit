@@ -130,7 +130,9 @@ export default function AdminCoursesPage() {
         },
       });
       if (!response.ok) throw new Error("Failed to fetch courses");
-      return response.json();
+      const data = await response.json();
+      console.log("[Debug] Courses data:", data);
+      return data;
     },
   });
 
@@ -439,13 +441,10 @@ export default function AdminCoursesPage() {
                                 {course.title}
                               </button>
                               {course.isMapped && (
-                                <Badge
-                                  variant="secondary"
-                                  className="h-5 px-1.5 py-0 flex items-center gap-1 bg-amber-50 text-amber-600 border-amber-100 font-bold text-[10px] uppercase tracking-wider"
-                                >
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200">
                                   <Lock className="w-2.5 h-2.5" />
                                   Mapped
-                                </Badge>
+                                </span>
                               )}
                             </div>
                           </td>

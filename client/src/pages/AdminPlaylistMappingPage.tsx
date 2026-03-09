@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,10 @@ export default function AdminPlaylistMappingPage() {
   const { toast } = useToast();
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [changeDialogOpen, setChangeDialogOpen] = useState(false);
+  const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
   const [pendingCourseId, setPendingCourseId] = useState<number | null>(null);
+  const [mappingLocked, setMappingLocked] = useState(false);
+  const [isTogglingLock, setIsTogglingLock] = useState(false);
   const adminToken = localStorage.getItem("@app:admin_token") || "";
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<
@@ -77,6 +80,13 @@ export default function AdminPlaylistMappingPage() {
 
   const selectedCourse = mappingData?.mappings?.[0];
   const selectedCourseId = selectedCourse?.courseId;
+
+  // Update lock state when mapping data loads
+  useEffect(() => {
+    if (mappingData?.feature?.mappingLocked !== undefined) {
+      setMappingLocked(mappingData.feature.mappingLocked);
+    }
+  }, [mappingData?.feature?.mappingLocked]);
 
   const { data: modules = [], isLoading: modulesLoading } = useQuery<
     ModuleWithLessons[]
@@ -197,6 +207,47 @@ export default function AdminPlaylistMappingPage() {
     },
   });
 
+  const toggleLockMutation = useMutation({
+    mutationFn: async (locked: boolean) => {
+      await apiRequest(
+        "PATCH",
+        `/admin/v1/frontend-mapping/features/PLAYLIST/lock`,
+        { locked }
+      );
+    },
+    onSuccess: (_, locked) => {
+      queryClient.invalidateQueries({
+        queryKey: ["/admin/v1/frontend-mapping/features", "PLAYLIST", "courses"],
+      });
+      setMappingLocked(locked);
+      setUnlockDialogOpen(false);
+      toast({
+        title: "Success",
+        description: `Mapping ${locked ? "locked" : "unlocked"} successfully`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update lock status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleToggleLock = async (newLockedState: boolean) => {
+    // Only show confirmation when UNLOCKING
+    if (mappingLocked && newLockedState === false) {
+      setUnlockDialogOpen(true);
+      return;
+    }
+    toggleLockMutation.mutate(newLockedState);
+  };
+
+  const confirmUnlock = () => {
+    toggleLockMutation.mutate(false);
+  };
+
   const handleCourseChange = (courseId: string) => {
     if (!courseId) return;
     const newCourseId = parseInt(courseId);
@@ -270,7 +321,7 @@ export default function AdminPlaylistMappingPage() {
                     <Select
                       value={selectedCourseId?.toString() || ""}
                       onValueChange={handleCourseChange}
-                      disabled={mapCourseMutation.isPending}
+                      disabled={mapCourseMutation.isPending || mappingLocked}
                     >
                       <SelectTrigger
                         className="bg-gray-50 border-gray-100 focus:bg-white h-10 rounded-lg text-sm"
@@ -296,7 +347,7 @@ export default function AdminPlaylistMappingPage() {
                       variant="ghost"
                       size="sm"
                       onClick={handleClearSelection}
-                      disabled={clearMappingMutation.isPending}
+                      disabled={clearMappingMutation.isPending || mappingLocked}
                       className="h-10 text-gray-400 hover:text-destructive transition-colors font-bold text-xs gap-1"
                       data-testid="button-clear-playlist-selection"
                     >
@@ -308,6 +359,41 @@ export default function AdminPlaylistMappingPage() {
                   {mapCourseMutation.isPending && (
                     <Loader2 className="w-4 h-4 animate-spin text-brand" />
                   )}
+                </div>
+              </div>
+            </Card>
+
+            {/* Lock Status Card */}
+            <Card className="p-0 border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] bg-white rounded-lg overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">
+                      {mappingLocked ? "🔒" : "🔓"}
+                    </span>
+                    <div>
+                      <h3 className="text-md font-bold text-gray-900">
+                        {mappingLocked ? "Locked" : "Unlocked"}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {mappingLocked
+                          ? "Mapping is protected from accidental changes"
+                          : "Mapping can be modified"}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => handleToggleLock(!mappingLocked)}
+                    disabled={toggleLockMutation.isPending}
+                    className={mappingLocked ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}
+                  >
+                    {toggleLockMutation.isPending
+                      ? "Updating..."
+                      : mappingLocked
+                      ? "Unlock Mapping"
+                      : "Lock Mapping"}
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -429,6 +515,36 @@ export default function AdminPlaylistMappingPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Unlock Confirmation Dialog */}
+      <AlertDialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unlock Mapping?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Unlocking this will allow modification of the course mapping for
+                this feature.
+              </p>
+              <p className="text-gray-600">
+                Make sure to lock the mapping again after making changes to
+                protect it from accidental modifications.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmUnlock}
+              className="bg-amber-600 hover:bg-amber-700 font-bold"
+              disabled={toggleLockMutation.isPending}
+            >
+              {toggleLockMutation.isPending ? "Unlocking..." : "Unlock"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+

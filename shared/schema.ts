@@ -233,6 +233,7 @@ export const frontendFeatures = pgTable("frontend_features", {
   code: text("code").notNull().unique(),
   displayName: text("display_name").notNull(),
   displayMode: text("display_mode").notNull(), // 'modules' | 'lessons' | 'courses'
+  mappingLocked: boolean("mapping_locked").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });
 

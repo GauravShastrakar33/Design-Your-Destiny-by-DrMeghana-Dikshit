@@ -943,6 +943,22 @@ export class DbStorage implements IStorage {
     }
   }
 
+  async getFeatureLockStatus(featureId: number): Promise<boolean | undefined> {
+    const result = await db
+      .select({ mappingLocked: frontendFeaturesTable.mappingLocked })
+      .from(frontendFeaturesTable)
+      .where(eq(frontendFeaturesTable.id, featureId));
+    return result[0]?.mappingLocked;
+  }
+
+  async toggleFeatureLock(featureId: number, locked: boolean): Promise<boolean> {
+    const result = await db
+      .update(frontendFeaturesTable)
+      .set({ mappingLocked: locked })
+      .where(eq(frontendFeaturesTable.id, featureId));
+    return result.rowCount > 0;
+  }
+
   async getModulesForCourse(courseId: number) {
     return await db.select().from(cmsModules).where(eq(cmsModules.courseId, courseId)).orderBy(asc(cmsModules.position));
   }
