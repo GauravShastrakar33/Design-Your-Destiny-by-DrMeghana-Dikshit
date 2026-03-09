@@ -791,31 +791,38 @@ export const insertGoldmineVideoSchema = createInsertSchema(goldmineVideos).omit
 export type InsertGoldmineVideo = z.infer<typeof insertGoldmineVideoSchema>;
 export type GoldmineVideo = typeof goldmineVideos.$inferSelect;
 
+
 // Audit Logs Table
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
-  adminId: integer("admin_id").notNull().references(() => users.id),
-  adminEmail: varchar("admin_email", { length: 150 }).notNull(),
+  userId: integer("user_id").notNull(), // The user/admin performing the action
+  userEmail: varchar("user_email", { length: 150 }).notNull(), // Email to easily identify the actor
   entityType: varchar("entity_type", { length: 50 }).notNull(),
-  entityId: integer("entity_id").notNull(),
-  relatedEntityId: integer("related_entity_id"),
+  entityId: varchar("entity_id", { length: 50 }).notNull(), // varchar to support UUIDs
+  relatedEntityId: varchar("related_entity_id", { length: 50 }),
   action: varchar("action", { length: 50 }).notNull(),
   oldValues: jsonb("old_values"),
-  newValues: jsonb("new_values").notNull(),
-  changesSummary: text("changes_summary").notNull(),
+  newValues: jsonb("new_values"), // Nullable for DELETE actions
+  changesSummary: text("changes_summary"), // Nullable if not provided
   reason: text("reason"),
   ipAddress: varchar("ip_address", { length: 45 }),
   userAgent: text("user_agent"),
   timestamp: timestamp("timestamp", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
-  adminIdIdx: index("idx_audit_logs_admin_id").on(table.adminId),
+  userIdIdx: index("idx_audit_logs_user_id").on(table.userId),
   entityTypeIdx: index("idx_audit_logs_entity_type").on(table.entityType),
   entityIdIdx: index("idx_audit_logs_entity_id").on(table.entityId),
   actionIdx: index("idx_audit_logs_action").on(table.action),
   timestampIdx: index("idx_audit_logs_timestamp").on(table.timestamp),
-  adminEmailIdx: index("idx_audit_logs_admin_email").on(table.adminEmail),
+  userEmailIdx: index("idx_audit_logs_user_email").on(table.userEmail),
 }));
 
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  createdAt: true,
+  timestamp: true,
+});
+
 export type AuditLog = typeof auditLogs.$inferSelect;
-export type InsertAuditLog = Omit<typeof auditLogs.$inferInsert, 'id' | 'timestamp' | 'createdAt'>;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;

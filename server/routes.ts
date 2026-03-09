@@ -135,6 +135,7 @@ import {
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { authenticateJWT, type AuthPayload } from "./middleware/auth";
+import { logAudit } from "./utils/audit";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const JWT_SECRET = process.env.JWT_SECRET as string;
@@ -331,6 +332,11 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
 
   // Legacy password-based auth (backward compatible)
   if (authHeader === `Bearer ${ADMIN_PASSWORD}`) {
+    req.user = {
+      sub: 0,
+      email: "legacy-admin@system.local",
+      role: "SUPER_ADMIN",
+    };
     next();
     return;
   }
@@ -1337,6 +1343,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         programCode
       );
 
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "CREATE",
+          entityType: "USER",
+          entityId: student.id,
+          newValues: { name, email, phone, programCode },
+        });
+      }
+
       res.status(201).json({ message: "Student added", userId: student.id });
     } catch (error) {
       console.error("Error creating student:", error);
@@ -1359,6 +1377,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!student) {
         res.status(404).json({ error: "Student not found" });
         return;
+      }
+
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "UPDATE",
+          entityType: "USER",
+          entityId: id,
+          newValues: { name, email, phone, status, programCode },
+        });
       }
 
       res.json({ message: "Student updated" });
@@ -1385,6 +1415,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
 
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "UPDATE_STATUS",
+          entityType: "USER",
+          entityId: id,
+          newValues: { status },
+        });
+      }
+
       res.json({ message: "Status updated" });
     } catch (error) {
       console.error("Error updating student status:", error);
@@ -1396,11 +1438,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/admin/v1/students/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const student = await storage.getStudentById(id);
       const success = await storage.deleteStudent(id);
 
       if (!success) {
         res.status(404).json({ error: "Student not found" });
         return;
+      }
+
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "DELETE",
+          entityType: "USER",
+          entityId: id,
+          oldValues: student,
+        });
       }
 
       res.json({ message: "Student deleted" });
@@ -1432,6 +1487,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         await storage.resetUserPassword(id, hashedPassword);
+
+        if (req.user) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "PASSWORD_CHANGE",
+            entityType: "USER",
+            entityId: id,
+          });
+        }
 
         res.json({ success: true, message: "Password reset successfully" });
       } catch (error) {
@@ -2009,6 +2075,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         })
         .returning();
 
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "CREATE",
+          entityType: "PROGRAM",
+          entityId: newProgram.id,
+          newValues: newProgram,
+        });
+      }
+
       res.status(201).json(newProgram);
     } catch (error: any) {
       console.error("Error creating program:", error);
@@ -2028,6 +2106,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const programId = parseInt(req.params.id);
       const { code, name } = req.body;
 
+      const [existing] = await db.select().from(programs).where(eq(programs.id, programId));
+
       const [updated] = await db
         .update(programs)
         .set({
@@ -2040,6 +2120,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!updated) {
         res.status(404).json({ error: "Program not found" });
         return;
+      }
+
+      if (req.user && existing) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "UPDATE",
+          entityType: "PROGRAM",
+          entityId: programId,
+          oldValues: existing,
+          newValues: updated,
+        });
       }
 
       res.json(updated);
@@ -2082,6 +2175,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!deleted) {
         res.status(404).json({ error: "Program not found" });
         return;
+      }
+
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "DELETE",
+          entityType: "PROGRAM",
+          entityId: programId,
+          oldValues: deleted,
+        });
       }
 
       res.json({ success: true });
@@ -2275,6 +2380,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         })
         .returning();
 
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "CREATE",
+          entityType: "CMS_COURSE",
+          entityId: course.id,
+          newValues: course,
+        });
+      }
+
       res.status(201).json(course);
     } catch (error) {
       console.error("Error creating course:", error);
@@ -2301,6 +2418,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .set({ ...req.body, updatedAt: new Date() })
         .where(eq(cmsCourses.id, courseId))
         .returning();
+
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "UPDATE",
+          entityType: "CMS_COURSE",
+          entityId: courseId,
+          oldValues: existing,
+          newValues: updated,
+        });
+      }
 
       res.json(updated);
     } catch (error) {
@@ -2335,7 +2465,20 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return;
         }
 
+        const [courseToDelete] = await db.select().from(cmsCourses).where(eq(cmsCourses.id, courseId));
         await db.delete(cmsCourses).where(eq(cmsCourses.id, courseId));
+
+        if (req.user && courseToDelete) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "DELETE",
+            entityType: "CMS_COURSE",
+            entityId: courseId,
+            oldValues: courseToDelete,
+          });
+        }
 
         res.json({ success: true });
       } catch (error) {
@@ -2368,6 +2511,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         if (!updated) {
           res.status(404).json({ error: "Course not found" });
           return;
+        }
+
+        if (req.user) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "UPDATE",
+            entityType: "CMS_COURSE",
+            entityId: courseId,
+            newValues: { isPublished },
+          });
         }
 
         res.json(updated);
@@ -2489,6 +2644,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         })
         .returning();
 
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "CREATE",
+          entityType: "CMS_MODULE",
+          entityId: module.id,
+          relatedEntityId: module.courseId,
+          newValues: module,
+        });
+      }
+
       res.status(201).json(module);
     } catch (error) {
       console.error("Error creating module:", error);
@@ -2501,6 +2669,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const moduleId = parseInt(req.params.id);
 
+      const [existing] = await db.select().from(cmsModules).where(eq(cmsModules.id, moduleId));
+
       const [updated] = await db
         .update(cmsModules)
         .set({ ...req.body, updatedAt: new Date() })
@@ -2510,6 +2680,20 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!updated) {
         res.status(404).json({ error: "Module not found" });
         return;
+      }
+
+      if (req.user && existing) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "UPDATE",
+          entityType: "CMS_MODULE",
+          entityId: moduleId,
+          relatedEntityId: updated.courseId,
+          oldValues: existing,
+          newValues: updated,
+        });
       }
 
       res.json(updated);
@@ -2527,7 +2711,21 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       try {
         const moduleId = parseInt(req.params.id);
 
+        const [moduleToDelete] = await db.select().from(cmsModules).where(eq(cmsModules.id, moduleId));
         await db.delete(cmsModules).where(eq(cmsModules.id, moduleId));
+
+        if (req.user && moduleToDelete) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "DELETE",
+            entityType: "CMS_MODULE",
+            entityId: moduleId,
+            relatedEntityId: moduleToDelete.courseId,
+            oldValues: moduleToDelete,
+          });
+        }
 
         res.json({ success: true });
       } catch (error) {
@@ -2615,6 +2813,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         })
         .returning();
 
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "CREATE",
+          entityType: "CMS_FOLDER",
+          entityId: folder.id,
+          relatedEntityId: folder.moduleId,
+          newValues: folder,
+        });
+      }
+
       res.status(201).json(folder);
     } catch (error) {
       console.error("Error creating folder:", error);
@@ -2627,6 +2838,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const folderId = parseInt(req.params.id);
 
+      const [existing] = await db.select().from(cmsModuleFolders).where(eq(cmsModuleFolders.id, folderId));
+
       const [updated] = await db
         .update(cmsModuleFolders)
         .set({ ...req.body, updatedAt: new Date() })
@@ -2636,6 +2849,20 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!updated) {
         res.status(404).json({ error: "Folder not found" });
         return;
+      }
+
+      if (req.user && existing) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "UPDATE",
+          entityType: "CMS_FOLDER",
+          entityId: folderId,
+          relatedEntityId: updated.moduleId,
+          oldValues: existing,
+          newValues: updated,
+        });
       }
 
       res.json(updated);
@@ -2653,9 +2880,24 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       try {
         const folderId = parseInt(req.params.id);
 
+        const [folderToDelete] = await db.select().from(cmsModuleFolders).where(eq(cmsModuleFolders.id, folderId));
+
         await db
           .delete(cmsModuleFolders)
           .where(eq(cmsModuleFolders.id, folderId));
+
+        if (req.user && folderToDelete) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "DELETE",
+            entityType: "CMS_FOLDER",
+            entityId: folderId,
+            relatedEntityId: folderToDelete.moduleId,
+            oldValues: folderToDelete,
+          });
+        }
 
         res.json({ success: true });
       } catch (error) {
@@ -2780,6 +3022,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         })
         .returning();
 
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "CREATE",
+          entityType: "CMS_LESSON",
+          entityId: lesson.id,
+          relatedEntityId: lesson.moduleId,
+          newValues: lesson,
+        });
+      }
+
       res.status(201).json(lesson);
     } catch (error) {
       console.error("Error creating lesson:", error);
@@ -2792,6 +3047,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     try {
       const lessonId = parseInt(req.params.id);
 
+      const [existing] = await db.select().from(cmsLessons).where(eq(cmsLessons.id, lessonId));
+
       const [updated] = await db
         .update(cmsLessons)
         .set({ ...req.body, updatedAt: new Date() })
@@ -2801,6 +3058,20 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       if (!updated) {
         res.status(404).json({ error: "Lesson not found" });
         return;
+      }
+
+      if (req.user && existing) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "UPDATE",
+          entityType: "CMS_LESSON",
+          entityId: lessonId,
+          relatedEntityId: updated.moduleId,
+          oldValues: existing,
+          newValues: updated,
+        });
       }
 
       res.json(updated);
@@ -2818,6 +3089,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       try {
         const lessonId = parseInt(req.params.id);
 
+        const [lessonToDelete] = await db.select().from(cmsLessons).where(eq(cmsLessons.id, lessonId));
+
         // First delete associated files from R2
         const files = await db
           .select()
@@ -2828,6 +3101,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         }
 
         await db.delete(cmsLessons).where(eq(cmsLessons.id, lessonId));
+
+        if (req.user && lessonToDelete) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "DELETE",
+            entityType: "CMS_LESSON",
+            entityId: lessonId,
+            relatedEntityId: lessonToDelete.moduleId,
+            oldValues: lessonToDelete,
+          });
+        }
 
         res.json({ success: true });
       } catch (error) {
@@ -3041,6 +3327,21 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           })
           .returning();
 
+        if (req.user) {
+          // Exclude large text fields from log
+          const { scriptHtml: omitHtml, extractedText: omitText, ...logValues } = file;
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "CREATE",
+            entityType: "CMS_FILE",
+            entityId: file.id,
+            relatedEntityId: file.lessonId,
+            newValues: logValues,
+          });
+        }
+
         res.status(201).json(file);
       } catch (error) {
         console.error("Error confirming file upload:", error);
@@ -3064,6 +3365,21 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       await db.delete(cmsLessonFiles).where(eq(cmsLessonFiles.id, fileId));
+
+      if (req.user && file) {
+        // Exclude large text fields from log
+        const { scriptHtml, extractedText, ...logValues } = file;
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "DELETE",
+          entityType: "CMS_FILE",
+          entityId: fileId,
+          relatedEntityId: file.lessonId,
+          oldValues: logValues,
+        });
+      }
 
       res.json({ success: true });
     } catch (error) {
@@ -3202,6 +3518,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           position,
         });
 
+        if (req.user) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "MAP",
+            entityType: "FEATURE_COURSE_MAP",
+            entityId: `${feature.id}-${courseId}`,
+            relatedEntityId: feature.code,
+            newValues: mapping,
+          });
+        }
+
         res.status(201).json(mapping);
       } catch (error) {
         console.error("Error creating feature course mapping:", error);
@@ -3237,6 +3566,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
         if (!success) {
           return res.status(404).json({ error: "Mapping not found" });
+        }
+
+        if (req.user) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "UNMAP",
+            entityType: "FEATURE_COURSE_MAP",
+            entityId: `${feature.id}-${courseId}`,
+            relatedEntityId: feature.code,
+            oldValues: { featureId: feature.id, courseId: parseInt(courseId) },
+          });
         }
 
         res.json({ success: true });
@@ -4299,6 +4641,17 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         liveStartAt: liveStartAt ? new Date(liveStartAt) : null,
         liveEndAt: liveEndAt ? new Date(liveEndAt) : null,
       });
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "CREATE",
+          entityType: "BANNER",
+          entityId: banner.id,
+          newValues: banner,
+        });
+      }
       res.status(201).json(banner);
     } catch (error) {
       console.error("Error creating session banner:", error);
@@ -4342,9 +4695,23 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         if (liveEndAt !== undefined)
           updateData.liveEndAt = liveEndAt ? new Date(liveEndAt) : null;
 
+        const existing = await storage.getSessionBannerById(id);
         const banner = await storage.updateSessionBanner(id, updateData);
         if (!banner) {
           return res.status(404).json({ error: "Banner not found" });
+        }
+
+        if (req.user && existing) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "UPDATE",
+            entityType: "BANNER",
+            entityId: id,
+            oldValues: existing,
+            newValues: banner,
+          });
         }
         res.json(banner);
       } catch (error) {
@@ -4361,9 +4728,22 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     async (req, res) => {
       try {
         const id = parseInt(req.params.id);
+        const existing = await storage.getSessionBannerById(id);
         const success = await storage.deleteSessionBanner(id);
         if (!success) {
           return res.status(404).json({ error: "Banner not found" });
+        }
+
+        if (req.user && existing) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "DELETE",
+            entityType: "BANNER",
+            entityId: id,
+            oldValues: existing,
+          });
         }
         res.json({ success: true });
       } catch (error) {
@@ -4398,6 +4778,17 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           liveStartAt: original.liveStartAt,
           liveEndAt: original.liveEndAt,
         });
+        if (req.user) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "CREATE",
+            entityType: "BANNER",
+            entityId: duplicate.id,
+            newValues: duplicate,
+          });
+        }
         res.status(201).json(duplicate);
       } catch (error) {
         console.error("Error duplicating session banner:", error);
@@ -4974,6 +5365,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       const event = await storage.createEvent(parsed.data);
 
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "CREATE",
+          entityType: "EVENT",
+          entityId: event.id,
+          newValues: event,
+        });
+      }
+
       // Create reminder notifications if event is UPCOMING
       try {
         await createEventReminders(event);
@@ -5015,10 +5418,24 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         updateData.recordingExpiryDate = updateData.recordingExpiryDate;
       }
 
+      const existing = await storage.getEventById(id);
       const event = await storage.updateEvent(id, updateData);
 
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
+      }
+
+      if (req.user && existing) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "UPDATE",
+          entityType: "EVENT",
+          entityId: id,
+          oldValues: existing,
+          newValues: event,
+        });
       }
 
       // Regenerate notifications if start_time or status changed
@@ -5076,6 +5493,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
+      }
+
+      if (req.user) {
+        const oldValues = await storage.getEventById(id);
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "DELETE",
+          entityType: "EVENT",
+          entityId: id,
+          oldValues,
+        });
       }
 
       // Delete notifications for cancelled event
@@ -6295,6 +6725,18 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         })
         .returning();
 
+      if (req.user) {
+        logAudit({
+          req,
+          userId: req.user.sub,
+          userEmail: req.user.email,
+          action: "CREATE",
+          entityType: "NOTIFICATION",
+          entityId: notification.id,
+          newValues: notification,
+        });
+      }
+
       const tokens = allTokens.map((t) => t.token);
       // Send with default deep link to notifications page
       const result = await sendPushNotification(tokens, title, body, {
@@ -6580,6 +7022,19 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
         if (!updatedQuestion) {
           return res.status(500).json({ error: "Failed to update question" });
+        }
+
+        if (req.user) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "UPDATE",
+            entityType: "DRM_QUESTION",
+            entityId: questionId,
+            oldValues: { status: question.status },
+            newValues: { status: "ANSWERED", audioR2Key: audioKey },
+          });
         }
 
         // Create notification for the user
@@ -7170,6 +7625,23 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           isPublished: isPublished === "true" || isPublished === true,
         });
 
+        if (req.user) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "CREATE",
+            entityType: "GOLDMINE_VIDEO",
+            entityId: video.id,
+            newValues: {
+              title: video.title,
+              description: video.description,
+              isPublished: video.isPublished,
+              tags: video.tags,
+            },
+          });
+        }
+
         return res.status(201).json(video);
       } catch (error) {
         console.error("Error creating goldmine video:", error);
@@ -7226,6 +7698,23 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return res
             .status(500)
             .json({ error: "Failed to delete video record" });
+        }
+
+        if (req.user) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "DELETE",
+            entityType: "GOLDMINE_VIDEO",
+            entityId: id,
+            oldValues: {
+              title: video.title,
+              description: video.description,
+              isPublished: video.isPublished,
+              tags: video.tags,
+            },
+          });
         }
 
         return res.json({ success: true });
@@ -7341,6 +7830,24 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return res
             .status(404)
             .json({ error: "Video not found during update" });
+        }
+
+        if (req.user) {
+          logAudit({
+            req,
+            userId: req.user.sub,
+            userEmail: req.user.email,
+            action: "UPDATE",
+            entityType: "GOLDMINE_VIDEO",
+            entityId: id,
+            oldValues: {
+              title: video.title,
+              description: video.description,
+              isPublished: video.isPublished,
+              tags: video.tags,
+            },
+            newValues: updateData,
+          });
         }
 
         return res.json(updatedVideo);
