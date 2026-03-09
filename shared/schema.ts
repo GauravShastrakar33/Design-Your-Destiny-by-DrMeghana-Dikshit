@@ -790,3 +790,32 @@ export const insertGoldmineVideoSchema = createInsertSchema(goldmineVideos).omit
 
 export type InsertGoldmineVideo = z.infer<typeof insertGoldmineVideoSchema>;
 export type GoldmineVideo = typeof goldmineVideos.$inferSelect;
+
+// Audit Logs Table
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").notNull().references(() => users.id),
+  adminEmail: varchar("admin_email", { length: 150 }).notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(),
+  entityId: integer("entity_id").notNull(),
+  relatedEntityId: integer("related_entity_id"),
+  action: varchar("action", { length: 50 }).notNull(),
+  oldValues: jsonb("old_values"),
+  newValues: jsonb("new_values").notNull(),
+  changesSummary: text("changes_summary").notNull(),
+  reason: text("reason"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  timestamp: timestamp("timestamp", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+}, (table) => ({
+  adminIdIdx: index("idx_audit_logs_admin_id").on(table.adminId),
+  entityTypeIdx: index("idx_audit_logs_entity_type").on(table.entityType),
+  entityIdIdx: index("idx_audit_logs_entity_id").on(table.entityId),
+  actionIdx: index("idx_audit_logs_action").on(table.action),
+  timestampIdx: index("idx_audit_logs_timestamp").on(table.timestamp),
+  adminEmailIdx: index("idx_audit_logs_admin_email").on(table.adminEmail),
+}));
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = Omit<typeof auditLogs.$inferInsert, 'id' | 'timestamp' | 'createdAt'>;

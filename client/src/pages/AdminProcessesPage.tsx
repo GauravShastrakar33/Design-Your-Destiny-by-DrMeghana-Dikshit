@@ -495,22 +495,24 @@ export default function AdminProcessesPage() {
           onValueChange={setActiveTab}
           className="w-full space-y-6"
         >
-          <TabsList className="bg-white border border-gray-100 shadow-sm p-1 h-12 rounded-lg">
-            <TabsTrigger
-              value="DYD"
-              data-testid="tab-dyd"
-              className="rounded-md px-8 h-full font-bold text-xs data-[state=active]:bg-brand data-[state=active]:text-white transition-all uppercase tracking-wider"
-            >
-              DYD
-            </TabsTrigger>
-            <TabsTrigger
-              value="USM"
-              data-testid="tab-usm"
-              className="rounded-md px-8 h-full font-bold text-xs data-[state=active]:bg-brand data-[state=active]:text-white transition-all uppercase tracking-wider"
-            >
-              USM
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex justify-center">
+            <TabsList className="bg-white border border-gray-100 shadow-sm p-1 h-10 rounded-lg w-fit">
+              <TabsTrigger
+                value="DYD"
+                data-testid="tab-dyd"
+                className="rounded-md px-20 h-full font-bold text-base data-[state=active]:bg-brand data-[state=active]:text-white transition-all uppercase tracking-wider"
+              >
+                DYD
+              </TabsTrigger>
+              <TabsTrigger
+                value="USM"
+                data-testid="tab-usm"
+                className="rounded-md px-20 h-full font-bold text-base data-[state=active]:bg-brand data-[state=active]:text-white transition-all uppercase tracking-wider"
+              >
+                USM
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="DYD" className="focus-visible:outline-none">
             <FeatureTab code="DYD" label="DYD Processes" />

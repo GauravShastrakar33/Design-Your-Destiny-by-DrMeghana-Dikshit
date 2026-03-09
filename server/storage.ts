@@ -26,6 +26,7 @@ import {
   type DrmQuestion, type InsertDrmQuestion,
   type LessonProgress,
   type GoldmineVideo, type InsertGoldmineVideo,
+  type AuditLog, type InsertAuditLog,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -47,7 +48,8 @@ import {
   userBadges as userBadgesTable,
   drmQuestions as drmQuestionsTable,
   lessonProgress as lessonProgressTable,
-  goldmineVideos as goldmineVideosTable
+  goldmineVideos as goldmineVideosTable,
+  auditLogs as auditLogsTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
