@@ -164,7 +164,7 @@ export default function GoldMinePage() {
             <Gem className="w-6 h-6" />
           </div>
           <h1 className="text-xl font-bold text-gray-900 px-4">
-            Gold Mine is your curated vault of powerful teachings.
+            Gold Mine is your curated vault of powerful teachings by Dr. M 
           </h1>
           <p className="text-gray-500 text-sm leading-relaxed max-w-sm mx-auto px-4">
             Search by topic, emotion, or concept to quickly find what you need
