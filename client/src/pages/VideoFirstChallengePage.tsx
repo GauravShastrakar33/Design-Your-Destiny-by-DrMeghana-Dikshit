@@ -483,9 +483,10 @@ export default function VideoFirstChallengePage() {
         title={`Day ${currentDay?.dayNumber} of ${allDays.length}`}
         hasBackButton={true}
         onBack={handleBack}
+        maxWidthClassName="max-w-3xl md:max-w-5xl"
       />
 
-      <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full pb-24 px-3">
+      <div className="flex-1 flex flex-col max-w-3xl md:max-w-5xl mx-auto w-full pb-24 px-3">
         {/* Adaptive Player Stage */}
         <div
           className={`w-full mt-4 relative ${
@@ -551,11 +552,11 @@ export default function VideoFirstChallengePage() {
               Day {currentDay?.dayNumber}: {currentDay?.title}
             </h2>
           </div>
-          <div className="w-full flex justify-between items-center gap-3">
+          <div className="w-full sm:w-auto flex justify-between items-center gap-3">
             {isCurrentLessonCompleted ? (
-              <div className="flex items-center gap-2 bg-emerald-50 content-none px-2 py-1 rounded-full border border-emerald-100">
-                <div className="w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                  <Check className="w-2 h-2 text-white" />
+              <div className="flex items-center gap-2 bg-emerald-50 content-none px-4 py-1.5 rounded-full border border-emerald-100 shrink-0">
+                <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                  <Check className="w-2.5 h-2.5 text-white" />
                 </div>
                 <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide">
                   Complete
@@ -567,7 +568,7 @@ export default function VideoFirstChallengePage() {
                   currentDay && markCompleteMutation.mutate(currentDay.lessonId)
                 }
                 disabled={markCompleteMutation.isPending}
-                className=" text-white font-bold px-2 py-1 rounded-full hover:bg-brand/90 shadow-lg shadow-brand/20 transition-all"
+                className="bg-brand text-white font-bold px-6 py-2 rounded-full hover:bg-brand/90 shadow-lg shadow-brand/20 transition-all shrink-0"
               >
                 {markCompleteMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -576,8 +577,8 @@ export default function VideoFirstChallengePage() {
                 )}
               </Button>
             ) : (
-              <div className="flex items-center gap-2 content-none px-2 py-1 rounded-full border border-gray-200 bg-gray-50">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
+              <div className="flex items-center gap-2 content-none px-4 py-1.5 rounded-full border border-gray-200 bg-gray-50 shrink-0">
+                <div className="w-2.5 h-2.5 bg-gray-400 rounded-full animate-pulse" />
                 <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">
                   Learning...
                 </span>
@@ -597,7 +598,7 @@ export default function VideoFirstChallengePage() {
               <div className="h-px flex-1 bg-gray-200 mx-4" />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {allDays.map((day, index) => {
                 const isCompleted = completedLessonIds.has(day.lessonId);
                 const isCurrent = index === currentDayIndex;
