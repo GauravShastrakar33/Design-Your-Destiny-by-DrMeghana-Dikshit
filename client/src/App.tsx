@@ -117,6 +117,8 @@ function AppContent() {
 
   useEffect(() => {
     locationRef.current = location;
+    // Always scroll window to top on route change
+    window.scrollTo(0, 0);
   }, [location]);
 
   useEffect(() => {
