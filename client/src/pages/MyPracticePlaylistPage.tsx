@@ -18,6 +18,8 @@ import {
   Volume2,
   VolumeX,
   Volume1,
+  RotateCcw,
+  RotateCw,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -74,6 +76,7 @@ interface PlayerUIProps {
   onTogglePlay: () => void;
   onNext: () => void;
   onPrev: () => void;
+  onSkip: (offset: number) => void;
   onSeek: (val: number[]) => void;
   onClose: () => void;
   volume: number;
@@ -96,6 +99,7 @@ const FullScreenPlayer = ({
   onTogglePlay,
   onNext,
   onPrev,
+  onSkip,
   onSeek,
   onClose,
   volume,
@@ -123,7 +127,7 @@ const FullScreenPlayer = ({
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 300 }}
-      className="fixed inset-0 z-[70] bg-[#F8F9FB] flex flex-col items-center overflow-hidden"
+      className="fixed inset-0 z-[70] bg-[#F8F9FB] flex flex-col overflow-hidden"
     >
       <style>{`
         @keyframes slow-spin {
@@ -175,6 +179,7 @@ const FullScreenPlayer = ({
         title="Now Playing"
         hasBackButton={true}
         onBack={onClose}
+        maxWidthClassName="max-w-4xl sm:max-w-5xl"
         rightContent={
           <Button
             variant="ghost"
@@ -188,217 +193,242 @@ const FullScreenPlayer = ({
         }
       />
 
-      <div className="flex-1 w-full max-w-2xl md:max-w-4xl flex flex-col items-center justify-start px-4 md:px-10 relative z-10 pt-[calc(env(safe-area-inset-top)+6rem)]">
-        <AnimatePresence mode="wait">
-          {!showQueue ? (
-            <motion.div
-              key="player"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full flex flex-col items-center flex-1 justify-start gap-8 sm:gap-12 md:gap-14"
-            >
-              {/* Artwork - Music Disk Aesthetic */}
-              <div className="relative group flex items-center justify-center w-full mt-6 mb-4">
-                {/* Visual Disk - Vinyl Groove Look */}
-                <div
-                  style={{
-                    animation: "slow-spin 20s linear infinite",
-                    animationPlayState: isPlaying ? "running" : "paused",
-                  }}
-                  className="w-full aspect-square max-w-[200px] sm:max-w-[240px] md:max-w-[300px] rounded-full bg-slate-900 flex items-center justify-center shadow-sm border-[10px] sm:border-[12px] border-slate-800 relative z-10"
-                >
-                  {/* Groove Rings */}
-                  <div className="absolute inset-3 rounded-full border border-white/10" />
-                  <div className="absolute inset-6 rounded-full border border-white/10" />
-                  <div className="absolute inset-9 rounded-full border border-white/10" />
-                  <div className="absolute inset-12 rounded-full border border-white/10" />
-
-                  {/* Inner Content Label */}
-                  <div className="w-1/3 h-1/3 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center border-4 border-slate-900 shadow-inner overflow-hidden relative">
-                    <div className="absolute inset-0 bg-white/20 blur-sm" />
-                    <Music className="w-1/2 h-1/2 text-white/90 relative z-10" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Info */}
-              <div className="w-full text-center">
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight mb-6 px-2">
-                  {track?.lesson?.title || "Unknown Track"}
-                </h2>
-                <p className="text-brand font-black text-xs uppercase tracking-[0.2em] bg-brand/5 px-4 py-1.5 rounded-full hidden">
-                  Practice Session
-                </p>
-              </div>
-
-              {/* Progress */}
-              <div className="w-full space-y-4 px-2">
-                <Slider
-                  value={[progress]}
-                  max={duration || 100}
-                  step={0.1}
-                  onValueChange={onSeek}
-                  className="cursor-pointer"
-                  trackClassName="h-1 bg-slate-100"
-                  thumbClassName="h-3 w-3 border-[1.5px] border-brand"
-                />
-                <div className="flex justify-between text-xs font-bold text-slate-600 tabular-nums uppercase tracking-widest">
-                  <span>{formatTime(progress)}</span>
-                  {isLoading || duration === 0 ? (
-                    <Loader2 className="w-3 h-3 animate-spin text-brand" />
-                  ) : (
-                    <span>{formatTime(duration)}</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Controls - Equal sizes, disabled states */}
-              <div className="flex items-center gap-8 sm:gap-14">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onPrev}
-                  disabled={!hasPrev}
-                  className="w-12 h-12 rounded-full bg-brand/20 text-brand border border-brand/50 shadow-md shadow-brand/30 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
-                >
-                  <SkipBack className="w-8 h-8 fill-current" />
-                </Button>
-
-                <Button
-                  onClick={onTogglePlay}
-                  className="w-16 h-16 rounded-full bg-brand text-white shadow-md shadow-brand/30 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-8 h-8 fill-current" />
-                  ) : (
-                    <Play className="w-8 h-8 fill-current ml-1" />
-                  )}
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onNext}
-                  disabled={!hasNext}
-                  className="w-12 h-12 rounded-full bg-brand/20 text-brand border border-brand/50 shadow-md shadow-brand/30 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
-                >
-                  <SkipForward className="w-8 h-8 fill-current" />
-                </Button>
-              </div>
-
-              {/* Speed & Volume Container */}
-              <div className="w-full max-w-[320px] flex items-center pr-4 gap-4 bg-white/50 backdrop-blur-sm rounded-full border border-brand/50">
-                {/* Playback Speed Select */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 rounded-l-full w-12 font-black text-xs text-brand hover:bg-brand/10 bg-brand/5 border border-brand/20 transition-all shrink-0"
-                    >
-                      {playbackRate === 1 ? "1X" : `${playbackRate}X`}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    className="w-24 rounded-xl border-brand/10 bg-white shadow-xl z-[80]"
-                  >
-                    {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
-                      <DropdownMenuItem
-                        key={speed}
-                        onClick={() => onPlaybackRateChange(speed)}
-                        className={`text-[11px] font-black rounded-lg ${
-                          playbackRate === speed
-                            ? "bg-brand/10 text-brand"
-                            : "text-slate-600"
-                        }`}
-                      >
-                        {speed === 1 ? "Normal" : `${speed}x`}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {volume === 0 ? (
-                  <VolumeX className="w-4 h-4 text-slate-400" />
-                ) : volume < 0.5 ? (
-                  <Volume1 className="w-4 h-4 text-slate-400" />
-                ) : (
-                  <Volume2 className="w-4 h-4 text-slate-400" />
-                )}
-                <Slider
-                  value={[volume]}
-                  max={1}
-                  step={0.01}
-                  onValueChange={onVolumeChange}
-                  className="flex-1"
-                  trackClassName="h-1 bg-slate-100"
-                  thumbClassName="h-3 w-3 border-[1.5px] border-brand"
-                />
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="queue"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="w-full flex-1 flex flex-col gap-4 py-4"
-            >
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest px-2 mb-2">
-                Up Next
-              </h3>
-              <div className="flex-1 overflow-y-auto space-y-1 max-h-[60vh] pr-2 scrollbar-hide">
-                {queue.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    onClick={() => onTrackClick(idx)}
-                    className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all ${
-                      idx === currentIdx
-                        ? "bg-brand/10 border border-brand/10"
-                        : "hover:bg-white"
-                    }`}
-                  >
-                    <div className="w-8 flex items-center justify-center text-xs font-black tabular-nums">
-                      {idx === currentIdx && isPlaying ? (
-                        <div className="flex gap-0.5 items-end h-2.5">
-                          <div className="w-0.5 bg-brand animate-[bounce_1s_infinite] h-1.5" />
-                          <div className="w-0.5 bg-brand animate-[bounce_0.8s_infinite] h-2.5" />
-                          <div className="w-0.5 bg-brand animate-[bounce_1.2s_infinite] h-1" />
-                        </div>
-                      ) : (
-                        <span
-                          className={
-                            idx === currentIdx ? "text-brand" : "text-slate-500"
-                          }
-                        >
-                          {idx + 1}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`font-bold text-sm truncate ${
-                          idx === currentIdx ? "text-brand" : "text-slate-800"
-                        }`}
-                      >
-                        {item.lesson?.title || `Lesson ${item.lessonId}`}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowQueue(false)}
-                className="w-full mt-2 rounded-lg font-bold border border-slate-900 text-slate-900 bg-white"
+      <div className="flex-1 w-full flex flex-col items-center justify-start relative z-10 pt-[calc(env(safe-area-inset-top)+5rem)]">
+        <div className="w-full max-w-2xl md:max-w-4xl px-4 md:px-10 flex flex-col items-center">
+          <AnimatePresence mode="wait">
+            {!showQueue ? (
+              <motion.div
+                key="player"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full flex flex-col items-center flex-1 justify-start gap-4 sm:gap-8 md:gap-10"
               >
-                Back to Player
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                {/* Artwork - Music Disk Aesthetic */}
+                <div className="relative group flex items-center justify-center w-full mt-2 mb-2 sm:mt-6 sm:mb-4">
+                  {/* Visual Disk - Vinyl Groove Look */}
+                  <div
+                    style={{
+                      animation: "slow-spin 20s linear infinite",
+                      animationPlayState: isPlaying ? "running" : "paused",
+                    }}
+                    className="w-full aspect-square max-w-[180px] sm:max-w-[240px] md:max-w-[320px] rounded-full bg-slate-900 flex items-center justify-center shadow-sm border-[8px] sm:border-[12px] border-slate-800 relative z-10"
+                  >
+                    {/* Groove Rings */}
+                    <div className="absolute inset-2 sm:inset-3 rounded-full border border-white/10" />
+                    <div className="absolute inset-4 sm:inset-6 rounded-full border border-white/10" />
+                    <div className="absolute inset-6 sm:inset-9 rounded-full border border-white/10" />
+                    <div className="absolute inset-8 sm:inset-12 rounded-full border border-white/10" />
+
+                    {/* Inner Content Label */}
+                    <div className="w-1/3 h-1/3 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center border-4 border-slate-900 shadow-inner overflow-hidden relative">
+                      <div className="absolute inset-0 bg-white/20 blur-sm" />
+                      <Music className="w-1/2 h-1/2 text-white/90 relative z-10" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="w-full text-center">
+                  <h2 className="text-lg sm:text-2xl font-black text-slate-900 leading-tight mb-2 sm:mb-4 px-2">
+                    {track?.lesson?.title || "Unknown Track"}
+                  </h2>
+                </div>
+
+                {/* Progress */}
+                <div className="w-full space-y-2 sm:space-y-4 px-2">
+                  <Slider
+                    value={[progress]}
+                    max={duration || 100}
+                    step={0.1}
+                    onValueChange={onSeek}
+                    className="cursor-pointer"
+                    trackClassName="h-1 bg-slate-100"
+                    thumbClassName="h-3 w-3 border-[1.5px] border-brand"
+                  />
+                  <div className="flex justify-between text-xs font-bold text-slate-600 tabular-nums uppercase tracking-widest">
+                    <span>{formatTime(progress)}</span>
+                    {isLoading || duration === 0 ? (
+                      <Loader2 className="w-3 h-3 animate-spin text-brand" />
+                    ) : (
+                      <span>{formatTime(duration)}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Controls - Equal sizes, disabled states */}
+                <div className="flex items-center gap-3 sm:gap-6 md:gap-8">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onPrev}
+                    disabled={!hasPrev}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand/10 text-brand border border-brand/20 shadow-sm hover:scale-110 active:scale-95 transition-all flex items-center justify-center disabled:opacity-30"
+                  >
+                    <SkipBack className="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
+                  </Button>
+
+                  <button
+                    onClick={() => onSkip(-10)}
+                    disabled={isLoading}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand/10 text-brand border border-brand/20 shadow-sm hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center disabled:opacity-30 relative"
+                    title="Backward 10s"
+                  >
+                    <RotateCcw className="w-6 h-6 sm:w-7 sm:h-7" />
+                    <span className="absolute inset-0 flex items-center justify-center text-[7px] sm:text-[9px] font-black mt-[1.5px] sm:mt-[2px]">
+                      10
+                    </span>
+                  </button>
+
+                  <Button
+                    onClick={onTogglePlay}
+                    className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-brand text-white shadow-xl shadow-brand/20 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-8 h-8 sm:w-10 sm:h-10 fill-current" />
+                    ) : (
+                      <Play className="w-8 h-8 sm:w-10 sm:h-10 fill-current ml-1" />
+                    )}
+                  </Button>
+
+                  <button
+                    onClick={() => onSkip(10)}
+                    disabled={isLoading}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand/10 text-brand border border-brand/20 shadow-sm hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center disabled:opacity-30 relative"
+                    title="Forward 10s"
+                  >
+                    <RotateCw className="w-6 h-6 sm:w-7 sm:h-7" />
+                    <span className="absolute inset-0 flex items-center justify-center text-[7px] sm:text-[9px] font-black mt-[1.5px] sm:mt-[2px]">
+                      10
+                    </span>
+                  </button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onNext}
+                    disabled={!hasNext}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand/10 text-brand border border-brand/20 shadow-sm hover:scale-110 active:scale-95 transition-all flex items-center justify-center disabled:opacity-30"
+                  >
+                    <SkipForward className="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
+                  </Button>
+                </div>
+
+                {/* Speed & Volume Container */}
+                <div className="w-full max-w-[320px] flex items-center pr-4 gap-4 bg-white/50 backdrop-blur-sm rounded-full border border-brand/50">
+                  {/* Playback Speed Select */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 rounded-l-full w-12 font-black text-xs text-brand hover:bg-brand/10 bg-brand/5 border border-brand/20 transition-all shrink-0"
+                      >
+                        {playbackRate === 1 ? "1X" : `${playbackRate}X`}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="start"
+                      className="w-24 rounded-xl border-brand/10 bg-white shadow-xl z-[80]"
+                    >
+                      {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
+                        <DropdownMenuItem
+                          key={speed}
+                          onClick={() => onPlaybackRateChange(speed)}
+                          className={`text-[11px] font-black rounded-lg ${
+                            playbackRate === speed
+                              ? "bg-brand/10 text-brand"
+                              : "text-slate-600"
+                          }`}
+                        >
+                          {speed === 1 ? "Normal" : `${speed}x`}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {volume === 0 ? (
+                    <VolumeX className="w-4 h-4 text-slate-400" />
+                  ) : volume < 0.5 ? (
+                    <Volume1 className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <Volume2 className="w-4 h-4 text-slate-400" />
+                  )}
+                  <Slider
+                    value={[volume]}
+                    max={1}
+                    step={0.01}
+                    onValueChange={onVolumeChange}
+                    className="flex-1"
+                    trackClassName="h-1 bg-slate-100"
+                    thumbClassName="h-3 w-3 border-[1.5px] border-brand"
+                  />
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="queue"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="w-full flex-1 flex flex-col gap-4 py-4"
+              >
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest px-2 mb-2">
+                  Up Next
+                </h3>
+                <div className="flex-1 overflow-y-auto space-y-1 max-h-[60vh] pr-2 scrollbar-hide">
+                  {queue.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      onClick={() => onTrackClick(idx)}
+                      className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all ${
+                        idx === currentIdx
+                          ? "bg-brand/10 border border-brand/10"
+                          : "hover:bg-white"
+                      }`}
+                    >
+                      <div className="w-8 flex items-center justify-center text-xs font-black tabular-nums">
+                        {idx === currentIdx && isPlaying ? (
+                          <div className="flex gap-0.5 items-end h-2.5">
+                            <div className="w-0.5 bg-brand animate-[bounce_1s_infinite] h-1.5" />
+                            <div className="w-0.5 bg-brand animate-[bounce_0.8s_infinite] h-2.5" />
+                            <div className="w-0.5 bg-brand animate-[bounce_1.2s_infinite] h-1" />
+                          </div>
+                        ) : (
+                          <span
+                            className={
+                              idx === currentIdx
+                                ? "text-brand"
+                                : "text-slate-500"
+                            }
+                          >
+                            {idx + 1}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`font-bold text-sm truncate ${
+                            idx === currentIdx ? "text-brand" : "text-slate-800"
+                          }`}
+                        >
+                          {item.lesson?.title || `Lesson ${item.lessonId}`}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowQueue(false)}
+                  className="w-full mt-2 rounded-lg font-bold border border-slate-900 text-slate-900 bg-white"
+                >
+                  Back to Player
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </motion.div>
   );
@@ -673,6 +703,21 @@ export default function MyPracticePlaylistPage() {
       setProgress(val[0]);
     }
   };
+
+  const handleSkip = (offset: number) => {
+    if (audioRef.current) {
+      const newTime = Math.max(
+        0,
+        Math.min(
+          audioRef.current.duration,
+          audioRef.current.currentTime + offset
+        )
+      );
+      audioRef.current.currentTime = newTime;
+      setProgress(newTime);
+    }
+  };
+
   const handleVolumeChange = (val: number[]) => {
     const v = val[0];
     setVolume(v);
@@ -707,6 +752,7 @@ export default function MyPracticePlaylistPage() {
         onBack={() =>
           expandedPlaylistId ? setExpandedPlaylistId(null) : setLocation("/")
         }
+        maxWidthClassName="max-w-2xl md:max-w-5xl"
         rightContent={
           <div className="flex items-center gap-3">
             {(isFetchingPlaylists || isFetchingExpanded) && (
@@ -1038,6 +1084,7 @@ export default function MyPracticePlaylistPage() {
             onTogglePlay={handleTogglePlay}
             onNext={handleNext}
             onPrev={handlePrev}
+            onSkip={handleSkip}
             onSeek={handleSeek}
             onClose={() => setIsFullScreen(false)}
             volume={volume}
