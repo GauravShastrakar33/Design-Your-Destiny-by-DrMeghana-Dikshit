@@ -37,6 +37,8 @@ import {
   AlertCircle,
   Trash2,
   X,
+  Video,
+  Lock,
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import type { Event, Program } from "@shared/schema";
@@ -46,21 +48,26 @@ import { FormSelect } from "@/components/ui/form-select";
 import { FormTextarea } from "@/components/ui/form-textarea";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 const eventFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   coachName: z.string().optional(),
   thumbnailUrl: z.string().optional(),
-  startDatetime: z.string().min(1, "Start date/time is required"),
-  endDatetime: z.string().min(1, "End date/time is required"),
+  startDatetime: z.string().optional(),
+  endDatetime: z.string().optional(),
   joinUrl: z
     .string()
-    .min(1, "Registration link is required")
-    .url("Must be a valid URL"),
+    .url("Must be a valid URL")
+    .optional()
+    .or(z.literal("")),
   requiredProgramCode: z.string().min(1, "Program is required"),
   requiredProgramLevel: z.number().min(1),
-  status: z.enum(["DRAFT", "UPCOMING", "COMPLETED", "CANCELLED"]),
+  status: z.enum(["UPCOMING", "COMPLETED", "CANCELLED"]),
+  recordingUrl: z.string().optional(),
+  recordingExpiryDate: z.string().optional(),
+  showRecording: z.boolean().optional(),
 });
 
 type EventFormData = z.infer<typeof eventFormSchema>;
@@ -74,6 +81,7 @@ export default function AdminEventFormPage() {
 
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [eventType, setEventType] = useState<"upcoming" | "past">("upcoming");
 
   useEffect(() => {
     const token = localStorage.getItem("@app:admin_token");
@@ -94,9 +102,12 @@ export default function AdminEventFormPage() {
       startDatetime: "",
       endDatetime: "",
       joinUrl: "",
-      requiredProgramCode: "USB",
+      requiredProgramCode: "DYD",
       requiredProgramLevel: 1,
-      status: "DRAFT",
+      status: "UPCOMING",
+      recordingUrl: "",
+      recordingExpiryDate: "",
+      showRecording: false,
     },
   });
 
@@ -134,6 +145,13 @@ export default function AdminEventFormPage() {
       const startDt = new Date(event.startDatetime);
       const endDt = new Date(event.endDatetime);
 
+      // Determine event type based on status or presence of recording
+      if (event.status === "COMPLETED") {
+        setEventType("past");
+      } else {
+        setEventType("upcoming");
+      }
+
       form.reset({
         title: event.title,
         description: event.description || "",
@@ -142,9 +160,12 @@ export default function AdminEventFormPage() {
         startDatetime: format(startDt, "yyyy-MM-dd'T'HH:mm"),
         endDatetime: format(endDt, "yyyy-MM-dd'T'HH:mm"),
         joinUrl: event.joinUrl || "",
-        requiredProgramCode: event.requiredProgramCode || "USB",
+        requiredProgramCode: event.requiredProgramCode || "DYD",
         requiredProgramLevel: event.requiredProgramLevel || 1,
         status: event.status as any,
+        recordingUrl: event.recordingUrl || "",
+        recordingExpiryDate: event.recordingExpiryDate || "",
+        showRecording: event.showRecording || false,
       });
 
       if (event.thumbnailSignedUrl) {
@@ -163,11 +184,14 @@ export default function AdminEventFormPage() {
         },
         body: JSON.stringify({
           ...data,
-          startDatetime: new Date(data.startDatetime).toISOString(),
-          endDatetime: new Date(data.endDatetime).toISOString(),
-          joinUrl: data.joinUrl || null,
+          startDatetime: data.startDatetime ? new Date(data.startDatetime).toISOString() : new Date().toISOString(),
+          endDatetime: data.endDatetime ? new Date(data.endDatetime).toISOString() : new Date().toISOString(),
+          joinUrl: eventType === "upcoming" ? (data.joinUrl || null) : null,
           requiredProgramCode: data.requiredProgramCode,
           requiredProgramLevel: data.requiredProgramLevel,
+          recordingUrl: eventType === "past" ? (data.recordingUrl || null) : (data.recordingUrl || null),
+          recordingExpiryDate: eventType === "past" ? (data.recordingExpiryDate || null) : (data.recordingExpiryDate || null),
+          showRecording: eventType === "past" ? true : (data.showRecording ?? false),
         }),
       });
       if (!response.ok) throw new Error("Failed to create event");
@@ -195,11 +219,14 @@ export default function AdminEventFormPage() {
         },
         body: JSON.stringify({
           ...data,
-          startDatetime: new Date(data.startDatetime).toISOString(),
-          endDatetime: new Date(data.endDatetime).toISOString(),
-          joinUrl: data.joinUrl || null,
+          startDatetime: data.startDatetime ? new Date(data.startDatetime).toISOString() : new Date().toISOString(),
+          endDatetime: data.endDatetime ? new Date(data.endDatetime).toISOString() : new Date().toISOString(),
+          joinUrl: eventType === "upcoming" ? (data.joinUrl || null) : null,
           requiredProgramCode: data.requiredProgramCode,
           requiredProgramLevel: data.requiredProgramLevel,
+          recordingUrl: eventType === "past" ? (data.recordingUrl || null) : (data.recordingUrl || null),
+          recordingExpiryDate: eventType === "past" ? (data.recordingExpiryDate || null) : (data.recordingExpiryDate || null),
+          showRecording: eventType === "past" ? true : (data.showRecording ?? false),
         }),
       });
       if (!response.ok) throw new Error("Failed to update event");
@@ -410,6 +437,42 @@ export default function AdminEventFormPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
+                      <div className="flex bg-slate-100 p-1 rounded-xl w-fit mb-4">
+                        <Button
+                          type="button"
+                          variant={eventType === "upcoming" ? "secondary" : "ghost"}
+                          className={cn(
+                            "rounded-lg px-4 h-9 text-xs font-bold transition-all",
+                            eventType === "upcoming" ? "bg-white shadow-sm text-brand" : "text-slate-500 hover:text-slate-700"
+                          )}
+                          onClick={() => {
+                            setEventType("upcoming");
+                            form.setValue("status", "UPCOMING");
+                          }}
+                        >
+                          <Calendar className="w-3.5 h-3.5 mr-2" />
+                          Upcoming Event
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={eventType === "past" ? "secondary" : "ghost"}
+                          className={cn(
+                            "rounded-lg px-4 h-9 text-xs font-bold transition-all",
+                            eventType === "past" ? "bg-white shadow-sm text-brand" : "text-slate-500 hover:text-slate-700"
+                          )}
+                          onClick={() => {
+                            setEventType("past");
+                            form.setValue("status", "COMPLETED");
+                            form.setValue("showRecording", true);
+                          }}
+                        >
+                          <Video className="w-3.5 h-3.5 mr-2" />
+                          Past Event (Publish Recording)
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2">
                       <FormInput
                         name="title"
                         label="Event Title"
@@ -424,22 +487,6 @@ export default function AdminEventFormPage() {
                       placeholder="e.g. Dr. Meghana Dikshit"
                       data-testid="input-coach-name"
                     />
-                    <FormSelect
-                      name="status"
-                      label="Status"
-                      required
-                      options={[
-                        { label: "Draft", value: "DRAFT" },
-                        { label: "Upcoming (Published)", value: "UPCOMING" },
-                        ...(isEditing
-                          ? [
-                              { label: "Completed", value: "COMPLETED" },
-                              { label: "Cancelled", value: "CANCELLED" },
-                            ]
-                          : []),
-                      ]}
-                      data-testid="select-status"
-                    />
                     <div className="md:col-span-2">
                       <FormTextarea
                         name="description"
@@ -452,80 +499,84 @@ export default function AdminEventFormPage() {
                   </div>
                 </div>
               </div>
-
+ 
               {/* Middle Section: Schedule & Access */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10 border-t border-gray-100">
-                {/* Left: Schedule */}
-                <div className="lg:col-span-4 space-y-6">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="w-4 h-4 text-brand" />
-                    <span className="text-sm font-semibold text-gray-500">
-                      Schedule
-                    </span>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold text-gray-500 tracking-wider">
-                        Start Date & Time
-                      </Label>
-                      <Controller
-                        name="startDatetime"
-                        control={form.control}
-                        render={({ field }) => (
-                          <DateTimePicker
-                            date={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            setDate={(date) =>
-                              field.onChange(date?.toISOString() || "")
-                            }
-                            placeholder="Select start date"
-                            error={!!form.formState.errors.startDatetime}
+                {/* Left side: Schedule (Upcoming only) or Spacer (Past) */}
+                <div className="lg:col-span-4">
+                  {eventType === "upcoming" && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Calendar className="w-4 h-4 text-brand" />
+                        <span className="text-sm font-semibold text-gray-500">
+                          Schedule
+                        </span>
+                      </div>
+  
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold text-gray-500 tracking-wider">
+                            Start Date & Time
+                          </Label>
+                          <Controller
+                            name="startDatetime"
+                            control={form.control}
+                            render={({ field }) => (
+                              <DateTimePicker
+                                date={
+                                  field.value ? new Date(field.value) : undefined
+                                }
+                                setDate={(date) =>
+                                  field.onChange(date?.toISOString() || "")
+                                }
+                                placeholder="Select start date"
+                                error={!!form.formState.errors.startDatetime}
+                              />
+                            )}
                           />
-                        )}
-                      />
-                      {form.formState.errors.startDatetime && (
-                        <p className="text-xs font-bold text-red-500 mt-1">
-                          {form.formState.errors.startDatetime.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold text-gray-500 tracking-wider">
-                        End Date & Time
-                      </Label>
-                      <Controller
-                        name="endDatetime"
-                        control={form.control}
-                        render={({ field }) => (
-                          <DateTimePicker
-                            date={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            setDate={(date) =>
-                              field.onChange(date?.toISOString() || "")
-                            }
-                            minDate={
-                              form.watch("startDatetime")
-                                ? new Date(form.watch("startDatetime"))
-                                : undefined
-                            }
-                            placeholder="Select end date"
-                            error={!!form.formState.errors.endDatetime}
+                          {form.formState.errors.startDatetime && (
+                            <p className="text-xs font-bold text-red-500 mt-1">
+                              {form.formState.errors.startDatetime.message}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold text-gray-500 tracking-wider">
+                            End Date & Time
+                          </Label>
+                          <Controller
+                            name="endDatetime"
+                            control={form.control}
+                            render={({ field }) => (
+                              <DateTimePicker
+                                date={
+                                  field.value ? new Date(field.value) : undefined
+                                }
+                                setDate={(date) =>
+                                  field.onChange(date?.toISOString() || "")
+                                }
+                                minDate={
+                                  form.watch("startDatetime")
+                                    ? new Date(form.watch("startDatetime"))
+                                    : undefined
+                                }
+                                placeholder="Select end date"
+                                error={!!form.formState.errors.endDatetime}
+                              />
+                            )}
                           />
-                        )}
-                      />
-                      {form.formState.errors.endDatetime && (
-                        <p className="text-xs font-bold text-red-500 mt-1">
-                          {form.formState.errors.endDatetime.message}
-                        </p>
-                      )}
+                          {form.formState.errors.endDatetime && (
+                            <p className="text-xs font-bold text-red-500 mt-1">
+                              {form.formState.errors.endDatetime.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-
-                {/* Right: Access & Links */}
+ 
+                {/* Right side: Access & Links */}
                 <div className="lg:col-span-8 space-y-6">
                   <div className="flex items-center gap-2 mb-1">
                     <AlertCircle className="w-4 h-4 text-brand" />
@@ -534,80 +585,134 @@ export default function AdminEventFormPage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-700">
-                        Required Program{" "}
-                        <span className="text-destructive ml-1">*</span>
-                      </Label>
-                      <Controller
-                        name="requiredProgramCode"
-                        control={form.control}
-                        render={({ field }) => (
-                          <Select
-                            value={field.value}
-                            onValueChange={(code: string) => {
-                              field.onChange(code);
-                              const p = programs.find((pg) => pg.code === code);
-                              if (p) {
-                                form.setValue("requiredProgramLevel", p.level);
-                              }
-                            }}
-                          >
-                            <SelectTrigger
-                              className={cn(
-                                form.formState.errors.requiredProgramCode &&
-                                  "!border-destructive"
-                              )}
-                            >
-                              <SelectValue placeholder="Select program" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[...programs]
-                                .sort((a, b) => b.level - a.level)
-                                .map((p) => (
-                                  <SelectItem key={p.code} value={p.code}>
-                                    {p.code} — {p.name}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2 max-w-md">
+                        <Label className="text-sm font-semibold text-gray-700">
+                          Required Program{" "}
+                          <span className="text-destructive ml-1">*</span>
+                        </Label>
+                        <Input
+                          value="DYD — Design Your Destiny"
+                          readOnly
+                          className="bg-gray-100 cursor-not-allowed h-10"
+                        />
+                        <input type="hidden" {...form.register("requiredProgramCode")} />
+                        <input type="hidden" {...form.register("requiredProgramLevel")} />
+                        {form.formState.errors.requiredProgramCode && (
+                          <p className="text-xs font-medium text-destructive">
+                            {form.formState.errors.requiredProgramCode.message}
+                          </p>
                         )}
-                      />
-                      {form.formState.errors.requiredProgramCode && (
-                        <p className="text-xs font-medium text-destructive">
-                          {form.formState.errors.requiredProgramCode.message}
-                        </p>
+                      </div>
+                      
+                      {eventType === "upcoming" && (
+                        <div className="space-y-2 max-w-md animate-in fade-in slide-in-from-right-4 duration-500">
+                          <Label className="text-sm font-semibold text-gray-700">
+                            Registration Link
+                            <span className="text-[10px] text-slate-400 font-bold ml-2 uppercase tracking-wider">
+                              Optional
+                            </span>
+                          </Label>
+                          <Input
+                            {...form.register("joinUrl")}
+                            placeholder="Registration link (leave empty if not open)"
+                            className={cn(
+                              "h-10",
+                              form.formState.errors.joinUrl && "!border-destructive"
+                            )}
+                            data-testid="input-join-url"
+                          />
+                          {form.formState.errors.joinUrl && (
+                            <p className="text-xs font-medium text-red-500">
+                              {form.formState.errors.joinUrl.message}
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-700">
-                        Registration Link{" "}
-                        <span className="text-destructive ml-1">*</span>
-                      </Label>
-                      <Input
-                        {...form.register("joinUrl")}
-                        placeholder="Enter registration link"
-                        className={cn(
-                          form.formState.errors.joinUrl && "!border-destructive"
-                        )}
-                        data-testid="input-join-url"
-                      />
-                      {form.formState.errors.joinUrl && (
-                        <p className="text-xs font-medium text-red-500">
-                          {form.formState.errors.joinUrl.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
                   <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                     <p className="text-xs text-gray-500 leading-relaxed italic">
-                      Users will be able to register for this event if they
-                      belong to the selected program or higher.
+                      {eventType === "upcoming"
+                        ? "Users will be able to register for this event if they belong to the selected program or higher. If you leave the link empty, users will see 'Registration Opening Soon'."
+                        : "Past events are accessible to users in the selected program or higher for watching recordings."}
                     </p>
                   </div>
                 </div>
               </div>
+
+              {/* Recording Details Section - Show when status is COMPLETED OR eventType is past */}
+              {(form.watch("status") === "COMPLETED" || eventType === "past") && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10 border-t border-gray-100 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className="lg:col-span-4 space-y-6">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Video className="w-4 h-4 text-brand" />
+                      <span className="text-sm font-semibold text-gray-500">
+                        Recording Details
+                      </span>
+                    </div>
+                    <div className="space-y-4">
+                      {eventType === "past" ? (
+                        <div className="p-4 bg-brand/5 rounded-xl border border-brand/10">
+                          <p className="text-xs font-bold text-brand">
+                             Recording will be published immediately
+                          </p>
+                        </div>
+                      ) : (
+                        <FormField
+                          control={form.control}
+                          name="showRecording"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-gray-50/50 border-gray-100 shadow-sm">
+                              <div className="space-y-0.5">
+                                <FormLabel className="text-sm font-bold text-gray-900">
+                                  Show Recording
+                                </FormLabel>
+                                <FormDescription className="text-xs font-medium text-gray-500">
+                                  Make visible to users
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  data-testid="switch-show-recording"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-8 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="md:col-span-2">
+                        <FormInput
+                          name="recordingUrl"
+                          label="Recording URL"
+                          placeholder="e.g. https://zoom.us/rec/..."
+                          data-testid="input-recording-url"
+                          required={eventType === "past"}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold text-gray-700">
+                          Recording Expiry Date {eventType === "past" && <span className="text-destructive ml-1">*</span>}
+                        </Label>
+                        <Input
+                          type="date"
+                          {...form.register("recordingExpiryDate")}
+                          className="bg-white border-gray-200"
+                          data-testid="input-recording-expiry"
+                          required={eventType === "past"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Form Footer / Actions */}

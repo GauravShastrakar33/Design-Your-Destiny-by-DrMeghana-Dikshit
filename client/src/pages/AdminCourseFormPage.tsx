@@ -54,6 +54,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -142,6 +152,32 @@ export default function AdminCourseFormPage() {
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(
     new Set()
   );
+
+  // Deletion Confirmation States
+  const [moduleDeleteConfirm, setModuleDeleteConfirm] = useState<{
+    open: boolean;
+    id: number | null;
+  }>({ open: false, id: null });
+  const [folderDeleteConfirm, setFolderDeleteConfirm] = useState<{
+    open: boolean;
+    id: number | null;
+  }>({ open: false, id: null });
+  const [lessonDeleteConfirm, setLessonDeleteConfirm] = useState<{
+    open: boolean;
+    id: number | null;
+  }>({ open: false, id: null });
+
+  // TODO: Drag and drop state (disabled, re-enable later)
+  // const [draggedItem, setDraggedItem] = useState<{
+  //   type: "module" | "folder" | "lesson";
+  //   id: number;
+  //   moduleId?: number;
+  // } | null>(null);
+  // const [dragOverItem, setDragOverItem] = useState<{
+  //   type: "module" | "folder" | "lesson";
+  //   id: number;
+  //   moduleId?: number;
+  // } | null>(null);
 
   const searchString =
     useSearch() ||
@@ -406,6 +442,58 @@ export default function AdminCourseFormPage() {
     },
   });
 
+  const deleteLessonMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/v1/cms/lessons/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/v1/cms/courses", courseId],
+      });
+      toast({ title: "Lesson deleted" });
+    },
+  });
+
+  // TODO: Reorder mutations (disabled, re-enable with drag and drop later)
+  // const reorderModulesMutation = useMutation({
+  //   mutationFn: async (items: { id: number; position: number }[]) => {
+  //     await apiRequest("POST", "/api/admin/v1/cms/modules/reorder", { items });
+  //   },
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/cms/courses", courseId] });
+  //     toast({ title: "Modules reordered" });
+  //   },
+  //   onError: () => {
+  //     toast({ title: "Failed to reorder modules", variant: "destructive" });
+  //   },
+  // });
+
+  // const reorderFoldersMutation = useMutation({
+  //   mutationFn: async (items: { id: number; position: number }[]) => {
+  //     await apiRequest("POST", "/api/admin/v1/cms/folders/reorder", { items });
+  //   },
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/cms/courses", courseId] });
+  //     toast({ title: "Folders reordered" });
+  //   },
+  //   onError: () => {
+  //     toast({ title: "Failed to reorder folders", variant: "destructive" });
+  //   },
+  // });
+
+  // const reorderLessonsMutation = useMutation({
+  //   mutationFn: async (items: { id: number; position: number }[]) => {
+  //     await apiRequest("POST", "/api/admin/v1/cms/lessons/reorder", { items });
+  //   },
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/cms/courses", courseId] });
+  //     toast({ title: "Lessons reordered" });
+  //   },
+  //   onError: () => {
+  //     toast({ title: "Failed to reorder lessons", variant: "destructive" });
+  //   },
+  // });
+
   const toggleModule = (id: number) => {
     const next = new Set(expandedModules);
     next.has(id) ? next.delete(id) : next.add(id);
@@ -417,6 +505,20 @@ export default function AdminCourseFormPage() {
     next.has(id) ? next.delete(id) : next.add(id);
     setExpandedFolders(next);
   };
+
+  // TODO: Drag and drop handlers (disabled, re-enable later)
+  // const handleModuleDragStart = ...
+  // const handleModuleDragOver = ...
+  // const handleModuleDragLeave = ...
+  // const handleModuleDrop = ...
+  // const handleFolderDragStart = ...
+  // const handleFolderDragOver = ...
+  // const handleFolderDragLeave = ...
+  // const handleFolderDrop = ...
+  // const handleLessonDragStart = ...
+  // const handleLessonDragOver = ...
+  // const handleLessonDragLeave = ...
+  // const handleLessonDrop = ...
 
   const handleNext = () => {
     if (currentStep === 1) {
@@ -814,10 +916,12 @@ export default function AdminCourseFormPage() {
                       onOpenChange={() => toggleModule(module.id)}
                       className="group"
                     >
-                      <div className="rounded-lg border border-gray-100 overflow-hidden bg-white hover:border-brand/20 transition-colors shadow-sm">
+                      <div
+                        className="rounded-lg border border-gray-100 hover:border-brand/20 overflow-hidden bg-white transition-colors shadow-sm"
+                      >
                         <CollapsibleTrigger className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50/50 text-left">
                           <div className="flex items-center gap-4">
-                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400 group-hover:bg-brand group-hover:text-white transition-colors cursor-grab">
+                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400 group-hover:bg-brand group-hover:text-white transition-colors">
                               <GripVertical className="w-4 h-4" />
                             </div>
                             <div className="flex flex-col">
@@ -881,7 +985,10 @@ export default function AdminCourseFormPage() {
                               size="icon"
                               className="h-9 w-9 text-gray-400 hover:text-red-500"
                               onClick={() =>
-                                deleteModuleMutation.mutate(module.id)
+                                setModuleDeleteConfirm({
+                                  open: true,
+                                  id: module.id,
+                                })
                               }
                             >
                               <Trash2 className="w-4 h-4" />
@@ -900,9 +1007,14 @@ export default function AdminCourseFormPage() {
                                   open={expandedFolders.has(folder.id)}
                                   onOpenChange={() => toggleFolder(folder.id)}
                                 >
-                                  <div className="bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm ml-4">
+                                  <div
+                                    className="bg-white rounded-lg border border-gray-100 hover:bg-gray-50/50 overflow-hidden shadow-sm ml-4 transition-colors"
+                                  >
                                     <CollapsibleTrigger className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50/50">
                                       <div className="flex items-center gap-3">
+                                        <div className="text-gray-400">
+                                          <GripVertical className="w-3.5 h-3.5" />
+                                        </div>
                                         <Folder className="w-4 h-4 text-yellow-500 fill-yellow-500/10" />
                                         <span className="font-bold text-gray-700 text-sm">
                                           {folder.title}
@@ -940,11 +1052,12 @@ export default function AdminCourseFormPage() {
                                             (l) => l.folderId === folder.id
                                           )
                                           .map((lesson) => (
-                                            <div
+                                             <div
                                               key={lesson.id}
-                                              className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 group/lesson"
+                                              className="flex items-center justify-between p-2 rounded-lg transition-colors group/lesson hover:bg-gray-50"
                                             >
                                               <div className="flex items-center gap-2">
+                                                <GripVertical className="w-3.5 h-3.5 text-gray-400" />
                                                 <FileText className="w-3.5 h-3.5 text-gray-400" />
                                                 <span className="text-sm font-medium text-gray-600">
                                                   {lesson.title}
@@ -976,7 +1089,7 @@ export default function AdminCourseFormPage() {
                                 .map((lesson) => (
                                   <div
                                     key={lesson.id}
-                                    className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm ml-4 flex items-center justify-between group/lesson"
+                                    className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm ml-4 flex items-center justify-between group/lesson transition-colors"
                                   >
                                     <div className="flex items-center gap-3">
                                       <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
@@ -1030,6 +1143,12 @@ export default function AdminCourseFormPage() {
                                         variant="ghost"
                                         size="icon"
                                         className="h-8 w-8 text-gray-400 hover:text-red-500"
+                                        onClick={() =>
+                                          setLessonDeleteConfirm({
+                                            open: true,
+                                            id: lesson.id,
+                                          })
+                                        }
                                       >
                                         <Trash2 className="w-4 h-4" />
                                       </Button>
@@ -1222,6 +1341,70 @@ export default function AdminCourseFormPage() {
           </FormProvider>
         </DialogContent>
       </Dialog>
+
+      {/* Module Delete Confirmation */}
+      <AlertDialog
+        open={moduleDeleteConfirm.open}
+        onOpenChange={(open) =>
+          setModuleDeleteConfirm({ ...moduleDeleteConfirm, open })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Module?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the module and all its contents
+              (folders and lessons). This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (moduleDeleteConfirm.id) {
+                  deleteModuleMutation.mutate(moduleDeleteConfirm.id);
+                  setModuleDeleteConfirm({ open: false, id: null });
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Lesson Delete Confirmation */}
+      <AlertDialog
+        open={lessonDeleteConfirm.open}
+        onOpenChange={(open) =>
+          setLessonDeleteConfirm({ ...lessonDeleteConfirm, open })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Lesson?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the lesson and all its associated
+              files. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (lessonDeleteConfirm.id) {
+                  deleteLessonMutation.mutate(lessonDeleteConfirm.id);
+                  setLessonDeleteConfirm({ open: false, id: null });
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

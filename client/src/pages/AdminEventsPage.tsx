@@ -101,22 +101,35 @@ export default function AdminEventsPage() {
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
-    if (tab && ["upcoming", "latest", "all"].includes(tab)) {
+    if (tab && ["upcoming", "completed"].includes(tab)) {
       return tab;
     }
+    if (tab === "latest") return "completed";
     return "upcoming";
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [recordingDialogEvent, setRecordingDialogEvent] =
     useState<EventWithSignedUrl | null>(null);
   const [recordingUrl, setRecordingUrl] = useState("");
-  const [recordingPasscode, setRecordingPasscode] = useState("");
   const [recordingExpiryDate, setRecordingExpiryDate] = useState("");
   const [skipConfirmEvent, setSkipConfirmEvent] =
     useState<EventWithSignedUrl | null>(null);
-  const [latestSubTab, setLatestSubTab] = useState("decision");
+  const [removeConfirmEvent, setRemoveConfirmEvent] =
+    useState<EventWithSignedUrl | null>(null);
+  const [completedSubTab, setCompletedSubTab] = useState("decision");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDeleteId, setEventToDeleteId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (recordingDialogEvent) {
+      setRecordingUrl(recordingDialogEvent.recordingUrl || "");
+      setRecordingExpiryDate(
+        recordingDialogEvent.recordingExpiryDate
+          ? format(new Date(recordingDialogEvent.recordingExpiryDate), "yyyy-MM-dd")
+          : ""
+      );
+    }
+  }, [recordingDialogEvent]);
 
   useEffect(() => {
     const token = localStorage.getItem("@app:admin_token");
@@ -215,11 +228,52 @@ export default function AdminEventsPage() {
       toast({ title: "Recording added successfully" });
       setRecordingDialogEvent(null);
       setRecordingUrl("");
-      setRecordingPasscode("");
       setRecordingExpiryDate("");
     },
     onError: () => {
       toast({ title: "Failed to add recording", variant: "destructive" });
+    },
+  });
+
+  const removeRecordingMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const url = `/api/admin/v1/events/${id}/remove-recording`;
+      console.log(`[Admin] Initiating remove recording request: ${url}`);
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+          "Content-Type": "application/json"
+        },
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        let errorMsg = "Failed to remove recording";
+        try {
+          const json = JSON.parse(text);
+          errorMsg = json.details || json.error || errorMsg;
+        } catch {
+          errorMsg = `Server error (${response.status})`;
+        }
+        console.error(`[Admin] Remove recording failed:`, errorMsg);
+        throw new Error(errorMsg);
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/v1/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/latest"] });
+      toast({ title: "Recording removed successfully" });
+      setRemoveConfirmEvent(null);
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Remove Recording Error", 
+        description: error.message,
+        variant: "destructive" 
+      });
     },
   });
 
@@ -236,7 +290,7 @@ export default function AdminEventsPage() {
 
   const handleAddRecording = () => {
     if (!recordingDialogEvent) return;
-    if (!recordingUrl || !recordingPasscode || !recordingExpiryDate) {
+    if (!recordingUrl || !recordingExpiryDate) {
       toast({
         title: "Please fill all recording fields",
         variant: "destructive",
@@ -247,7 +301,6 @@ export default function AdminEventsPage() {
       id: recordingDialogEvent.id,
       data: {
         recordingUrl,
-        recordingPasscode,
         recordingExpiryDate,
       },
     });
@@ -265,12 +318,12 @@ export default function AdminEventsPage() {
       e.status === "UPCOMING" && isAfter(new Date(e.endDatetime), new Date())
   );
 
-  // Latest Events: Show COMPLETED only (never CANCELLED), hide expired recordings, hide skipped
-  const latestEvents = filteredEvents.filter((e) => {
+  // Completed Events: Show COMPLETED only (never CANCELLED), hide expired recordings, hide skipped
+  const completedEvents = filteredEvents.filter((e) => {
     // Only show COMPLETED events, never CANCELLED
     if (e.status !== "COMPLETED") return false;
 
-    // Hide skipped events (they only appear in All Events)
+    // Hide skipped events
     if (e.recordingSkipped) return false;
 
     // Hide events with expired recordings (but include events without expiry date or pending decision)
@@ -284,10 +337,10 @@ export default function AdminEventsPage() {
     return true;
   });
 
-  const eventsNeedingDecision = latestEvents.filter(needsRecordingDecision);
+  const eventsNeedingDecision = completedEvents.filter(needsRecordingDecision);
 
-  // Events with recordings published (for display in Recent Events)
-  const eventsWithRecordings = latestEvents.filter(
+  // Events with recordings published
+  const eventsWithRecordings = completedEvents.filter(
     (e) => e.showRecording === true && e.recordingUrl
   );
 
@@ -385,76 +438,96 @@ export default function AdminEventsPage() {
                 )}
               </div>
 
-              {/* Actions */}
+               {/* Actions */}
               <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-gray-50">
-                {showDecisionActions && needsDecision ? (
+                {showDecisionActions ? (
+                  needsDecision ? (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => setRecordingDialogEvent(event)}
+                        className="bg-brand hover:bg-brand/90 font-bold"
+                        data-testid={`button-add-recording-${event.id}`}
+                      >
+                        <Video className="w-4 h-4 mr-1.5" />
+                        Add Recording
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSkipConfirmEvent(event)}
+                        className="font-bold text-gray-600"
+                        data-testid={`button-skip-recording-${event.id}`}
+                      >
+                        <SkipForward className="w-4 h-4 mr-1.5" />
+                        Skip Recording
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setRecordingDialogEvent(event)}
+                        className="bg-white border-gray-200 hover:border-brand hover:text-brand font-bold shadow-sm"
+                        data-testid={`button-edit-recording-${event.id}`}
+                      >
+                        <Edit className="w-4 h-4 mr-1.5" />
+                        Edit recording
+                      </Button>
+                      {event.status === "COMPLETED" && event.recordingUrl && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setRemoveConfirmEvent(event)}
+                          disabled={removeRecordingMutation.isPending}
+                          className="font-bold flex items-center gap-1.5"
+                          data-testid={`button-remove-recording-${event.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Remove Recording
+                        </Button>
+                      )}
+                    </>
+                  )
+                ) : (
                   <>
-                    <Button
-                      size="sm"
-                      onClick={() => setRecordingDialogEvent(event)}
-                      className="bg-brand hover:bg-brand/90 font-bold"
-                      data-testid={`button-add-recording-${event.id}`}
-                    >
-                      <Video className="w-4 h-4 mr-1.5" />
-                      Add Recording
-                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setSkipConfirmEvent(event)}
-                      className="font-bold text-gray-600"
-                      data-testid={`button-skip-recording-${event.id}`}
+                      onClick={() =>
+                        setLocation(
+                          `/admin/events/${event.id}/edit?tab=${activeTab}`
+                        )
+                      }
+                      className="bg-white border-gray-200 hover:border-brand hover:text-brand font-bold shadow-sm"
+                      data-testid={`button-edit-event-${event.id}`}
                     >
-                      <SkipForward className="w-4 h-4 mr-1.5" />
-                      Skip Recording
+                      <Edit className="w-4 h-4 mr-1.5" />
+                      Edit
                     </Button>
-                  </>
-                ) : (
-                  <>
-                    {event.status !== "COMPLETED" &&
-                      event.status !== "CANCELLED" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            setLocation(
-                              `/admin/events/${event.id}/edit?tab=${activeTab}`
-                            )
-                          }
-                          className="bg-white border-gray-200 hover:border-brand hover:text-brand font-bold shadow-sm"
-                          data-testid={`button-edit-event-${event.id}`}
-                        >
-                          <Edit className="w-4 h-4 mr-1.5" />
-                          Edit
-                        </Button>
-                      )}
-                    {event.joinUrl &&
-                      event.status !== "COMPLETED" &&
-                      event.status !== "CANCELLED" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => window.open(event.joinUrl!, "_blank")}
-                          className="bg-white border-gray-200 hover:bg-gray-50 font-bold shadow-sm"
-                          data-testid={`button-join-event-${event.id}`}
-                        >
-                          <ExternalLink className="w-4 h-4 mr-1.5" />
-                          Registration Link
-                        </Button>
-                      )}
-                    {event.status !== "CANCELLED" &&
-                      (event.status !== "COMPLETED" || activeTab === "all") && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleCancel(event.id)}
-                          disabled={cancelMutation.isPending}
-                          className="text-gray-400 hover:text-red-600 hover:bg-red-50 ml-auto"
-                          data-testid={`button-cancel-event-${event.id}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
+                    {event.joinUrl && event.status !== "CANCELLED" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(event.joinUrl!, "_blank")}
+                        className="bg-white border-gray-200 hover:bg-gray-50 font-bold shadow-sm"
+                        data-testid={`button-join-event-${event.id}`}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-1.5" />
+                        Registration Link
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleCancel(event.id)}
+                      disabled={cancelMutation.isPending}
+                      className="text-gray-400 hover:text-red-600 hover:bg-red-50 ml-auto"
+                      data-testid={`button-cancel-event-${event.id}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </>
                 )}
               </div>
@@ -504,28 +577,21 @@ export default function AdminEventsPage() {
               data-testid="tab-upcoming"
             >
               Upcoming
-              <Badge className="ml-2 bg-brand/10 text-brand border-none hover:bg-brand/10 hidden">
+              <Badge className="ml-2 bg-brand/10 text-brand border-none h-5 min-w-[20px] px-1 text-[10px] font-black rounded-full shadow-sm flex items-center justify-center">
                 {upcomingEvents.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger
-              value="latest"
+              value="completed"
               className="font-bold px-5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg"
-              data-testid="tab-latest"
+              data-testid="tab-completed"
             >
-              Latest
+              Completed
               {eventsNeedingDecision.length > 0 && (
-                <Badge className="ml-2 bg-amber-500 border-none animate-pulse hidden">
+                <Badge className="ml-2 bg-amber-500 text-white border-none h-5 min-w-[20px] px-1 text-[10px] font-black rounded-full animate-pulse shadow-sm flex items-center justify-center">
                   {eventsNeedingDecision.length}
                 </Badge>
               )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="all"
-              className="font-bold px-5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg"
-              data-testid="tab-all"
-            >
-              All Events
             </TabsTrigger>
           </TabsList>
 
@@ -578,48 +644,48 @@ export default function AdminEventsPage() {
           </TabsContent>
 
           <TabsContent
-            value="latest"
+            value="completed"
             className="mt-0 focus-visible:outline-none focus-visible:ring-0"
           >
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 grayscale opacity-60">
                 <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
                 <p className="text-gray-500 font-bold">
-                  Loading latest events...
+                  Loading completed events...
                 </p>
               </div>
             ) : (
               <Tabs
-                value={latestSubTab}
-                onValueChange={setLatestSubTab}
+                value={completedSubTab}
+                onValueChange={setCompletedSubTab}
                 className="w-full space-y-4"
               >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col items-center justify-center gap-4 py-4">
+                  <div className="flex items-center gap-2 opacity-60">
                     <Video className="w-4 h-4 text-brand" />
-                    <h2 className="text-sm font-bold text-gray-900">
+                    <h2 className="text-xs font-black uppercase tracking-widest text-gray-500">
                       Recording Management
                     </h2>
                   </div>
-                  <TabsList className="bg-gray-100/50 p-1">
+                  <TabsList className="bg-gray-100/50 p-1.5 h-auto">
                     <TabsTrigger
                       value="decision"
-                      className="text-xs font-bold px-4 data-[state=active]:bg-white data-[state=active]:shadow-xs rounded-md"
+                      className="text-sm font-bold px-8 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-xl transition-all"
                     >
                       Needs Decision
                       {eventsNeedingDecision.length > 0 && (
-                        <Badge className="ml-2 bg-amber-500 border-none h-4 px-1 text-[10px]">
+                        <Badge className="ml-3 bg-amber-500 text-white border-none h-6 min-w-[24px] flex items-center justify-center px-1.5 text-xs font-black rounded-full shadow-sm">
                           {eventsNeedingDecision.length}
                         </Badge>
                       )}
                     </TabsTrigger>
                     <TabsTrigger
                       value="published"
-                      className="text-xs font-bold px-4 data-[state=active]:bg-white data-[state=active]:shadow-xs rounded-md"
+                      className="text-sm font-bold px-8 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-xl transition-all"
                     >
                       Published
                       {eventsWithRecordings.length > 0 && (
-                        <Badge className="ml-2 bg-blue-500 border-none h-4 px-1 text-[10px]">
+                        <Badge className="ml-3 bg-blue-500 text-white border-none h-6 min-w-[24px] flex items-center justify-center px-1.5 text-xs font-black rounded-full shadow-sm">
                           {eventsWithRecordings.length}
                         </Badge>
                       )}
@@ -669,35 +735,6 @@ export default function AdminEventsPage() {
               </Tabs>
             )}
           </TabsContent>
-
-          <TabsContent
-            value="all"
-            className="mt-0 focus-visible:outline-none focus-visible:ring-0"
-          >
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-20 grayscale opacity-60">
-                <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
-                <p className="text-gray-500 font-bold">Loading all events...</p>
-              </div>
-            ) : allEvents.length === 0 ? (
-              <Card className="p-20 text-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/30">
-                <p className="text-gray-500 font-bold mb-4">
-                  No events created yet
-                </p>
-                <Button
-                  onClick={() => setLocation("/admin/events/new")}
-                  className="bg-brand text-white hover:bg-brand/90 font-bold"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Event
-                </Button>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {filteredEvents.map((event) => renderEventCard(event))}
-              </div>
-            )}
-          </TabsContent>
         </div>
       </Tabs>
 
@@ -707,9 +744,15 @@ export default function AdminEventsPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Recording</DialogTitle>
+            <DialogTitle>
+              {recordingDialogEvent?.showRecording
+                ? "Edit Recording"
+                : "Add Recording"}
+            </DialogTitle>
             <DialogDescription>
-              Add the recording details for "{recordingDialogEvent?.title}"
+              {recordingDialogEvent?.showRecording
+                ? `Update recording details for "${recordingDialogEvent?.title}"`
+                : `Add the recording details for "${recordingDialogEvent?.title}"`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -723,16 +766,7 @@ export default function AdminEventsPage() {
                 data-testid="input-recording-url"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="recordingPasscode">Passcode</Label>
-              <Input
-                id="recordingPasscode"
-                value={recordingPasscode}
-                onChange={(e) => setRecordingPasscode(e.target.value)}
-                placeholder="Enter recording passcode"
-                data-testid="input-recording-passcode"
-              />
-            </div>
+
             <div className="space-y-2">
               <Label htmlFor="recordingExpiryDate">Expiry Date</Label>
               <Input
@@ -754,9 +788,19 @@ export default function AdminEventsPage() {
             <Button
               onClick={handleAddRecording}
               disabled={addRecordingMutation.isPending}
+              className="bg-brand hover:bg-brand/90"
               data-testid="button-save-recording"
             >
-              {addRecordingMutation.isPending ? "Saving..." : "Save Recording"}
+              {addRecordingMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Please wait...
+                </>
+              ) : recordingDialogEvent?.showRecording ? (
+                "Save Changes"
+              ) : (
+                "Add Recording"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -774,11 +818,10 @@ export default function AdminEventsPage() {
               Skip Recording for this Event?
             </DialogTitle>
             <DialogDescription className="pt-2">
-              This event will not have a recording and will not appear in Latest
-              for users.
+              The event will be marked as <strong>no recording</strong> and <strong>removed</strong> from the Events page.
               <br />
               <br />
-              You can still add a recording later from All Events.
+              Users will not have access to a recording for this session.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
@@ -802,6 +845,50 @@ export default function AdminEventsPage() {
               {skipRecordingMutation.isPending
                 ? "Skipping..."
                 : "Skip Recording"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Recording Confirmation Modal */}
+      <Dialog
+        open={!!removeConfirmEvent}
+        onOpenChange={() => setRemoveConfirmEvent(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Remove Published Recording?
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              The current recording will be removed from the user Event Calender page.
+              <br />
+              <br />
+              This event will move back to <strong>Needs Decision</strong>, where you can publish a new recording once it becomes available or skip publishing it.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="default"
+              onClick={() => setRemoveConfirmEvent(null)}
+              data-testid="button-remove-go-back"
+            >
+              Go Back
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (removeConfirmEvent) {
+                  removeRecordingMutation.mutate(removeConfirmEvent.id);
+                }
+              }}
+              disabled={removeRecordingMutation.isPending}
+              data-testid="button-remove-confirm"
+            >
+              {removeRecordingMutation.isPending
+                ? "Removing..."
+                : "Remove Recording"}
             </Button>
           </DialogFooter>
         </DialogContent>

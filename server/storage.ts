@@ -26,6 +26,7 @@ import {
   type DrmQuestion, type InsertDrmQuestion,
   type LessonProgress,
   type GoldmineVideo, type InsertGoldmineVideo,
+  type AuditLog, type InsertAuditLog,
   communitySessions, users as usersTable, categories as categoriesTable, articles as articlesTable,
   programs as programsTable, userPrograms as userProgramsTable,
   frontendFeatures as frontendFeaturesTable, featureCourseMap as featureCourseMapTable,
@@ -47,7 +48,8 @@ import {
   userBadges as userBadgesTable,
   drmQuestions as drmQuestionsTable,
   lessonProgress as lessonProgressTable,
-  goldmineVideos as goldmineVideosTable
+  goldmineVideos as goldmineVideosTable,
+  auditLogs as auditLogsTable
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -941,6 +943,22 @@ export class DbStorage implements IStorage {
         .set({ position: i })
         .where(and(eq(featureCourseMapTable.featureId, featureId), eq(featureCourseMapTable.courseId, courseIds[i])));
     }
+  }
+
+  async getFeatureLockStatus(featureId: number): Promise<boolean | undefined> {
+    const result = await db
+      .select({ mappingLocked: frontendFeaturesTable.mappingLocked })
+      .from(frontendFeaturesTable)
+      .where(eq(frontendFeaturesTable.id, featureId));
+    return result[0]?.mappingLocked;
+  }
+
+  async toggleFeatureLock(featureId: number, locked: boolean): Promise<boolean> {
+    const result = await db
+      .update(frontendFeaturesTable)
+      .set({ mappingLocked: locked })
+      .where(eq(frontendFeaturesTable.id, featureId));
+    return result.rowCount > 0;
   }
 
   async getModulesForCourse(courseId: number) {

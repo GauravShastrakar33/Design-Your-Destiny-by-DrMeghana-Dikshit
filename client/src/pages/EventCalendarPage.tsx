@@ -5,7 +5,6 @@ import {
   Calendar,
   Clock,
   Video,
-  Copy,
   ExternalLink,
   ArrowUp,
 } from "lucide-react";
@@ -16,13 +15,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import type { Event } from "@shared/schema";
@@ -77,9 +69,6 @@ export default function EventCalendarPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>("upcoming");
-  const [selectedEvent, setSelectedEvent] = useState<EventWithSignedUrl | null>(
-    null
-  );
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -131,14 +120,9 @@ export default function EventCalendarPage() {
       if (!isNaN(eventId)) {
         const foundUpcoming = upcomingEvents.find((e) => e.id === eventId);
         const foundLatest = latestEvents.find((e) => e.id === eventId);
-        const found = foundUpcoming || foundLatest;
 
-        if (found) {
-          setSelectedEvent(found);
-          // Auto-switch tab if the event is in "latest" (recordings)
-          if (!foundUpcoming && foundLatest) {
-            setActiveTab("completed");
-          }
+        if (!foundUpcoming && foundLatest) {
+          setActiveTab("completed");
         }
       }
     }
@@ -151,20 +135,6 @@ export default function EventCalendarPage() {
 
   const handleJoin = (joinUrl: string) => {
     window.open(joinUrl, "_blank");
-  };
-
-  const handleCopyPasscode = (passcode: string) => {
-    // Only copy the passcode part if it contains "Passcode: "
-    const cleanPasscode = passcode.includes("Passcode: ")
-      ? passcode.split("Passcode: ")[1].trim()
-      : passcode.trim();
-
-    navigator.clipboard.writeText(cleanPasscode);
-    toast({ title: "Passcode copied to clipboard" });
-  };
-
-  const handleOpenRecording = (event: EventWithSignedUrl) => {
-    setSelectedEvent(event);
   };
 
   // Use currentTime state to check if event is live (auto-updates via timer)
@@ -379,17 +349,17 @@ export default function EventCalendarPage() {
                                   </div>
                                 )}
 
-                                <Button
-                                  onClick={() =>
-                                    event.joinUrl && handleJoin(event.joinUrl)
-                                  }
-                                  // disabled={!live || !event.joinUrl}
-                                  className="w-full bg-white text-brand font-semibold rounded-lg border border-brand hover:translate-y-[-2px] transition-all text-xs uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
-                                  data-testid={`button-join-${event.id}`}
-                                >
-                                  Register Now
-                                  <ExternalLink className="w-3.5 h-3.5 ml-2" />
-                                </Button>
+                                 <Button
+                                   onClick={() =>
+                                     event.joinUrl && handleJoin(event.joinUrl)
+                                   }
+                                   disabled={!event.joinUrl}
+                                   className="w-full bg-white text-brand font-semibold rounded-lg border border-brand hover:translate-y-[-2px] transition-all text-xs uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
+                                   data-testid={`button-join-${event.id}`}
+                                 >
+                                   {event.joinUrl ? "Register Now" : "Registration Opening Soon"}
+                                   {event.joinUrl && <ExternalLink className="w-3.5 h-3.5 ml-2" />}
+                                 </Button>
                               </div>
                             </div>
                           </motion.div>
@@ -427,7 +397,10 @@ export default function EventCalendarPage() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.1 }}
                           className="group bg-white rounded-2xl overflow-hidden shadow-md shadow-black/[0.03] border border-slate-100 hover:shadow-xl transition-all duration-300 cursor-pointer"
-                          onClick={() => handleOpenRecording(event)}
+                          onClick={() =>
+                            event.recordingUrl &&
+                            window.open(event.recordingUrl, "_blank")
+                          }
                           data-testid={`latest-event-${event.id}`}
                         >
                           <div className="relative h-52 overflow-hidden">
@@ -516,7 +489,14 @@ export default function EventCalendarPage() {
                                 </div>
                               )}
 
-                              <Button className="w-full font-semibold rounded-lg hover:translate-y-[-2px] transition-all text-xs uppercase tracking-wide bg-white text-brand border border-brand">
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  event.recordingUrl &&
+                                    window.open(event.recordingUrl, "_blank");
+                                }}
+                                className="w-full font-semibold rounded-lg hover:translate-y-[-2px] transition-all text-xs uppercase tracking-wide bg-white text-brand border border-brand"
+                              >
                                 Watch Recording
                                 <ExternalLink className="w-3.5 h-3.5 ml-2" />
                               </Button>
@@ -532,110 +512,6 @@ export default function EventCalendarPage() {
           </Tabs>
         </motion.div>
       </main>
-
-      {/* Recording Access Dialog */}
-      <Dialog
-        open={!!selectedEvent}
-        onOpenChange={(open) => !open && setSelectedEvent(null)}
-      >
-        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl p-0 overflow-hidden border-0 shadow-2xl bg-white focus:outline-none">
-          {selectedEvent ? (
-            <div className="flex flex-col">
-              <div className="p-4 sm:p-6 pb-0 space-y-2">
-                <div className="flex items-start gap-4">
-                  <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand/5 flex items-center justify-center mt-1">
-                    <Video className="w-5 h-5 sm:w-6 sm:h-6 text-brand" />
-                  </div>
-                  <div className="flex-1 min-w-0 pr-8">
-                    <DialogTitle className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
-                      {selectedEvent?.title}
-                    </DialogTitle>
-                    <DialogDescription className="text-xs sm:text-sm text-slate-500 mt-1">
-                      Access and watch the recorded session
-                    </DialogDescription>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-[10px] sm:text-xs font-bold text-brand uppercase tracking-widest truncate">
-                        Access Passcode
-                      </h3>
-                    </div>
-
-                    {selectedEvent.recordingPasscode && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          handleCopyPasscode(selectedEvent.recordingPasscode!)
-                        }
-                        className="h-8 px-3 text-[10px] sm:text-xs font-bold text-brand uppercase tracking-wider hover:bg-brand/5 rounded-full transition-all shrink-0"
-                      >
-                        <Copy className="w-3.5 h-3.5 text-brand" />
-                        Copy Code
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-6 flex flex-col items-center justify-center gap-1 group-hover:border-brand/20 transition-all">
-                    <span className="text-xl sm:text-2xl font-bold text-slate-900 tracking-[0.1em] font-mono break-all text-center">
-                      {selectedEvent?.recordingPasscode?.includes("Passcode: ")
-                        ? selectedEvent.recordingPasscode
-                            .split("Passcode: ")[1]
-                            .trim()
-                        : selectedEvent?.recordingPasscode || "N/A"}
-                    </span>
-                  </div>
-                </div>
-
-                {selectedEvent.recordingExpiryDate && (
-                  <div className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-amber-50/50 rounded-full w-fit mx-auto border border-amber-500/30">
-                    <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-                    <p className="text-[10px] sm:text-xs font-bold text-amber-700 uppercase tracking-widest whitespace-nowrap">
-                      Available until{" "}
-                      {selectedEvent?.recordingExpiryDate
-                        ? format(
-                            new Date(selectedEvent.recordingExpiryDate),
-                            "MMM d, yyyy"
-                          )
-                        : "N/A"}
-                    </p>
-                  </div>
-                )}
-
-                <Button
-                  className="w-full h-11 sm:h-12 rounded-xl bg-brand hover:bg-brand/90 text-white font-bold shadow-lg shadow-brand/20 transition-all hover:scale-[1.01] active:scale-[0.99] text-sm sm:text-base"
-                  onClick={() => {
-                    if (selectedEvent.recordingUrl) {
-                      window.open(selectedEvent.recordingUrl, "_blank");
-                    }
-                  }}
-                  disabled={!selectedEvent.recordingUrl}
-                  data-testid="button-open-recording"
-                >
-                  Open Recording
-                  <ExternalLink className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="p-8 text-center space-y-2">
-              <p className="text-slate-500">No session selected.</p>
-              <Button
-                onClick={() => setSelectedEvent(null)}
-                variant="ghost"
-                className="text-brand"
-              >
-                Close
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
