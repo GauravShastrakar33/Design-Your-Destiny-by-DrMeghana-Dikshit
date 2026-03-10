@@ -27,7 +27,7 @@ export function Header({
 
   return (
     <div
-      className={`fixed top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-[#F8F7FF]/90 backdrop-blur-2xl border-b border-brand/10 shadow-[0_8px_32px_-12px_rgba(112,61,250,0.15)] z-50 transition-all duration-500 ${className}`}
+      className={`sticky top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-[#F8F7FF]/90 backdrop-blur-2xl border-b border-brand/10 shadow-[0_8px_32px_-12px_rgba(112,61,250,0.15)] z-50 transition-all duration-500 mb-2 ${className}`}
     >
       <div
         className={`max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center ${

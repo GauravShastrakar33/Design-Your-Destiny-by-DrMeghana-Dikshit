@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import BottomNav from "@/components/BottomNav";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -22,12 +23,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden bg-[#F8F9FB]">
       <main
         ref={mainRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden pt-[calc(env(safe-area-inset-top)+4.5rem)]"
+        className="flex-1 overflow-y-auto overflow-x-hidden bg-[#F8F9FB]"
       >
-        {children}
+        <PullToRefresh containerRef={mainRef}>{children}</PullToRefresh>
       </main>
       <BottomNav />
     </div>
