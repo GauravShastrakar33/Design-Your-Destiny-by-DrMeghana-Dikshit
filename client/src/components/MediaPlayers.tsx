@@ -19,6 +19,7 @@ import {
 import { Settings2 } from "lucide-react";
 import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
+import { MediaSession } from "@capgo/capacitor-media-session";
 
 interface MediaPlayerProps {
   src: string;
@@ -30,7 +31,7 @@ interface MediaPlayerProps {
 }
 
 export const VideoPlayer = React.forwardRef<HTMLVideoElement, MediaPlayerProps>(
-  ({ src, onPlay, onTimeUpdate, onEnded, autoPlay }, ref) => {
+  ({ src, onPlay, onTimeUpdate, onEnded, autoPlay, title }, ref) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -134,6 +135,78 @@ export const VideoPlayer = React.forwardRef<HTMLVideoElement, MediaPlayerProps>(
         }
       };
     }, [isFullscreen]);
+
+    // ─── Media Session API via @jofr/capacitor-media-session ───────────
+    // Handle Metadata separately to avoid flickering
+    useEffect(() => {
+      MediaSession.setMetadata({
+        title: title || "Dr. M Video",
+        artist: "Dr. Meghana Dikshit",
+        album: "Design Your Destiny",
+        artwork: [
+          { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+        ],
+      });
+    }, [title]);
+
+    // Handle Playback State & Handlers
+    useEffect(() => {
+      MediaSession.setPlaybackState({
+        playbackState: isPlaying ? "playing" : "paused",
+      });
+
+      MediaSession.setActionHandler({ action: "play" }, () => {
+        videoRef.current?.play().catch(console.error);
+      });
+
+      MediaSession.setActionHandler({ action: "pause" }, () => {
+        videoRef.current?.pause();
+      });
+
+      MediaSession.setActionHandler({ action: "seekbackward" }, (details) => {
+        const skipTime = details.seekTime ?? 10;
+        if (videoRef.current) {
+          videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - skipTime);
+        }
+      });
+
+      MediaSession.setActionHandler({ action: "seekforward" }, (details) => {
+        const skipTime = details.seekTime ?? 10;
+        if (videoRef.current) {
+          videoRef.current.currentTime = Math.min(videoRef.current.duration || 0, videoRef.current.currentTime + skipTime);
+        }
+      });
+
+      MediaSession.setActionHandler({ action: "seekto" as any }, (details: any) => {
+        if (videoRef.current && typeof details.seekTime === 'number') {
+          videoRef.current.currentTime = details.seekTime;
+        }
+      });
+
+      return () => {
+        const actions: any[] = ["play", "pause", "seekbackward", "seekforward", "seekto"];
+        actions.forEach((action) => {
+          try {
+            MediaSession.setActionHandler({ action }, null);
+          } catch {}
+        });
+      };
+    }, [isPlaying]);
+
+    // Handle Position Updates
+    useEffect(() => {
+      if (videoRef.current && videoRef.current.duration) {
+        try {
+          MediaSession.setPositionState({
+            duration: duration || 0,
+            playbackRate: playbackRate,
+            position: Math.min(currentTime, duration || 0),
+          });
+        } catch (e) {}
+      }
+    }, [currentTime, duration, playbackRate]);
+    // ─── End Media Session API ─────────────────────────────────────────
 
     const togglePlay = async () => {
       if (videoRef.current && !isLoading) {
@@ -469,6 +542,78 @@ export const AudioPlayer = React.forwardRef<HTMLAudioElement, MediaPlayerProps>(
         setCurrentTime(audioRef.current.currentTime);
       }
     };
+
+    // ─── Media Session API via @jofr/capacitor-media-session ───────────
+    // Handle Metadata separately to avoid flickering
+    useEffect(() => {
+      MediaSession.setMetadata({
+        title: title || "Dr. M Audio",
+        artist: "Dr. Meghana Dikshit",
+        album: "Design Your Destiny",
+        artwork: [
+          { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+        ],
+      });
+    }, [title]);
+
+    // Handle Playback State & Handlers
+    useEffect(() => {
+      MediaSession.setPlaybackState({
+        playbackState: isPlaying ? "playing" : "paused",
+      });
+
+      MediaSession.setActionHandler({ action: "play" }, () => {
+        audioRef.current?.play().catch(console.error);
+      });
+
+      MediaSession.setActionHandler({ action: "pause" }, () => {
+        audioRef.current?.pause();
+      });
+
+      MediaSession.setActionHandler({ action: "seekbackward" }, (details) => {
+        const skipTime = details.seekTime ?? 10;
+        if (audioRef.current) {
+          audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - skipTime);
+        }
+      });
+
+      MediaSession.setActionHandler({ action: "seekforward" }, (details) => {
+        const skipTime = details.seekTime ?? 10;
+        if (audioRef.current) {
+          audioRef.current.currentTime = Math.min(audioRef.current.duration || 0, audioRef.current.currentTime + skipTime);
+        }
+      });
+
+      MediaSession.setActionHandler({ action: "seekto" as any }, (details: any) => {
+        if (audioRef.current && typeof details.seekTime === 'number') {
+          audioRef.current.currentTime = details.seekTime;
+        }
+      });
+
+      return () => {
+        const actions: any[] = ["play", "pause", "seekbackward", "seekforward", "seekto"];
+        actions.forEach((action) => {
+          try {
+            MediaSession.setActionHandler({ action }, null);
+          } catch {}
+        });
+      };
+    }, [isPlaying]);
+
+    // Handle Position Updates
+    useEffect(() => {
+      if (audioRef.current && audioRef.current.duration) {
+        try {
+          MediaSession.setPositionState({
+            duration: duration || 0,
+            playbackRate: playbackRate,
+            position: Math.min(currentTime, duration || 0),
+          });
+        } catch (e) {}
+      }
+    }, [currentTime, duration, playbackRate]);
+    // ─── End Media Session API ─────────────────────────────────────────
 
     const formatTime = (time: number) => {
       const minutes = Math.floor(time / 60);

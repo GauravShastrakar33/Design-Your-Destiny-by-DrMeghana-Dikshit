@@ -441,9 +441,10 @@ export default function ProcessesPage() {
         title="Processes"
         hasBackButton={true}
         onBack={() => setLocation("/home")}
+        maxWidthClassName="max-w-3xl md:max-w-5xl"
       />
 
-      <main className="max-w-3xl mx-auto p-4 pt-3">
+      <main className="max-w-3xl md:max-w-5xl mx-auto p-4 pt-3">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Tabs
             value={activeTab}

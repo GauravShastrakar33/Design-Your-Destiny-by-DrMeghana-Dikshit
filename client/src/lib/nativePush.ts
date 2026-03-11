@@ -62,6 +62,20 @@ export function setupNativePushListeners() {
 
   registrationListenerActive = true;
 
+  // Create default notification channel for Android (required for Android 8+)
+  if (Capacitor.getPlatform() === "android") {
+    PushNotifications.createChannel({
+      id: "default",
+      name: "Default",
+      description: "General notifications",
+      importance: 5,
+    }).then(() => {
+      console.log("✅ Android notification channel created/verified");
+    }).catch((error) => {
+      console.error("❌ Failed to create Android notification channel:", error);
+    });
+  }
+
   // Handle successful registration - this is called after PushNotifications.register()
   PushNotifications.addListener("registration", async (token) => {
     const rawPlatform = Capacitor.getPlatform();
@@ -76,10 +90,7 @@ export function setupNativePushListeners() {
       if (fcmToken) {
         tokenValue = fcmToken;
       } else {
-        console.error("❌ iOS FCM token unavailable; skipping registration");
-        window.dispatchEvent(
-          new CustomEvent("nativePushRegistered", { detail: { success: false } }),
-        );
+        console.log("📱 iOS APNs registration successful; waiting for FCM token...");
         return;
       }
     }
@@ -108,6 +119,35 @@ export function setupNativePushListeners() {
     window.dispatchEvent(
       new CustomEvent("nativePushRegistered", { detail: { success: false } }),
     );
+  });
+
+  // Handle FCM token refreshed (called when Firebase generates or refreshes the token)
+  FirebaseMessaging.addListener("tokenReceived", async (event) => {
+    const rawPlatform = Capacitor.getPlatform();
+    const platform =
+      rawPlatform === "ios" || rawPlatform === "android"
+        ? rawPlatform
+        : "native";
+    const tokenValue = event.token;
+
+    console.log(
+      "🔥 FCM token refreshed:",
+      tokenValue.substring(0, 20) + "...",
+    );
+
+    // 💾 Always save the token for later sync
+    await Preferences.set({ key: "@app:pending_fcm_token", value: tokenValue });
+    await Preferences.set({ key: "@app:fcm_platform", value: platform });
+
+    // 🚀 Only sync now if we are already authenticated
+    const { value: hasToken } = await Preferences.get({
+      key: "@app:user_token",
+    });
+    if (hasToken) {
+      await syncTokenWithBackend();
+    } else {
+      console.log("⏳ No user token found; deferring registration until login");
+    }
   });
 
   // Handle incoming push notification (fg/bg)

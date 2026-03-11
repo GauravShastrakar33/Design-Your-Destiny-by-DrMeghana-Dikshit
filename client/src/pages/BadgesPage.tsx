@@ -50,33 +50,51 @@ export default function BadgesPage() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3
-                className={`font-bold text-base leading-none tracking-tight truncate ${
-                  isEarned ? "text-gray-900" : "text-gray-400"
-                }`}
-              >
-                {badge.displayName}
-              </h3>
-              {isEarned && <Sparkles className="w-3.5 h-3.5 text-brand/60" />}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <h3
+                  className={`font-bold text-base leading-none tracking-tight truncate ${
+                    isEarned ? "text-gray-900" : "text-gray-400"
+                  }`}
+                >
+                  {badge.displayName}
+                </h3>
+                {isEarned && <Sparkles className="w-3.5 h-3.5 text-brand/60" />}
+              </div>
+
+              {!isEarned && (
+                <div className="flex items-center gap-1.5 bg-gray-100/30 px-2 py-1 rounded-lg border border-gray-200/40 flex-shrink-0">
+                  <Lock className="w-2.5 h-2.5 text-gray-400" />
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider leading-none">
+                    Locked
+                  </span>
+                </div>
+              )}
             </div>
 
             <p
-              className={`text-xs mt-1 font-medium line-clamp-2 ${
+              className={`text-xs mt-1.5 font-medium ${
                 isEarned ? "text-gray-600" : "text-gray-400/80"
               }`}
             >
               {badge.meaning}
             </p>
 
-            {!isEarned && (
-              <div className="flex items-center gap-1.5 mt-2 bg-gray-100/50 w-fit px-2 py-0.5 rounded-full border border-gray-200/50">
-                <Lock className="w-2.5 h-2.5 text-gray-400" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
-                  Locked
-                </span>
-              </div>
-            )}
+            <div
+              className={`mt-3 p-2.5 rounded-xl transition-colors duration-300 ${
+                isEarned
+                  ? "bg-indigo-50/50 border border-indigo-100/50"
+                  : "bg-gray-50 border border-gray-100"
+              }`}
+            >
+              <p
+                className={`text-[11px] font-bold leading-normal ${
+                  isEarned ? "text-gray-700" : "text-gray-500"
+                }`}
+              >
+                {badge.howToEarn}
+              </p>
+            </div>
           </div>
         </Card>
       </motion.div>

@@ -53,7 +53,7 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, ilike, and, or, inArray, sql, count, asc, desc } from "drizzle-orm";
+import { eq, ilike, and, or, inArray, sql, count, countDistinct, asc, desc } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -137,6 +137,14 @@ export interface IStorage {
   getUnreadNotificationCount(userId: number): Promise<number>;
   markNotificationAsRead(userId: number, notificationId: number): Promise<void>;
   markAllNotificationsAsRead(userId: number): Promise<void>;
+  getUserNotifications(userId: number): Promise<{
+    id: number;
+    title: string;
+    body: string;
+    type: string;
+    relatedEventId: number | null;
+    createdAt: string;
+  }[]>;
 
   // Goldmine Videos
   createGoldmineVideo(data: InsertGoldmineVideo & { id: string }): Promise<GoldmineVideo>;
@@ -469,6 +477,7 @@ export class MemStorage implements IStorage {
   async getUnreadNotificationCount(userId: number): Promise<number> { return 0; }
   async markNotificationAsRead(userId: number, notificationId: number): Promise<void> { }
   async markAllNotificationsAsRead(userId: number): Promise<void> { }
+  async getUserNotifications(userId: number): Promise<any[]> { return []; }
 
   // Goldmine Videos stubs
   async createGoldmineVideo(data: InsertGoldmineVideo & { id: string }): Promise<GoldmineVideo> { throw new Error("Not implemented in MemStorage"); }
@@ -2043,7 +2052,7 @@ export class DbStorage implements IStorage {
 
   async getUnreadNotificationCount(userId: number): Promise<number> {
     const [result] = await db
-      .select({ count: count() })
+      .select({ count: countDistinct(notificationLogsTable.notificationId) })
       .from(notificationLogsTable)
       .where(
         and(
@@ -2051,7 +2060,7 @@ export class DbStorage implements IStorage {
           eq(notificationLogsTable.isRead, false)
         )
       );
-    return result?.count ?? 0;
+    return Number(result?.count) ?? 0;
   }
 
   async markNotificationAsRead(userId: number, notificationId: number): Promise<void> {
@@ -2245,11 +2254,7 @@ export class DbStorage implements IStorage {
         eq(notificationLogsTable.notificationId, notificationsTable.id)
       )
       .where(
-        and(
-          eq(notificationLogsTable.userId, userId),
-          // Include both sent and delivered statuses
-          sql`${notificationLogsTable.status} IN ('sent', 'delivered')`
-        )
+        eq(notificationLogsTable.userId, userId)
       )
       .orderBy(desc(notificationLogsTable.createdAt));
 
