@@ -6544,6 +6544,32 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
     }
   );
 
+  // Mark specific notification as read
+  app.patch(
+    "/api/v1/notifications/:id/read",
+    authenticateJWT,
+    async (req, res) => {
+      try {
+        const userId = (req as any).user.sub;
+        const notificationId = Number(req.params.id);
+
+        if (!userId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        if (isNaN(notificationId)) {
+          return res.status(400).json({ error: "Invalid notification ID" });
+        }
+
+        await storage.markNotificationAsRead(userId, notificationId);
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+        res.status(500).json({ error: "Failed to mark notification as read" });
+      }
+    }
+  );
+
   // Register device token for push notifications
   app.post(
     "/api/v1/notifications/register-device",
@@ -6568,42 +6594,22 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return res.status(400).json({ error: "Platform name too long" });
         }
 
-        // Check if this exact token already exists
-        const existingToken = await db
-          .select()
-          .from(deviceTokens)
-          .where(eq(deviceTokens.token, token))
-          .limit(1);
-
-        if (existingToken.length > 0) {
-          // Token already exists - update user_id or platform if different
-          const updates: any = {};
-          if (existingToken[0].userId !== userId) updates.userId = userId;
-          if (existingToken[0].platform !== platformValue)
-            updates.platform = platformValue;
-
-          if (Object.keys(updates).length > 0) {
-            await db
-              .update(deviceTokens)
-              .set(updates)
-              .where(eq(deviceTokens.token, token));
-          }
-          return res.json({
-            success: true,
-            message: "Token registration updated",
+        // Atomic UPSERT: Update if token exists (regardless of user), or insert as new
+        // This allows multiple devices per user while keeping tokens unique
+        await db
+          .insert(deviceTokens)
+          .values({
+            userId,
+            token,
+            platform: platformValue,
+          })
+          .onConflictDoUpdate({
+            target: deviceTokens.token,
+            set: {
+              userId,
+              platform: platformValue,
+            },
           });
-        }
-
-        // UPSERT: Delete any old tokens for this user first, then insert new one
-        // This ensures only the latest token is stored per user (tokens change on browser refresh)
-        await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
-
-        // Insert new token
-        await db.insert(deviceTokens).values({
-          userId,
-          token,
-          platform: platformValue,
-        });
 
         res.json({ success: true, message: "Device registered successfully" });
       } catch (error: any) {
@@ -6740,6 +6746,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const tokens = allTokens.map((t) => t.token);
       // Send with default deep link to notifications page
       const result = await sendPushNotification(tokens, title, body, {
+        notificationId: notification.id.toString(),
         url: "/notifications",
         type: "admin_test",
       });
@@ -7063,6 +7070,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             "Dr. M has answered your question 🎧",
             "Your personal voice response is ready to listen.",
             {
+              notificationId: notification.id.toString(),
               questionId: questionId.toString(),
               deepLink: `/dr-m/questions/${questionId}`,
             }

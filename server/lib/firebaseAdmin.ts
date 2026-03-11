@@ -1,19 +1,32 @@
 import admin from "firebase-admin";
+import dotenv from "dotenv";
+
+dotenv.config(); // loads .env locally (ignored in Replit if not present)
 
 let fcmInstance: admin.messaging.Messaging | null = null;
 
 export function initializeFirebaseAdmin() {
   if (!admin.apps.length) {
     try {
+      const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+
+      if (!raw) {
+        throw new Error(
+          "FIREBASE_SERVICE_ACCOUNT environment variable is missing"
+        );
+      }
+
+      const serviceAccount = JSON.parse(raw);
+
       admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
+        credential: admin.credential.cert(serviceAccount),
       });
 
       console.log("🔥 Firebase Admin initialized successfully");
 
       fcmInstance = admin.messaging();
     } catch (error) {
-      console.error("Failed to initialize Firebase Admin:", error);
+      console.error("❌ Failed to initialize Firebase Admin:", error);
       return null;
     }
   } else {
@@ -42,7 +55,7 @@ export async function sendPushNotification(
   tokensToCleanup: string[];
 }> {
   const fcm = getFCM();
-  
+
   if (!fcm) {
     console.error("FCM not initialized");
     return {
@@ -54,12 +67,18 @@ export async function sendPushNotification(
   }
 
   if (tokens.length === 0) {
-    return { successCount: 0, failureCount: 0, failedTokens: [], tokensToCleanup: [] };
+    return {
+      successCount: 0,
+      failureCount: 0,
+      failedTokens: [],
+      tokensToCleanup: [],
+    };
   }
 
   // 📦 FCM has a limit of 500 tokens per multicast message
   const batchSize = 500;
   const tokenBatches: string[][] = [];
+
   for (let i = 0; i < tokens.length; i += batchSize) {
     tokenBatches.push(tokens.slice(i, i + batchSize));
   }
@@ -69,14 +88,17 @@ export async function sendPushNotification(
   const allFailedTokens: string[] = [];
   const tokensToCleanup: string[] = [];
 
-  console.log(`🚀 Sending notification in ${tokenBatches.length} batch(es) to ${tokens.length} total tokens`);
+  console.log(
+    `🚀 Sending notification in ${tokenBatches.length} batch(es) to ${tokens.length} total tokens`
+  );
 
   for (const batch of tokenBatches) {
     const message: admin.messaging.MulticastMessage = {
       tokens: batch,
       notification: { title, body },
       data,
-      // 📱 Ensure high priority for mobile devices
+
+      // Android configuration
       android: {
         priority: "high",
         notification: {
@@ -84,6 +106,8 @@ export async function sendPushNotification(
           channelId: "default",
         },
       },
+
+      // iOS configuration
       apns: {
         payload: {
           aps: {
@@ -93,6 +117,8 @@ export async function sendPushNotification(
           },
         },
       },
+
+      // Web push configuration
       webpush: {
         notification: {
           title,
@@ -105,6 +131,7 @@ export async function sendPushNotification(
 
     try {
       const response = await fcm.sendEachForMulticast(message);
+
       totalSuccessCount += response.successCount;
       totalFailureCount += response.failureCount;
 
@@ -112,18 +139,21 @@ export async function sendPushNotification(
         if (!resp.success) {
           const token = batch[idx];
           allFailedTokens.push(token);
-          
+
           const errorCode = resp.error?.code;
-          // 🧹 Only cleanup if the token is explicitly invalid/not registered
+
           if (errorCode === "messaging/registration-token-not-registered") {
             tokensToCleanup.push(token);
           } else {
-             console.error(`FCM error for token ${idx} in batch: ${errorCode}`);
+            console.error(
+              `❌ FCM error for token ${idx} in batch: ${errorCode}`
+            );
           }
         }
       });
     } catch (error) {
-      console.error("Error sending multicast batch:", error);
+      console.error("❌ Error sending multicast batch:", error);
+
       totalFailureCount += batch.length;
       allFailedTokens.push(...batch);
     }
