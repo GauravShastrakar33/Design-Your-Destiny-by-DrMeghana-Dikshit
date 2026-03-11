@@ -31,7 +31,7 @@ export function BadgeIcon({
       className={`relative ${sizeMap[size]} ${className}`}
       title={
         showTooltip && badge
-          ? `${badge.displayName}: ${badge.meaning}`
+          ? `${badge.displayName}\nMeaning: ${badge.meaning}\nRequirement: ${badge.howToEarn}`
           : undefined
       }
       data-testid={`badge-icon-${badgeKey}`}

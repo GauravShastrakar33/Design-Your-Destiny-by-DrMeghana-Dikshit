@@ -45,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Playlist, PlaylistItem } from "@shared/schema";
+import { MediaSession } from "@capgo/capacitor-media-session";
 
 interface PlaylistWithItems {
   playlist: Playlist;
@@ -717,6 +718,107 @@ export default function MyPracticePlaylistPage() {
       setProgress(newTime);
     }
   };
+
+  // ─── Media Session API via @jofr/capacitor-media-session ───────────
+  // Handle Metadata updates separately to avoid flickering
+  useEffect(() => {
+    const trackTitle = currentTrack?.lesson?.title || "Dr. M Audio";
+    MediaSession.setMetadata({
+      title: trackTitle,
+      artist: "Dr. Meghana Dikshit",
+      album: "Design Your Destiny",
+      artwork: [
+        { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+        { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+      ],
+    });
+  }, [currentTrack]);
+
+  // Handle Playback State & Handlers
+  useEffect(() => {
+    MediaSession.setPlaybackState({
+      playbackState: isPlaying ? "playing" : "paused",
+    });
+
+    const setupHandlers = async () => {
+      MediaSession.setActionHandler({ action: "play" }, () => {
+        setIsPlaying(true);
+        audioRef.current?.play().catch(console.error);
+      });
+      
+      MediaSession.setActionHandler({ action: "pause" }, () => {
+        setIsPlaying(false);
+        audioRef.current?.pause();
+      });
+
+      MediaSession.setActionHandler({ action: "previoustrack" }, () => {
+        handlePrev();
+      });
+
+      MediaSession.setActionHandler({ action: "nexttrack" }, () => {
+        handleNext();
+      });
+
+      MediaSession.setActionHandler({ action: "seekbackward" }, (details) => {
+        const skipTime = details.seekTime ?? 10;
+        if (audioRef.current) {
+          const newTime = Math.max(0, audioRef.current.currentTime - skipTime);
+          audioRef.current.currentTime = newTime;
+          setProgress(newTime);
+        }
+      });
+
+      MediaSession.setActionHandler({ action: "seekforward" }, (details) => {
+        const skipTime = details.seekTime ?? 10;
+        if (audioRef.current) {
+          const newTime = Math.min(audioRef.current.duration, audioRef.current.currentTime + skipTime);
+          audioRef.current.currentTime = newTime;
+          setProgress(newTime);
+        }
+      });
+
+      // Handle scrubbing from lock screen / notification drawer
+      MediaSession.setActionHandler({ action: "seekto" as any }, (details: any) => {
+        if (audioRef.current && typeof details.seekTime === 'number') {
+          audioRef.current.currentTime = details.seekTime;
+          setProgress(details.seekTime);
+        }
+      });
+    };
+
+    setupHandlers();
+
+    return () => {
+      const actions: any[] = [
+        "play",
+        "pause",
+        "previoustrack",
+        "nexttrack",
+        "seekbackward",
+        "seekforward",
+        "seekto"
+      ];
+      actions.forEach((action) => {
+        try {
+          MediaSession.setActionHandler({ action }, null);
+        } catch {}
+      });
+    };
+  }, [playingItems, isPlaying, currentTrackIndex]);
+
+  // Handle Position Updates separately to minimize overhead and flicker
+  useEffect(() => {
+    if (audioRef.current && audioRef.current.duration) {
+      try {
+        MediaSession.setPositionState({
+          duration: duration || 0,
+          playbackRate: playbackRate,
+          position: Math.min(progress, duration || 0),
+        });
+      } catch (e) {}
+    }
+  }, [progress, duration, playbackRate]);
+  // ─── End Media Session API ─────────────────────────────────────────
 
   const handleVolumeChange = (val: number[]) => {
     const v = val[0];

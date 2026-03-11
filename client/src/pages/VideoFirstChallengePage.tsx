@@ -62,6 +62,7 @@ interface FlattenedDay {
 }
 
 import { useAuth } from "@/contexts/AuthContext";
+import { MediaSession } from "@capgo/capacitor-media-session";
 
 // ... existing imports ...
 
@@ -80,6 +81,7 @@ export default function VideoFirstChallengePage() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [autoOpenPdf, setAutoOpenPdf] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const { isAuthenticated } = useAuth();
 
@@ -318,6 +320,104 @@ export default function VideoFirstChallengePage() {
     setHasReached90(false);
     setShowAudioPlayer(false);
   }, [currentDay?.lessonId]);
+
+  // Handle playback state sync for Media Session
+  useEffect(() => {
+    const media = showAudioPlayer ? audioRef.current : videoRef.current;
+    if (!media) return;
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+
+    media.addEventListener("play", handlePlay);
+    media.addEventListener("pause", handlePause);
+
+    return () => {
+      media.removeEventListener("play", handlePlay);
+      media.removeEventListener("pause", handlePause);
+    };
+  }, [showAudioPlayer, currentDay]);
+
+  // ─── Media Session API via @jofr/capacitor-media-session ───────────
+  // Handle Metadata separately to avoid flickering
+  useEffect(() => {
+    const trackTitle = currentDay?.title || "Dr. M Challenge";
+    MediaSession.setMetadata({
+      title: trackTitle,
+      artist: "Dr. Meghana Dikshit",
+      album: courseData?.course.title || "Design Your Destiny",
+      artwork: [
+        { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+        { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+      ],
+    });
+  }, [currentDay, courseData]);
+
+  // Handle Playback State & Handlers
+  useEffect(() => {
+    MediaSession.setPlaybackState({
+      playbackState: isPlaying ? "playing" : "paused",
+    });
+
+    MediaSession.setActionHandler({ action: "play" }, () => {
+      setIsPlaying(true);
+      if (showAudioPlayer) audioRef.current?.play().catch(console.error);
+      else videoRef.current?.play().catch(console.error);
+    });
+
+    MediaSession.setActionHandler({ action: "pause" }, () => {
+      setIsPlaying(false);
+      if (showAudioPlayer) audioRef.current?.pause();
+      else videoRef.current?.pause();
+    });
+
+    MediaSession.setActionHandler({ action: "seekbackward" }, (details) => {
+      const skipTime = details.seekTime ?? 10;
+      const media = showAudioPlayer ? audioRef.current : videoRef.current;
+      if (media) {
+        media.currentTime = Math.max(0, media.currentTime - skipTime);
+      }
+    });
+
+    MediaSession.setActionHandler({ action: "seekforward" }, (details) => {
+      const skipTime = details.seekTime ?? 10;
+      const media = showAudioPlayer ? audioRef.current : videoRef.current;
+      if (media) {
+        media.currentTime = Math.min(media.duration || 0, media.currentTime + skipTime);
+      }
+    });
+
+    MediaSession.setActionHandler({ action: "seekto" as any }, (details: any) => {
+      const media = showAudioPlayer ? audioRef.current : videoRef.current;
+      if (media && typeof details.seekTime === 'number') {
+        media.currentTime = details.seekTime;
+      }
+    });
+
+    return () => {
+      const actions: any[] = ["play", "pause", "seekbackward", "seekforward", "seekto"];
+      actions.forEach((action) => {
+        try {
+          MediaSession.setActionHandler({ action }, null);
+        } catch {}
+      });
+    };
+  }, [isPlaying, showAudioPlayer]);
+
+  // Handle Position Updates
+  useEffect(() => {
+    const media = showAudioPlayer ? audioRef.current : videoRef.current;
+    if (media && media.duration) {
+      try {
+        MediaSession.setPositionState({
+          duration: media.duration,
+          playbackRate: media.playbackRate,
+          position: media.currentTime,
+        });
+      } catch (e) {}
+    }
+  }, [watchProgress, showAudioPlayer]);
+  // ─── End Media Session API ─────────────────────────────────────────
 
   // Day click handler
   const handleDayClick = (index: number) => {
