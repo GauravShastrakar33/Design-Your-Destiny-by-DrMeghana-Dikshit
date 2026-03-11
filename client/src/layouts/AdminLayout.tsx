@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import AdminSidebar from "@/components/AdminSidebar";
 import { AdminSidebarProvider } from "@/contexts/AdminSidebarContext";
@@ -12,7 +12,14 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
   const isLoginPage = location === "/admin/login";
+
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [location]);
 
   if (isLoginPage) {
     return <div className="min-h-screen bg-gray-50">{children}</div>;
@@ -56,7 +63,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <span className="ml-4 font-bold text-gray-900">Dr.M Admin</span>
           </header>
 
-          <main className="flex-1 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+          <main
+            ref={mainRef}
+            className="flex-1 overflow-y-auto custom-scrollbar bg-[#F8FAFC]"
+          >
             <div className="min-h-full pb-20">{children}</div>
           </main>
         </div>
