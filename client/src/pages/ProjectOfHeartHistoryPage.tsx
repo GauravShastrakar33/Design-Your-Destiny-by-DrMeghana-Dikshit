@@ -67,13 +67,13 @@ const CATEGORY_CONFIG: Record<
     icon: <CircleDollarSign className="w-3.5 h-3.5" />,
   },
   other: {
-    label: "Self Exploration",
+    label: "Other",
     style: {
-      backgroundColor: "rgba(112, 61, 250, 0.1)",
-      color: "#703DFA",
-      border: "1px solid rgba(112, 61, 250, 0.2)",
+      backgroundColor: "rgba(107, 114, 128, 0.1)",
+      color: "#374151",
+      border: "1px solid rgba(107, 114, 128, 0.2)",
     },
-    icon: <Tag className="w-3.5 h-3.5" />,
+    icon: <Sparkles className="w-3.5 h-3.5" />,
   },
 };
 
@@ -81,6 +81,8 @@ interface HistoryPOH {
   id: string;
   title: string;
   category: Category;
+  customCategory?: string | null;
+  custom_category?: string | null;
   status: "completed" | "closed_early";
   started_at: string | null;
   ended_at: string | null;
@@ -245,10 +247,11 @@ export default function ProjectOfHeartHistoryPage() {
                               ?.style || CATEGORY_CONFIG.other.style
                           }
                         >
-                          {CATEGORY_CONFIG[project.category as Category]
-                            ?.icon || CATEGORY_CONFIG.other.icon}
-                          {CATEGORY_CONFIG[project.category as Category]
-                            ?.label || CATEGORY_CONFIG.other.label}
+                          {CATEGORY_CONFIG[project.category as Category]?.icon || CATEGORY_CONFIG.other.icon}
+                          {project.category === "other" && (project.customCategory || project.custom_category)
+                             ? (project.customCategory || project.custom_category)
+                             : (CATEGORY_CONFIG[project.category as Category]
+                               ?.label || CATEGORY_CONFIG.other.label)}
                         </span>
                         <div className="flex items-center gap-1.5 text-gray-400 text-xs font-medium">
                           <Calendar className="w-3.5 h-3.5" />

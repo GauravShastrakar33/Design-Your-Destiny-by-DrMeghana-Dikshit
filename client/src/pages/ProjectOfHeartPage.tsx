@@ -56,7 +56,7 @@ import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-type POHStatus = "active" | "next" | "horizon";
+type POHStatus = "active" | "next";
 type Category = "career" | "health" | "relationships" | "wealth" | "other";
 
 interface Milestone {
@@ -78,6 +78,8 @@ interface POHItem {
   title: string;
   why: string;
   category: Category;
+  customCategory?: string | null;
+  custom_category?: string | null;
   started_at?: string;
   vision_images?: string[];
   milestones?: Milestone[];
@@ -88,7 +90,6 @@ interface POHItem {
 interface POHState {
   active: POHItem | null;
   next: POHItem | null;
-  horizon: POHItem | null;
 }
 
 const CATEGORY_CONFIG: Record<
@@ -175,21 +176,22 @@ const CATEGORY_CONFIG: Record<
       milestoneBorder: "border-amber-200",
     },
   },
+
   other: {
     label: "Other",
     style: {
-      backgroundColor: "rgba(100, 116, 139, 0.1)",
-      color: "#334155",
-      border: "1px solid rgba(100, 116, 139, 0.2)",
+      backgroundColor: "rgba(107, 114, 128, 0.1)",
+      color: "#374151",
+      border: "1px solid rgba(107, 114, 128, 0.2)",
     },
     icon: <Sparkles className="w-3 h-3" />,
     theme: {
-      whyBg: "bg-slate-50",
-      whyBorder: "border-slate-100",
-      whyText: "text-slate-600",
+      whyBg: "bg-gradient-to-br from-gray-50/50 to-slate-50/30",
+      whyBorder: "border-gray-100/50",
+      whyText: "text-gray-700",
       whyIcon: "✨",
-      milestoneBg: "bg-slate-50/80",
-      milestoneBorder: "border-slate-200/50",
+      milestoneBg: "bg-gradient-to-r from-gray-50 to-slate-50/50",
+      milestoneBorder: "border-gray-200/50",
     },
   },
 };
@@ -201,7 +203,6 @@ export default function ProjectOfHeartPage() {
   const [pohState, setPOHState] = useState<POHState>({
     active: null,
     next: null,
-    horizon: null,
   });
 
   const allMilestonesCompleted = useMemo(() => {
@@ -309,9 +310,8 @@ export default function ProjectOfHeartPage() {
     }
   };
 
-  // Create Next/Horizon modal
+  // Create Next modal
   const [showCreateNextModal, setShowCreateNextModal] = useState(false);
-  const [showCreateHorizonModal, setShowCreateHorizonModal] = useState(false);
   const [nextPOHTitle, setNextPOHTitle] = useState("");
   const [nextPOHCategory, setNextPOHCategory] = useState<Category | "">("");
   const [nextPOHCustomCategory, setNextPOHCustomCategory] = useState("");
@@ -320,7 +320,7 @@ export default function ProjectOfHeartPage() {
   // Re-align modal
   const [showRealignModal, setShowRealignModal] = useState(false);
   const [realignTarget, setRealignTarget] = useState<
-    "active" | "next" | "horizon" | null
+    "active" | "next" | null
   >(null);
   const [realignTitle, setRealignTitle] = useState("");
   const [realignWhy, setRealignWhy] = useState("");
@@ -344,7 +344,6 @@ export default function ProjectOfHeartPage() {
         setPOHState({
           active: data.active || null,
           next: data.next || null,
-          horizon: data.horizon || null,
         });
         if (
           data.active?.today_rating !== null &&
@@ -370,14 +369,11 @@ export default function ProjectOfHeartPage() {
 
     setCreatingPOH(true);
     try {
-      const category =
-        newPOH.category === "other"
-          ? newPOH.customCategory.toLowerCase()
-          : newPOH.category;
       const response = await apiRequest("POST", "/api/poh", {
         title: newPOH.title.trim(),
         why: newPOH.why.trim(),
-        category,
+        category: newPOH.category,
+        customCategory: newPOH.category === "other" ? newPOH.customCategory : null,
       });
 
       if (response.ok) {
@@ -674,59 +670,51 @@ export default function ProjectOfHeartPage() {
     }
   };
 
-  // Create Next/Horizon handlers
-  const handleCreateNext = async (type: "next" | "horizon") => {
+  // Create Next handlers
+  const handleCreateNext = async (type: "next") => {
     const title = nextPOHTitle.trim();
-    const category =
-      nextPOHCategory === "other"
-        ? nextPOHCustomCategory.toLowerCase()
-        : nextPOHCategory;
-    if (!title || !category) return;
+    const category = nextPOHCategory;
+    if (!title || !category || (category === "other" && !nextPOHCustomCategory.trim())) return;
 
     setCreatingNext(true);
     try {
-      // Backend requires why field - use placeholder for Next/Horizon since spec doesn't include why in modal
-      const defaultWhy =
-        type === "next"
-          ? "Direction after current project"
-          : "Long-term guiding star";
+      // Backend requires why field - use placeholder for Next since spec doesn't include why in modal
+      const defaultWhy = "Direction after current project";
 
       const response = await apiRequest("POST", "/api/poh", {
         title,
         why: defaultWhy,
         category,
+        customCategory: category === "other" ? nextPOHCustomCategory : null,
       });
 
       if (response.ok) {
         setShowCreateNextModal(false);
-        setShowCreateHorizonModal(false);
         setNextPOHTitle("");
         setNextPOHCategory("");
         setNextPOHCustomCategory("");
         await fetchPOHData();
       }
     } catch (err) {
-      console.error("Create next/horizon error:", err);
+      console.error("Create next error:", err);
     } finally {
       setCreatingNext(false);
     }
   };
 
   // Re-align handlers
-  const openRealignFor = (target: "active" | "next" | "horizon") => {
+  const openRealignFor = (target: "active" | "next") => {
     const poh =
       target === "active"
         ? pohState.active
-        : target === "next"
-        ? pohState.next
-        : pohState.horizon;
+        : pohState.next;
     if (!poh) return;
 
     setRealignTarget(target);
     setRealignTitle(poh.title);
     setRealignWhy(poh.why || "");
     setRealignCategory(poh.category as Category);
-    setRealignCustomCategory("");
+    setRealignCustomCategory(poh.customCategory || "");
     setShowRealignModal(true);
   };
 
@@ -735,26 +723,17 @@ export default function ProjectOfHeartPage() {
     const poh =
       realignTarget === "active"
         ? pohState.active
-        : realignTarget === "next"
-        ? pohState.next
-        : pohState.horizon;
+        : pohState.next;
     if (!poh) return;
 
     setSavingRealign(true);
     try {
-      const category =
-        realignCategory === "other"
-          ? realignCustomCategory.toLowerCase()
-          : realignCategory;
-      const body: Record<string, string> = {
+      const response = await apiRequest("PUT", `/api/poh/${poh.id}`, {
         title: realignTitle.trim(),
-        category,
-      };
-      if (realignTarget === "active") {
-        body.why = realignWhy.trim();
-      }
-
-      const response = await apiRequest("PUT", `/api/poh/${poh.id}`, body);
+        category: realignCategory,
+        customCategory: realignCategory === "other" ? realignCustomCategory : null,
+        ...(realignTarget === "active" ? { why: realignWhy.trim() } : {}),
+      });
 
       if (response.ok) {
         setShowRealignModal(false);
@@ -956,8 +935,8 @@ export default function ProjectOfHeartPage() {
                 your heart, not just your mind.
               </p>
               <p className="text-sm text-gray-500 leading-relaxed">
-                You can have one active Project at a time, with a Next and a
-                North Star guiding your longer journey.
+                You can have one active Project at a time, with a Next project
+                ready for when you finish.
               </p>
             </Card>
           </motion.div>
@@ -1207,10 +1186,13 @@ export default function ProjectOfHeartPage() {
                     ).icon
                   }
                   {
-                    (
-                      CATEGORY_CONFIG[pohState.active.category as Category] ||
-                      CATEGORY_CONFIG.other
-                    ).label
+                    (pohState.active.category === "other" && 
+                     (pohState.active.customCategory || pohState.active.custom_category))
+                      ? (pohState.active.customCategory || pohState.active.custom_category)
+                      : (
+                          CATEGORY_CONFIG[pohState.active.category as Category] ||
+                          CATEGORY_CONFIG.other
+                        ).label
                   }
                 </span>
                 <span
@@ -1512,7 +1494,7 @@ export default function ProjectOfHeartPage() {
                         )}
                       </motion.div>
                     ))}
-                    {pohState.active.milestones.length < 5 && (
+                    {pohState?.active?.milestones && pohState.active.milestones.length < 5 && (
                       <button
                         onClick={() => setShowMilestoneModal(true)}
                         className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-600 hover:text-brand transition-colors mt-2"
@@ -1945,10 +1927,13 @@ export default function ProjectOfHeartPage() {
                     ).icon
                   }
                   {
-                    (
-                      CATEGORY_CONFIG[pohState.next.category as Category] ||
-                      CATEGORY_CONFIG.other
-                    ).label
+                    (pohState.next.category === "other" && 
+                     (pohState.next.customCategory || pohState.next.custom_category))
+                      ? (pohState.next.customCategory || pohState.next.custom_category)
+                      : (
+                          CATEGORY_CONFIG[pohState.next.category as Category] ||
+                          CATEGORY_CONFIG.other
+                        ).label
                   }
                 </span>
                 <span
@@ -1975,91 +1960,11 @@ export default function ProjectOfHeartPage() {
           </motion.div>
         )}
 
-        {pohState.active && !pohState.horizon && (
-          <div className="flex justify-center mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateHorizonModal(true)}
-              className="w-fit px-6 h-10 border-indigo-100 bg-white hover:bg-brand/5 text-indigo-600 font-semibold rounded-xl transition-all"
-              data-testid="button-create-horizon"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create North Star
-            </Button>
-          </div>
-        )}
-
-        {/* NORTH STAR (Horizon) CARD */}
-        {pohState.horizon && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
-          >
-            <div
-              className="rounded-2xl px-6 py-8 relative overflow-hidden group shadow-md border border-indigo-100"
-              style={{
-                background:
-                  "linear-gradient(135deg, #ffffff 0%, #f3efff 40%, #d6cbfc 100%)", // Primary Hint Gradient
-              }}
-              data-testid="card-horizon-poh"
-            >
-              <div className="flex items-center justify-between mb-8 relative z-10">
-                <span
-                  className="text-xs font-bold px-3 py-1.5 rounded-full tracking-wider backdrop-blur-md flex items-center gap-1.5"
-                  style={
-                    (
-                      CATEGORY_CONFIG[pohState.horizon.category as Category] ||
-                      CATEGORY_CONFIG.other
-                    ).style
-                  }
-                >
-                  {
-                    (
-                      CATEGORY_CONFIG[pohState.horizon.category as Category] ||
-                      CATEGORY_CONFIG.other
-                    ).icon
-                  }
-                  {
-                    (
-                      CATEGORY_CONFIG[pohState.horizon.category as Category] ||
-                      CATEGORY_CONFIG.other
-                    ).label
-                  }
-                </span>
-                <span
-                  className="text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 tracking-wider backdrop-blur-md"
-                  style={{
-                    backgroundColor: "rgba(254, 243, 199, 0.8)", // Amber-100
-                    color: "#B45309", // Amber-700
-                    border: "1px solid rgba(251, 191, 36, 0.4)",
-                  }}
-                >
-                  <Star className="w-3 h-3 fill-current" />
-                  North Star
-                </span>
-              </div>
-
-              <div className="relative z-10">
-                <p className="text-xs text-primary tracking-wide font-semibold italic mb-3 flex items-center gap-2">
-                  <Focus className="w-4 h-4" /> Guiding every step forward.
-                </p>
-                <p
-                  className="text-xl sm:text-2xl font-bold text-slate-800 leading-relaxed tracking-tight"
-                  data-testid="text-someday-poh"
-                >
-                  "{pohState.horizon.title}"
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
         {/* History Link */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.45 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
         >
           <button
             onClick={() => setLocation("/project-of-heart/history")}
@@ -2345,81 +2250,7 @@ export default function ProjectOfHeartPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create North Star Modal */}
-      <Dialog
-        open={showCreateHorizonModal}
-        onOpenChange={setShowCreateHorizonModal}
-      >
-        <DialogContent className="w-[95vw] sm:max-w-md p-6 rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>Create North Star</DialogTitle>
-            <DialogDescription>
-              This guides you, even when you're not actively working on it.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Input
-              value={nextPOHTitle}
-              onChange={(e) => setNextPOHTitle(e.target.value.slice(0, 120))}
-              placeholder="Enter title..."
-              data-testid="input-horizon-title"
-            />
-            <Select
-              value={nextPOHCategory}
-              onValueChange={(v) => setNextPOHCategory(v as Category)}
-            >
-              <SelectTrigger data-testid="select-horizon-category">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {(
-                  [
-                    "career",
-                    "health",
-                    "relationships",
-                    "wealth",
-                    "other",
-                  ] as Category[]
-                ).map((cat) => (
-                  <SelectItem key={cat} value={cat} className="capitalize">
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {nextPOHCategory === "other" && (
-              <Input
-                value={nextPOHCustomCategory}
-                onChange={(e) => setNextPOHCustomCategory(e.target.value)}
-                placeholder="Enter custom category"
-              />
-            )}
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateHorizonModal(false)}
-              className="flex-1 h-10 border-indigo-100 text-indigo-600 text-xs font-bold uppercase tracking-widest rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => handleCreateNext("horizon")}
-              disabled={
-                creatingNext || !nextPOHTitle.trim() || !nextPOHCategory
-              }
-              className="flex-1 h-10 bg-brand hover:bg-brand/90 text-white text-xs font-bold uppercase tracking-widest rounded-xl shadow-md"
-              data-testid="button-submit-horizon"
-            >
-              {creatingNext ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "Create"
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+
 
       {/* Re-align Modal - Redesigned & Responsive */}
       <Dialog open={showRealignModal} onOpenChange={setShowRealignModal}>
@@ -2465,18 +2296,7 @@ export default function ProjectOfHeartPage() {
                   Next Project
                 </button>
               )}
-              {pohState.horizon && (
-                <button
-                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                    realignTarget === "horizon"
-                      ? "bg-white text-yellow-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => openRealignFor("horizon")}
-                >
-                  North Star
-                </button>
-              )}
+
             </div>
 
             <div className="space-y-5">
