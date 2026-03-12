@@ -36,6 +36,7 @@ import {
   notifications,
   communitySessions,
   goldmineVideos,
+  insertProjectOfHeartSchema,
 } from "@shared/schema";
 import {
   sendPushNotification,
@@ -5732,10 +5733,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       // Fetch all POHs for user
       const userPOHs = await storage.getUserPOHs(userId);
+      console.log("DEBUG /api/poh/current: Fetched POHs for user", userId, "Count:", userPOHs.length);
 
       const activePOH = userPOHs.find((p) => p.status === "active");
       const nextPOH = userPOHs.find((p) => p.status === "next");
-      const horizonPOH = userPOHs.find((p) => p.status === "horizon");
 
       // Build ACTIVE POH response with full details (milestones, actions, today's rating)
       let activeResponse = null;
@@ -5788,6 +5789,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           title: activePOH.title,
           why: activePOH.why,
           category: activePOH.category,
+          customCategory: activePOH.customCategory,
+          custom_category: activePOH.customCategory,
           started_at: activePOH.startedAt,
           vision_images: signedVisionImages,
           milestones: milestones.map((m) => ({
@@ -5814,19 +5817,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           title: nextPOH.title,
           why: nextPOH.why,
           category: nextPOH.category,
-          milestones: [],
-          actions: [],
-        };
-      }
-
-      // Build HORIZON POH response with empty arrays for milestones/actions (placeholder only)
-      let horizonResponse = null;
-      if (horizonPOH) {
-        horizonResponse = {
-          id: horizonPOH.id,
-          title: horizonPOH.title,
-          why: horizonPOH.why,
-          category: horizonPOH.category,
+          customCategory: nextPOH.customCategory,
+          custom_category: nextPOH.customCategory,
           milestones: [],
           actions: [],
         };
@@ -5835,7 +5827,6 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       res.json({
         active: activeResponse,
         next: nextResponse,
-        horizon: horizonResponse,
       });
     } catch (error) {
       console.error("Error fetching current POH:", error);
@@ -5851,23 +5842,22 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       }
 
       const userId = req.user.sub;
-      const { title, why, category } = req.body;
+      const { title, why, category, customCategory } = req.body;
 
-      // Validate inputs
-      if (!title || title.length > 120) {
-        return res
-          .status(400)
-          .json({ error: "Title is required and must be <= 120 characters" });
-      }
-      if (!why || why.length > 500) {
-        return res
-          .status(400)
-          .json({ error: "Why is required and must be <= 500 characters" });
-      }
-      if (!pohCategoryEnum.safeParse(category).success) {
+      // Validate inputs using schema
+      const validation = insertProjectOfHeartSchema.safeParse({
+        userId,
+        title,
+        why,
+        category,
+        customCategory,
+        status: "active", // Placeholder for validation
+      });
+
+      if (!validation.success) {
         return res.status(400).json({
-          error:
-            "Invalid category. Must be: career, health, relationships, or wealth",
+          error: "Validation failed",
+          details: validation.error.format(),
         });
       }
 
@@ -5875,9 +5865,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
       const userPOHs = await storage.getUserPOHs(userId);
       const hasActive = userPOHs.some((p) => p.status === "active");
       const hasNext = userPOHs.some((p) => p.status === "next");
-      const hasHorizon = userPOHs.some((p) => p.status === "horizon");
 
-      let status: "active" | "next" | "horizon";
+      let status: "active" | "next";
       let startedAt: string | null = null;
 
       if (!hasActive) {
@@ -5885,12 +5874,10 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         startedAt = new Date().toISOString().split("T")[0]; // Today
       } else if (!hasNext) {
         status = "next";
-      } else if (!hasHorizon) {
-        status = "horizon";
       } else {
         return res.status(400).json({
           error:
-            "Cannot create more POHs. You already have active, next, and horizon projects.",
+            "Cannot create more POHs. You already have active and next projects.",
         });
       }
 
@@ -5899,6 +5886,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         title,
         why,
         category,
+        customCategory,
         status,
         startedAt,
       });
@@ -5919,7 +5907,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
 
       const userId = req.user.sub;
       const pohId = req.params.id;
-      const { title, why, category } = req.body;
+      const { title, why, category, customCategory } = req.body;
 
       // Verify ownership
       const poh = await storage.getPOHById(pohId);
@@ -5959,6 +5947,21 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
           return res.status(400).json({ error: "Invalid category" });
         }
         updates.category = category;
+
+        // Custom category validation if other selected
+        if (category === "other") {
+          if (!customCategory || !customCategory.trim()) {
+            return res.status(400).json({ error: "Custom category is required when 'other' is selected" });
+          }
+          updates.customCategory = customCategory.trim();
+        } else {
+          updates.customCategory = null;
+        }
+      } else if (customCategory !== undefined && poh.category === "other") {
+        if (!customCategory || !customCategory.trim()) {
+          return res.status(400).json({ error: "Custom category cannot be empty" });
+        }
+        updates.customCategory = customCategory.trim();
       }
 
       const updatedPOH = await storage.updatePOH(pohId, updates);
@@ -6276,7 +6279,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         closingReflection: closing_reflection,
       });
 
-      // Promote NEXT -> ACTIVE and HORIZON -> NEXT
+      // Promote NEXT -> ACTIVE
       await storage.promotePOHs(userId, today);
 
       res.json({ success: true, message: "POH completed successfully" });
@@ -6323,7 +6326,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         closingReflection: closing_reflection,
       });
 
-      // Promote NEXT -> ACTIVE and HORIZON -> NEXT
+      // Promote NEXT -> ACTIVE
       await storage.promotePOHs(userId, today);
 
       res.json({ success: true, message: "POH closed early" });
@@ -6357,6 +6360,8 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
             id: poh.id,
             title: poh.title,
             category: poh.category,
+            customCategory: poh.customCategory,
+            custom_category: poh.customCategory,
             status: poh.status,
             started_at: poh.startedAt,
             ended_at: poh.endedAt,
@@ -7145,18 +7150,11 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         .where(eq(projectOfHearts.status, "next"));
       const next = Number(nextResult[0]?.count) || 0;
 
-      const northStarResult = await db
-        .select({ count: count() })
-        .from(projectOfHearts)
-        .where(eq(projectOfHearts.status, "horizon"));
-      const northStar = Number(northStarResult[0]?.count) || 0;
-
       res.json({
         total_users: totalUsers,
         users_with_poh: usersWithPoh,
         active,
         next,
-        north_star: northStar,
       });
     } catch (error: any) {
       console.error("Error fetching POH usage:", error);
@@ -7352,6 +7350,7 @@ Bob Wilson,bob.wilson@example.com,+9876543210`;
         health: 0,
         relationships: 0,
         wealth: 0,
+        other: 0,
       };
 
       categoryResult.forEach((r) => {

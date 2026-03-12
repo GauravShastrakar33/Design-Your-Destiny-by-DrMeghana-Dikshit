@@ -1759,7 +1759,7 @@ export class DbStorage implements IStorage {
     return poh;
   }
 
-  async createPOH(data: { userId: number; title: string; why: string; category: string; status: string; startedAt: string | null }): Promise<ProjectOfHeart> {
+  async createPOH(data: { userId: number; title: string; why: string; category: string; customCategory?: string | null; status: string; startedAt: string | null }): Promise<ProjectOfHeart> {
     const [newPOH] = await db
       .insert(projectOfHeartsTable)
       .values({
@@ -1767,6 +1767,7 @@ export class DbStorage implements IStorage {
         title: data.title,
         why: data.why,
         category: data.category,
+        customCategory: data.customCategory,
         status: data.status,
         startedAt: data.startedAt
       })
@@ -1774,7 +1775,7 @@ export class DbStorage implements IStorage {
     return newPOH;
   }
 
-  async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string; visionImages: string[] }>): Promise<ProjectOfHeart> {
+  async updatePOH(pohId: string, updates: Partial<{ title: string; why: string; category: string; customCategory: string | null; visionImages: string[] }>): Promise<ProjectOfHeart> {
     const [updated] = await db
       .update(projectOfHeartsTable)
       .set({ ...updates, updatedAt: new Date() })
@@ -1799,9 +1800,8 @@ export class DbStorage implements IStorage {
     // Get all user POHs
     const userPOHs = await this.getUserPOHs(userId);
 
-    // Find NEXT and HORIZON
+    // Find NEXT
     const nextPOH = userPOHs.find(p => p.status === "next");
-    const horizonPOH = userPOHs.find(p => p.status === "horizon");
 
     // Promote NEXT -> ACTIVE
     if (nextPOH) {
@@ -1809,14 +1809,6 @@ export class DbStorage implements IStorage {
         .update(projectOfHeartsTable)
         .set({ status: "active", startedAt: today, updatedAt: new Date() })
         .where(eq(projectOfHeartsTable.id, nextPOH.id));
-    }
-
-    // Promote HORIZON -> NEXT
-    if (horizonPOH) {
-      await db
-        .update(projectOfHeartsTable)
-        .set({ status: "next", updatedAt: new Date() })
-        .where(eq(projectOfHeartsTable.id, horizonPOH.id));
     }
   }
 

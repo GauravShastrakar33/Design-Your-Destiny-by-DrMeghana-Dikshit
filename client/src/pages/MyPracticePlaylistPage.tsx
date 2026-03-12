@@ -461,6 +461,7 @@ export default function MyPracticePlaylistPage() {
   const [volume, setVolume] = useState(1);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [hasLoggedActivity, setHasLoggedActivity] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -507,6 +508,31 @@ export default function MyPracticePlaylistPage() {
       toast({ title: "Playlist created!" });
     },
   });
+
+  const logActivityMutation = useMutation({
+    mutationFn: async (params: { lessonId: number; lessonName: string }) => {
+      const res = await apiRequest("POST", "/api/v1/activity/log", {
+        lessonId: params.lessonId,
+        lessonName: params.lessonName,
+        featureType: "PLAYLIST",
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
+          query.queryKey[0] === "/api/v1/activity/monthly-stats",
+      });
+    },
+  });
+
+  const logActivity = (lessonId: number, lessonName: string) => {
+    if (!hasLoggedActivity && isAuthenticated) {
+      setHasLoggedActivity(true);
+      logActivityMutation.mutate({ lessonId, lessonName });
+    }
+  };
 
   const renamePlaylistMutation = useMutation({
     mutationFn: async ({ id, title }: { id: number; title: string }) => {
@@ -629,6 +655,7 @@ export default function MyPracticePlaylistPage() {
     if (audioSource) {
       setDuration(0);
       setIsAudioLoading(true);
+      setHasLoggedActivity(false);
     }
   }, [audioSource]);
 
@@ -652,8 +679,17 @@ export default function MyPracticePlaylistPage() {
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setProgress(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 0);
+      const currentTime = audioRef.current.currentTime;
+      const duration = audioRef.current.duration || 0;
+      setProgress(currentTime);
+      setDuration(duration);
+
+      // Log activity if 50% finished
+      if (duration > 0 && currentTime >= duration * 0.5) {
+        if (currentTrack?.lesson) {
+          logActivity(currentTrack.lesson.id, currentTrack.lesson.title);
+        }
+      }
     }
   };
 
@@ -1208,6 +1244,11 @@ export default function MyPracticePlaylistPage() {
         ref={audioRef}
         src={audioSource || ""}
         preload="auto"
+        onPlay={() => {
+          if (currentTrack?.lesson) {
+            logActivity(currentTrack.lesson.id, currentTrack.lesson.title);
+          }
+        }}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleTrackEnded}

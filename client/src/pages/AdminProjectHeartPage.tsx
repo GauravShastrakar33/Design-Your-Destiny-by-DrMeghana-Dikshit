@@ -40,7 +40,6 @@ interface UsageData {
   users_with_poh: number;
   active: number;
   next: number;
-  north_star: number;
 }
 
 interface DailyCheckinsData {
@@ -69,6 +68,7 @@ interface LifeAreasData {
   health: number;
   relationships: number;
   wealth: number;
+  other: number;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -76,6 +76,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   health: "#10B981",
   relationships: "#EC4899",
   wealth: "#F59E0B",
+  other: "#7C3AED",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -83,6 +84,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   health: "Health",
   relationships: "Relationships",
   wealth: "Wealth",
+  other: "Other",
 };
 
 const CATEGORY_ICONS: Record<string, typeof Briefcase> = {
@@ -90,6 +92,7 @@ const CATEGORY_ICONS: Record<string, typeof Briefcase> = {
   health: HeartPulse,
   relationships: Users2,
   wealth: Wallet,
+  other: Sparkles,
 };
 
 function StatCard({
@@ -256,6 +259,11 @@ export default function AdminProjectHeartPage() {
           value: lifeAreas.wealth,
           color: CATEGORY_COLORS.wealth,
         },
+        {
+          name: "Other",
+          value: lifeAreas.other,
+          color: CATEGORY_COLORS.other,
+        },
       ].filter((d) => d.value > 0)
     : [];
 
@@ -293,7 +301,7 @@ export default function AdminProjectHeartPage() {
           {/* 1. USAGE SECTION */}
           <section
             data-testid="section-usage"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
           >
             <StatCard
               title="Total Users"
@@ -326,12 +334,7 @@ export default function AdminProjectHeartPage() {
               icon={TrendingUp}
               markerColor="bg-brand"
             />
-            <StatCard
-              title="North Star Goals"
-              value={usage?.north_star || 0}
-              icon={Sparkles}
-              markerColor="bg-brand"
-            />
+
           </section>
 
           {/* 2. DAILY CHECK-INS SECTION */}

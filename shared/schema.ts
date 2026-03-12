@@ -577,10 +577,10 @@ export type InsertNotificationLog = z.infer<typeof insertNotificationLogSchema>;
 export type NotificationLog = typeof notificationLogs.$inferSelect;
 
 // Project of Heart (POH) Tables
-export const pohCategoryEnum = z.enum(["career", "health", "relationships", "wealth"]);
+export const pohCategoryEnum = z.enum(["career", "health", "relationships", "wealth", "other"]);
 export type POHCategory = z.infer<typeof pohCategoryEnum>;
 
-export const pohStatusEnum = z.enum(["active", "next", "horizon", "completed", "closed_early"]);
+export const pohStatusEnum = z.enum(["active", "next", "completed", "closed_early"]);
 export type POHStatus = z.infer<typeof pohStatusEnum>;
 
 export const projectOfHearts = pgTable("project_of_hearts", {
@@ -589,6 +589,7 @@ export const projectOfHearts = pgTable("project_of_hearts", {
   title: text("title").notNull(),
   why: text("why").notNull(),
   category: varchar("category", { length: 32 }).notNull(),
+  customCategory: text("custom_category"),
   status: varchar("status", { length: 20 }).notNull(),
   startedAt: date("started_at", { mode: "string" }),
   endedAt: date("ended_at", { mode: "string" }),
@@ -607,6 +608,23 @@ export const insertProjectOfHeartSchema = createInsertSchema(projectOfHearts).om
   why: z.string().min(1).max(500),
   category: pohCategoryEnum,
   status: pohStatusEnum,
+  customCategory: z.string().nullable().optional(),
+}).refine(data => {
+  if (data.category === "other") {
+    return !!data.customCategory && data.customCategory.trim().length > 0;
+  }
+  return true;
+}, {
+  message: "Custom category is required when 'Other' is selected",
+  path: ["customCategory"],
+}).refine(data => {
+  if (data.category !== "other") {
+    return data.customCategory === null || data.customCategory === undefined;
+  }
+  return true;
+}, {
+  message: "Custom category must be null when a predefined category is selected",
+  path: ["customCategory"],
 });
 
 export type InsertProjectOfHeart = z.infer<typeof insertProjectOfHeartSchema>;
