@@ -1,10 +1,14 @@
 import { db } from "../db";
 import {
+  type InsertNotification,
+  type InsertNotificationLog,
   notificationLogs as notificationLogsTable,
   notifications as notificationsTable,
   deviceTokens as deviceTokensTable,
+  programs as programsTable,
+  userPrograms as userProgramsTable,
 } from "@shared/schema";
-import { eq, and, desc, countDistinct } from "drizzle-orm";
+import { eq, and, asc, desc, countDistinct, inArray, sql } from "drizzle-orm";
 
 export const notificationRepository = {
   // ─── User In-App Notifications ────────────────────────────────────────────
@@ -101,5 +105,63 @@ export const notificationRepository = {
   async insertNotificationLogs(records: { notificationId: number; userId: number; deviceToken: string; status: string }[]) {
     if (records.length === 0) return;
     await db.insert(notificationLogsTable).values(records);
+  },
+
+  // ─── Delivery / Cron ──────────────────────────────────────────────────────
+
+  async createNotifications(notifications: InsertNotification[]) {
+    if (notifications.length === 0) return [];
+
+    return db
+      .insert(notificationsTable)
+      .values(notifications)
+      .returning();
+  },
+
+  async getPendingNotifications() {
+    const now = new Date();
+
+    return db
+      .select()
+      .from(notificationsTable)
+      .where(
+        and(
+          sql`${notificationsTable.scheduledAt} <= ${now}`,
+          eq(notificationsTable.sent, false)
+        )
+      )
+      .orderBy(asc(notificationsTable.scheduledAt));
+  },
+
+  async markNotificationSent(id: number): Promise<void> {
+    await db
+      .update(notificationsTable)
+      .set({ sent: true, sentAt: new Date() })
+      .where(eq(notificationsTable.id, id));
+  },
+
+  async createNotificationLogs(logs: InsertNotificationLog[]) {
+    if (logs.length === 0) return [];
+
+    return db
+      .insert(notificationLogsTable)
+      .values(logs)
+      .returning();
+  },
+
+  async getEligibleUserIdsForNotification(programCode: string, programLevel: number): Promise<number[]> {
+    const result = await db
+      .select({ userId: userProgramsTable.userId })
+      .from(userProgramsTable)
+      .innerJoin(programsTable, eq(userProgramsTable.programId, programsTable.id))
+      .where(
+        and(
+          eq(programsTable.code, programCode),
+          sql`${programsTable.level} >= ${programLevel}`,
+          eq(programsTable.isActive, true)
+        )
+      );
+
+    return result.map((row) => row.userId);
   },
 };
