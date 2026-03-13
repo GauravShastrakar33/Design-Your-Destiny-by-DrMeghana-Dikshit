@@ -9,7 +9,6 @@ import {
   ChevronDown,
   Plus,
   Pencil,
-  Check,
   Music,
   Loader2,
   MoreVertical,
@@ -1500,7 +1499,9 @@ export default function MyPracticePlaylistPage() {
                             }`}
                           >
                             {isSelected && (
-                              <Check className="w-4 h-4" strokeWidth={4} />
+                              <span className="text-xs font-black">
+                                {selectedLessonIds.indexOf(lesson.id) + 1}
+                              </span>
                             )}
                           </div>
                         </div>
