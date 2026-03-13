@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Search,
   X,
@@ -39,6 +40,19 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Handle body scroll lock & styling
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add("overlay-open");
+    } else {
+      document.body.classList.remove("overlay-open");
+    }
+
+    return () => {
+      document.body.classList.remove("overlay-open");
+    };
+  }, [isOpen]);
 
   // Reset state when overlay opens/closes
   useEffect(() => {
@@ -153,7 +167,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -161,7 +175,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: "100%" }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed inset-0 z-[60] bg-[#F8F9FB] flex flex-col h-[100dvh]"
+          className="fixed inset-0 z-[100] bg-[#F8F9FB] flex flex-col h-[100dvh]"
         >
           <Header
             title="Search"
@@ -359,6 +373,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
