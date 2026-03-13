@@ -19,10 +19,10 @@ router.post("/api/v1/me/change-password", authenticateJWT, userController.change
 // ===== USER WELLNESS PROFILE APIs =====
 
 // Admin API: Get wellness profile for a user
-router.get("/admin/v1/users/:userId/wellness-profile", requireAdmin, userController.getWellnessProfileAdmin);
+router.get("/admin/v1/users/:userId/wellness-profile", authenticateJWT, requireAdmin, userController.getWellnessProfileAdmin);
 
 // Admin API: Create or update wellness profile for a user
-router.post("/admin/v1/users/:userId/wellness-profile", requireAdmin, userController.updateWellnessProfileAdmin);
+router.post("/admin/v1/users/:userId/wellness-profile", authenticateJWT, requireAdmin, userController.updateWellnessProfileAdmin);
 
 // User API: Get own wellness profile (read-only)
 router.get("/api/v1/me/wellness-profile", authenticateJWT, userController.getOwnWellnessProfile);

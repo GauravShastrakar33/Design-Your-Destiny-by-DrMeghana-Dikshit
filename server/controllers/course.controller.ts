@@ -9,7 +9,12 @@ import {
   insertCmsLessonFileSchema
 } from "@shared/schema";
 import { logAudit } from "../utils/audit";
-import { getSignedGetUrl } from "../r2Upload";
+import {
+  generateCourseThumnailKey,
+  generateLessonFileKey,
+  getSignedGetUrl,
+  getSignedPutUrl,
+} from "../r2Upload";
 
 const handleServiceError = (res: Response, error: unknown, fallbackMessage: string) => {
   if (error instanceof CourseServiceError) {
@@ -104,10 +109,50 @@ export const courseController = {
 
   getCourseById: async (req: Request, res: Response) => {
     try {
-      const course = await courseService.getCourseById(parseInt(req.params.id));
-      res.json(course);
+      const data = await courseService.getAdminCourseById(parseInt(req.params.id));
+      res.json(data);
     } catch (error) {
       handleServiceError(res, error, "Failed to fetch course");
+    }
+  },
+
+  getPublicCourseById: async (req: Request, res: Response) => {
+    try {
+      const data = await courseService.getCourseById(parseInt(req.params.id));
+      const { modules, ...course } = data;
+      res.json({ course, modules });
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch course");
+    }
+  },
+
+  getPublicModule: async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const data = await courseService.getPublicModule(id);
+      res.json(data);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch module");
+    }
+  },
+
+  getPublicLesson: async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const data = await courseService.getPublicLesson(id);
+      res.json(data);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch lesson");
+    }
+  },
+
+  getPublicCourseFull: async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const data = await courseService.getPublicCourseFull(id);
+      res.json({ course: data.course, modules: data.modules });
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch course full details");
     }
   },
 
@@ -170,6 +215,21 @@ export const courseController = {
     }
   },
 
+  toggleCoursePublish: async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { isPublished } = req.body;
+      if (typeof isPublished !== "boolean") {
+        return res.status(400).json({ error: "isPublished must be a boolean" });
+      }
+
+      const course = await courseService.toggleCoursePublish(id, isPublished);
+      res.json(course);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to toggle course publish");
+    }
+  },
+
   // --- FEATURE MAPPING ---
   getFrontendFeatures: async (req: Request, res: Response) => {
     try {
@@ -184,7 +244,18 @@ export const courseController = {
     try {
       const { code } = req.params;
       const feature = await courseService.getFrontendFeatureByCode(code);
-      const mappings = await courseService.getFeatureMap(code);
+      const mappings = await Promise.all(
+        (await courseService.getFeatureMap(code)).map(async (mapping: any) => {
+          const course = await courseService.getCourseById(mapping.courseId);
+          return {
+            ...mapping,
+            course: {
+              id: course.id,
+              title: course.title,
+            },
+          };
+        })
+      );
       res.json({ feature, mappings });
     } catch (error) {
       handleServiceError(res, error, "Failed to fetch feature course mappings");
@@ -323,8 +394,8 @@ export const courseController = {
       if (feature.displayMode === "modules") {
         if (mappings.length === 0) return res.json({ feature, course: null, modules: [] });
         const courseId = mappings[0].courseId;
-        const course = await courseService.getCourseById(courseId);
-        const modules = await courseService.getModulesForCourse(courseId);
+        const data = await courseService.getCourseById(courseId);
+        const { modules, ...course } = data;
         return res.json({ feature, course, modules });
       }
 
@@ -343,13 +414,13 @@ export const courseController = {
         ] : [];
 
         const mappedCourses = await Promise.all(mappings.map(async (m) => {
-          const course = await courseService.getCourseById(m.courseId);
+          const data = await courseService.getCourseById(m.courseId);
           return {
-            id: course.id,
-            title: course.title,
-            description: course.description,
-            thumbnailKey: course.thumbnailKey,
-            thumbnailUrl: (course as any).thumbnailSignedUrl,
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            thumbnailKey: data.thumbnailKey,
+            thumbnailUrl: data.thumbnailUrl,
             position: m.position,
             isBuiltIn: false,
           };
@@ -374,6 +445,15 @@ export const courseController = {
       const data = await courseService.getPlaylistSourceData(courseId);
       if (!data) return res.json({ course: null, modules: [] });
 
+      // Generate signed URL for course thumbnail
+      let thumbnailUrl = null;
+      if (data.course.thumbnailKey) {
+        const signedResult = await getSignedGetUrl(data.course.thumbnailKey);
+        if (signedResult.success && signedResult.url) {
+          thumbnailUrl = signedResult.url;
+        }
+      }
+
       // Generate signed URLs for audio files
       const modulesWithUrls = await Promise.all(data.modules.map(async (module: any) => {
         const lessonsWithUrls = await Promise.all(module.lessons.map(async (lesson: any) => {
@@ -386,7 +466,7 @@ export const courseController = {
         return { ...module, lessons: lessonsWithUrls };
       }));
 
-      res.json({ course: data.course, modules: modulesWithUrls });
+      res.json({ course: { ...data.course, thumbnailUrl }, modules: modulesWithUrls });
     } catch (error) {
       handleServiceError(res, error, "Failed to fetch playlist source");
     }
@@ -485,12 +565,41 @@ export const courseController = {
     }
   },
 
+  updatePlaylist: async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Not authenticated" });
+      const id = parseInt(req.params.id);
+      const { title } = req.body;
+      if (!title?.trim()) return res.status(400).json({ error: "Title is required" });
+
+      const data = await courseService.getPlaylist(id);
+      if (data.playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
+
+      const playlist = await courseService.updatePlaylist(id, title.trim());
+      res.json(playlist);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to update playlist");
+    }
+  },
+
+  getPlaylist: async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Not authenticated" });
+      const id = parseInt(req.params.id);
+      const data = await courseService.getPlaylist(id);
+      if (data.playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
+      res.json(data);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch playlist");
+    }
+  },
+
   deletePlaylist: async (req: Request, res: Response) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Not authenticated" });
       const id = parseInt(req.params.id);
-      const playlist = await courseService.getPlaylist(id);
-      if (playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
+      const data = await courseService.getPlaylist(id);
+      if (data.playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
       await courseService.deletePlaylist(id);
       res.json({ success: true });
     } catch (error) {
@@ -502,8 +611,8 @@ export const courseController = {
     try {
       if (!req.user) return res.status(401).json({ error: "Not authenticated" });
       const playlistId = parseInt(req.params.id);
-      const playlist = await courseService.getPlaylist(playlistId);
-      if (playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
+      const data = await courseService.getPlaylist(playlistId);
+      if (data.playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
       const items = await courseService.getPlaylistItems(playlistId);
       res.json(items);
     } catch (error) {
@@ -515,8 +624,8 @@ export const courseController = {
     try {
       if (!req.user) return res.status(401).json({ error: "Not authenticated" });
       const playlistId = parseInt(req.params.id);
-      const playlist = await courseService.getPlaylist(playlistId);
-      if (playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
+      const data = await courseService.getPlaylist(playlistId);
+      if (data.playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
 
       const { lessonIds } = req.body;
       if (!Array.isArray(lessonIds)) return res.status(400).json({ error: "lessonIds must be an array" });
@@ -532,8 +641,8 @@ export const courseController = {
     try {
       if (!req.user) return res.status(401).json({ error: "Not authenticated" });
       const playlistId = parseInt(req.params.id);
-      const playlist = await courseService.getPlaylist(playlistId);
-      if (playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
+      const data = await courseService.getPlaylist(playlistId);
+      if (data.playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
 
       const { orderedItemIds } = req.body;
       if (!Array.isArray(orderedItemIds)) return res.status(400).json({ error: "orderedItemIds must be an array" });
@@ -552,8 +661,8 @@ export const courseController = {
       const playlistId = parseInt(playlistIdStr);
       const itemId = parseInt(itemIdStr);
 
-      const playlist = await courseService.getPlaylist(playlistId);
-      if (playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
+      const data = await courseService.getPlaylist(playlistId);
+      if (data.playlist.userId !== req.user.sub) return res.status(403).json({ error: "Access denied" });
 
       await courseService.deletePlaylistItem(playlistId, itemId);
       res.json({ success: true });
@@ -574,10 +683,21 @@ export const courseController = {
     }
   },
 
+  getCourseModules: async (req: Request, res: Response) => {
+    try {
+      const courseId = parseInt(req.params.courseId);
+      if (isNaN(courseId)) return res.status(400).json({ error: "Valid courseId is required" });
+      const modules = await courseService.getModulesForCourse(courseId);
+      res.json(modules);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch modules");
+    }
+  },
+
   createModule: async (req: Request, res: Response) => {
     try {
       const parsed = insertCmsModuleSchema.safeParse(req.body);
-      if (!parsed.success) return res.status(400).json({ error: "Invalid modulo data", details: parsed.error.errors });
+      if (!parsed.success) return res.status(400).json({ error: "Invalid module data", details: parsed.error.errors });
       
       const module = await courseService.createModule(parsed.data);
       if (req.user) {
@@ -650,6 +770,17 @@ export const courseController = {
     }
   },
 
+  getFolders: async (req: Request, res: Response) => {
+    try {
+      const moduleId = parseInt(String(req.query.moduleId));
+      if (isNaN(moduleId)) return res.status(400).json({ error: "moduleId is required" });
+      const folders = await courseService.getFoldersForModule(moduleId);
+      res.json(folders);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch folders");
+    }
+  },
+
   // --- LESSONS ---
   createLesson: async (req: Request, res: Response) => {
     try {
@@ -685,7 +816,69 @@ export const courseController = {
     }
   },
 
+  getLessons: async (req: Request, res: Response) => {
+    try {
+      const moduleId = parseInt(String(req.query.moduleId));
+      if (isNaN(moduleId)) return res.status(400).json({ error: "moduleId is required" });
+
+      const folderId =
+        req.query.folderId === undefined
+          ? undefined
+          : parseInt(String(req.query.folderId));
+
+      const lessons = await courseService.getLessonsForModule(
+        moduleId,
+        folderId === undefined || !Number.isNaN(folderId) ? folderId : undefined
+      );
+      res.json(lessons);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch lessons");
+    }
+  },
+
+  getModuleLessons: async (req: Request, res: Response) => {
+    try {
+      const moduleId = parseInt(req.params.id);
+      if (isNaN(moduleId)) return res.status(400).json({ error: "Valid moduleId is required" });
+      const lessons = await courseService.getLessonsForModule(moduleId);
+      res.json(lessons);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch lessons");
+    }
+  },
+
+  getAdminLessonById: async (req: Request, res: Response) => {
+    try {
+      const lessonId = parseInt(req.params.id);
+      const lesson = await courseService.getAdminLessonById(lessonId);
+      res.json(lesson);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch lesson");
+    }
+  },
+
   // --- FILES ---
+  getFiles: async (req: Request, res: Response) => {
+    try {
+      const lessonId = parseInt(String(req.query.lessonId));
+      if (isNaN(lessonId)) return res.status(400).json({ error: "lessonId is required" });
+      const files = await courseService.getFilesForLesson(lessonId);
+      res.json(files);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch files");
+    }
+  },
+
+  getLessonFiles: async (req: Request, res: Response) => {
+    try {
+      const lessonId = parseInt(req.params.id);
+      const files = await courseService.getFilesForLesson(lessonId);
+      res.json(files);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to fetch files");
+    }
+  },
+
   getPublicFileDownloadUrl: async (req: Request, res: Response) => {
     try {
       const fileId = parseInt(req.params.id);
@@ -709,6 +902,58 @@ export const courseController = {
     }
   },
 
+  getLegacyUploadUrlForFile: async (req: Request, res: Response) => {
+    try {
+      const {
+        filename,
+        contentType,
+        lessonId,
+        fileType,
+        courseId,
+        moduleId,
+        programCode,
+        uploadType,
+      } = req.body;
+
+      if (!filename || !contentType) {
+        return res.status(400).json({ error: "filename and contentType are required" });
+      }
+
+      let key: string;
+      if (uploadType === "thumbnail" && courseId && programCode) {
+        key = generateCourseThumnailKey(String(programCode), Number(courseId));
+      } else if (lessonId && fileType && courseId && moduleId && programCode) {
+        key = generateLessonFileKey(
+          String(programCode),
+          Number(courseId),
+          Number(moduleId),
+          Number(lessonId),
+          String(fileType)
+        );
+      } else {
+        return res.status(400).json({
+          error:
+            "Invalid upload parameters. For thumbnails: programCode, courseId required. For lesson files: programCode, courseId, moduleId, lessonId, fileType required.",
+        });
+      }
+
+      const upload = await getSignedPutUrl(key, String(contentType));
+      if (!upload.success || !upload.uploadUrl || !upload.key) {
+        return res.status(500).json({ error: upload.error || "Failed to get upload URL" });
+      }
+
+      const signed = await getSignedGetUrl(upload.key);
+      res.json({
+        uploadUrl: upload.uploadUrl,
+        key: upload.key,
+        publicUrl: upload.publicUrl ?? null,
+        signedUrl: signed.success ? signed.url ?? null : null,
+      });
+    } catch (error) {
+      handleServiceError(res, error, "Failed to get upload URL");
+    }
+  },
+
   createFile: async (req: Request, res: Response) => {
     try {
       const parsed = insertCmsLessonFileSchema.safeParse(req.body);
@@ -719,6 +964,10 @@ export const courseController = {
     } catch (error) {
       handleServiceError(res, error, "Failed to register file");
     }
+  },
+
+  confirmFileUpload: async (req: Request, res: Response) => {
+    return courseController.createFile(req, res);
   },
 
   deleteFile: async (req: Request, res: Response) => {

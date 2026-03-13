@@ -317,6 +317,15 @@ export class CourseRepository {
     return newPlaylist;
   }
 
+  async updatePlaylist(id: number, title: string): Promise<Playlist | undefined> {
+    const [updated] = await db
+      .update(playlistsTable)
+      .set({ title, updatedAt: new Date() })
+      .where(eq(playlistsTable.id, id))
+      .returning();
+    return updated;
+  }
+
   async deletePlaylist(id: number): Promise<boolean> {
     const result = await db.delete(playlistsTable).where(eq(playlistsTable.id, id)).returning();
     return result.length > 0;

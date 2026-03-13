@@ -63,14 +63,14 @@ export const courseService = {
     }
 
     return await Promise.all(courses.map(async (course) => {
-      let thumbnailSignedUrl = null;
+      let thumbnailUrl = null;
       if (course.thumbnailKey) {
         const signedResult = await getSignedGetUrl(course.thumbnailKey);
         if (signedResult.success && signedResult.url) {
-          thumbnailSignedUrl = signedResult.url;
+          thumbnailUrl = signedResult.url;
         }
       }
-      return { ...course, thumbnailSignedUrl, isMapped: mappedIds.has(course.id) };
+      return { ...course, thumbnailUrl, isMapped: mappedIds.has(course.id) };
     }));
   },
 
@@ -84,11 +84,11 @@ export const courseService = {
       if (program) programCode = program.code;
     }
 
-    let thumbnailSignedUrl = null;
+    let thumbnailUrl = null;
     if (course.thumbnailKey) {
       const signedResult = await getSignedGetUrl(course.thumbnailKey);
       if (signedResult.success && signedResult.url) {
-        thumbnailSignedUrl = signedResult.url;
+        thumbnailUrl = signedResult.url;
       }
     }
 
@@ -99,12 +99,20 @@ export const courseService = {
       
       const lessonsWithFiles = await Promise.all(lessons.map(async (lesson) => {
         const files = await courseRepository.getFilesByLessonId(lesson.id);
-        return { ...lesson, files };
+        return { ...lesson, files, hasScript: files.some(f => f.fileType === "script" || f.fileType === "pdf") };
       }));
       return { ...module, folders, lessons: lessonsWithFiles };
     }));
 
-    return { ...course, programCode, thumbnailSignedUrl, modules: modulesWithContent };
+    return { ...course, programCode, thumbnailUrl, modules: modulesWithContent };
+  },
+
+  async getAdminCourseById(id: number) {
+    const course = await this.getCourseById(id);
+    return {
+      ...course,
+      thumbnailSignedUrl: course.thumbnailUrl,
+    };
   },
 
   async createCourse(data: InsertCmsCourse, adminId: number | null) {
@@ -118,6 +126,13 @@ export const courseService = {
     
     // Position updates handled separately generally, but passed through if provided
     return await courseRepository.updateCourse(id, data as any);
+  },
+
+  async toggleCoursePublish(id: number, isPublished: boolean) {
+    const existing = await courseRepository.getCourseById(id);
+    if (!existing) throw new CourseServiceError("Course not found", 404);
+
+    return await courseRepository.updateCourse(id, { isPublished } as any);
   },
 
   async deleteCourse(id: number) {
@@ -316,12 +331,86 @@ export const courseService = {
     return await courseRepository.getModulesByCourseId(courseId);
   },
 
+  async getFoldersForModule(moduleId: number) {
+    return await courseRepository.getFoldersByModuleId(moduleId);
+  },
+
+  async getLessonsForModule(moduleId: number, folderId?: number | null) {
+    const lessons = await courseRepository.getLessonsByModuleId(moduleId);
+    if (folderId === undefined) return lessons;
+    if (folderId === null) return lessons.filter((lesson) => lesson.folderId === null);
+    return lessons.filter((lesson) => lesson.folderId === folderId);
+  },
+
+  async getAdminLessonById(lessonId: number) {
+    const lesson = await courseRepository.getLessonById(lessonId);
+    if (!lesson) throw new CourseServiceError("Lesson not found", 404);
+
+    const files = await courseRepository.getFilesByLessonId(lessonId);
+    return { ...lesson, files };
+  },
+
+  async getFilesForLesson(lessonId: number) {
+    return await courseRepository.getFilesByLessonId(lessonId);
+  },
+
   async getLessonsForCourse(courseId: number) {
     return await courseRepository.getLessonsForCourse(courseId);
   },
 
   async getPlaylistSourceData(courseId: number) {
     return await courseRepository.getPlaylistSourceData(courseId);
+  },
+
+  async getPublicModule(moduleId: number) {
+    const module = await courseRepository.getModuleById(moduleId);
+    if (!module) throw new CourseServiceError("Module not found", 404);
+
+    const folders = await courseRepository.getFoldersByModuleId(moduleId);
+    const lessons = await courseRepository.getLessonsByModuleId(moduleId);
+    
+    // Fetch file presence info for all lessons in this module to show icons on journey
+    const lessonsWithMeta = await Promise.all(lessons.map(async (l) => {
+      const files = await courseRepository.getFilesByLessonId(l.id);
+      return {
+        ...l,
+        hasScript: files.some(f => f.fileType === "script")
+      };
+    }));
+
+    return { module, folders, lessons: lessonsWithMeta };
+  },
+
+  async getPublicLesson(lessonId: number) {
+    const lesson = await courseRepository.getLessonById(lessonId);
+    if (!lesson) throw new CourseServiceError("Lesson not found", 404);
+
+    const files = await courseRepository.getFilesByLessonId(lessonId);
+    const filesWithUrls = await Promise.all(files.map(async (file) => {
+      let signedUrl = null;
+      if (file.r2Key) {
+        const result = await getSignedGetUrl(file.r2Key);
+        if (result.success && result.url) {
+          signedUrl = result.url;
+        }
+      }
+      return { ...file, signedUrl };
+    }));
+
+    return { lesson, files: filesWithUrls };
+  },
+
+  async getPublicCourseFull(courseId: number) {
+    const course = await courseRepository.getCourseById(courseId);
+    if (!course) throw new CourseServiceError("Course not found", 404);
+
+    const modules = await courseRepository.getModulesByCourseId(courseId);
+    const modulesWithLessons = await Promise.all(modules.map(async (module) => {
+      const lessons = await courseRepository.getLessonsByModuleId(module.id);
+      return { ...module, lessons };
+    }));
+
+    return { course, modules: modulesWithLessons };
   },
 
   // --- PLAYLISTS ---
@@ -332,11 +421,38 @@ export const courseService = {
   async getPlaylist(id: number) {
     const playlist = await courseRepository.getPlaylistById(id);
     if (!playlist) throw new CourseServiceError("Playlist not found", 404);
-    return playlist;
+
+    const items = await courseRepository.getPlaylistItems(id);
+    const itemsWithAudio = await Promise.all(items.map(async (item) => {
+      const files = await courseRepository.getFilesByLessonId(item.lessonId);
+      const audioFiles = files.filter(f => f.fileType === "audio");
+      
+      const audioFilesWithUrls = await Promise.all(audioFiles.map(async (file) => {
+        let signedUrl = null;
+        if (file.r2Key) {
+          const result = await getSignedGetUrl(file.r2Key);
+          if (result.success && result.url) {
+            signedUrl = result.url;
+          }
+        }
+        return { ...file, signedUrl };
+      }));
+
+      const lesson = await courseRepository.getLessonById(item.lessonId);
+      return { ...item, lesson, audioFiles: audioFilesWithUrls };
+    }));
+
+    return { playlist, items: itemsWithAudio };
   },
 
   async createPlaylist(data: InsertPlaylist) {
     return await courseRepository.createPlaylist(data);
+  },
+
+  async updatePlaylist(id: number, title: string) {
+    const playlist = await courseRepository.updatePlaylist(id, title);
+    if (!playlist) throw new CourseServiceError("Playlist not found", 404);
+    return playlist;
   },
 
   async deletePlaylist(id: number) {

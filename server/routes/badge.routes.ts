@@ -14,9 +14,9 @@ router.get("/api/v1/badges", authenticateJWT, badgeController.getBadges);
 router.post("/api/v1/badges/evaluate", authenticateJWT, badgeController.evaluateBadges);
 
 // GET /admin/v1/students/:id/badges - Admin gets student badges
-router.get("/admin/v1/students/:id/badges", rbacAdmin, badgeController.getAdminStudentBadges);
+router.get("/admin/v1/students/:id/badges", authenticateJWT, rbacAdmin, badgeController.getAdminStudentBadges);
 
 // POST /admin/v1/students/:id/badges - Admin granting badges
-router.post("/admin/v1/students/:id/badges", rbacAdmin, badgeController.awardAdminBadge);
+router.post("/admin/v1/students/:id/badges", authenticateJWT, rbacAdmin, badgeController.awardAdminBadge);
 
 export default router;

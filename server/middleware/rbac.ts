@@ -31,3 +31,17 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
 
   next();
 }
+
+export function requireSuperAdmin(req: Request, res: Response, next: NextFunction) {
+  const role = req.user?.role as UserRole | undefined;
+
+  if (!role) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  if (role !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Super Admin access required" });
+  }
+
+  next();
+}
