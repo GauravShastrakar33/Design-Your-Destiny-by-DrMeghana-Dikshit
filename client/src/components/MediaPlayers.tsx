@@ -21,6 +21,13 @@ import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { MediaSession } from "@capgo/capacitor-media-session";
 
+// Shared utility — defined once at module level, not re-created on every render
+const formatTime = (time: number): string => {
+  const minutes = Math.floor(time / 60);
+  const seconds = Math.floor(time % 60);
+  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+};
+
 interface MediaPlayerProps {
   src: string;
   onPlay?: () => void;
@@ -136,67 +143,89 @@ export const VideoPlayer = React.forwardRef<HTMLVideoElement, MediaPlayerProps>(
       };
     }, [isFullscreen]);
 
-    // ─── Media Session API via @jofr/capacitor-media-session ───────────
-    // Handle Metadata separately to avoid flickering
+    // ─── Media Session: Metadata ───────────────────────────────────────
     useEffect(() => {
       MediaSession.setMetadata({
         title: title || "Dr. M Video",
         artist: "Dr. Meghana Dikshit",
         album: "Design Your Destiny",
         artwork: [
-          { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+          {
+            src: "/android-chrome-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/android-chrome-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
         ],
       });
     }, [title]);
 
-    // Handle Playback State & Handlers
+    // ─── Media Session: Action Handlers (registered ONCE on mount) ─────
     useEffect(() => {
-      MediaSession.setPlaybackState({
-        playbackState: isPlaying ? "playing" : "paused",
-      });
-
       MediaSession.setActionHandler({ action: "play" }, () => {
         videoRef.current?.play().catch(console.error);
       });
-
       MediaSession.setActionHandler({ action: "pause" }, () => {
         videoRef.current?.pause();
       });
-
       MediaSession.setActionHandler({ action: "seekbackward" }, (details) => {
         const skipTime = details.seekTime ?? 10;
         if (videoRef.current) {
-          videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - skipTime);
+          videoRef.current.currentTime = Math.max(
+            0,
+            videoRef.current.currentTime - skipTime
+          );
         }
       });
-
       MediaSession.setActionHandler({ action: "seekforward" }, (details) => {
         const skipTime = details.seekTime ?? 10;
         if (videoRef.current) {
-          videoRef.current.currentTime = Math.min(videoRef.current.duration || 0, videoRef.current.currentTime + skipTime);
+          videoRef.current.currentTime = Math.min(
+            videoRef.current.duration || 0,
+            videoRef.current.currentTime + skipTime
+          );
         }
       });
-
-      MediaSession.setActionHandler({ action: "seekto" as any }, (details: any) => {
-        if (videoRef.current && typeof details.seekTime === 'number') {
-          videoRef.current.currentTime = details.seekTime;
+      MediaSession.setActionHandler(
+        { action: "seekto" as any },
+        (details: any) => {
+          if (videoRef.current && typeof details.seekTime === "number") {
+            videoRef.current.currentTime = details.seekTime;
+          }
         }
-      });
-
+      );
       return () => {
-        const actions: any[] = ["play", "pause", "seekbackward", "seekforward", "seekto"];
-        actions.forEach((action) => {
+        (
+          ["play", "pause", "seekbackward", "seekforward", "seekto"] as any[]
+        ).forEach((action) => {
           try {
             MediaSession.setActionHandler({ action }, null);
           } catch {}
         });
       };
+    }, []); // empty deps — register handlers only once
+
+    // ─── Media Session: Playback State (updates on play/pause) ─────────
+    useEffect(() => {
+      MediaSession.setPlaybackState({
+        playbackState: isPlaying ? "playing" : "paused",
+      });
     }, [isPlaying]);
 
-    // Handle Position Updates
+    // ─── Media Session: Position State (throttled to max once per 5s) ──
+    const lastPositionUpdateRef = useRef(0);
     useEffect(() => {
-      if (videoRef.current && videoRef.current.duration) {
+      const now = Date.now();
+      if (
+        videoRef.current &&
+        videoRef.current.duration &&
+        now - lastPositionUpdateRef.current >= 5000
+      ) {
+        lastPositionUpdateRef.current = now;
         try {
           MediaSession.setPositionState({
             duration: duration || 0,
@@ -206,7 +235,7 @@ export const VideoPlayer = React.forwardRef<HTMLVideoElement, MediaPlayerProps>(
         } catch (e) {}
       }
     }, [currentTime, duration, playbackRate]);
-    // ─── End Media Session API ─────────────────────────────────────────
+    // ─── End Media Session ─────────────────────────────────────────────
 
     const togglePlay = async () => {
       if (videoRef.current && !isLoading) {
@@ -543,67 +572,89 @@ export const AudioPlayer = React.forwardRef<HTMLAudioElement, MediaPlayerProps>(
       }
     };
 
-    // ─── Media Session API via @jofr/capacitor-media-session ───────────
-    // Handle Metadata separately to avoid flickering
+    // ─── Media Session: Metadata ───────────────────────────────────────
     useEffect(() => {
       MediaSession.setMetadata({
         title: title || "Dr. M Audio",
         artist: "Dr. Meghana Dikshit",
         album: "Design Your Destiny",
         artwork: [
-          { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+          {
+            src: "/android-chrome-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/android-chrome-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
         ],
       });
     }, [title]);
 
-    // Handle Playback State & Handlers
+    // ─── Media Session: Action Handlers (registered ONCE on mount) ─────
     useEffect(() => {
-      MediaSession.setPlaybackState({
-        playbackState: isPlaying ? "playing" : "paused",
-      });
-
       MediaSession.setActionHandler({ action: "play" }, () => {
         audioRef.current?.play().catch(console.error);
       });
-
       MediaSession.setActionHandler({ action: "pause" }, () => {
         audioRef.current?.pause();
       });
-
       MediaSession.setActionHandler({ action: "seekbackward" }, (details) => {
         const skipTime = details.seekTime ?? 10;
         if (audioRef.current) {
-          audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - skipTime);
+          audioRef.current.currentTime = Math.max(
+            0,
+            audioRef.current.currentTime - skipTime
+          );
         }
       });
-
       MediaSession.setActionHandler({ action: "seekforward" }, (details) => {
         const skipTime = details.seekTime ?? 10;
         if (audioRef.current) {
-          audioRef.current.currentTime = Math.min(audioRef.current.duration || 0, audioRef.current.currentTime + skipTime);
+          audioRef.current.currentTime = Math.min(
+            audioRef.current.duration || 0,
+            audioRef.current.currentTime + skipTime
+          );
         }
       });
-
-      MediaSession.setActionHandler({ action: "seekto" as any }, (details: any) => {
-        if (audioRef.current && typeof details.seekTime === 'number') {
-          audioRef.current.currentTime = details.seekTime;
+      MediaSession.setActionHandler(
+        { action: "seekto" as any },
+        (details: any) => {
+          if (audioRef.current && typeof details.seekTime === "number") {
+            audioRef.current.currentTime = details.seekTime;
+          }
         }
-      });
-
+      );
       return () => {
-        const actions: any[] = ["play", "pause", "seekbackward", "seekforward", "seekto"];
-        actions.forEach((action) => {
+        (
+          ["play", "pause", "seekbackward", "seekforward", "seekto"] as any[]
+        ).forEach((action) => {
           try {
             MediaSession.setActionHandler({ action }, null);
           } catch {}
         });
       };
+    }, []); // empty deps — register handlers only once
+
+    // ─── Media Session: Playback State (updates on play/pause) ─────────
+    useEffect(() => {
+      MediaSession.setPlaybackState({
+        playbackState: isPlaying ? "playing" : "paused",
+      });
     }, [isPlaying]);
 
-    // Handle Position Updates
+    // ─── Media Session: Position State (throttled to max once per 5s) ──
+    const lastAudioPositionUpdateRef = useRef(0);
     useEffect(() => {
-      if (audioRef.current && audioRef.current.duration) {
+      const now = Date.now();
+      if (
+        audioRef.current &&
+        audioRef.current.duration &&
+        now - lastAudioPositionUpdateRef.current >= 5000
+      ) {
+        lastAudioPositionUpdateRef.current = now;
         try {
           MediaSession.setPositionState({
             duration: duration || 0,
@@ -613,13 +664,7 @@ export const AudioPlayer = React.forwardRef<HTMLAudioElement, MediaPlayerProps>(
         } catch (e) {}
       }
     }, [currentTime, duration, playbackRate]);
-    // ─── End Media Session API ─────────────────────────────────────────
-
-    const formatTime = (time: number) => {
-      const minutes = Math.floor(time / 60);
-      const seconds = Math.floor(time % 60);
-      return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-    };
+    // ─── End Media Session ─────────────────────────────────────────────
 
     return (
       <motion.div

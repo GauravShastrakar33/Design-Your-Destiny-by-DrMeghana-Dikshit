@@ -2,6 +2,16 @@ import { Capacitor } from "@capacitor/core";
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { Preferences } from "@capacitor/preferences";
 
+// Module-level token cache — avoids async Preferences.get on every API request
+let cachedUserToken: string | null | undefined = undefined;
+let cachedAdminToken: string | null | undefined = undefined;
+
+/** Call this on logout to force a fresh token read on next request */
+export function clearCachedTokens() {
+  cachedUserToken = undefined;
+  cachedAdminToken = undefined;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -36,35 +46,31 @@ async function getAuthHeaders(url: string): Promise<Record<string, string>> {
     normalizedUrl.startsWith("/admin") ||
     normalizedUrl.startsWith("/api/admin");
 
-  console.log(
-    `[AuthDebug] Checking headers for: ${url} | Native: ${Capacitor.isNativePlatform()} | AdminRoute: ${isAdminRoute}`
-  );
-
   if (isAdminRoute) {
     if (Capacitor.isNativePlatform()) {
-      // Native: Use Preferences as usual
-      const { value: adminToken } = await Preferences.get({
-        key: "@app:admin_token",
-      });
-      console.log(`[AuthDebug] Native Admin Token found: ${!!adminToken}`);
-      if (adminToken) {
-        headers["Authorization"] = `Bearer ${adminToken}`;
+      // Read from cache; only call Preferences.get once per session
+      if (cachedAdminToken === undefined) {
+        const { value } = await Preferences.get({ key: "@app:admin_token" });
+        cachedAdminToken = value;
+      }
+      if (cachedAdminToken) {
+        headers["Authorization"] = `Bearer ${cachedAdminToken}`;
       }
     } else {
       // Web: Read directly from localStorage to match AdminAuthContext
       const adminToken = localStorage.getItem("@app:admin_token");
-      console.log(`[AuthDebug] Web Admin Token found: ${!!adminToken}`);
       if (adminToken) {
         headers["Authorization"] = `Bearer ${adminToken}`;
       }
     }
   } else {
-    // User App: Continue using Preferences (consistent across web/mobile for app users)
-    const { value: userToken } = await Preferences.get({
-      key: "@app:user_token",
-    });
-    if (userToken) {
-      headers["Authorization"] = `Bearer ${userToken}`;
+    // User App: cache token after first read
+    if (cachedUserToken === undefined) {
+      const { value } = await Preferences.get({ key: "@app:user_token" });
+      cachedUserToken = value;
+    }
+    if (cachedUserToken) {
+      headers["Authorization"] = `Bearer ${cachedUserToken}`;
     }
   }
 
@@ -98,10 +104,9 @@ export async function apiRequest(
   // in server/routes.ts are defined without them (e.g., /api/v1/money-calendar).
   const cleanUrl = url.replace(/^\/+/, "");
 
-
   const fullUrl = Capacitor.isNativePlatform()
-  ? `${API_BASE_URL}/${cleanUrl}`
-  : `/${cleanUrl}`;
+    ? `${API_BASE_URL}/${cleanUrl}`
+    : `/${cleanUrl}`;
 
   // const fullUrl = Capacitor.isNativePlatform()
   //   ? `https://app.drmeghana.com/${cleanUrl}`

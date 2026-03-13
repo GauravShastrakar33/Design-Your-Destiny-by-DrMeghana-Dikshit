@@ -1,6 +1,7 @@
 import { Home, Calendar, Bot, Heart, User } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import chatIcon from "@assets/chat icon_1763078697186.png";
+import { prefetchPage, pathToPageMap } from "@/lib/prefetch";
 
 interface NavItem {
   path: string;
@@ -19,6 +20,13 @@ const navItems: NavItem[] = [
 export default function BottomNav() {
   const [location] = useLocation();
 
+  const handlePrefetch = (path: string) => {
+    const pageName = pathToPageMap[path];
+    if (pageName) {
+      prefetchPage(pageName);
+    }
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#F8F7FF]/90 backdrop-blur-2xl border-t border-brand/10 shadow-[0_-12px_40px_-12px_rgba(112,61,250,0.2)] pb-[env(safe-area-inset-bottom)] transition-all duration-500">
       <div className="mx-auto w-full max-w-lg px-2 py-2 flex items-center justify-between">
@@ -34,6 +42,7 @@ export default function BottomNav() {
               key={item.path}
               href={item.path}
               className="relative group flex-1"
+              onMouseEnter={() => handlePrefetch(item.path)}
               data-testid={`nav-${item.label
                 .toLowerCase()
                 .replace(/\s+/g, "-")}`}

@@ -319,9 +319,9 @@ export default function ProjectOfHeartPage() {
 
   // Re-align modal
   const [showRealignModal, setShowRealignModal] = useState(false);
-  const [realignTarget, setRealignTarget] = useState<
-    "active" | "next" | null
-  >(null);
+  const [realignTarget, setRealignTarget] = useState<"active" | "next" | null>(
+    null
+  );
   const [realignTitle, setRealignTitle] = useState("");
   const [realignWhy, setRealignWhy] = useState("");
   const [realignCategory, setRealignCategory] = useState<Category | "">("");
@@ -373,7 +373,8 @@ export default function ProjectOfHeartPage() {
         title: newPOH.title.trim(),
         why: newPOH.why.trim(),
         category: newPOH.category,
-        customCategory: newPOH.category === "other" ? newPOH.customCategory : null,
+        customCategory:
+          newPOH.category === "other" ? newPOH.customCategory : null,
       });
 
       if (response.ok) {
@@ -674,7 +675,12 @@ export default function ProjectOfHeartPage() {
   const handleCreateNext = async (type: "next") => {
     const title = nextPOHTitle.trim();
     const category = nextPOHCategory;
-    if (!title || !category || (category === "other" && !nextPOHCustomCategory.trim())) return;
+    if (
+      !title ||
+      !category ||
+      (category === "other" && !nextPOHCustomCategory.trim())
+    )
+      return;
 
     setCreatingNext(true);
     try {
@@ -704,10 +710,7 @@ export default function ProjectOfHeartPage() {
 
   // Re-align handlers
   const openRealignFor = (target: "active" | "next") => {
-    const poh =
-      target === "active"
-        ? pohState.active
-        : pohState.next;
+    const poh = target === "active" ? pohState.active : pohState.next;
     if (!poh) return;
 
     setRealignTarget(target);
@@ -720,10 +723,7 @@ export default function ProjectOfHeartPage() {
 
   const saveRealign = async () => {
     if (!realignTarget) return;
-    const poh =
-      realignTarget === "active"
-        ? pohState.active
-        : pohState.next;
+    const poh = realignTarget === "active" ? pohState.active : pohState.next;
     if (!poh) return;
 
     setSavingRealign(true);
@@ -731,7 +731,8 @@ export default function ProjectOfHeartPage() {
       const response = await apiRequest("PUT", `/api/poh/${poh.id}`, {
         title: realignTitle.trim(),
         category: realignCategory,
-        customCategory: realignCategory === "other" ? realignCustomCategory : null,
+        customCategory:
+          realignCategory === "other" ? realignCustomCategory : null,
         ...(realignTarget === "active" ? { why: realignWhy.trim() } : {}),
       });
 
@@ -1185,15 +1186,15 @@ export default function ProjectOfHeartPage() {
                       CATEGORY_CONFIG.other
                     ).icon
                   }
-                  {
-                    (pohState.active.category === "other" && 
-                     (pohState.active.customCategory || pohState.active.custom_category))
-                      ? (pohState.active.customCategory || pohState.active.custom_category)
-                      : (
-                          CATEGORY_CONFIG[pohState.active.category as Category] ||
-                          CATEGORY_CONFIG.other
-                        ).label
-                  }
+                  {pohState.active.category === "other" &&
+                  (pohState.active.customCategory ||
+                    pohState.active.custom_category)
+                    ? pohState.active.customCategory ||
+                      pohState.active.custom_category
+                    : (
+                        CATEGORY_CONFIG[pohState.active.category as Category] ||
+                        CATEGORY_CONFIG.other
+                      ).label}
                 </span>
                 <span
                   className="text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5"
@@ -1312,6 +1313,7 @@ export default function ProjectOfHeartPage() {
                                 <img
                                   src={pohState.active!.vision_images![index]}
                                   alt={`Vision ${index + 1}`}
+                                  loading="lazy"
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover/image:scale-110"
                                 />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center backdrop-blur-[2px]">
@@ -1494,16 +1496,17 @@ export default function ProjectOfHeartPage() {
                         )}
                       </motion.div>
                     ))}
-                    {pohState?.active?.milestones && pohState.active.milestones.length < 5 && (
-                      <button
-                        onClick={() => setShowMilestoneModal(true)}
-                        className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-600 hover:text-brand transition-colors mt-2"
-                        data-testid="button-add-milestone"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Add milestone
-                      </button>
-                    )}
+                    {pohState?.active?.milestones &&
+                      pohState.active.milestones.length < 5 && (
+                        <button
+                          onClick={() => setShowMilestoneModal(true)}
+                          className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-600 hover:text-brand transition-colors mt-2"
+                          data-testid="button-add-milestone"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Add milestone
+                        </button>
+                      )}
                   </div>
                 )}
               </div>
@@ -1926,15 +1929,15 @@ export default function ProjectOfHeartPage() {
                       CATEGORY_CONFIG.other
                     ).icon
                   }
-                  {
-                    (pohState.next.category === "other" && 
-                     (pohState.next.customCategory || pohState.next.custom_category))
-                      ? (pohState.next.customCategory || pohState.next.custom_category)
-                      : (
-                          CATEGORY_CONFIG[pohState.next.category as Category] ||
-                          CATEGORY_CONFIG.other
-                        ).label
-                  }
+                  {pohState.next.category === "other" &&
+                  (pohState.next.customCategory ||
+                    pohState.next.custom_category)
+                    ? pohState.next.customCategory ||
+                      pohState.next.custom_category
+                    : (
+                        CATEGORY_CONFIG[pohState.next.category as Category] ||
+                        CATEGORY_CONFIG.other
+                      ).label}
                 </span>
                 <span
                   className="text-xs sm:text-sm font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5"
@@ -2250,8 +2253,6 @@ export default function ProjectOfHeartPage() {
         </DialogContent>
       </Dialog>
 
-
-
       {/* Re-align Modal - Redesigned & Responsive */}
       <Dialog open={showRealignModal} onOpenChange={setShowRealignModal}>
         <DialogContent className="w-[95%] sm:w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-xl sm:rounded-2xl p-0 gap-0 bg-white">
@@ -2296,7 +2297,6 @@ export default function ProjectOfHeartPage() {
                   Next Project
                 </button>
               )}
-
             </div>
 
             <div className="space-y-5">

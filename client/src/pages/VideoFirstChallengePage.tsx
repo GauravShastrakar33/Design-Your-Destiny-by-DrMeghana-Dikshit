@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type {
   CmsCourse,
@@ -130,7 +130,10 @@ export default function VideoFirstChallengePage() {
     enabled: isAuthenticated,
   });
 
-  const completedLessonIds = new Set(progressData?.completedLessonIds || []);
+  const completedLessonIds = useMemo(
+    () => new Set(progressData?.completedLessonIds || []),
+    [progressData?.completedLessonIds]
+  );
 
   // Flatten modules into linear days
   useEffect(() => {
@@ -347,28 +350,39 @@ export default function VideoFirstChallengePage() {
       artist: "Dr. Meghana Dikshit",
       album: courseData?.course.title || "Design Your Destiny",
       artwork: [
-        { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
-        { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+        {
+          src: "/android-chrome-192x192.png",
+          sizes: "192x192",
+          type: "image/png",
+        },
+        {
+          src: "/android-chrome-512x512.png",
+          sizes: "512x512",
+          type: "image/png",
+        },
       ],
     });
   }, [currentDay, courseData]);
 
-  // Handle Playback State & Handlers
+  // Handle Playback State
   useEffect(() => {
     MediaSession.setPlaybackState({
       playbackState: isPlaying ? "playing" : "paused",
     });
+  }, [isPlaying]);
 
+  // Handle Action Handlers - Register once on mount
+  useEffect(() => {
     MediaSession.setActionHandler({ action: "play" }, () => {
       setIsPlaying(true);
-      if (showAudioPlayer) audioRef.current?.play().catch(console.error);
-      else videoRef.current?.play().catch(console.error);
+      const media = showAudioPlayer ? audioRef.current : videoRef.current;
+      media?.play().catch(console.error);
     });
 
     MediaSession.setActionHandler({ action: "pause" }, () => {
       setIsPlaying(false);
-      if (showAudioPlayer) audioRef.current?.pause();
-      else videoRef.current?.pause();
+      const media = showAudioPlayer ? audioRef.current : videoRef.current;
+      media?.pause();
     });
 
     MediaSession.setActionHandler({ action: "seekbackward" }, (details) => {
@@ -383,31 +397,50 @@ export default function VideoFirstChallengePage() {
       const skipTime = details.seekTime ?? 10;
       const media = showAudioPlayer ? audioRef.current : videoRef.current;
       if (media) {
-        media.currentTime = Math.min(media.duration || 0, media.currentTime + skipTime);
+        media.currentTime = Math.min(
+          media.duration || 0,
+          media.currentTime + skipTime
+        );
       }
     });
 
-    MediaSession.setActionHandler({ action: "seekto" as any }, (details: any) => {
-      const media = showAudioPlayer ? audioRef.current : videoRef.current;
-      if (media && typeof details.seekTime === 'number') {
-        media.currentTime = details.seekTime;
+    MediaSession.setActionHandler(
+      { action: "seekto" as any },
+      (details: any) => {
+        const media = showAudioPlayer ? audioRef.current : videoRef.current;
+        if (media && typeof details.seekTime === "number") {
+          media.currentTime = details.seekTime;
+        }
       }
-    });
+    );
 
     return () => {
-      const actions: any[] = ["play", "pause", "seekbackward", "seekforward", "seekto"];
+      const actions: any[] = [
+        "play",
+        "pause",
+        "seekbackward",
+        "seekforward",
+        "seekto",
+      ];
       actions.forEach((action) => {
         try {
           MediaSession.setActionHandler({ action }, null);
         } catch {}
       });
     };
-  }, [isPlaying, showAudioPlayer]);
+  }, [showAudioPlayer]); // Re-register only if player type switches
 
-  // Handle Position Updates
+  // Handle Position Updates - Throttle to 5 seconds
+  const lastPositionUpdateRef = useRef(0);
   useEffect(() => {
+    const now = Date.now();
     const media = showAudioPlayer ? audioRef.current : videoRef.current;
-    if (media && media.duration) {
+    if (
+      media &&
+      media.duration &&
+      now - lastPositionUpdateRef.current >= 5000
+    ) {
+      lastPositionUpdateRef.current = now;
       try {
         MediaSession.setPositionState({
           duration: media.duration,
@@ -440,6 +473,12 @@ export default function VideoFirstChallengePage() {
   const handleBack = () => {
     setLocation("/money-mastery");
   };
+
+  // For locking logic
+  const firstIncompleteIndex = useMemo(
+    () => allDays.findIndex((d) => !completedLessonIds.has(d.lessonId)),
+    [allDays, completedLessonIds]
+  );
 
   // Loading state
   if (courseLoading || modulesLoading || progressLoading) {
@@ -571,11 +610,6 @@ export default function VideoFirstChallengePage() {
     setShowAudioPlayer(false);
     audioRef.current?.pause();
   };
-
-  // For locking logic
-  const firstIncompleteIndex = allDays.findIndex(
-    (d) => !completedLessonIds.has(d.lessonId)
-  );
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
