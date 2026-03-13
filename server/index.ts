@@ -76,6 +76,13 @@ app.use(
 );
 app.use(express.urlencoded({ extended: false }));
 
+app.use((req, _res, next) => {
+  if (req.originalUrl.startsWith("/api") || req.originalUrl.startsWith("/admin")) {
+    console.log("API HIT:", req.method, req.originalUrl);
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

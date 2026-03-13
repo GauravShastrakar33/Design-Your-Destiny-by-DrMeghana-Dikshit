@@ -9,7 +9,6 @@ import {
   ChevronDown,
   Plus,
   Pencil,
-  Check,
   Music,
   Loader2,
   MoreVertical,
@@ -130,50 +129,14 @@ const FullScreenPlayer = ({
       transition={{ type: "spring", damping: 30, stiffness: 300 }}
       className="fixed inset-0 z-[70] bg-[#F8F9FB] flex flex-col overflow-hidden"
     >
-      <style>{`
-        @keyframes slow-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .animate-slow-spin {
-          animation: slow-spin 20s linear infinite;
-        }
-      `}</style>
-
       {/* Background Aesthetic Gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-brand/2 via-white to-white pointer-events-none" />
       <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[50%] bg-brand/2 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-10 left-[-10%] w-[60%] h-[50%] bg-purple-500/2 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Full Page Dynamic Glows */}
-      <motion.div
-        animate={{
-          scale: [1, 1.2, 1],
-          x: [-100, 100, -50, 150, -100],
-          y: [-80, 120, -100, 80, -80],
-          rotate: [0, 90, 180, 270, 360],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="absolute w-[70vw] h-[70vw] bg-brand/25 blur-[80px] rounded-full pointer-events-none left-[-10%] top-[-10%]"
-      />
-      <motion.div
-        animate={{
-          scale: [1.2, 1, 1.2],
-          x: [100, -100, 50, -150, 100],
-          y: [80, -120, 100, -80, 80],
-          rotate: [360, 270, 180, 90, 0],
-        }}
-        transition={{
-          duration: 25,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="absolute w-[70vw] h-[70vw] bg-fuchsia-500/25 blur-[80px] rounded-full pointer-events-none right-[-10%] bottom-[-10%]"
-      />
+      {/* Full Page Dynamic Glows — Static CSS optimized for GPU */}
+      <div className="absolute w-[70vw] h-[70vw] bg-brand/15 blur-[80px] rounded-full pointer-events-none left-[-10%] top-[-10%]" />
+      <div className="absolute w-[70vw] h-[70vw] bg-fuchsia-500/15 blur-[80px] rounded-full pointer-events-none right-[-10%] bottom-[-10%]" />
 
       {/* Header */}
       <Header
@@ -764,8 +727,16 @@ export default function MyPracticePlaylistPage() {
       artist: "Dr. Meghana Dikshit",
       album: "Design Your Destiny",
       artwork: [
-        { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
-        { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+        {
+          src: "/android-chrome-192x192.png",
+          sizes: "192x192",
+          type: "image/png",
+        },
+        {
+          src: "/android-chrome-512x512.png",
+          sizes: "512x512",
+          type: "image/png",
+        },
       ],
     });
   }, [currentTrack]);
@@ -781,7 +752,7 @@ export default function MyPracticePlaylistPage() {
         setIsPlaying(true);
         audioRef.current?.play().catch(console.error);
       });
-      
+
       MediaSession.setActionHandler({ action: "pause" }, () => {
         setIsPlaying(false);
         audioRef.current?.pause();
@@ -807,19 +778,25 @@ export default function MyPracticePlaylistPage() {
       MediaSession.setActionHandler({ action: "seekforward" }, (details) => {
         const skipTime = details.seekTime ?? 10;
         if (audioRef.current) {
-          const newTime = Math.min(audioRef.current.duration, audioRef.current.currentTime + skipTime);
+          const newTime = Math.min(
+            audioRef.current.duration,
+            audioRef.current.currentTime + skipTime
+          );
           audioRef.current.currentTime = newTime;
           setProgress(newTime);
         }
       });
 
       // Handle scrubbing from lock screen / notification drawer
-      MediaSession.setActionHandler({ action: "seekto" as any }, (details: any) => {
-        if (audioRef.current && typeof details.seekTime === 'number') {
-          audioRef.current.currentTime = details.seekTime;
-          setProgress(details.seekTime);
+      MediaSession.setActionHandler(
+        { action: "seekto" as any },
+        (details: any) => {
+          if (audioRef.current && typeof details.seekTime === "number") {
+            audioRef.current.currentTime = details.seekTime;
+            setProgress(details.seekTime);
+          }
         }
-      });
+      );
     };
 
     setupHandlers();
@@ -832,7 +809,7 @@ export default function MyPracticePlaylistPage() {
         "nexttrack",
         "seekbackward",
         "seekforward",
-        "seekto"
+        "seekto",
       ];
       actions.forEach((action) => {
         try {
@@ -843,8 +820,15 @@ export default function MyPracticePlaylistPage() {
   }, [playingItems, isPlaying, currentTrackIndex]);
 
   // Handle Position Updates separately to minimize overhead and flicker
+  const lastPositionUpdateRef = useRef(0);
   useEffect(() => {
-    if (audioRef.current && audioRef.current.duration) {
+    const now = Date.now();
+    if (
+      audioRef.current &&
+      audioRef.current.duration &&
+      now - lastPositionUpdateRef.current >= 5000
+    ) {
+      lastPositionUpdateRef.current = now;
       try {
         MediaSession.setPositionState({
           duration: duration || 0,
@@ -1515,7 +1499,9 @@ export default function MyPracticePlaylistPage() {
                             }`}
                           >
                             {isSelected && (
-                              <Check className="w-4 h-4" strokeWidth={4} />
+                              <span className="text-xs font-black">
+                                {selectedLessonIds.indexOf(lesson.id) + 1}
+                              </span>
                             )}
                           </div>
                         </div>

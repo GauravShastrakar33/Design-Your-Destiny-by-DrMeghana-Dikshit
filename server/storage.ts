@@ -967,7 +967,7 @@ export class DbStorage implements IStorage {
       .update(frontendFeaturesTable)
       .set({ mappingLocked: locked })
       .where(eq(frontendFeaturesTable.id, featureId));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getModulesForCourse(courseId: number) {
@@ -1524,54 +1524,6 @@ export class DbStorage implements IStorage {
       .returning();
 
     return { alreadyCompleted: false, progress: newProgress };
-  }
-
-  // ===== REWIRING BELIEFS =====
-
-  async getRewiringBeliefsByUserId(userId: number): Promise<RewiringBelief[]> {
-    const beliefs = await db
-      .select()
-      .from(rewiringBeliefsTable)
-      .where(eq(rewiringBeliefsTable.userId, userId))
-      .orderBy(desc(rewiringBeliefsTable.createdAt));
-    return beliefs;
-  }
-
-  async getRewiringBeliefById(id: number): Promise<RewiringBelief | undefined> {
-    const [belief] = await db
-      .select()
-      .from(rewiringBeliefsTable)
-      .where(eq(rewiringBeliefsTable.id, id));
-    return belief;
-  }
-
-  async createRewiringBelief(belief: InsertRewiringBelief): Promise<RewiringBelief> {
-    const [newBelief] = await db
-      .insert(rewiringBeliefsTable)
-      .values(belief)
-      .returning();
-    return newBelief;
-  }
-
-  async updateRewiringBelief(
-    id: number,
-    userId: number,
-    updates: Partial<Pick<InsertRewiringBelief, 'limitingBelief' | 'upliftingBelief'>>
-  ): Promise<RewiringBelief | undefined> {
-    const [updated] = await db
-      .update(rewiringBeliefsTable)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(and(eq(rewiringBeliefsTable.id, id), eq(rewiringBeliefsTable.userId, userId)))
-      .returning();
-    return updated;
-  }
-
-  async deleteRewiringBelief(id: number, userId: number): Promise<boolean> {
-    const result = await db
-      .delete(rewiringBeliefsTable)
-      .where(and(eq(rewiringBeliefsTable.id, id), eq(rewiringBeliefsTable.userId, userId)))
-      .returning();
-    return result.length > 0;
   }
 
   // ===== USER WELLNESS PROFILES =====

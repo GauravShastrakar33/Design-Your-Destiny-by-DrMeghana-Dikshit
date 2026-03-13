@@ -71,6 +71,10 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+body.overlay-open main {
+  overflow-y: hidden !important;
+}
+
 /* Global Status Bar Background - Fixed Opaque Layer */
 
 
@@ -425,4 +429,18 @@ body {
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+}
+
+@keyframes slow-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-slow-spin {
+  animation: slow-spin 20s linear infinite;
 }

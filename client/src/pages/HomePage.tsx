@@ -35,6 +35,7 @@ import { BadgeToastManager } from "@/components/BadgeEarnedToast";
 import { fetchUnreadCount } from "@/lib/notificationState";
 import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/Header";
+import { BannerSkeleton } from "@/components/SkeletonLoaders";
 
 interface BannerData {
   banner: {
@@ -320,7 +321,7 @@ export default function HomePage() {
           {/* Hero Banner Section */}
           <motion.section variants={itemVariants} className="w-full">
             {isBannerLoading ? (
-              <Skeleton className="w-full aspect-[16/9] rounded-xl shadow-xl shadow-black/[0.03]" />
+              <BannerSkeleton />
             ) : (
               banner && (
                 <div className="relative group">
@@ -368,6 +369,7 @@ export default function HomePage() {
                           <img
                             src={banner.thumbnailUrl}
                             alt="Banner"
+                            loading="lazy"
                             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                             data-testid="img-banner"
                           />

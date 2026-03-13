@@ -557,7 +557,7 @@ export default function AdminEventFormPage() {
                                 }
                                 minDate={
                                   form.watch("startDatetime")
-                                    ? new Date(form.watch("startDatetime"))
+                                    ? new Date(form.watch("startDatetime") as string)
                                     : undefined
                                 }
                                 placeholder="Select end date"

@@ -1,8 +1,17 @@
 import { Capacitor } from "@capacitor/core";
 import { initPushNotifications, syncTokenWithBackend } from "@/lib/nativePush";
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { refreshPushToken, setupForegroundNotifications } from "@/lib/notifications";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { queryClient, apiRequest, clearCachedTokens } from "@/lib/queryClient";
+import {
+  refreshPushToken,
+  setupForegroundNotifications,
+} from "@/lib/notifications";
 import { Preferences } from "@capacitor/preferences";
 
 interface User {
@@ -13,17 +22,25 @@ interface User {
   forcePasswordChange?: boolean;
 }
 
-interface AuthContextType {
+interface AuthStateContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   requiresPasswordChange: boolean;
+}
+
+interface AuthActionsContextType {
   login: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
   clearPasswordChangeRequirement: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthStateContext = createContext<AuthStateContextType | undefined>(
+  undefined
+);
+const AuthActionsContext = createContext<AuthActionsContextType | undefined>(
+  undefined
+);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -33,8 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const { value: token } = await Preferences.get({ key: "@app:user_token" });
-        const { value: storedUser } = await Preferences.get({ key: "@app:user" });
+        const { value: token } = await Preferences.get({
+          key: "@app:user_token",
+        });
+        const { value: storedUser } = await Preferences.get({
+          key: "@app:user",
+        });
 
         if (token && storedUser) {
           try {
@@ -48,24 +69,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             // 🔄 Refresh user data from backend to ensure we have latest name/role
-            // This fixes issues where local storage has stale/incomplete data
             try {
               const response = await apiRequest("GET", "/api/v1/me");
               if (response.ok) {
                 const freshUserData = await response.json();
-                // Merge with existing session data (like token) if needed, 
-                // but here endpoint returns profile data.
-                // Re-construct user object matching User interface
                 const updatedUser: User = {
                   id: freshUserData.id,
                   name: freshUserData.name,
                   email: freshUserData.email,
                   role: freshUserData.role,
-                  forcePasswordChange: freshUserData.forcePasswordChange
+                  forcePasswordChange: freshUserData.forcePasswordChange,
                 };
 
                 setUser(updatedUser);
-                await Preferences.set({ key: "@app:user", value: JSON.stringify(updatedUser) });
+                await Preferences.set({
+                  key: "@app:user",
+                  value: JSON.stringify(updatedUser),
+                });
               } else if (response.status === 401) {
                 // Token expired or invalid
                 console.log("Token invalid, logging out");
@@ -74,31 +94,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(null);
                 queryClient.clear();
                 setIsLoading(false);
-                return; // Stop execution
+                return;
               }
             } catch (apiError) {
-              console.error("Failed to refresh user profile from backend:", apiError);
-              // We continue with stored user data if backend fetch fails (offline flow)
+              console.error(
+                "Failed to refresh user profile from backend:",
+                apiError
+              );
             }
 
             if (Capacitor.isNativePlatform()) {
-              // 📱 Android / iOS - Fire and forget, don't block rendering
-              initPushNotifications().then(() => {
-                console.log("📱 Native push initialized");
-                // 🔄 Sync token if it was already cached
-                syncTokenWithBackend();
-              }).catch((error) => {
-                // Already logged in initPushNotifications, just prevent unhandled rejection
-                console.error("⚠️ Push init failed in AuthContext (non-blocking):", error);
-              });
+              initPushNotifications()
+                .then(() => {
+                  syncTokenWithBackend();
+                })
+                .catch((error) => {
+                  console.error(
+                    "⚠️ Push init failed in AuthContext (non-blocking):",
+                    error
+                  );
+                });
             } else {
-              // 🌐 Web / PWA
               refreshPushToken().then((refreshed) => {
                 if (refreshed) {
                   console.log("🌐 Web push token refreshed");
                 }
               });
-
               setupForegroundNotifications();
             }
           } catch (error) {
@@ -117,69 +138,96 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-
   const login = async (token: string, userData: User) => {
     await Preferences.set({ key: "@app:user_token", value: token });
-    await Preferences.set({ key: "@app:user", value: JSON.stringify(userData) });
+    await Preferences.set({
+      key: "@app:user",
+      value: JSON.stringify(userData),
+    });
+    clearCachedTokens();
     setUser(userData);
 
-    // Check if user needs to change password
     if (userData.forcePasswordChange) {
       setRequiresPasswordChange(true);
     }
 
-    // 🔔 Register push AFTER login - Fire and forget, don't block UI
     if (Capacitor.isNativePlatform()) {
-      initPushNotifications().then(() => {
-        console.log("📱 Native push initialized after login");
-        // 🚀 CRITICAL: Sync the token now that we have the Auth token!
-        syncTokenWithBackend();
-      }).catch((error) => {
-        // Already logged in initPushNotifications, just prevent unhandled rejection
-        console.error("⚠️ Push init after login failed (non-blocking):", error);
-      });
+      initPushNotifications()
+        .then(() => {
+          syncTokenWithBackend();
+        })
+        .catch((error) => {
+          console.error(
+            "⚠️ Push init after login failed (non-blocking):",
+            error
+          );
+        });
     }
   };
 
   const clearPasswordChangeRequirement = async () => {
     setRequiresPasswordChange(false);
-    // Update stored user to remove the flag
     if (user) {
       const updatedUser = { ...user, forcePasswordChange: false };
-      await Preferences.set({ key: "@app:user", value: JSON.stringify(updatedUser) });
+      await Preferences.set({
+        key: "@app:user",
+        value: JSON.stringify(updatedUser),
+      });
       setUser(updatedUser);
     }
   };
 
-
   const logout = async () => {
     await Preferences.remove({ key: "@app:user_token" });
     await Preferences.remove({ key: "@app:user" });
+    clearCachedTokens();
     setUser(null);
     queryClient.clear();
   };
 
   return (
-    <AuthContext.Provider
+    <AuthStateContext.Provider
       value={{
         user,
         isAuthenticated: !!user,
         isLoading,
         requiresPasswordChange,
-        login,
-        logout,
-        clearPasswordChangeRequirement,
       }}
     >
-      {children}
-    </AuthContext.Provider>
+      <AuthActionsContext.Provider
+        value={{
+          login,
+          logout,
+          clearPasswordChangeRequirement,
+        }}
+      >
+        {children}
+      </AuthActionsContext.Provider>
+    </AuthStateContext.Provider>
   );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
+/** 🧊 Returns only auth state: user, loading status, etc. Causes re-renders on user change. */
+export function useAuthState() {
+  const context = useContext(AuthStateContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("useAuthState must be used within an AuthProvider");
   }
   return context;
+}
+
+/** ⚡ Returns only auth actions: login, logout. Never causes re-renders. */
+export function useAuthActions() {
+  const context = useContext(AuthActionsContext);
+  if (context === undefined) {
+    throw new Error("useAuthActions must be used within an AuthProvider");
+  }
+  return context;
+}
+
+/** 🔄 Backward compatibility hook — provides both state and actions. */
+export function useAuth() {
+  const state = useAuthState();
+  const actions = useAuthActions();
+  return { ...state, ...actions };
 }

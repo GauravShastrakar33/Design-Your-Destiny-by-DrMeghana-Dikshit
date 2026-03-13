@@ -1,5 +1,7 @@
-import { storage } from "../storage";
 import { sendPushNotification } from "../lib/firebaseAdmin";
+import { deviceTokenRepository } from "../repositories/deviceToken.repository";
+import { eventRepository } from "../repositories/event.repository";
+import { notificationRepository } from "../repositories/notification.repository";
 
 let cronInterval: ReturnType<typeof setInterval> | null = null;
 let isProcessing = false;
@@ -12,7 +14,7 @@ async function processNotifications(): Promise<void> {
 
   isProcessing = true;
   try {
-    const pendingNotifications = await storage.getPendingNotifications();
+    const pendingNotifications = await notificationRepository.getPendingNotifications();
     
     if (pendingNotifications.length > 0) {
       console.log(`🔔 Notification cron: Found ${pendingNotifications.length} pending notification(s)`);
@@ -20,7 +22,7 @@ async function processNotifications(): Promise<void> {
 
     for (const notification of pendingNotifications) {
       try {
-        const eligibleUserIds = await storage.getEligibleUserIdsForNotification(
+        const eligibleUserIds = await notificationRepository.getEligibleUserIdsForNotification(
           notification.requiredProgramCode,
           notification.requiredProgramLevel
         );
@@ -29,17 +31,17 @@ async function processNotifications(): Promise<void> {
 
         if (eligibleUserIds.length === 0) {
           console.log(`No eligible users for notification ${notification.id}, marking as sent`);
-          await storage.markNotificationSent(notification.id);
+          await notificationRepository.markNotificationSent(notification.id);
           continue;
         }
 
-        const deviceTokens = await storage.getDeviceTokensByUserIds(eligibleUserIds);
+        const deviceTokens = await deviceTokenRepository.getDeviceTokensByUserIds(eligibleUserIds);
         
         console.log(`Notification ${notification.id}: Found ${deviceTokens.length} registered devices`);
 
         if (deviceTokens.length === 0) {
           console.log(`No device tokens found for notification ${notification.id}, marking as sent`);
-          await storage.markNotificationSent(notification.id);
+          await notificationRepository.markNotificationSent(notification.id);
           continue;
         }
 
@@ -48,12 +50,12 @@ async function processNotifications(): Promise<void> {
 
         // Check if event is still valid (not cancelled)
         if (notification.type === "event_reminder" && notification.relatedEventId) {
-          const event = await storage.getEventById(notification.relatedEventId);
+          const event = await eventRepository.getEventById(notification.relatedEventId);
           if (!event || event.status === "CANCELLED") {
             console.log(
               `Skipping notification ${notification.id} because event ${notification.relatedEventId} is ${event?.status || 'missing'}`
             );
-            await storage.markNotificationSent(notification.id);
+            await notificationRepository.markNotificationSent(notification.id);
             continue;
           }
         }
@@ -102,13 +104,13 @@ async function processNotifications(): Promise<void> {
         }
 
         // 📝 Always save logs so users can see reminders in-app
-        await storage.createNotificationLogs(logs);
+        await notificationRepository.createNotificationLogs(logs);
 
         // 🧹 [DISABLED] Only cleanup tokens that are explicitly invalid (NotRegistered)
         /* 
         for (const deadToken of result.tokensToCleanup) {
           try {
-            await storage.deleteDeviceToken(deadToken);
+            await deviceTokenRepository.deleteDeviceToken(deadToken);
             console.log(`Removed dead token: ${deadToken.substring(0, 20)}...`);
           } catch (err) {
             console.error("Error removing dead token:", err);
@@ -116,7 +118,7 @@ async function processNotifications(): Promise<void> {
         }
         */
 
-        await storage.markNotificationSent(notification.id);
+        await notificationRepository.markNotificationSent(notification.id);
 
         console.log(
           `Notification ${notification.id}: ${result.successCount} push sent, ${result.failureCount} push failed`
@@ -207,7 +209,7 @@ export async function createEventReminders(event: {
   }
 
   if (notifications.length > 0) {
-    await storage.createNotifications(notifications);
+    await notificationRepository.createNotifications(notifications);
     console.log(
       `Created ${notifications.length} reminder(s) for event ${event.id}: ${event.title}`
     );
