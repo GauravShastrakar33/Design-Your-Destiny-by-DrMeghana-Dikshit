@@ -184,7 +184,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
             className="bg-white/95 backdrop-blur-md shrink-0"
           />
 
-          <div className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-[calc(env(safe-area-inset-top)+6rem)] pb-20 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 b-20 overflow-y-auto custom-scrollbar">
             {/* Search Input */}
             <div className="relative mb-8 group">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
