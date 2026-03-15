@@ -8,8 +8,22 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { randomUUID } from "crypto";
 import { db } from "../db";
-import { eq, inArray } from "drizzle-orm";
-import { InsertProgram, InsertCmsCourse, InsertCmsModule, InsertCmsModuleFolder, InsertCmsLesson, InsertCmsLessonFile, frontendFeatures, InsertPlaylist } from "@shared/schema";
+import { eq, inArray, asc } from "drizzle-orm";
+import { 
+  cmsCourses, 
+  cmsModules, 
+  cmsModuleFolders, 
+  cmsLessons, 
+  cmsLessonFiles,
+  frontendFeatures,
+  InsertProgram, 
+  InsertCmsCourse, 
+  InsertCmsModule, 
+  InsertCmsModuleFolder, 
+  InsertCmsLesson, 
+  InsertCmsLessonFile, 
+  InsertPlaylist 
+} from "@shared/schema";
 import { 
   generateCourseThumnailKey,
   generateLessonFileKey
@@ -81,7 +95,7 @@ export const courseService = {
     }));
   },
 
-  async getCourseById(id: number) {
+  async getCourseSummaryById(id: number) {
     const course = await courseRepository.getCourseById(id);
     if (!course) throw new CourseServiceError("Course not found", 404);
 
@@ -100,16 +114,58 @@ export const courseService = {
     }
 
     const modules = await courseRepository.getModulesByCourseId(id);
-    const modulesWithContent = await Promise.all(modules.map(async (module) => {
-      const folders = await courseRepository.getFoldersByModuleId(module.id);
-      const lessons = await courseRepository.getLessonsByModuleId(module.id);
+    return { ...course, programCode, thumbnailUrl, modules };
+  },
+
+  async getCourseById(id: number) {
+    const course = await courseRepository.getCourseById(id);
+    if (!course) throw new CourseServiceError("Course not found", 404);
+
+    let programCode = "";
+    if (course.programId) {
+      const program = await courseRepository.getProgramById(course.programId);
+      if (program) programCode = program.code;
+    }
+    
+    let thumbnailUrl = null;
+    if (course.thumbnailKey) {
+      const signedResult = await getSignedGetUrl(course.thumbnailKey);
+      if (signedResult.success && signedResult.url) {
+        thumbnailUrl = signedResult.url;
+      }
+    }
+
+    // Optimized fetching: Batch queries instead of N+1 in loops
+    const modules = await courseRepository.getModulesByCourseId(id);
+    if (modules.length === 0) {
+      return { ...course, programCode, thumbnailUrl, modules: [] };
+    }
+
+    const moduleIds = modules.map(m => m.id);
+    const [allFolders, allLessons] = await Promise.all([
+      db.select().from(cmsModuleFolders).where(inArray(cmsModuleFolders.moduleId, moduleIds)).orderBy(asc(cmsModuleFolders.position)),
+      db.select().from(cmsLessons).where(inArray(cmsLessons.moduleId, moduleIds)).orderBy(asc(cmsLessons.position))
+    ]);
+
+    const lessonIds = allLessons.map(l => l.id);
+    const allFiles = lessonIds.length > 0 
+      ? await db.select().from(cmsLessonFiles).where(inArray(cmsLessonFiles.lessonId, lessonIds)).orderBy(asc(cmsLessonFiles.position))
+      : [];
+
+    const modulesWithContent = modules.map(module => {
+      const folders = allFolders.filter(f => f.moduleId === module.id);
+      const lessons = allLessons.filter(l => l.moduleId === module.id);
       
-      const lessonsWithFiles = await Promise.all(lessons.map(async (lesson) => {
-        const files = await courseRepository.getFilesByLessonId(lesson.id);
-        return { ...lesson, files, hasScript: files.some(f => f.fileType === "script" || f.fileType === "pdf") };
-      }));
+      const lessonsWithFiles = lessons.map(lesson => {
+        const files = allFiles.filter(f => f.lessonId === lesson.id);
+        return { 
+          ...lesson, 
+          files, 
+          hasScript: files.some(f => f.fileType === "script" || f.fileType === "pdf") 
+        };
+      });
       return { ...module, folders, lessons: lessonsWithFiles };
-    }));
+    });
 
     return { ...course, programCode, thumbnailUrl, modules: modulesWithContent };
   },
@@ -409,17 +465,23 @@ export const courseService = {
     const module = await courseRepository.getModuleById(moduleId);
     if (!module) throw new CourseServiceError("Module not found", 404);
 
-    const folders = await courseRepository.getFoldersByModuleId(moduleId);
-    const lessons = await courseRepository.getLessonsByModuleId(moduleId);
+    const [folders, lessons] = await Promise.all([
+      courseRepository.getFoldersByModuleId(moduleId),
+      courseRepository.getLessonsByModuleId(moduleId)
+    ]);
     
-    // Fetch file presence info for all lessons in this module to show icons on journey
-    const lessonsWithMeta = await Promise.all(lessons.map(async (l) => {
-      const files = await courseRepository.getFilesByLessonId(l.id);
+    const lessonIds = lessons.map(l => l.id);
+    const allFiles = lessonIds.length > 0
+      ? await db.select().from(cmsLessonFiles).where(inArray(cmsLessonFiles.lessonId, lessonIds))
+      : [];
+
+    const lessonsWithMeta = lessons.map(l => {
+      const files = allFiles.filter(f => f.lessonId === l.id);
       return {
         ...l,
-        hasScript: files.some(f => f.fileType === "script")
+        hasScript: files.some(f => f.fileType === "script" || f.fileType === "pdf")
       };
-    }));
+    });
 
     return { module, folders, lessons: lessonsWithMeta };
   },

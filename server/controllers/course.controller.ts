@@ -24,6 +24,12 @@ const handleServiceError = (res: Response, error: unknown, fallbackMessage: stri
   return res.status(500).json({ error: fallbackMessage });
 };
 
+const FEATURE_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const featureCache = new Map<string, { data: any; timestamp: number }>();
+const moduleCache = new Map<number, { data: any; timestamp: number }>();
+const courseCache = new Map<number, { data: any; timestamp: number }>();
+const lessonCache = new Map<number, { data: any; timestamp: number }>();
+
 export const courseController = {
   // --- PROGRAMS ---
   getAllPrograms: async (req: Request, res: Response) => {
@@ -118,9 +124,19 @@ export const courseController = {
 
   getPublicCourseById: async (req: Request, res: Response) => {
     try {
-      const data = await courseService.getCourseById(parseInt(req.params.id));
+      const id = parseInt(req.params.id);
+      
+      const cached = courseCache.get(id);
+      if (cached && Date.now() - cached.timestamp < FEATURE_CACHE_DURATION) {
+        return res.json(cached.data);
+      }
+
+      const data = await courseService.getCourseById(id);
       const { modules, ...course } = data;
-      res.json({ course, modules });
+      const responseData = { course, modules };
+      
+      courseCache.set(id, { data: responseData, timestamp: Date.now() });
+      res.json(responseData);
     } catch (error) {
       handleServiceError(res, error, "Failed to fetch course");
     }
@@ -129,7 +145,17 @@ export const courseController = {
   getPublicModule: async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
+
+      // Check cache
+      const cached = moduleCache.get(id);
+      if (cached && Date.now() - cached.timestamp < FEATURE_CACHE_DURATION) {
+        return res.json(cached.data);
+      }
+
       const data = await courseService.getPublicModule(id);
+      
+      // Update cache
+      moduleCache.set(id, { data, timestamp: Date.now() });
       res.json(data);
     } catch (error) {
       handleServiceError(res, error, "Failed to fetch module");
@@ -139,7 +165,17 @@ export const courseController = {
   getPublicLesson: async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
+
+      // Check cache
+      const cached = lessonCache.get(id);
+      if (cached && Date.now() - cached.timestamp < FEATURE_CACHE_DURATION) {
+        return res.json(cached.data);
+      }
+
       const data = await courseService.getPublicLesson(id);
+      
+      // Update cache
+      lessonCache.set(id, { data, timestamp: Date.now() });
       res.json(data);
     } catch (error) {
       handleServiceError(res, error, "Failed to fetch lesson");
@@ -388,26 +424,41 @@ export const courseController = {
   getPublicFeature: async (req: Request, res: Response) => {
     try {
       const { code } = req.params;
+      const light = req.query.light === "true";
+      const cacheKey = `${code}${light ? "_light" : ""}`;
+
+      // Check cache
+      const cached = featureCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < FEATURE_CACHE_DURATION) {
+        return res.json(cached.data);
+      }
+
       const feature = await courseService.getFrontendFeatureByCode(code);
       const mappings = (await courseService.getFeatureMap(code)) as any[];
 
+      let responseData: any;
+
       if (feature.displayMode === "modules") {
-        if (mappings.length === 0) return res.json({ feature, course: null, modules: [] });
-        const courseId = mappings[0].courseId;
-        const data = await courseService.getCourseById(courseId);
-        const { modules, ...course } = data;
-        return res.json({ feature, course, modules });
-      }
-
-      if (feature.displayMode === "lessons") {
-        if (mappings.length === 0) return res.json({ feature, course: null, lessons: [] });
-        const courseId = mappings[0].courseId;
-        const course = await courseService.getCourseById(courseId);
-        const lessons = await courseService.getLessonsForCourse(courseId);
-        return res.json({ feature, course, lessons });
-      }
-
-      if (feature.displayMode === "courses") {
+        if (mappings.length === 0) {
+          responseData = { feature, course: null, modules: [] };
+        } else {
+          const courseId = mappings[0].courseId;
+          const data = light 
+            ? await courseService.getCourseSummaryById(courseId)
+            : await courseService.getCourseById(courseId);
+          const { modules, ...course } = data;
+          responseData = { feature, course, modules };
+        }
+      } else if (feature.displayMode === "lessons") {
+        if (mappings.length === 0) {
+          responseData = { feature, course: null, lessons: [] };
+        } else {
+          const courseId = mappings[0].courseId;
+          const course = await courseService.getCourseById(courseId);
+          const lessons = await courseService.getLessonsForCourse(courseId);
+          responseData = { feature, course, lessons };
+        }
+      } else if (feature.displayMode === "courses") {
         const builtIns = code === "ABUNDANCE" ? [
           { id: "builtin-money-calendar", title: "Money Calendar", isBuiltIn: true },
           { id: "builtin-rewiring-belief", title: "Rewiring Belief", isBuiltIn: true },
@@ -426,10 +477,14 @@ export const courseController = {
           };
         }));
 
-        return res.json({ feature, builtIns, courses: mappedCourses });
+        responseData = { feature, builtIns, courses: mappedCourses };
+      } else {
+        responseData = { feature, mappings };
       }
 
-      res.json({ feature, mappings });
+      // Update cache
+      featureCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+      res.json(responseData);
     } catch (error) {
       handleServiceError(res, error, "Failed to fetch public feature");
     }

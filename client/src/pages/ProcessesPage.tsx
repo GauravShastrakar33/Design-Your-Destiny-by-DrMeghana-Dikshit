@@ -422,10 +422,10 @@ export default function ProcessesPage() {
   } = useQuery<FeatureResponse>({
     queryKey: ["/api/public/v1/features", "DYD"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/public/v1/features/DYD");
+      const response = await apiRequest("GET", "/api/public/v1/features/DYD?light=true");
       return response.json();
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && activeTab === "DYD",
   });
 
   const {
@@ -435,10 +435,10 @@ export default function ProcessesPage() {
   } = useQuery<FeatureResponse>({
     queryKey: ["/api/public/v1/features", "USM"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/public/v1/features/USM");
+      const response = await apiRequest("GET", "/api/public/v1/features/USM?light=true");
       return response.json();
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && activeTab === "USM",
   });
 
   return (
