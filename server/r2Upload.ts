@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import type { Readable } from "stream";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 interface R2Config {
@@ -322,6 +323,81 @@ export async function uploadBufferToR2(
     };
   } catch (error) {
     console.error("R2 upload error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Upload a Readable stream to R2 without loading it into memory.
+ * Useful for large files (e.g. optimized MP4) to keep RAM near zero.
+ */
+export async function uploadStreamToR2(
+  stream: Readable,
+  key: string,
+  contentType: string
+): Promise<UploadToR2Result> {
+  try {
+    const credCheck = checkR2Credentials();
+    if (!credCheck.valid) {
+      return { success: false, error: credCheck.error };
+    }
+
+    const client = getR2Client();
+
+    const command = new PutObjectCommand({
+      Bucket: r2Config.bucketName!,
+      Key: key,
+      Body: stream,
+      ContentType: contentType,
+    });
+
+    await client.send(command);
+
+    const publicUrl = r2Config.publicBaseUrl
+      ? `${r2Config.publicBaseUrl}/${key}`
+      : `https://${r2Config.accountId}.r2.cloudflarestorage.com/${r2Config.bucketName}/${key}`;
+
+    return { success: true, url: publicUrl, key };
+  } catch (error) {
+    console.error("R2 stream upload error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Download an R2 object and return its body as a Readable stream.
+ * Pipe this into fs.createWriteStream to save to disk without RAM spikes.
+ */
+export async function downloadR2ObjectAsStream(
+  key: string
+): Promise<{ success: boolean; stream?: Readable; error?: string }> {
+  try {
+    const credCheck = checkR2Credentials();
+    if (!credCheck.valid) {
+      return { success: false, error: credCheck.error };
+    }
+
+    const client = getR2Client();
+    const command = new GetObjectCommand({
+      Bucket: r2Config.bucketName!,
+      Key: key,
+    });
+
+    const response = await client.send(command);
+
+    if (!response.Body) {
+      return { success: false, error: "No body in response" };
+    }
+
+    return { success: true, stream: response.Body as Readable };
+  } catch (error) {
+    console.error("R2 stream download error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",

@@ -263,6 +263,13 @@ register(
   courseController.createFile
 );
 register(
+  "post",
+  ["/admin/v1/cms/files/:id/optimize-video", "/api/admin/v1/cms/files/:id/optimize-video"],
+  requireAuth,
+  requireAdmin,
+  courseController.optimizeVideoFile
+);
+register(
   "delete",
   ["/admin/v1/cms/files/:id", "/api/admin/v1/cms/files/:id"],
   requireAuth,

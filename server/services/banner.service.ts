@@ -1,5 +1,12 @@
 import { bannerRepository } from "../repositories/banner.repository";
-import { getSignedPutUrl, getSignedGetUrl } from "../r2Upload";
+import { getSignedPutUrl, getSignedGetUrl, downloadR2ObjectAsStream, uploadStreamToR2 } from "../r2Upload";
+import { optimizeMp4FastStart, safeUnlink } from "./videoOptimizer";
+import { pipeline } from "node:stream/promises";
+import { createWriteStream, createReadStream } from "fs";
+import { promises as fsPromises } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { randomUUID } from "crypto";
 
 export const bannerService = {
   // ─── Admin ─────────────────────────────────────────────────────────────────
@@ -102,7 +109,42 @@ export const bannerService = {
     return banner;
   },
 
-  // ─── Public ────────────────────────────────────────────────────────────────
+  // ─── Public ───────────────────────────────────────────────────────────────────────
+
+  async optimizeVideo(id: number) {
+    const banner = await bannerRepository.findById(id);
+    if (!banner) throw new Error("NOT_FOUND");
+    if (!banner.videoKey) throw new Error("NO_VIDEO");
+
+    const tempInputPath = join(tmpdir(), "video-processing", `${randomUUID()}-banner-in.mp4`);
+    let optimizedPath: string | null = null;
+
+    const downloadResult = await downloadR2ObjectAsStream(banner.videoKey);
+    if (!downloadResult.success || !downloadResult.stream) {
+      throw new Error("Failed to download banner video from storage");
+    }
+
+    try {
+      // Pipe R2 stream to disk — await pipeline ensures full write before FFmpeg starts
+      await pipeline(downloadResult.stream, createWriteStream(tempInputPath));
+
+      const stat = await fsPromises.stat(tempInputPath);
+      const sizeMb = (stat.size / (1024 * 1024)).toFixed(1);
+      console.log(`[bannerService] Banner video download complete — Size: ${sizeMb} MB — Starting faststart optimization`);
+
+      optimizedPath = await optimizeMp4FastStart(tempInputPath);
+
+      // Stream optimized file back to the same R2 key (overwrites original)
+      const uploadResult = await uploadStreamToR2(createReadStream(optimizedPath), banner.videoKey, "video/mp4");
+      if (!uploadResult.success) throw new Error("Failed to upload optimized banner video");
+
+      console.log(`[bannerService] Banner video optimization complete for banner ${id}`);
+      return { success: true };
+    } finally {
+      await safeUnlink(tempInputPath);
+      if (optimizedPath) await safeUnlink(optimizedPath);
+    }
+  },
 
   async getPublicBanner() {
     const now = new Date();

@@ -970,6 +970,17 @@ export const courseController = {
     return courseController.createFile(req, res);
   },
 
+  optimizeVideoFile: async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: "Invalid file ID" });
+      const result = await courseService.optimizeVideoFile(id);
+      res.json(result);
+    } catch (error) {
+      handleServiceError(res, error, "Failed to optimize video file");
+    }
+  },
+
   deleteFile: async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);

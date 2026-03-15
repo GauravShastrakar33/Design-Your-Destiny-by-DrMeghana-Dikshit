@@ -1,5 +1,12 @@
 import { courseRepository } from "../repositories/course.repository";
-import { getSignedGetUrl, getSignedPutUrl } from "../r2Upload";
+import { getSignedGetUrl, getSignedPutUrl, downloadR2ObjectAsStream, uploadStreamToR2 } from "../r2Upload";
+import { optimizeMp4FastStart, safeUnlink } from "./videoOptimizer";
+import { pipeline } from "node:stream/promises";
+import { createWriteStream, createReadStream } from "fs";
+import { promises as fsPromises } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { randomUUID } from "crypto";
 import { db } from "../db";
 import { eq, inArray } from "drizzle-orm";
 import { InsertProgram, InsertCmsCourse, InsertCmsModule, InsertCmsModuleFolder, InsertCmsLesson, InsertCmsLessonFile, frontendFeatures, InsertPlaylist } from "@shared/schema";
@@ -264,6 +271,42 @@ export const courseService = {
     // Note: Actual R2 deletion should be handled if we need strict cleanup, 
     // but the original code just did DB deletion for safety/history.
     return await courseRepository.deleteFile(id);
+  },
+
+  async optimizeVideoFile(fileId: number) {
+    const file = await courseRepository.getFileById(fileId);
+    if (!file) throw new CourseServiceError("File not found", 404);
+    if (file.fileType !== "video") throw new CourseServiceError("File is not a video", 400);
+
+    const tempInputPath = join(tmpdir(), `video-processing`, `${randomUUID()}-in.mp4`);
+    let optimizedPath: string | null = null;
+
+    const downloadResult = await downloadR2ObjectAsStream(file.r2Key);
+    if (!downloadResult.success || !downloadResult.stream) {
+      throw new CourseServiceError("Failed to download video from storage", 500);
+    }
+
+    try {
+      // Stream R2 download to disk — await pipeline ensures full write before FFmpeg starts
+      await pipeline(downloadResult.stream, createWriteStream(tempInputPath));
+
+      // Log size now that we have the file on disk
+      const stat = await fsPromises.stat(tempInputPath);
+      const sizeMb = (stat.size / (1024 * 1024)).toFixed(1);
+      console.log(`[courseService] Video download complete — Size: ${sizeMb} MB — Starting faststart optimization`);
+
+      optimizedPath = await optimizeMp4FastStart(tempInputPath);
+
+      // Stream optimized file back to same R2 key (overwrites original)
+      const uploadResult = await uploadStreamToR2(createReadStream(optimizedPath), file.r2Key, "video/mp4");
+      if (!uploadResult.success) throw new CourseServiceError("Failed to upload optimized video", 500);
+
+      console.log(`[courseService] Video optimization complete for file ${fileId}`);
+      return { success: true };
+    } finally {
+      await safeUnlink(tempInputPath);
+      if (optimizedPath) await safeUnlink(optimizedPath);
+    }
   },
 
   async getFileDownloadUrl(id: number) {

@@ -15,6 +15,7 @@ router.put("/api/admin/v1/session-banners/:id", authenticateJWT, requireAdmin, b
 router.delete("/api/admin/v1/session-banners/:id", authenticateJWT, requireAdmin, bannerController.deleteBanner);
 router.post("/api/admin/v1/session-banners/:id/duplicate", authenticateJWT, requireAdmin, bannerController.duplicate);
 router.post("/api/admin/v1/session-banners/:id/set-default", authenticateJWT, requireAdmin, bannerController.setDefault);
+router.post("/api/admin/v1/session-banners/:id/optimize-video", authenticateJWT, requireAdmin, bannerController.optimizeVideo);
 
 // ─── Public Route ─────────────────────────────────────────────────────────────
 router.get("/api/public/v1/session-banner", bannerController.getPublicBanner);

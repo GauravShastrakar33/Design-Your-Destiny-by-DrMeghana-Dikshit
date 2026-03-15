@@ -112,6 +112,20 @@ export const bannerController = {
 
   // ─── Public ────────────────────────────────────────────────────────────────
 
+  async optimizeVideo(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: "Invalid banner ID" });
+      const result = await bannerService.optimizeVideo(id);
+      res.json(result);
+    } catch (error: any) {
+      if (error.message === "NOT_FOUND") return res.status(404).json({ error: "Banner not found" });
+      if (error.message === "NO_VIDEO") return res.status(400).json({ error: "Banner has no video to optimize" });
+      console.error("Error optimizing banner video:", error);
+      res.status(500).json({ error: "Failed to optimize banner video" });
+    }
+  },
+
   async getPublicBanner(_req: Request, res: Response) {
     try {
       res.json(await bannerService.getPublicBanner());

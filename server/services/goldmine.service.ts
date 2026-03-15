@@ -1,5 +1,7 @@
 import { goldmineRepository } from "../repositories/goldmine.repository";
-import { uploadBufferToR2, deleteR2Object, getSignedGetUrl, getSignedPutUrl } from "../r2Upload";
+import { uploadBufferToR2, uploadStreamToR2, deleteR2Object, getSignedGetUrl, getSignedPutUrl } from "../r2Upload";
+import { optimizeMp4FastStart, safeUnlink } from "./videoOptimizer";
+import { createReadStream } from "fs";
 import crypto from "crypto";
 
 export const goldmineService = {
@@ -57,10 +59,33 @@ export const goldmineService = {
 
     const sizeMb = Math.ceil(videoFile.size / (1024 * 1024));
 
-    const videoUpload = await uploadBufferToR2(videoFile.buffer, videoKey, videoFile.mimetype || "video/mp4");
-    if (!videoUpload.success) throw new Error("VIDEO_UPLOAD_FAILED");
+    // Disk-storage multer gives us file.path; run FFmpeg fast start on it.
+    const rawVideoPath = videoFile.path;
+    if (!rawVideoPath) throw new Error("MISSING_VIDEO");
 
-    const thumbnailUpload = await uploadBufferToR2(thumbnailFile.buffer, thumbnailKey, thumbnailFile.mimetype || "image/webp");
+    let optimizedPath: string | null = null;
+    try {
+      optimizedPath = await optimizeMp4FastStart(rawVideoPath);
+
+      // Stream optimized file to R2 — no full-file buffer in RAM
+      const videoStream = createReadStream(optimizedPath);
+      const videoUpload = await uploadStreamToR2(videoStream, videoKey, "video/mp4");
+      if (!videoUpload.success) throw new Error("VIDEO_UPLOAD_FAILED");
+    } finally {
+      // Always clean up temp files regardless of success/failure
+      await safeUnlink(rawVideoPath);
+      if (optimizedPath) await safeUnlink(optimizedPath);
+    }
+
+    // Thumbnail: still comes from disk storage (image, small — buffer is fine)
+    const thumbnailBuffer = thumbnailFile.buffer
+      ?? (thumbnailFile.path ? await import("fs").then(f => f.promises.readFile(thumbnailFile.path!)) : null);
+    if (!thumbnailBuffer) {
+      await safeUnlink(thumbnailFile.path || "");
+      throw new Error("MISSING_THUMBNAIL");
+    }
+    const thumbnailUpload = await uploadBufferToR2(thumbnailBuffer, thumbnailKey, thumbnailFile.mimetype || "image/webp");
+    await safeUnlink(thumbnailFile.path || "");
     if (!thumbnailUpload.success) throw new Error("THUMBNAIL_UPLOAD_FAILED");
 
     return goldmineRepository.create({
