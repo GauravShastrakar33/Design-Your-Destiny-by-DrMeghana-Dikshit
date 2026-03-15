@@ -183,8 +183,10 @@ export function setupNativePushListeners() {
         await apiRequest("PATCH", `/api/v1/notifications/${data.notificationId}/read`);
         // 🔄 Invalidate notifications query to refresh the UI immediately
         await queryClient.invalidateQueries({ queryKey: ["/api/v1/notifications"] });
-        const { fetchUnreadCount } = await import("./notificationState");
-        await fetchUnreadCount();
+        
+        // 🔄 Force badge sync
+        const { fetchUnreadCount: refreshCount } = await import("./notificationState");
+        await refreshCount();
       } catch (e) {
         console.error("❌ Failed to mark notification read", e);
       }

@@ -25,6 +25,20 @@ export async function setUnreadCount(count: number) {
     value: JSON.stringify(count),
   });
 
+  // 🔴 Synchronize App Icon Badge
+  try {
+    const { Badge } = await import("@capawesome/capacitor-badge");
+    if (count > 0) {
+      await Badge.set({ count });
+      console.log(`📱 [BADGE] Applied count: ${count}`);
+    } else {
+      await Badge.clear();
+      console.log("📱 [BADGE] Cleared");
+    }
+  } catch (e) {
+    console.warn("⚠️ Failed to update native badge", e);
+  }
+
   // 🔴 Notify UI immediately
   window.dispatchEvent(new CustomEvent("unread-changed", { detail: { count } }));
 }

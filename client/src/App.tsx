@@ -205,6 +205,10 @@ function AppContent() {
             await queryClient.invalidateQueries({
               queryKey: ["/api/v1/notifications/unread-count"],
             });
+
+            // 🔴 Explicit badge sync on foreground
+            const { fetchUnreadCount } = await import("@/lib/notificationState");
+            await fetchUnreadCount();
           } catch (e) {
             console.error("❌ Failed to refresh notifications on resume", e);
           }

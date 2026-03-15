@@ -178,6 +178,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    // 🔴 Clear App Icon Badge
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const { Badge } = await import("@capawesome/capacitor-badge");
+        await Badge.clear();
+        console.log("📱 [AUTH] Badge cleared on logout");
+      } catch (e) {
+        console.warn("⚠️ Failed to clear badge on logout", e);
+      }
+    }
+
     await Preferences.remove({ key: "@app:user_token" });
     await Preferences.remove({ key: "@app:user" });
     clearCachedTokens();

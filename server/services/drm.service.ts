@@ -101,19 +101,43 @@ export const drmService = {
     const userTokens = await drmRepository.getDeviceTokensByUserIds([question.userId]);
 
     if (userTokens.length > 0) {
+      // 1. Insert notification logs first (source of truth)
+      await drmRepository.insertNotificationLogs(
+        userTokens.map((t) => ({ 
+          notificationId: notification.id, 
+          userId: t.userId, 
+          deviceToken: t.token, 
+          status: "sent" 
+        }))
+      );
+
+      // 2. Query actual unread count
+      const { notificationService } = await import("./notification.service");
+      const { count } = await notificationService.getUnreadCount(question.userId);
+
+      // 3. Send push with accurate count
       const tokens = userTokens.map((t) => t.token);
       const pushResult = await sendPushNotification(
         tokens,
         "Dr. M has answered your question 🎧",
         "Your personal voice response is ready to listen.",
-        { notificationId: notification.id.toString(), questionId: questionId.toString(), deepLink: `/dr-m/questions/${questionId}` }
+        { 
+          notificationId: notification.id.toString(), 
+          questionId: questionId.toString(), 
+          deepLink: `/dr-m/questions/${questionId}` 
+        },
+        count
       );
-      await drmRepository.insertNotificationLogs(
-        userTokens.map((t) => ({ notificationId: notification.id, userId: t.userId, deviceToken: t.token, status: pushResult.successCount > 0 ? "sent" : "failed" }))
-      );
+      
+      console.log(`🔔 Sent DRM answer push to user ${question.userId} with badge ${count}`);
     } else {
       // In-app only
-      await drmRepository.insertNotificationLogs([{ notificationId: notification.id, userId: question.userId, deviceToken: "in-app-only", status: "sent" }]);
+      await drmRepository.insertNotificationLogs([{ 
+        notificationId: notification.id, 
+        userId: question.userId, 
+        deviceToken: "in-app-only", 
+        status: "sent" 
+      }]);
     }
 
     const audioUrlResult = await getSignedGetUrl(audioKey);

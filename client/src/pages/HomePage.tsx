@@ -30,7 +30,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import SearchOverlay from "@/components/SearchOverlay";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useEvaluateBadgesOnMount } from "@/hooks/useBadges";
 import { BadgeToastManager } from "@/components/BadgeEarnedToast";
 import { fetchUnreadCount } from "@/lib/notificationState";
 import { useAuth } from "@/contexts/AuthContext";
@@ -90,7 +89,6 @@ export default function HomePage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [markAttempted, setMarkAttempted] = useState(false);
   const [newBadges, setNewBadges] = useState<string[]>([]);
-  const [badgeEvaluated, setBadgeEvaluated] = useState(false);
 
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -116,12 +114,6 @@ export default function HomePage() {
       window.removeEventListener("unread-changed", handleUnreadChange);
     };
   }, []);
-
-  const { evaluate } = useEvaluateBadgesOnMount({
-    onNewBadges: (badgeKeys) => {
-      setNewBadges(badgeKeys);
-    },
-  });
 
   const { data: bannerData, isLoading: isBannerLoading } = useQuery<BannerData>(
     {
@@ -152,10 +144,15 @@ export default function HomePage() {
       const res = await apiRequest("POST", "/api/v1/streak/mark-today");
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: ["/api/v1/streak/last-7-days"],
       });
+      // Handle the newBadges array populated by trackingService
+      if (data?.newBadges && data.newBadges.length > 0) {
+        setNewBadges(data.newBadges);
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/badges"] });
+      }
     },
     onError: (error) => {
       console.error("Failed to mark streak:", error);
@@ -169,14 +166,6 @@ export default function HomePage() {
       markTodayMutation.mutate();
     }
   }, [markAttempted, isAuthenticated]);
-
-  // Evaluate badges on mount (only once per session)
-  useEffect(() => {
-    if (!badgeEvaluated && isAuthenticated) {
-      setBadgeEvaluated(true);
-      evaluate();
-    }
-  }, [badgeEvaluated, isAuthenticated, evaluate]);
 
   // Update user timezone on mount
   useEffect(() => {

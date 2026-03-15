@@ -1,6 +1,7 @@
 import { trackingRepository } from "../repositories/tracking.repository";
 import { userRepository } from "../repositories/user.repository";
 import { getTodayForUser } from "../utils/timezone";
+import { badgeService } from "./badgeService";
 
 export class TrackingServiceError extends Error {
   statusCode: number;
@@ -22,7 +23,14 @@ export const trackingService = {
     const todayDate = getTodayForUser(user.timezone);
     await trackingRepository.markUserActivityDate(userId, todayDate);
     
-    return { success: true, date: todayDate };
+    let newBadges: string[] = [];
+    try {
+      newBadges = await badgeService.evaluateBadges(userId, todayDate);
+    } catch (e) {
+      console.error(`[markStreakToday] Failed to evaluate badges for user ${userId}`, e);
+    }
+
+    return { success: true, date: todayDate, newBadges };
   },
 
   async getLast7DaysStreak(userId: number, baseDateQuery?: string) {
@@ -113,7 +121,14 @@ export const trackingService = {
 
     const result = await trackingRepository.logActivity(userId, lessonId, lessonName, featureType, todayDate);
 
-    return { success: true, logged: result.logged };
+    let newBadges: string[] = [];
+    try {
+      newBadges = await badgeService.evaluateBadges(userId, todayDate);
+    } catch (e) {
+      console.error(`[logActivity] Failed to evaluate badges for user ${userId}`, e);
+    }
+
+    return { success: true, logged: result.logged, newBadges };
   },
 
   async getMonthlyActivityStats(userId: number, monthQuery?: string) {

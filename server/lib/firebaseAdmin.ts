@@ -48,6 +48,7 @@ export async function sendPushNotification(
   title: string,
   body: string,
   data?: Record<string, string>,
+  badge?: number,
 ): Promise<{
   successCount: number;
   failureCount: number;
@@ -89,7 +90,7 @@ export async function sendPushNotification(
   const tokensToCleanup: string[] = [];
 
   console.log(
-    `🚀 Sending notification in ${tokenBatches.length} batch(es) to ${tokens.length} total tokens`
+    `🚀 Sending notification in ${tokenBatches.length} batch(es) to ${tokens.length} total tokens. Badge: ${badge ?? "not set"}`
   );
 
   for (const batch of tokenBatches) {
@@ -112,7 +113,7 @@ export async function sendPushNotification(
         payload: {
           aps: {
             sound: "default",
-            badge: 1,
+            ...(badge !== undefined ? { badge } : {}),
             "content-available": 1,
           },
         },

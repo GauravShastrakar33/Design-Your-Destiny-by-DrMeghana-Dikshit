@@ -2,6 +2,13 @@ import { Request, Response } from "express";
 import { bannerService } from "../services/banner.service";
 import { logAudit } from "../utils/audit";
 
+const BANNER_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+let publicBannerCache: { data: any; timestamp: number } | null = null;
+
+const clearBannerCache = () => {
+  publicBannerCache = null;
+};
+
 export const bannerController = {
   // ─── Admin ─────────────────────────────────────────────────────────────────
 
@@ -42,6 +49,7 @@ export const bannerController = {
   async create(req: Request, res: Response) {
     try {
       const banner = await bannerService.create(req.body);
+      clearBannerCache();
       if (req.user) {
         logAudit({ req, userId: req.user.sub, userEmail: req.user.email, action: "CREATE", entityType: "BANNER", entityId: banner.id, newValues: banner });
       }
@@ -59,6 +67,7 @@ export const bannerController = {
     try {
       const id = parseInt(req.params.id);
       const { banner, existing } = await bannerService.update(id, req.body);
+      clearBannerCache();
       if (req.user && existing) {
         logAudit({ req, userId: req.user.sub, userEmail: req.user.email, action: "UPDATE", entityType: "BANNER", entityId: id, oldValues: existing, newValues: banner });
       }
@@ -74,6 +83,7 @@ export const bannerController = {
     try {
       const id = parseInt(req.params.id);
       const existing = await bannerService.deleteBanner(id);
+      clearBannerCache();
       if (req.user && existing) {
         logAudit({ req, userId: req.user.sub, userEmail: req.user.email, action: "DELETE", entityType: "BANNER", entityId: id, oldValues: existing });
       }
@@ -88,6 +98,7 @@ export const bannerController = {
   async duplicate(req: Request, res: Response) {
     try {
       const duplicate = await bannerService.duplicate(parseInt(req.params.id));
+      clearBannerCache();
       if (req.user) {
         logAudit({ req, userId: req.user.sub, userEmail: req.user.email, action: "CREATE", entityType: "BANNER", entityId: duplicate.id, newValues: duplicate });
       }
@@ -102,6 +113,7 @@ export const bannerController = {
   async setDefault(req: Request, res: Response) {
     try {
       const banner = await bannerService.setDefault(parseInt(req.params.id));
+      clearBannerCache();
       res.json(banner);
     } catch (error: any) {
       if (error.message === "NOT_FOUND") return res.status(404).json({ error: "Banner not found" });
@@ -117,6 +129,7 @@ export const bannerController = {
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ error: "Invalid banner ID" });
       const result = await bannerService.optimizeVideo(id);
+      clearBannerCache();
       res.json(result);
     } catch (error: any) {
       if (error.message === "NOT_FOUND") return res.status(404).json({ error: "Banner not found" });
@@ -128,7 +141,13 @@ export const bannerController = {
 
   async getPublicBanner(_req: Request, res: Response) {
     try {
-      res.json(await bannerService.getPublicBanner());
+      if (publicBannerCache && Date.now() - publicBannerCache.timestamp < BANNER_CACHE_DURATION) {
+        return res.json(publicBannerCache.data);
+      }
+      
+      const data = await bannerService.getPublicBanner();
+      publicBannerCache = { data, timestamp: Date.now() };
+      res.json(data);
     } catch (error) {
       console.error("Error fetching public session banner:", error);
       res.status(500).json({ error: "Failed to fetch session banner" });

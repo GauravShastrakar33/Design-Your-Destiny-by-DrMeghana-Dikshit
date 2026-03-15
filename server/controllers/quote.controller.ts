@@ -1,12 +1,46 @@
 import { Request, Response } from "express";
 import { quoteService } from "../services/quote.service";
 
+// In-memory cache for today's quote
+let cachedQuoteDate: string | null = null;
+let cachedQuoteData: any | null = null;
+let quoteFetchPromise: Promise<any> | null = null;
+
+export const clearQuoteCache = () => {
+  cachedQuoteDate = null;
+  cachedQuoteData = null;
+  quoteFetchPromise = null;
+};
+
 export const quoteController = {
   // ─── Public ────────────────────────────────────────────────────────────────
 
   async getToday(_req: Request, res: Response) {
     try {
-      res.json(await quoteService.getTodayQuote());
+      // Use UTC today or server today for the daily quote rotation
+      const today = new Date().toISOString().split("T")[0];
+
+      // 1. Level 1 Cache: Instant Memory Hit
+      if (cachedQuoteDate === today && cachedQuoteData) {
+        return res.json(cachedQuoteData);
+      }
+
+      // 2. Level 2 Cache: Prevent Cache Stampede
+      // If multiple requests arrive while one is already fetching, they all await the same promise
+      if (quoteFetchPromise) {
+        const data = await quoteFetchPromise;
+        return res.json(data);
+      }
+
+      // 3. Cache Miss: Fetch and Populate
+      quoteFetchPromise = quoteService.getTodayQuote();
+      const result = await quoteFetchPromise;
+      
+      cachedQuoteData = result;
+      cachedQuoteDate = today;
+      quoteFetchPromise = null;
+      
+      res.json(result);
     } catch (error) {
       console.error("Error fetching today's quote:", error);
       res.status(500).json({ error: "Failed to fetch quote" });

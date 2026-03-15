@@ -58,6 +58,7 @@ export const notificationService = {
       return { success: true, message: "No devices registered", successCount: 0, failureCount: 0, tokensCleanedUp: 0 };
     }
 
+    // 1. Create the notification record
     const notification = await notificationRepository.createNotification({
       title,
       body,
@@ -68,23 +69,54 @@ export const notificationService = {
       requiredProgramLevel: 0,
     });
 
-    const tokens = allTokens.map((t) => t.token);
-    const result = await sendPushNotification(tokens, title, body, {
-      notificationId: notification.id.toString(),
-      url: "/notifications",
-      type: "admin_test",
+    // 2. Insert notification logs first (source of truth for unread count)
+    await notificationRepository.insertNotificationLogs(
+      allTokens.map((t) => ({ 
+        notificationId: notification.id, 
+        userId: t.userId, 
+        deviceToken: t.token, 
+        status: "sent" 
+      }))
+    );
+
+    // 3. Group tokens by user and send personalized pushes with accurate badge counts
+    const userTokenMap = new Map<number, string[]>();
+    allTokens.forEach(t => {
+      const tokens = userTokenMap.get(t.userId) || [];
+      tokens.push(t.token);
+      userTokenMap.set(t.userId, tokens);
     });
 
-    await notificationRepository.insertNotificationLogs(
-      allTokens.map((t) => ({ notificationId: notification.id, userId: t.userId, deviceToken: t.token, status: "sent" }))
-    );
+    let totalSuccess = 0;
+    let totalFailure = 0;
+    const allTokensToCleanup: string[] = [];
+
+    for (const [userId, tokens] of Array.from(userTokenMap.entries())) {
+      try {
+        // Query current unread count (includes the one we just inserted)
+        const { count } = await this.getUnreadCount(userId);
+        
+        const result = await sendPushNotification(tokens, title, body, {
+          notificationId: notification.id.toString(),
+          url: "/notifications",
+          type: "admin_test",
+        }, count);
+
+        totalSuccess += result.successCount;
+        totalFailure += result.failureCount;
+        allTokensToCleanup.push(...result.tokensToCleanup);
+      } catch (err) {
+        console.error(`❌ Failed to send personalized push to user ${userId}:`, err);
+        totalFailure += tokens.length;
+      }
+    }
 
     return {
       success: true,
       message: "Notification sent",
-      successCount: result.successCount,
-      failureCount: result.failureCount,
-      tokensCleanedUp: result.failedTokens.length,
+      successCount: totalSuccess,
+      failureCount: totalFailure,
+      tokensCleanedUp: allTokensToCleanup.length,
       notification,
     };
   },
